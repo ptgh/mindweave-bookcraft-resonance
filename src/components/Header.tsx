@@ -1,12 +1,15 @@
 
 import { BookOpen } from "lucide-react";
+import { useLocation, Link } from "react-router-dom";
 
 const Header = () => {
+  const location = useLocation();
+  
   return (
     <header className="bg-slate-900 border-b border-slate-700">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
             <div className="w-8 h-8 flex items-center justify-center">
               <svg viewBox="0 0 24 24" className="w-6 h-6 text-blue-400">
                 <path
@@ -21,15 +24,29 @@ const Header = () => {
               </h1>
               <p className="text-xs text-slate-400 -mt-1">for the future-literate</p>
             </div>
-          </div>
+          </Link>
           
           <nav className="flex items-center space-x-6">
-            <button className="text-slate-300 hover:text-blue-400 transition-colors text-sm font-medium">
+            <Link
+              to="/"
+              className={`transition-colors text-sm font-medium ${
+                location.pathname === '/' 
+                  ? 'text-blue-400' 
+                  : 'text-slate-300 hover:text-blue-400'
+              }`}
+            >
               Signal
-            </button>
-            <button className="text-slate-300 hover:text-blue-400 transition-colors text-sm font-medium">
+            </Link>
+            <Link
+              to="/library"
+              className={`transition-colors text-sm font-medium ${
+                location.pathname === '/library' 
+                  ? 'text-blue-400' 
+                  : 'text-slate-300 hover:text-blue-400'
+              }`}
+            >
               Transmissions
-            </button>
+            </Link>
             <button className="text-slate-300 hover:text-blue-400 transition-colors text-sm font-medium">
               Map
             </button>
