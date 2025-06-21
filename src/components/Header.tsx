@@ -35,7 +35,7 @@ const Header = () => {
                   : 'text-slate-300 hover:text-blue-400'
               }`}
             >
-              Signal
+              Home
             </Link>
             <Link
               to="/library"
@@ -47,8 +47,8 @@ const Header = () => {
             >
               Transmissions
             </Link>
-            <button className="text-slate-300 hover:text-blue-400 transition-colors text-sm font-medium">
-              Map
+            <button className="text-slate-300 hover:text-blue-400 transition-colors text-sm font-medium opacity-50 cursor-not-allowed">
+              Thread Map
             </button>
           </nav>
         </div>
