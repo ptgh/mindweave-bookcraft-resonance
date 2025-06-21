@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 
 interface Book {
@@ -12,7 +11,6 @@ interface Book {
 }
 
 const Discovery = () => {
-  const [theme, setTheme] = useState<'clean' | 'speculative'>('speculative');
   const [books, setBooks] = useState<Book[]>([
     {
       id: '1',
@@ -47,64 +45,23 @@ const Discovery = () => {
     setBooks(prev => prev.filter(b => b.id !== bookId));
   };
 
-  const themeClasses = {
-    clean: {
-      background: 'bg-white min-h-screen',
-      text: 'text-gray-900',
-      card: 'bg-white border border-gray-200 shadow-sm',
-      header: 'text-gray-900',
-      subtext: 'text-gray-600',
-      button: {
-        keep: 'bg-green-600 hover:bg-green-700 text-white',
-        discard: 'bg-red-600 hover:bg-red-700 text-white'
-      }
-    },
-    speculative: {
-      background: 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen',
-      text: 'text-slate-200',
-      card: 'bg-slate-800/50 border border-slate-700',
-      header: 'text-slate-200',
-      subtext: 'text-slate-400',
-      button: {
-        keep: 'bg-blue-600 hover:bg-blue-700 text-white',
-        discard: 'bg-slate-600 hover:bg-slate-700 text-white'
-      }
-    }
-  };
-
-  const currentTheme = themeClasses[theme];
-
   return (
-    <div className={currentTheme.background}>
+    <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen">
       <div className="container mx-auto px-6 py-8">
-        {/* Header with theme toggle */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className={`text-2xl font-light tracking-wider ${currentTheme.header}`}>
-              {theme === 'speculative' ? 'SIGNAL DISCOVERY' : 'Book Discovery'}
-            </h1>
-            <p className={`text-sm mt-1 ${currentTheme.subtext}`}>
-              {theme === 'speculative' 
-                ? 'Tuning into transmissions from the future-literate' 
-                : 'Discover your next great read'
-              }
-            </p>
-          </div>
-          
-          <div className="flex items-center space-x-3">
-            <span className={`text-sm ${currentTheme.text}`}>Clean</span>
-            <Switch
-              checked={theme === 'speculative'}
-              onCheckedChange={(checked) => setTheme(checked ? 'speculative' : 'clean')}
-            />
-            <span className={`text-sm ${currentTheme.text}`}>Speculative</span>
-          </div>
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-light tracking-wider text-slate-200">
+            SIGNAL DISCOVERY
+          </h1>
+          <p className="text-sm mt-1 text-slate-400">
+            Tuning into transmissions from the future-literate
+          </p>
         </div>
 
         {/* Book cards */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto">
           {books.map(book => (
-            <div key={book.id} className={`${currentTheme.card} rounded-lg p-6 hover:shadow-lg transition-all duration-200`}>
+            <div key={book.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:shadow-lg transition-all duration-200">
               <div className="flex flex-col items-center text-center">
                 <div className="w-32 h-48 mb-4 rounded-lg overflow-hidden shadow-md">
                   <img 
@@ -118,23 +75,23 @@ const Discovery = () => {
                   />
                 </div>
                 
-                <h3 className={`text-lg font-medium mb-1 ${currentTheme.header}`}>
+                <h3 className="text-lg font-medium mb-1 text-slate-200">
                   {book.title}
                 </h3>
-                <p className={`text-sm mb-4 ${currentTheme.subtext}`}>
+                <p className="text-sm mb-4 text-slate-400">
                   {book.author}
                 </p>
                 
                 <div className="flex space-x-3 w-full">
                   <Button
                     onClick={() => handleKeep(book)}
-                    className={`flex-1 ${currentTheme.button.keep}`}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     Keep
                   </Button>
                   <Button
                     onClick={() => handleDiscard(book.id)}
-                    className={`flex-1 ${currentTheme.button.discard}`}
+                    className="flex-1 bg-slate-600 hover:bg-slate-700 text-white"
                   >
                     Discard
                   </Button>
@@ -147,10 +104,10 @@ const Discovery = () => {
         {/* Empty state */}
         {books.length === 0 && (
           <div className="text-center py-12">
-            <div className={`text-lg font-medium mb-2 ${currentTheme.header}`}>
+            <div className="text-lg font-medium mb-2 text-slate-200">
               All books reviewed!
             </div>
-            <p className={`text-sm ${currentTheme.subtext}`}>
+            <p className="text-sm text-slate-400">
               {savedBooks.length > 0 
                 ? `You kept ${savedBooks.length} book${savedBooks.length === 1 ? '' : 's'} for your library.`
                 : 'No books were saved to your library.'
@@ -162,12 +119,12 @@ const Discovery = () => {
         {/* Debug info for saved books */}
         {savedBooks.length > 0 && (
           <div className="mt-8 p-4 rounded-lg border border-dashed border-slate-600">
-            <h3 className={`text-sm font-medium mb-2 ${currentTheme.header}`}>
+            <h3 className="text-sm font-medium mb-2 text-slate-200">
               Saved to Library ({savedBooks.length}):
             </h3>
             <div className="space-y-1">
               {savedBooks.map(book => (
-                <p key={book.id} className={`text-xs ${currentTheme.subtext}`}>
+                <p key={book.id} className="text-xs text-slate-400">
                   {book.title} by {book.author}
                 </p>
               ))}

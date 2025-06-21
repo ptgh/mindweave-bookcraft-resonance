@@ -10,34 +10,58 @@ const Index = () => {
   const [books, setBooks] = useState([
     {
       id: 1,
-      title: "Altered Carbon",
-      author: "Richard K. Morgan",
-      status: "reading" as const,
-      tags: ["Block Universe Compatible", "Memory Distortion", "Off-Earth Civilisations"],
+      title: "Dune",
+      author: "Frank Herbert",
+      status: "read" as const,
+      tags: ["Block Universe Compatible", "Off-Earth Civilisations", "Future Politics"],
       rating: { shifted: true, truth: true }
     },
     {
       id: 2,
-      title: "The Stars My Destination",
-      author: "Alfred Bester",
-      status: "read" as const,
-      tags: ["Temporal Distortion", "Nonlinear Narrative", "Technological Shamanism"],
+      title: "Dhalgren",
+      author: "Samuel R. Delany",
+      status: "reading" as const,
+      tags: ["Temporal Distortion", "Nonlinear Narrative", "Urban Decay"],
       rating: { dissonant: true, shifted: true }
     },
     {
       id: 3,
+      title: "I, Robot",
+      author: "Isaac Asimov",
+      status: "read" as const,
+      tags: ["AI Ethics", "Three Laws", "Technological Shamanism"],
+      rating: { truth: true, confirmed: true }
+    },
+    {
+      id: 4,
+      title: "Altered Carbon",
+      author: "Richard K. Morgan",
+      status: "reading" as const,
+      tags: ["Memory Distortion", "Digital Consciousness", "Sebi-friendly"],
+      rating: { shifted: true, truth: true }
+    },
+    {
+      id: 5,
+      title: "The Stars My Destination",
+      author: "Alfred Bester",
+      status: "read" as const,
+      tags: ["Jaunting", "Revenge Arc", "Psychological Evolution"],
+      rating: { dissonant: true, shifted: true }
+    },
+    {
+      id: 6,
       title: "Do Androids Dream of Electric Sheep?",
       author: "Philip K. Dick",
       status: "read" as const,
-      tags: ["Mega-Corporate Systems", "Dream Logic", "Sebi-friendly"],
+      tags: ["Mega-Corporate Systems", "Dream Logic", "Empathy Machine"],
       rating: { truth: true, confirmed: true }
     }
   ]);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [currentSignal] = useState({
-    title: "Altered Carbon",
-    author: "Richard K. Morgan"
+    title: "Dune",
+    author: "Frank Herbert"
   });
 
   const addBook = (newBook: any) => {
