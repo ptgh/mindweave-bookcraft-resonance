@@ -35,7 +35,7 @@ export const saveTransmission = async (transmission: Omit<Transmission, 'id' | '
       tags: JSON.stringify(transmission.tags),
       resonance_labels: JSON.stringify(transmission.rating),
       notes: transmission.notes,
-      user_id: user.id
+      user_id: user.id // This ensures the user_id is set correctly
     }])
     .select()
     .single();
@@ -45,16 +45,18 @@ export const saveTransmission = async (transmission: Omit<Transmission, 'id' | '
 };
 
 export const updateTransmission = async (id: number, transmission: Partial<Omit<Transmission, 'id' | 'user_id' | 'created_at'>>) => {
+  const updateData: any = {};
+  
+  if (transmission.title !== undefined) updateData.title = transmission.title;
+  if (transmission.author !== undefined) updateData.author = transmission.author;
+  if (transmission.cover_url !== undefined) updateData.cover_url = transmission.cover_url;
+  if (transmission.tags !== undefined) updateData.tags = JSON.stringify(transmission.tags);
+  if (transmission.rating !== undefined) updateData.resonance_labels = JSON.stringify(transmission.rating);
+  if (transmission.notes !== undefined) updateData.notes = transmission.notes;
+
   const { data, error } = await supabase
     .from('transmissions')
-    .update({
-      title: transmission.title,
-      author: transmission.author,
-      cover_url: transmission.cover_url,
-      tags: transmission.tags ? JSON.stringify(transmission.tags) : undefined,
-      resonance_labels: transmission.rating ? JSON.stringify(transmission.rating) : undefined,
-      notes: transmission.notes
-    })
+    .update(updateData)
     .eq('id', id)
     .select()
     .single();
