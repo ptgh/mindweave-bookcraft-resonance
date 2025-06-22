@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { Plus, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PublisherResonanceBadge from "./PublisherResonanceBadge";
 import { EnrichedPublisherBook, PublisherSeries } from "@/services/publisherService";
@@ -24,7 +23,7 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
   if (loading) {
     return (
       <div className="text-center py-12">
-        <div className="animate-spin w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <div className="w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full mx-auto mb-4 animate-spin"></div>
         <p className="text-slate-400">Loading curated collection...</p>
       </div>
     );
@@ -52,50 +51,62 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
         <p className="text-slate-500 text-xs mt-1">Covers powered by Google Books API</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {books.map((book) => (
-          <div key={book.id} className="bg-slate-800/30 border border-slate-700/40 rounded-lg p-4 hover:bg-slate-700/40 transition-all duration-200 hover:border-slate-600/50">
-            {/* Book Cover */}
-            <div className="w-full h-48 bg-slate-700/30 rounded mb-4 overflow-hidden flex items-center justify-center border border-slate-600/20 relative">
-              {book.cover_url ? (
-                <img 
-                  src={book.cover_url} 
-                  alt={book.title} 
-                  className="w-full h-full object-cover rounded"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const fallback = target.nextElementSibling as HTMLElement;
-                    if (fallback) fallback.classList.remove('hidden');
-                  }}
-                />
-              ) : null}
-              <div className={`flex items-center justify-center text-slate-400 text-3xl absolute inset-0 ${book.cover_url ? 'hidden' : ''}`}>
-                {getSeriesPlaceholder(series.name)}
+          <div key={book.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors">
+            <div className="flex items-start space-x-4">
+              {/* Book Cover - matching transmissions page size */}
+              <div className="w-12 h-16 bg-slate-700 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {book.cover_url ? (
+                  <img 
+                    src={book.cover_url} 
+                    alt={book.title} 
+                    className="w-full h-full object-cover rounded"
+                    style={{ imageRendering: 'crisp-edges' }}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const fallback = target.nextElementSibling as HTMLElement;
+                      if (fallback) fallback.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <div className={`flex items-center justify-center text-slate-400 text-lg absolute inset-0 ${book.cover_url ? 'hidden' : ''}`}>
+                  {getSeriesPlaceholder(series.name)}
+                </div>
+              </div>
+              
+              {/* Book Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <h3 className="text-slate-200 font-medium text-sm leading-tight">{book.title}</h3>
+                    <p className="text-slate-400 text-xs mt-1">{book.author}</p>
+                  </div>
+                  <div className="w-3 h-3 rounded-full border-2 border-purple-400 bg-purple-400/10 flex-shrink-0"></div>
+                </div>
+                
+                {book.editorial_note && (
+                  <p className="text-slate-400 text-xs italic leading-relaxed line-clamp-2 mb-2">{book.editorial_note}</p>
+                )}
+                
+                {book.isbn && (
+                  <p className="text-slate-500 text-xs font-mono mb-3">ISBN: {book.isbn}</p>
+                )}
+                
+                {/* Add Button - properly aligned */}
+                <Button
+                  size="sm"
+                  onClick={() => onAddBook(book)}
+                  className="w-full bg-purple-600/70 hover:bg-purple-600/90 text-white text-xs h-8 font-light border-0 flex items-center justify-center"
+                >
+                  <div className="w-3 h-3 rounded-full border border-white mr-2 flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                  </div>
+                  Add to Transmissions
+                </Button>
               </div>
             </div>
-            
-            {/* Book Info */}
-            <div className="mb-4">
-              <h3 className="text-slate-200 font-medium text-sm leading-tight mb-2 line-clamp-2">{book.title}</h3>
-              <p className="text-slate-400 text-xs mb-3 font-light">{book.author}</p>
-              {book.editorial_note && (
-                <p className="text-slate-400 text-xs italic leading-relaxed line-clamp-3 font-light mb-3">{book.editorial_note}</p>
-              )}
-              {book.isbn && (
-                <p className="text-slate-500 text-xs font-mono">ISBN: {book.isbn}</p>
-              )}
-            </div>
-            
-            {/* Add Button */}
-            <Button
-              size="sm"
-              onClick={() => onAddBook(book)}
-              className="w-full bg-purple-600/70 hover:bg-purple-600/90 text-white text-xs h-8 font-light border-0"
-            >
-              <Plus className="w-3 h-3 mr-1" />
-              Add to Transmissions
-            </Button>
           </div>
         ))}
       </div>

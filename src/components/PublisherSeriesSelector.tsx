@@ -1,6 +1,7 @@
 
 import { PublisherSeries } from "@/services/publisherService";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 
 interface PublisherSeriesSelectorProps {
   series: PublisherSeries[];
@@ -9,6 +10,9 @@ interface PublisherSeriesSelectorProps {
 }
 
 const PublisherSeriesSelector = ({ series, selectedSeriesId, onSeriesChange }: PublisherSeriesSelectorProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedSeries = series.find(s => s.id === selectedSeriesId);
+
   return (
     <div className="mb-8">
       <div className="mb-4">
@@ -18,22 +22,50 @@ const PublisherSeriesSelector = ({ series, selectedSeriesId, onSeriesChange }: P
         </p>
       </div>
       
-      <Select value={selectedSeriesId} onValueChange={onSeriesChange}>
-        <SelectTrigger className="w-full max-w-md bg-slate-800/50 border-slate-600 text-slate-200">
-          <SelectValue placeholder="Choose a publisher series..." />
-        </SelectTrigger>
-        <SelectContent className="bg-slate-800 border-slate-600">
-          {series.map((s) => (
-            <SelectItem key={s.id} value={s.id} className="text-slate-200 focus:bg-slate-700">
-              <div className="flex items-center space-x-2">
-                <span>{s.badge_emoji}</span>
-                <span>{s.name}</span>
-                <span className="text-slate-400 text-xs">({s.publisher})</span>
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="relative w-full max-w-md">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-4 py-3 text-left text-slate-200 hover:bg-slate-700/50 transition-all duration-200 flex items-center justify-between"
+        >
+          <div className="flex items-center space-x-3">
+            <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+            <span>{selectedSeries ? selectedSeries.name : "Choose a publisher series..."}</span>
+            {selectedSeries && (
+              <span className="text-slate-400 text-xs">({selectedSeries.publisher})</span>
+            )}
+          </div>
+          <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+        
+        {isOpen && (
+          <div className="absolute top-full left-0 w-full mt-1 bg-slate-800 border border-slate-600 rounded-lg shadow-xl z-50 overflow-hidden">
+            {series.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => {
+                  onSeriesChange(s.id);
+                  setIsOpen(false);
+                }}
+                className="w-full px-4 py-3 text-left hover:bg-slate-700 transition-colors duration-150 flex items-center space-x-3 text-slate-200"
+              >
+                <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                <span className="text-sm">{s.badge_emoji}</span>
+                <div className="flex-1">
+                  <span className="text-sm">{s.name}</span>
+                  <span className="text-slate-400 text-xs ml-2">({s.publisher})</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+        
+        {isOpen && (
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setIsOpen(false)}
+          />
+        )}
+      </div>
     </div>
   );
 };

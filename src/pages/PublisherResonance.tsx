@@ -88,7 +88,7 @@ const PublisherResonance = () => {
 
           {seriesLoading ? (
             <div className="text-center py-12">
-              <div className="animate-spin w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <div className="w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full mx-auto mb-4 animate-spin"></div>
               <p className="text-slate-400">Loading publisher collections...</p>
             </div>
           ) : (
