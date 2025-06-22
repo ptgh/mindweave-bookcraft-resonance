@@ -55,7 +55,7 @@ const Header = () => {
                   : 'text-slate-300 hover:text-blue-400'
               }`}
             >
-              Thread Map
+              Chrono Thread
             </Link>
           </nav>
         </div>
