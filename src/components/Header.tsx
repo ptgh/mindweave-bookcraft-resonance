@@ -47,9 +47,16 @@ const Header = () => {
             >
               Transmissions
             </Link>
-            <button className="text-slate-300 hover:text-blue-400 transition-colors text-sm font-medium opacity-50 cursor-not-allowed">
+            <Link
+              to="/thread-map"
+              className={`transition-colors text-sm font-medium ${
+                location.pathname === '/thread-map' 
+                  ? 'text-blue-400' 
+                  : 'text-slate-300 hover:text-blue-400'
+              }`}
+            >
               Thread Map
-            </button>
+            </Link>
           </nav>
         </div>
       </div>
