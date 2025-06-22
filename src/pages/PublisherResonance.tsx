@@ -15,17 +15,10 @@ const PublisherResonance = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { toast } = useToast();
 
-  // Focus on Penguin collections only for now
+  // Show all publisher series
   const { data: publisherSeries = [], isLoading } = useQuery({
     queryKey: ['publisher-series'],
-    queryFn: async () => {
-      const allSeries = await getPublisherSeries();
-      // Filter to show only Penguin series
-      return allSeries.filter(series => 
-        series.publisher.toLowerCase().includes('penguin') || 
-        series.name.toLowerCase().includes('penguin')
-      );
-    },
+    queryFn: getPublisherSeries,
   });
 
   const handleAddFromPublisher = async (book: PublisherBook) => {
@@ -91,8 +84,12 @@ const PublisherResonance = () => {
                   onClick={() => openSeriesModal(series)}
                 >
                   <div className="flex items-start space-x-4 mb-4">
-                    <div className="w-12 h-12 bg-slate-700/50 rounded flex items-center justify-center border border-slate-600/40">
-                      <span className="text-xl">{series.badge_emoji}</span>
+                    <div className="w-8 h-8 bg-slate-700/50 rounded-full flex items-center justify-center border border-slate-600/40">
+                      {series.name.toLowerCase().includes('penguin') ? (
+                        <span className="text-sm">🐧</span>
+                      ) : (
+                        <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                      )}
                     </div>
                     <div className="flex-1">
                       <PublisherResonanceBadge series={series} size="md" />
