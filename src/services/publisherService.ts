@@ -44,17 +44,71 @@ export const getPublisherBooks = async (seriesId: string): Promise<PublisherBook
 };
 
 export const findMatchingPublisherSeries = async (title: string, author: string): Promise<PublisherSeries | null> => {
-  const { data, error } = await supabase
+  console.log('Searching for publisher series match:', { title, author });
+  
+  // First try exact title and author match
+  let { data, error } = await supabase
+    .from('publisher_books')
+    .select(`
+      *,
+      publisher_series (*)
+    `)
+    .eq('title', title)
+    .eq('author', author)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error in exact match search:', error);
+  }
+  
+  if (data?.publisher_series) {
+    console.log('Found exact match:', data.publisher_series);
+    return data.publisher_series as PublisherSeries;
+  }
+
+  // Try partial title match with exact author
+  ({ data, error } = await supabase
     .from('publisher_books')
     .select(`
       *,
       publisher_series (*)
     `)
     .ilike('title', `%${title}%`)
+    .eq('author', author)
+    .limit(1)
+    .maybeSingle());
+
+  if (error) {
+    console.error('Error in partial title match search:', error);
+  }
+
+  if (data?.publisher_series) {
+    console.log('Found partial title match:', data.publisher_series);
+    return data.publisher_series as PublisherSeries;
+  }
+
+  // Try exact title with partial author match
+  ({ data, error } = await supabase
+    .from('publisher_books')
+    .select(`
+      *,
+      publisher_series (*)
+    `)
+    .eq('title', title)
     .ilike('author', `%${author}%`)
     .limit(1)
-    .single();
+    .maybeSingle());
 
-  if (error || !data) return null;
-  return data.publisher_series as PublisherSeries;
+  if (error) {
+    console.error('Error in partial author match search:', error);
+  }
+
+  if (data?.publisher_series) {
+    console.log('Found partial author match:', data.publisher_series);
+    return data.publisher_series as PublisherSeries;
+  }
+
+  console.log('No publisher series match found for:', { title, author });
+  return null;
 };

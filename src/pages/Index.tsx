@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import SignalInFocus from "@/components/SignalInFocus";
@@ -10,6 +9,7 @@ import Auth from "./Auth";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { Link } from "react-router-dom";
 import { getTransmissions, saveTransmission, updateTransmission, deleteTransmission, Transmission } from "@/services/transmissionsService";
 import { getPublisherSeries, PublisherSeries, PublisherBook } from "@/services/publisherService";
 
@@ -168,6 +168,38 @@ const Index = () => {
               + Log Signal
             </Button>
           </div>
+
+          {/* Publisher Resonance Section */}
+          {publisherSeries.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-slate-200 text-lg font-medium mb-1">Publisher Resonance</h3>
+                  <p className="text-slate-400 text-sm">Discover curated threads from premier publishers</p>
+                </div>
+                <Link to="/publisher-resonance">
+                  <Button variant="outline" size="sm" className="border-purple-500/30 text-purple-300 hover:bg-purple-500/10">
+                    Explore All Threads
+                  </Button>
+                </Link>
+              </div>
+              <div className="grid gap-4 md:grid-cols-3 mb-6">
+                {publisherSeries.slice(0, 3).map((series) => (
+                  <div 
+                    key={series.id}
+                    onClick={() => openPublisherModal(series)}
+                    className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4 hover:bg-purple-500/20 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center space-x-2 mb-2">
+                      <span className="text-lg">{series.badge_emoji}</span>
+                      <span className="text-purple-300 text-sm font-medium">{series.name}</span>
+                    </div>
+                    <p className="text-slate-400 text-xs">{series.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           
           {loading ? (
             <div className="text-center py-12">

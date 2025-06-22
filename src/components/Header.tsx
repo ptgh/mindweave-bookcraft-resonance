@@ -48,6 +48,16 @@ const Header = () => {
               Transmissions
             </Link>
             <Link
+              to="/publisher-resonance"
+              className={`transition-colors text-sm font-medium ${
+                location.pathname === '/publisher-resonance' 
+                  ? 'text-purple-400' 
+                  : 'text-slate-300 hover:text-purple-400'
+              }`}
+            >
+              Publisher Resonance
+            </Link>
+            <Link
               to="/thread-map"
               className={`transition-colors text-sm font-medium ${
                 location.pathname === '/thread-map' 
