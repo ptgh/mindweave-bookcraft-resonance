@@ -11,7 +11,6 @@ export type Database = {
     Tables: {
       transmissions: {
         Row: {
-          "add user_id": string | null
           author: string | null
           cover_url: string | null
           created_at: string
@@ -20,9 +19,9 @@ export type Database = {
           resonance_labels: string | null
           tags: string | null
           title: string | null
+          user_id: string | null
         }
         Insert: {
-          "add user_id"?: string | null
           author?: string | null
           cover_url?: string | null
           created_at?: string
@@ -31,9 +30,9 @@ export type Database = {
           resonance_labels?: string | null
           tags?: string | null
           title?: string | null
+          user_id?: string | null
         }
         Update: {
-          "add user_id"?: string | null
           author?: string | null
           cover_url?: string | null
           created_at?: string
@@ -42,6 +41,7 @@ export type Database = {
           resonance_labels?: string | null
           tags?: string | null
           title?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
