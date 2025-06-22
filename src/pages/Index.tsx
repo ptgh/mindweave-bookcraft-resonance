@@ -1,24 +1,19 @@
+
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import SignalInFocus from "@/components/SignalInFocus";
 import BookCard from "@/components/BookCard";
 import AddBookModal from "@/components/AddBookModal";
-import PublisherResonanceModal from "@/components/PublisherResonanceModal";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Link } from "react-router-dom";
 import { getTransmissions, saveTransmission, updateTransmission, deleteTransmission, Transmission } from "@/services/transmissionsService";
-import { getPublisherSeries, PublisherSeries, PublisherBook } from "@/services/publisherService";
 
 const Index = () => {
   const [books, setBooks] = useState<Transmission[]>([]);
-  const [publisherSeries, setPublisherSeries] = useState<PublisherSeries[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isPublisherModalOpen, setIsPublisherModalOpen] = useState(false);
-  const [selectedSeries, setSelectedSeries] = useState<PublisherSeries | null>(null);
   const [editingBook, setEditingBook] = useState<Transmission | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentSignal] = useState({
@@ -32,7 +27,6 @@ const Index = () => {
   useEffect(() => {
     if (user) {
       loadTransmissions();
-      loadPublisherSeries();
     }
   }, [user]);
 
@@ -49,15 +43,6 @@ const Index = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadPublisherSeries = async () => {
-    try {
-      const series = await getPublisherSeries();
-      setPublisherSeries(series);
-    } catch (error: any) {
-      console.error('Failed to load publisher series:', error);
     }
   };
 
@@ -85,27 +70,6 @@ const Index = () => {
         variant: "destructive",
       });
     }
-  };
-
-  const handleAddFromPublisher = (book: PublisherBook) => {
-    const newBook = {
-      title: book.title,
-      author: book.author,
-      cover_url: book.cover_url || "",
-      status: "want-to-read",
-      tags: [],
-      notes: book.editorial_note || "",
-      rating: {
-        truth: false,
-        confirmed: false,
-        disrupted: false,
-        rewired: false
-      },
-      publisher_series_id: book.series_id
-    };
-    
-    addBook(newBook);
-    setIsPublisherModalOpen(false);
   };
 
   const handleEditBook = (book: Transmission) => {
@@ -142,11 +106,6 @@ const Index = () => {
     setEditingBook(null);
   };
 
-  const openPublisherModal = (series: PublisherSeries) => {
-    setSelectedSeries(series);
-    setIsPublisherModalOpen(true);
-  };
-
   return (
     <AuthWrapper fallback={<Auth />}>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -168,38 +127,6 @@ const Index = () => {
               + Log Signal
             </Button>
           </div>
-
-          {/* Publisher Resonance Section */}
-          {publisherSeries.length > 0 && (
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-slate-200 text-lg font-medium mb-1">Publisher Resonance</h3>
-                  <p className="text-slate-400 text-sm">Discover curated threads from premier publishers</p>
-                </div>
-                <Link to="/publisher-resonance">
-                  <Button variant="outline" size="sm" className="border-purple-500/30 text-purple-300 hover:bg-purple-500/10">
-                    Explore All Threads
-                  </Button>
-                </Link>
-              </div>
-              <div className="grid gap-4 md:grid-cols-3 mb-6">
-                {publisherSeries.slice(0, 3).map((series) => (
-                  <div 
-                    key={series.id}
-                    onClick={() => openPublisherModal(series)}
-                    className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4 hover:bg-purple-500/20 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="text-lg">{series.badge_emoji}</span>
-                      <span className="text-purple-300 text-sm font-medium">{series.name}</span>
-                    </div>
-                    <p className="text-slate-400 text-xs">{series.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
           
           {loading ? (
             <div className="text-center py-12">
@@ -265,15 +192,6 @@ const Index = () => {
           onAdd={addBook}
           editingBook={editingBook}
         />
-
-        {selectedSeries && (
-          <PublisherResonanceModal
-            isOpen={isPublisherModalOpen}
-            onClose={() => setIsPublisherModalOpen(false)}
-            series={selectedSeries}
-            onAddBook={handleAddFromPublisher}
-          />
-        )}
       </div>
     </AuthWrapper>
   );

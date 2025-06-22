@@ -6,7 +6,6 @@ import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
 import PublisherResonanceBadge from "@/components/PublisherResonanceBadge";
 import PublisherResonanceModal from "@/components/PublisherResonanceModal";
-import { Button } from "@/components/ui/button";
 import { getPublisherSeries, getPublisherBooks, PublisherSeries, PublisherBook } from "@/services/publisherService";
 import { saveTransmission } from "@/services/transmissionsService";
 import { useToast } from "@/hooks/use-toast";
@@ -84,28 +83,20 @@ const PublisherResonance = () => {
                   onClick={() => openSeriesModal(series)}
                 >
                   <div className="flex items-start space-x-4 mb-4">
-                    {series.logo_url ? (
-                      <img src={series.logo_url} alt={series.name} className="w-12 h-12 rounded" />
-                    ) : (
-                      <div className="w-12 h-12 bg-slate-700 rounded flex items-center justify-center">
-                        <span className="text-2xl">{series.badge_emoji}</span>
-                      </div>
-                    )}
+                    <div className="w-12 h-12 bg-slate-700/50 rounded flex items-center justify-center border border-slate-600/40">
+                      <span className="text-slate-400">•</span>
+                    </div>
                     <div className="flex-1">
                       <PublisherResonanceBadge series={series} size="md" />
-                      <p className="text-slate-400 text-sm mt-1">{series.publisher}</p>
+                      <p className="text-slate-500 text-sm mt-1 font-light">{series.publisher}</p>
                     </div>
                   </div>
                   
-                  <p className="text-slate-300 text-sm leading-relaxed mb-4">{series.description}</p>
+                  <p className="text-slate-300 text-sm leading-relaxed mb-4 font-light">{series.description}</p>
                   
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-purple-500/30 text-purple-300 hover:bg-purple-500/10 w-full group-hover:border-purple-400/50 transition-colors"
-                  >
-                    Explore Thread
-                  </Button>
+                  <div className="text-slate-500 text-xs font-light border-t border-slate-700/50 pt-3">
+                    Explore Thread →
+                  </div>
                 </div>
               ))}
             </div>

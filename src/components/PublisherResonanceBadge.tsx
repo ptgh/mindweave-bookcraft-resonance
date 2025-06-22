@@ -1,6 +1,4 @@
 
-import { Badge } from "@/components/ui/badge";
-
 interface PublisherResonanceBadgeProps {
   series: {
     name: string;
@@ -12,16 +10,13 @@ interface PublisherResonanceBadgeProps {
 
 const PublisherResonanceBadge = ({ series, size = "sm" }: PublisherResonanceBadgeProps) => {
   return (
-    <Badge 
-      variant="outline" 
-      className={`
-        border-purple-500/30 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 
-        ${size === "sm" ? "text-xs px-2 py-0.5" : "text-sm px-3 py-1"}
-      `}
-    >
-      <span className="mr-1">{series.badge_emoji}</span>
-      <span className="truncate">{series.name}</span>
-    </Badge>
+    <div className={`
+      inline-flex items-center border border-slate-600/40 bg-slate-700/20 rounded
+      ${size === "sm" ? "text-xs px-2 py-0.5 space-x-1" : "text-sm px-3 py-1 space-x-1.5"}
+    `}>
+      <span className="text-slate-400">•</span>
+      <span className="text-slate-300 font-light truncate">{series.name}</span>
+    </div>
   );
 };
 
