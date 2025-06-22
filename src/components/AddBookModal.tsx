@@ -1,15 +1,18 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import BookSearchInput from "./BookSearchInput";
+import { BookSuggestion } from "@/services/googleBooksApi";
 
 interface AddBookModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (book: any) => void;
+  editingBook?: any;
 }
 
 const conceptualTags = [
@@ -38,20 +41,80 @@ const conceptualTags = [
   "Metis-driven"
 ];
 
-const AddBookModal = ({ isOpen, onClose, onAdd }: AddBookModalProps) => {
+const personalResonanceOptions = [
+  { key: "truth", label: "Felt like truth" },
+  { key: "confirmed", label: "Confirmed a knowing" },
+  { key: "disrupted", label: "Disrupted my thinking" },
+  { key: "rewired", label: "Rewired my perspective" }
+];
+
+const AddBookModal = ({ isOpen, onClose, onAdd, editingBook }: AddBookModalProps) => {
   const [formData, setFormData] = useState({
     title: "",
     author: "",
     status: "want-to-read",
     tags: [] as string[],
     notes: "",
+    coverUrl: "",
     rating: {
-      shifted: false,
-      confirmed: false,
       truth: false,
-      dissonant: false
+      confirmed: false,
+      disrupted: false,
+      rewired: false
     }
   });
+
+  const [titleSearch, setTitleSearch] = useState("");
+  const [authorSearch, setAuthorSearch] = useState("");
+
+  useEffect(() => {
+    if (editingBook) {
+      setFormData({
+        title: editingBook.title || "",
+        author: editingBook.author || "",
+        status: editingBook.status || "want-to-read",
+        tags: editingBook.tags || [],
+        notes: editingBook.notes || "",
+        coverUrl: editingBook.coverUrl || "",
+        rating: {
+          truth: editingBook.rating?.truth || false,
+          confirmed: editingBook.rating?.confirmed || false,
+          disrupted: editingBook.rating?.disrupted || false,
+          rewired: editingBook.rating?.rewired || false
+        }
+      });
+      setTitleSearch(editingBook.title || "");
+      setAuthorSearch(editingBook.author || "");
+    } else {
+      setFormData({
+        title: "",
+        author: "",
+        status: "want-to-read",
+        tags: [],
+        notes: "",
+        coverUrl: "",
+        rating: {
+          truth: false,
+          confirmed: false,
+          disrupted: false,
+          rewired: false
+        }
+      });
+      setTitleSearch("");
+      setAuthorSearch("");
+    }
+  }, [editingBook, isOpen]);
+
+  const handleBookSelect = (book: BookSuggestion) => {
+    setFormData(prev => ({
+      ...prev,
+      title: book.title,
+      author: book.author,
+      coverUrl: book.coverUrl || ""
+    }));
+    setTitleSearch(book.title);
+    setAuthorSearch(book.author);
+  };
 
   const toggleTag = (tag: string) => {
     setFormData(prev => ({
@@ -62,32 +125,39 @@ const AddBookModal = ({ isOpen, onClose, onAdd }: AddBookModalProps) => {
     }));
   };
 
+  const handleResonanceChange = (key: string, checked: boolean) => {
+    const selectedCount = Object.values(formData.rating).filter(Boolean).length;
+    
+    if (checked && selectedCount >= 2) {
+      return; // Don't allow more than 2 selections
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      rating: {
+        ...prev.rating,
+        [key]: checked
+      }
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onAdd(formData);
     onClose();
-    setFormData({
-      title: "",
-      author: "",
-      status: "want-to-read",
-      tags: [],
-      notes: "",
-      rating: {
-        shifted: false,
-        confirmed: false,
-        truth: false,
-        dissonant: false
-      }
-    });
   };
 
   if (!isOpen) return null;
+
+  const selectedResonanceCount = Object.values(formData.rating).filter(Boolean).length;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-slate-800 border border-slate-600 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
-          <h2 className="text-slate-200 text-lg font-medium">Log Signal</h2>
+          <h2 className="text-slate-200 text-lg font-medium">
+            {editingBook ? "Edit Signal" : "Log Signal"}
+          </h2>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-slate-200 transition-colors"
@@ -100,25 +170,40 @@ const AddBookModal = ({ isOpen, onClose, onAdd }: AddBookModalProps) => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="title" className="text-slate-300 text-sm">Title</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                className="bg-slate-700 border-slate-600 text-slate-200 mt-1"
-                required
+              <BookSearchInput
+                placeholder="Search for a book title..."
+                value={titleSearch}
+                onValueChange={(value) => {
+                  setTitleSearch(value);
+                  setFormData(prev => ({ ...prev, title: value }));
+                }}
+                onBookSelect={handleBookSelect}
               />
             </div>
             <div>
               <Label htmlFor="author" className="text-slate-300 text-sm">Author</Label>
               <Input
-                id="author"
-                value={formData.author}
-                onChange={(e) => setFormData(prev => ({ ...prev, author: e.target.value }))}
-                className="bg-slate-700 border-slate-600 text-slate-200 mt-1"
+                value={authorSearch}
+                onChange={(e) => {
+                  setAuthorSearch(e.target.value);
+                  setFormData(prev => ({ ...prev, author: e.target.value }));
+                }}
+                className="bg-slate-700 border-slate-600 text-slate-200"
+                placeholder="Author name"
                 required
               />
             </div>
           </div>
+
+          {formData.coverUrl && (
+            <div className="flex justify-center">
+              <img 
+                src={formData.coverUrl} 
+                alt={formData.title}
+                className="w-20 h-28 object-cover rounded shadow-lg"
+              />
+            </div>
+          )}
           
           <div>
             <Label className="text-slate-300 text-sm">Status</Label>
@@ -164,28 +249,27 @@ const AddBookModal = ({ isOpen, onClose, onAdd }: AddBookModalProps) => {
           </div>
           
           <div>
-            <Label className="text-slate-300 text-sm mb-3 block">Personal Resonance</Label>
+            <Label className="text-slate-300 text-sm mb-3 block">
+              Personal Resonance 
+              <span className="text-slate-500 ml-2">(max 2)</span>
+            </Label>
             <div className="grid grid-cols-2 gap-2">
-              {[
-                { key: "shifted", label: "Shifted me" },
-                { key: "confirmed", label: "Confirmed me" },
-                { key: "truth", label: "Felt like truth" },
-                { key: "dissonant", label: "Dissonant brilliance" }
-              ].map(rating => (
-                <label key={rating.key} className="flex items-center space-x-2">
+              {personalResonanceOptions.map(option => (
+                <label key={option.key} className="flex items-center space-x-2">
                   <input
                     type="checkbox"
-                    checked={formData.rating[rating.key as keyof typeof formData.rating]}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      rating: {
-                        ...prev.rating,
-                        [rating.key]: e.target.checked
-                      }
-                    }))}
+                    checked={formData.rating[option.key as keyof typeof formData.rating]}
+                    onChange={(e) => handleResonanceChange(option.key, e.target.checked)}
+                    disabled={!formData.rating[option.key as keyof typeof formData.rating] && selectedResonanceCount >= 2}
                     className="text-blue-400"
                   />
-                  <span className="text-slate-300 text-sm">{rating.label}</span>
+                  <span className={`text-sm ${
+                    !formData.rating[option.key as keyof typeof formData.rating] && selectedResonanceCount >= 2 
+                      ? 'text-slate-500' 
+                      : 'text-slate-300'
+                  }`}>
+                    {option.label}
+                  </span>
                 </label>
               ))}
             </div>
@@ -215,7 +299,7 @@ const AddBookModal = ({ isOpen, onClose, onAdd }: AddBookModalProps) => {
               type="submit"
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
-              Log Signal
+              {editingBook ? "Update Signal" : "Log Signal"}
             </Button>
           </div>
         </form>

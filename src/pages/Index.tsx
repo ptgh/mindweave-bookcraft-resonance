@@ -5,67 +5,63 @@ import SignalInFocus from "@/components/SignalInFocus";
 import BookCard from "@/components/BookCard";
 import AddBookModal from "@/components/AddBookModal";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
-  const [books, setBooks] = useState([
-    {
-      id: 1,
-      title: "Dune",
-      author: "Frank Herbert",
-      status: "read" as const,
-      tags: ["Block Universe Compatible", "Off-Earth Civilisations", "Future Politics"],
-      rating: { shifted: true, truth: true }
-    },
-    {
-      id: 2,
-      title: "Dhalgren",
-      author: "Samuel R. Delany",
-      status: "reading" as const,
-      tags: ["Temporal Distortion", "Nonlinear Narrative", "Urban Decay"],
-      rating: { dissonant: true, shifted: true }
-    },
-    {
-      id: 3,
-      title: "I, Robot",
-      author: "Isaac Asimov",
-      status: "read" as const,
-      tags: ["AI Ethics", "Three Laws", "Technological Shamanism"],
-      rating: { truth: true, confirmed: true }
-    },
-    {
-      id: 4,
-      title: "Altered Carbon",
-      author: "Richard K. Morgan",
-      status: "reading" as const,
-      tags: ["Memory Distortion", "Digital Consciousness", "Sebi-friendly"],
-      rating: { shifted: true, truth: true }
-    },
-    {
-      id: 5,
-      title: "The Stars My Destination",
-      author: "Alfred Bester",
-      status: "read" as const,
-      tags: ["Jaunting", "Revenge Arc", "Psychological Evolution"],
-      rating: { dissonant: true, shifted: true }
-    },
-    {
-      id: 6,
-      title: "Do Androids Dream of Electric Sheep?",
-      author: "Philip K. Dick",
-      status: "read" as const,
-      tags: ["Mega-Corporate Systems", "Dream Logic", "Empathy Machine"],
-      rating: { truth: true, confirmed: true }
-    }
-  ]);
-
+  const [books, setBooks] = useState<any[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingBook, setEditingBook] = useState<any>(null);
   const [currentSignal] = useState({
-    title: "Dune",
-    author: "Frank Herbert"
+    title: "Signal Detected",
+    author: "Awaiting Transmission"
   });
 
+  const { toast } = useToast();
+
   const addBook = (newBook: any) => {
-    setBooks(prev => [...prev, { ...newBook, id: Date.now() }]);
+    if (editingBook) {
+      // Update existing book
+      setBooks(prev => prev.map(book => 
+        book.id === editingBook.id ? { ...newBook, id: editingBook.id } : book
+      ));
+      toast({
+        title: "Signal Updated",
+        description: "Your transmission has been successfully modified.",
+      });
+    } else {
+      // Add new book
+      setBooks(prev => [...prev, { ...newBook, id: Date.now() }]);
+      toast({
+        title: "Signal Logged",
+        description: "New transmission added to your consciousness record.",
+      });
+    }
+    setEditingBook(null);
+  };
+
+  const handleEditBook = (book: any) => {
+    setEditingBook(book);
+    setIsAddModalOpen(true);
+  };
+
+  const handleKeepBook = (book: any) => {
+    toast({
+      title: "Signal Archived",
+      description: `"${book.title}" has been marked for retention.`,
+    });
+  };
+
+  const handleDiscardBook = (book: any) => {
+    setBooks(prev => prev.filter(b => b.id !== book.id));
+    toast({
+      title: "Signal Discarded",
+      description: `"${book.title}" has been removed from your transmissions.`,
+    });
+  };
+
+  const closeModal = () => {
+    setIsAddModalOpen(false);
+    setEditingBook(null);
   };
 
   return (
@@ -93,11 +89,16 @@ const Index = () => {
           {books.map(book => (
             <BookCard
               key={book.id}
+              id={book.id}
               title={book.title}
               author={book.author}
               status={book.status}
               tags={book.tags}
               rating={book.rating}
+              coverUrl={book.coverUrl}
+              onEdit={() => handleEditBook(book)}
+              onKeep={() => handleKeepBook(book)}
+              onDiscard={() => handleDiscardBook(book)}
             />
           ))}
         </div>
@@ -132,8 +133,9 @@ const Index = () => {
       
       <AddBookModal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={closeModal}
         onAdd={addBook}
+        editingBook={editingBook}
       />
     </div>
   );

@@ -1,23 +1,38 @@
 
 import { useState } from "react";
-import { BookOpen, Circle } from "lucide-react";
+import { BookOpen, Edit, Archive, X } from "lucide-react";
 
 interface BookCardProps {
+  id: number;
   title: string;
   author: string;
   status: "reading" | "read" | "want-to-read";
   tags?: string[];
   coverUrl?: string;
   rating?: {
-    shifted?: boolean;
-    confirmed?: boolean;
     truth?: boolean;
-    dissonant?: boolean;
+    confirmed?: boolean;
+    disrupted?: boolean;
+    rewired?: boolean;
   };
+  onEdit?: () => void;
+  onKeep?: () => void;
+  onDiscard?: () => void;
 }
 
-const BookCard = ({ title, author, status, tags = [], coverUrl, rating }: BookCardProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+const BookCard = ({ 
+  id, 
+  title, 
+  author, 
+  status, 
+  tags = [], 
+  coverUrl, 
+  rating,
+  onEdit,
+  onKeep,
+  onDiscard
+}: BookCardProps) => {
+  const [showActions, setShowActions] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -32,8 +47,26 @@ const BookCard = ({ title, author, status, tags = [], coverUrl, rating }: BookCa
     }
   };
 
+  const getResonanceLabels = () => {
+    if (!rating) return [];
+    
+    const labels = [];
+    if (rating.truth) labels.push({ text: "Felt like truth", color: "text-green-400" });
+    if (rating.confirmed) labels.push({ text: "Confirmed a knowing", color: "text-blue-400" });
+    if (rating.disrupted) labels.push({ text: "Disrupted my thinking", color: "text-orange-400" });
+    if (rating.rewired) labels.push({ text: "Rewired my perspective", color: "text-purple-400" });
+    
+    return labels;
+  };
+
+  const resonanceLabels = getResonanceLabels();
+
   return (
-    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors">
+    <div 
+      className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors relative group"
+      onMouseEnter={() => setShowActions(true)}
+      onMouseLeave={() => setShowActions(false)}
+    >
       <div className="flex items-start space-x-4">
         <div className="w-12 h-16 bg-slate-700 rounded flex items-center justify-center flex-shrink-0">
           {coverUrl ? (
@@ -76,21 +109,53 @@ const BookCard = ({ title, author, status, tags = [], coverUrl, rating }: BookCa
             </div>
           )}
           
-          {rating && (
-            <div className="flex items-center space-x-2 mt-2">
-              {rating.shifted && (
-                <span className="text-xs text-blue-400">Shifted me</span>
-              )}
-              {rating.truth && (
-                <span className="text-xs text-green-400">Felt like truth</span>
-              )}
-              {rating.dissonant && (
-                <span className="text-xs text-orange-400">Dissonant brilliance</span>
-              )}
+          {resonanceLabels.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {resonanceLabels.map((label, index) => (
+                <span
+                  key={index}
+                  className={`text-xs px-2 py-1 rounded-full bg-slate-700/30 ${label.color}`}
+                >
+                  {label.text}
+                </span>
+              ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* Action buttons */}
+      {showActions && (
+        <div className="absolute bottom-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="p-1.5 bg-slate-700/80 hover:bg-slate-600 rounded text-slate-300 hover:text-blue-400 transition-colors"
+              title="Edit"
+            >
+              <Edit className="w-3 h-3" />
+            </button>
+          )}
+          {onKeep && (
+            <button
+              onClick={onKeep}
+              className="p-1.5 bg-slate-700/80 hover:bg-slate-600 rounded text-slate-300 hover:text-green-400 transition-colors"
+              title="Keep"
+            >
+              <Archive className="w-3 h-3" />
+            </button>
+          )}
+          {onDiscard && (
+            <button
+              onClick={onDiscard}
+              className="p-1.5 bg-slate-700/80 hover:bg-slate-600 rounded text-slate-300 hover:text-red-400 transition-colors"
+              title="Discard"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };
