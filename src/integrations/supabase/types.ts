@@ -9,6 +9,77 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      publisher_books: {
+        Row: {
+          author: string
+          cover_url: string | null
+          created_at: string
+          editorial_note: string | null
+          id: string
+          isbn: string | null
+          series_id: string
+          title: string
+        }
+        Insert: {
+          author: string
+          cover_url?: string | null
+          created_at?: string
+          editorial_note?: string | null
+          id?: string
+          isbn?: string | null
+          series_id: string
+          title: string
+        }
+        Update: {
+          author?: string
+          cover_url?: string | null
+          created_at?: string
+          editorial_note?: string | null
+          id?: string
+          isbn?: string | null
+          series_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publisher_books_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "publisher_series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publisher_series: {
+        Row: {
+          badge_emoji: string | null
+          created_at: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          publisher: string
+        }
+        Insert: {
+          badge_emoji?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          publisher: string
+        }
+        Update: {
+          badge_emoji?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          publisher?: string
+        }
+        Relationships: []
+      }
       transmissions: {
         Row: {
           author: string | null
@@ -16,6 +87,7 @@ export type Database = {
           created_at: string
           id: number
           notes: string | null
+          publisher_series_id: string | null
           resonance_labels: string | null
           tags: string | null
           title: string | null
@@ -27,6 +99,7 @@ export type Database = {
           created_at?: string
           id?: number
           notes?: string | null
+          publisher_series_id?: string | null
           resonance_labels?: string | null
           tags?: string | null
           title?: string | null
@@ -38,12 +111,21 @@ export type Database = {
           created_at?: string
           id?: number
           notes?: string | null
+          publisher_series_id?: string | null
           resonance_labels?: string | null
           tags?: string | null
           title?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transmissions_publisher_series_id_fkey"
+            columns: ["publisher_series_id"]
+            isOneToOne: false
+            referencedRelation: "publisher_series"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

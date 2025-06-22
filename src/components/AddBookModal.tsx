@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,9 @@ import StatusSection from "./BookForm/StatusSection";
 import ConceptualTagsSection from "./BookForm/ConceptualTagsSection";
 import PersonalResonanceSection from "./BookForm/PersonalResonanceSection";
 import NotesSection from "./BookForm/NotesSection";
+import PublisherResonanceBadge from "./PublisherResonanceBadge";
 import { BookSuggestion } from "@/services/googleBooksApi";
+import { findMatchingPublisherSeries, PublisherSeries } from "@/services/publisherService";
 
 interface AddBookModalProps {
   isOpen: boolean;
@@ -29,11 +30,13 @@ const AddBookModal = ({ isOpen, onClose, onAdd, editingBook }: AddBookModalProps
       confirmed: false,
       disrupted: false,
       rewired: false
-    }
+    },
+    publisher_series_id: undefined as string | undefined
   });
 
   const [titleSearch, setTitleSearch] = useState("");
   const [authorSearch, setAuthorSearch] = useState("");
+  const [detectedSeries, setDetectedSeries] = useState<PublisherSeries | null>(null);
 
   useEffect(() => {
     if (editingBook) {
@@ -49,10 +52,14 @@ const AddBookModal = ({ isOpen, onClose, onAdd, editingBook }: AddBookModalProps
           confirmed: editingBook.rating?.confirmed || false,
           disrupted: editingBook.rating?.disrupted || false,
           rewired: editingBook.rating?.rewired || false
-        }
+        },
+        publisher_series_id: editingBook.publisher_series_id
       });
       setTitleSearch(editingBook.title || "");
       setAuthorSearch(editingBook.author || "");
+      if (editingBook.publisher_series) {
+        setDetectedSeries(editingBook.publisher_series);
+      }
     } else {
       setFormData({
         title: "",
@@ -66,12 +73,37 @@ const AddBookModal = ({ isOpen, onClose, onAdd, editingBook }: AddBookModalProps
           confirmed: false,
           disrupted: false,
           rewired: false
-        }
+        },
+        publisher_series_id: undefined
       });
       setTitleSearch("");
       setAuthorSearch("");
+      setDetectedSeries(null);
     }
   }, [editingBook, isOpen]);
+
+  // Auto-detect publisher series when title/author changes
+  useEffect(() => {
+    const detectPublisherSeries = async () => {
+      if (formData.title && formData.author && !editingBook) {
+        try {
+          const series = await findMatchingPublisherSeries(formData.title, formData.author);
+          if (series) {
+            setDetectedSeries(series);
+            setFormData(prev => ({ ...prev, publisher_series_id: series.id }));
+          } else {
+            setDetectedSeries(null);
+            setFormData(prev => ({ ...prev, publisher_series_id: undefined }));
+          }
+        } catch (error) {
+          console.error('Error detecting publisher series:', error);
+        }
+      }
+    };
+
+    const timeoutId = setTimeout(detectPublisherSeries, 500);
+    return () => clearTimeout(timeoutId);
+  }, [formData.title, formData.author, editingBook]);
 
   const handleBookSelect = (book: BookSuggestion) => {
     console.log('Selected book with coverUrl:', book.coverUrl);
@@ -154,6 +186,17 @@ const AddBookModal = ({ isOpen, onClose, onAdd, editingBook }: AddBookModalProps
             onAuthorSearchChange={handleAuthorSearchChange}
             onBookSelect={handleBookSelect}
           />
+          
+          {/* Publisher Resonance Detection */}
+          {detectedSeries && (
+            <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <span className="text-purple-300 text-sm font-medium">Publisher Resonance Detected</span>
+              </div>
+              <PublisherResonanceBadge series={detectedSeries} />
+              <p className="text-slate-400 text-xs mt-2">{detectedSeries.description}</p>
+            </div>
+          )}
           
           <StatusSection
             status={formData.status}

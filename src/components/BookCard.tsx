@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { BookOpen, Edit, Archive, X } from "lucide-react";
+import PublisherResonanceBadge from "./PublisherResonanceBadge";
 
 interface BookCardProps {
   id: number;
@@ -15,6 +16,12 @@ interface BookCardProps {
     disrupted?: boolean;
     rewired?: boolean;
   };
+  publisher_series?: {
+    id: string;
+    name: string;
+    publisher: string;
+    badge_emoji: string;
+  };
   onEdit?: () => void;
   onKeep?: () => void;
   onDiscard?: () => void;
@@ -28,6 +35,7 @@ const BookCard = ({
   tags = [], 
   coverUrl, 
   rating,
+  publisher_series,
   onEdit,
   onKeep,
   onDiscard
@@ -90,6 +98,13 @@ const BookCard = ({
               )}
             </div>
           </div>
+          
+          {/* Publisher Resonance Badge */}
+          {publisher_series && (
+            <div className="mt-2">
+              <PublisherResonanceBadge series={publisher_series} />
+            </div>
+          )}
           
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Transmission {
@@ -17,6 +16,13 @@ export interface Transmission {
   };
   user_id: string;
   created_at: string;
+  publisher_series_id?: string;
+  publisher_series?: {
+    id: string;
+    name: string;
+    publisher: string;
+    badge_emoji: string;
+  };
 }
 
 export const saveTransmission = async (transmission: Omit<Transmission, 'id' | 'user_id' | 'created_at'>) => {
@@ -35,7 +41,8 @@ export const saveTransmission = async (transmission: Omit<Transmission, 'id' | '
       tags: JSON.stringify(transmission.tags),
       resonance_labels: JSON.stringify(transmission.rating),
       notes: transmission.notes,
-      user_id: user.id // This ensures the user_id is set correctly
+      publisher_series_id: transmission.publisher_series_id,
+      user_id: user.id
     }])
     .select()
     .single();
@@ -53,6 +60,7 @@ export const updateTransmission = async (id: number, transmission: Partial<Omit<
   if (transmission.tags !== undefined) updateData.tags = JSON.stringify(transmission.tags);
   if (transmission.rating !== undefined) updateData.resonance_labels = JSON.stringify(transmission.rating);
   if (transmission.notes !== undefined) updateData.notes = transmission.notes;
+  if (transmission.publisher_series_id !== undefined) updateData.publisher_series_id = transmission.publisher_series_id;
 
   const { data, error } = await supabase
     .from('transmissions')
@@ -68,7 +76,15 @@ export const updateTransmission = async (id: number, transmission: Partial<Omit<
 export const getTransmissions = async (): Promise<Transmission[]> => {
   const { data, error } = await supabase
     .from('transmissions')
-    .select('*')
+    .select(`
+      *,
+      publisher_series (
+        id,
+        name,
+        publisher,
+        badge_emoji
+      )
+    `)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -77,13 +93,15 @@ export const getTransmissions = async (): Promise<Transmission[]> => {
     id: item.id,
     title: item.title || '',
     author: item.author || '',
-    status: 'read' as const, // Default status since it's not stored in DB yet
+    status: 'read' as const,
     tags: item.tags ? JSON.parse(item.tags) : [],
     notes: item.notes || '',
     cover_url: item.cover_url || '',
     rating: item.resonance_labels ? JSON.parse(item.resonance_labels) : {},
     user_id: item.user_id || '',
-    created_at: item.created_at
+    created_at: item.created_at,
+    publisher_series_id: item.publisher_series_id,
+    publisher_series: item.publisher_series
   }));
 };
 

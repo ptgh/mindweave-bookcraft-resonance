@@ -4,16 +4,21 @@ import Header from "@/components/Header";
 import SignalInFocus from "@/components/SignalInFocus";
 import BookCard from "@/components/BookCard";
 import AddBookModal from "@/components/AddBookModal";
+import PublisherResonanceModal from "@/components/PublisherResonanceModal";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { getTransmissions, saveTransmission, updateTransmission, deleteTransmission, Transmission } from "@/services/transmissionsService";
+import { getPublisherSeries, PublisherSeries, PublisherBook } from "@/services/publisherService";
 
 const Index = () => {
   const [books, setBooks] = useState<Transmission[]>([]);
+  const [publisherSeries, setPublisherSeries] = useState<PublisherSeries[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isPublisherModalOpen, setIsPublisherModalOpen] = useState(false);
+  const [selectedSeries, setSelectedSeries] = useState<PublisherSeries | null>(null);
   const [editingBook, setEditingBook] = useState<Transmission | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentSignal] = useState({
@@ -27,6 +32,7 @@ const Index = () => {
   useEffect(() => {
     if (user) {
       loadTransmissions();
+      loadPublisherSeries();
     }
   }, [user]);
 
@@ -46,17 +52,24 @@ const Index = () => {
     }
   };
 
+  const loadPublisherSeries = async () => {
+    try {
+      const series = await getPublisherSeries();
+      setPublisherSeries(series);
+    } catch (error: any) {
+      console.error('Failed to load publisher series:', error);
+    }
+  };
+
   const addBook = async (newBook: any) => {
     try {
       if (editingBook) {
-        // Update existing book
         await updateTransmission(editingBook.id, newBook);
         toast({
           title: "Signal Updated",
           description: "Your transmission has been successfully modified.",
         });
       } else {
-        // Add new book
         await saveTransmission(newBook);
         toast({
           title: "Signal Logged",
@@ -72,6 +85,27 @@ const Index = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleAddFromPublisher = (book: PublisherBook) => {
+    const newBook = {
+      title: book.title,
+      author: book.author,
+      cover_url: book.cover_url || "",
+      status: "want-to-read",
+      tags: [],
+      notes: book.editorial_note || "",
+      rating: {
+        truth: false,
+        confirmed: false,
+        disrupted: false,
+        rewired: false
+      },
+      publisher_series_id: book.series_id
+    };
+    
+    addBook(newBook);
+    setIsPublisherModalOpen(false);
   };
 
   const handleEditBook = (book: Transmission) => {
@@ -106,6 +140,11 @@ const Index = () => {
   const closeModal = () => {
     setIsAddModalOpen(false);
     setEditingBook(null);
+  };
+
+  const openPublisherModal = (series: PublisherSeries) => {
+    setSelectedSeries(series);
+    setIsPublisherModalOpen(true);
   };
 
   return (
@@ -150,6 +189,7 @@ const Index = () => {
                     tags={book.tags}
                     rating={book.rating}
                     coverUrl={book.cover_url}
+                    publisher_series={book.publisher_series}
                     onEdit={() => handleEditBook(book)}
                     onKeep={() => handleKeepBook(book)}
                     onDiscard={() => handleDiscardBook(book)}
@@ -193,6 +233,15 @@ const Index = () => {
           onAdd={addBook}
           editingBook={editingBook}
         />
+
+        {selectedSeries && (
+          <PublisherResonanceModal
+            isOpen={isPublisherModalOpen}
+            onClose={() => setIsPublisherModalOpen(false)}
+            series={selectedSeries}
+            onAddBook={handleAddFromPublisher}
+          />
+        )}
       </div>
     </AuthWrapper>
   );
