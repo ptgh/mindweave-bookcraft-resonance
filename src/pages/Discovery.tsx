@@ -46,12 +46,12 @@ const Discovery = () => {
           </Link>
           
           <Link to="/publisher-resonance">
-            <div className="bg-slate-800/30 border border-slate-700/40 rounded-lg p-6 hover:bg-slate-700/40 transition-all duration-200 hover:border-slate-600/50">
+            <div className="bg-slate-800/20 border border-slate-700/30 rounded-lg p-6 opacity-50">
               <div className="flex items-center justify-center mb-3">
-                <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
+                <div className="w-3 h-3 bg-slate-500 rounded-full"></div>
               </div>
-              <h3 className="text-slate-200 font-medium mb-2">Publisher Resonance</h3>
-              <p className="text-slate-400 text-sm">Curated collections from premier publishers</p>
+              <h3 className="text-slate-300 font-medium mb-2">Publisher Resonance</h3>
+              <p className="text-slate-500 text-sm">Curated collections • Coming Soon</p>
             </div>
           </Link>
           

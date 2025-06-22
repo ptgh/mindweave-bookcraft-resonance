@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
-import PublisherSeriesSelector from "@/components/PublisherSeriesSelector";
+import PublisherMindMap from "@/components/PublisherMindMap";
 import PublisherBooksGrid from "@/components/PublisherBooksGrid";
 import { getPublisherSeries, getPublisherBooks, PublisherSeries, EnrichedPublisherBook } from "@/services/publisherService";
 import { saveTransmission } from "@/services/transmissionsService";
@@ -83,17 +83,17 @@ const PublisherResonance = () => {
         <main className="container mx-auto px-6 py-8">
           <div className="mb-8">
             <h1 className="text-3xl font-light text-slate-200 mb-2">Publisher Resonance</h1>
-            <p className="text-slate-400 text-lg">Curated collections from premier publishers—discover your next transmission.</p>
+            <p className="text-slate-400 text-lg">Navigate the consciousness web of curated collections—discover your next transmission.</p>
           </div>
 
           {seriesLoading ? (
             <div className="text-center py-12">
               <div className="w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full mx-auto mb-4 animate-spin"></div>
-              <p className="text-slate-400">Loading publisher collections...</p>
+              <p className="text-slate-400">Loading publisher consciousness web...</p>
             </div>
           ) : (
             <>
-              <PublisherSeriesSelector
+              <PublisherMindMap
                 series={publisherSeries}
                 selectedSeriesId={selectedSeriesId}
                 onSeriesChange={setSelectedSeriesId}
@@ -125,9 +125,9 @@ const PublisherResonance = () => {
           <div className="mt-16 text-center">
             <div className="inline-flex items-center space-x-2 text-slate-500 text-xs">
               <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
-              <span>Dynamic Collections: Active</span>
+              <span>Consciousness Web: Active</span>
               <div className="w-1 h-1 bg-slate-600 rounded-full" />
-              <span>API Integration: Google Books</span>
+              <span>Neural Pathways: Synchronized</span>
             </div>
           </div>
         </main>
