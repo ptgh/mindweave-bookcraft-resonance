@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -55,7 +54,7 @@ const AddBookModal = ({ isOpen, onClose, onAdd, editingBook }: AddBookModalProps
     status: "want-to-read",
     tags: [] as string[],
     notes: "",
-    coverUrl: "",
+    cover_url: "", // Changed from coverUrl to cover_url to match database schema
     rating: {
       truth: false,
       confirmed: false,
@@ -75,7 +74,7 @@ const AddBookModal = ({ isOpen, onClose, onAdd, editingBook }: AddBookModalProps
         status: editingBook.status || "want-to-read",
         tags: editingBook.tags || [],
         notes: editingBook.notes || "",
-        coverUrl: editingBook.coverUrl || "",
+        cover_url: editingBook.cover_url || "", // Changed from coverUrl to cover_url
         rating: {
           truth: editingBook.rating?.truth || false,
           confirmed: editingBook.rating?.confirmed || false,
@@ -92,7 +91,7 @@ const AddBookModal = ({ isOpen, onClose, onAdd, editingBook }: AddBookModalProps
         status: "want-to-read",
         tags: [],
         notes: "",
-        coverUrl: "",
+        cover_url: "", // Changed from coverUrl to cover_url
         rating: {
           truth: false,
           confirmed: false,
@@ -106,11 +105,12 @@ const AddBookModal = ({ isOpen, onClose, onAdd, editingBook }: AddBookModalProps
   }, [editingBook, isOpen]);
 
   const handleBookSelect = (book: BookSuggestion) => {
+    console.log('Selected book with coverUrl:', book.coverUrl); // Debug log
     setFormData(prev => ({
       ...prev,
       title: book.title,
       author: book.author,
-      coverUrl: book.coverUrl || ""
+      cover_url: book.coverUrl || "" // Changed from coverUrl to cover_url
     }));
     setTitleSearch(book.title);
     setAuthorSearch(book.author);
@@ -143,6 +143,7 @@ const AddBookModal = ({ isOpen, onClose, onAdd, editingBook }: AddBookModalProps
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Submitting form data:', formData); // Debug log
     onAdd(formData);
     onClose();
   };
@@ -195,10 +196,10 @@ const AddBookModal = ({ isOpen, onClose, onAdd, editingBook }: AddBookModalProps
             </div>
           </div>
 
-          {formData.coverUrl && (
+          {formData.cover_url && (
             <div className="flex justify-center">
               <img 
-                src={formData.coverUrl} 
+                src={formData.cover_url} 
                 alt={formData.title}
                 className="w-20 h-28 object-cover rounded shadow-lg"
               />
