@@ -18,10 +18,10 @@ const MindMap: React.FC<MindMapProps> = ({ transmissions }) => {
     return clusters;
   }, {} as Record<string, Transmission[]>);
 
-  // Create a central node position
-  const centerX = 400;
-  const centerY = 300;
-  const radius = 200;
+  // Create a central node position (smaller dimensions)
+  const centerX = 300;
+  const centerY = 200;
+  const radius = 120;
 
   // Generate positions for tag clusters around the center
   const tagPositions = Object.keys(tagClusters).map((tag, index) => {
@@ -32,7 +32,7 @@ const MindMap: React.FC<MindMapProps> = ({ transmissions }) => {
   });
 
   return (
-    <div className="relative w-full h-[600px] bg-slate-800/30 rounded-lg border border-slate-700 overflow-hidden">
+    <div className="relative w-full h-[400px] bg-slate-800/30 rounded-lg border border-slate-700 overflow-hidden">
       <svg width="100%" height="100%" className="absolute inset-0">
         {/* Draw connections from center to tag clusters */}
         {tagPositions.map(({ tag, x, y }) => (
@@ -44,7 +44,9 @@ const MindMap: React.FC<MindMapProps> = ({ transmissions }) => {
             y2={y}
             stroke="rgb(100 116 139)"
             strokeWidth="1"
-            opacity="0.5"
+            opacity="0.3"
+            className="animate-pulse"
+            style={{ animationDelay: `${Math.random() * 2}s`, animationDuration: `${2 + Math.random() * 2}s` }}
           />
         ))}
         
@@ -52,8 +54,8 @@ const MindMap: React.FC<MindMapProps> = ({ transmissions }) => {
         {tagPositions.map(({ tag, x, y, books }) => 
           books.map((book, bookIndex) => {
             const bookAngle = (bookIndex * 2 * Math.PI) / books.length;
-            const bookX = x + 60 * Math.cos(bookAngle);
-            const bookY = y + 60 * Math.sin(bookAngle);
+            const bookX = x + 40 * Math.cos(bookAngle);
+            const bookY = y + 40 * Math.sin(bookAngle);
             
             return (
               <line
@@ -64,7 +66,9 @@ const MindMap: React.FC<MindMapProps> = ({ transmissions }) => {
                 y2={bookY}
                 stroke="rgb(148 163 184)"
                 strokeWidth="0.5"
-                opacity="0.3"
+                opacity="0.2"
+                className="animate-pulse"
+                style={{ animationDelay: `${Math.random() * 3}s`, animationDuration: `${3 + Math.random() * 2}s` }}
               />
             );
           })
@@ -73,81 +77,69 @@ const MindMap: React.FC<MindMapProps> = ({ transmissions }) => {
 
       {/* Central consciousness node */}
       <div 
-        className="absolute transform -translate-x-1/2 -translate-y-1/2 bg-blue-500 rounded-full w-16 h-16 flex items-center justify-center shadow-lg border-2 border-blue-300"
-        style={{ left: centerX, top: centerY }}
+        className="absolute transform -translate-x-1/2 -translate-y-1/2 bg-blue-500 rounded-full w-8 h-8 shadow-lg border border-blue-300 animate-pulse"
+        style={{ 
+          left: centerX, 
+          top: centerY,
+          animationDuration: '2s'
+        }}
       >
-        <div className="text-white text-xs font-medium text-center">
-          Consciousness<br/>Core
-        </div>
+        <div className="w-full h-full bg-blue-400 rounded-full animate-ping opacity-30"></div>
       </div>
 
       {/* Tag cluster nodes */}
-      {tagPositions.map(({ tag, x, y, books }) => (
+      {tagPositions.map(({ tag, x, y, books }, index) => (
         <div key={tag}>
           {/* Tag cluster center */}
           <div 
-            className="absolute transform -translate-x-1/2 -translate-y-1/2 bg-purple-600 rounded-full w-12 h-12 flex items-center justify-center shadow-md border border-purple-400 group cursor-pointer hover:scale-110 transition-transform"
-            style={{ left: x, top: y }}
+            className="absolute transform -translate-x-1/2 -translate-y-1/2 bg-purple-600 rounded-full w-6 h-6 shadow-md border border-purple-400 animate-pulse"
+            style={{ 
+              left: x, 
+              top: y,
+              animationDelay: `${index * 0.3}s`,
+              animationDuration: `${2.5 + Math.random()}s`
+            }}
           >
-            <div className="text-white text-xs font-medium text-center px-1">
-              {tag}
-            </div>
-            
-            {/* Tooltip showing book count */}
-            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-              {books.length} transmission{books.length !== 1 ? 's' : ''}
-            </div>
+            <div className="w-full h-full bg-purple-400 rounded-full animate-ping opacity-20"></div>
           </div>
           
           {/* Individual book nodes around each tag cluster */}
-          {books.slice(0, 4).map((book, bookIndex) => {
-            const bookAngle = (bookIndex * 2 * Math.PI) / Math.min(books.length, 4);
-            const bookX = x + 60 * Math.cos(bookAngle);
-            const bookY = y + 60 * Math.sin(bookAngle);
+          {books.slice(0, 6).map((book, bookIndex) => {
+            const bookAngle = (bookIndex * 2 * Math.PI) / Math.min(books.length, 6);
+            const bookX = x + 40 * Math.cos(bookAngle);
+            const bookY = y + 40 * Math.sin(bookAngle);
             
             return (
               <div
                 key={book.id}
-                className="absolute transform -translate-x-1/2 -translate-y-1/2 bg-slate-700 rounded w-8 h-8 flex items-center justify-center shadow-sm border border-slate-600 group cursor-pointer hover:scale-125 transition-transform"
-                style={{ left: bookX, top: bookY }}
+                className="absolute transform -translate-x-1/2 -translate-y-1/2 bg-slate-700 rounded-full w-3 h-3 shadow-sm border border-slate-600 animate-pulse"
+                style={{ 
+                  left: bookX, 
+                  top: bookY,
+                  animationDelay: `${bookIndex * 0.2 + Math.random()}s`,
+                  animationDuration: `${3 + Math.random() * 2}s`
+                }}
               >
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                
-                {/* Book tooltip */}
-                <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap max-w-32 text-center">
-                  {book.title}
-                  <br />
-                  <span className="text-slate-400">{book.author}</span>
-                </div>
+                <div className="w-2 h-2 bg-green-400 rounded-full mx-auto mt-0.5 animate-ping opacity-40"></div>
               </div>
             );
           })}
-          
-          {/* Show "+X more" indicator if there are more books */}
-          {books.length > 4 && (
-            <div
-              className="absolute transform -translate-x-1/2 -translate-y-1/2 bg-slate-600 rounded w-6 h-6 flex items-center justify-center shadow-sm border border-slate-500 text-white text-xs"
-              style={{ left: x + 80, top: y }}
-            >
-              +{books.length - 4}
-            </div>
-          )}
         </div>
       ))}
 
-      {/* Legend */}
+      {/* Legend - kept but simplified */}
       <div className="absolute bottom-4 left-4 bg-slate-900/80 rounded-lg p-3 text-xs text-slate-300">
         <div className="space-y-1">
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
             <span>Consciousness Core</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-purple-600 rounded-full"></div>
+            <div className="w-3 h-3 bg-purple-600 rounded-full animate-pulse"></div>
             <span>Conceptual Clusters</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+            <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
             <span>Individual Transmissions</span>
           </div>
         </div>
