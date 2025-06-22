@@ -15,9 +15,17 @@ const PublisherResonance = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { toast } = useToast();
 
+  // Focus on Penguin collections only for now
   const { data: publisherSeries = [], isLoading } = useQuery({
     queryKey: ['publisher-series'],
-    queryFn: getPublisherSeries,
+    queryFn: async () => {
+      const allSeries = await getPublisherSeries();
+      // Filter to show only Penguin series
+      return allSeries.filter(series => 
+        series.publisher.toLowerCase().includes('penguin') || 
+        series.name.toLowerCase().includes('penguin')
+      );
+    },
   });
 
   const handleAddFromPublisher = async (book: PublisherBook) => {
@@ -84,7 +92,7 @@ const PublisherResonance = () => {
                 >
                   <div className="flex items-start space-x-4 mb-4">
                     <div className="w-12 h-12 bg-slate-700/50 rounded flex items-center justify-center border border-slate-600/40">
-                      <span className="text-slate-400">•</span>
+                      <span className="text-xl">{series.badge_emoji}</span>
                     </div>
                     <div className="flex-1">
                       <PublisherResonanceBadge series={series} size="md" />
@@ -99,6 +107,18 @@ const PublisherResonance = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {publisherSeries.length === 0 && !isLoading && (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center">
+                <span className="text-2xl">🐧</span>
+              </div>
+              <h3 className="text-slate-300 text-lg font-medium mb-2">No publisher threads yet</h3>
+              <p className="text-slate-400 text-sm">
+                Publisher resonance collections will appear here as they become available.
+              </p>
             </div>
           )}
 
