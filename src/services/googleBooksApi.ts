@@ -23,49 +23,81 @@ export interface BookSuggestion {
   categories?: string[];
 }
 
-export const searchBooks = async (query: string, maxResults: number = 5, startIndex: number = 0): Promise<BookSuggestion[]> => {
+export const searchBooks = async (query: string, maxResults: number = 10, startIndex: number = 0): Promise<BookSuggestion[]> => {
   if (!query || query.length < 2) return [];
   
   try {
     console.log(`Searching Google Books API for: "${query}"`);
     
-    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=${maxResults}&startIndex=${startIndex}&printType=books&orderBy=relevance`;
+    // Use intitle for better title matching
+    const searchQuery = `intitle:${encodeURIComponent(query)}`;
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${searchQuery}&maxResults=${maxResults}&startIndex=${startIndex}&printType=books&orderBy=relevance`;
     console.log('Google Books API URL:', url);
     
     const response = await fetch(url);
     
     if (!response.ok) {
       console.error('Google Books API response not OK:', response.status, response.statusText);
-      return [];
+      // Try fallback search without intitle prefix
+      const fallbackUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=${maxResults}&startIndex=${startIndex}&printType=books&orderBy=relevance`;
+      console.log('Trying fallback Google Books API URL:', fallbackUrl);
+      
+      const fallbackResponse = await fetch(fallbackUrl);
+      if (!fallbackResponse.ok) {
+        console.error('Fallback Google Books API also failed:', fallbackResponse.status);
+        return [];
+      }
+      
+      const fallbackData = await fallbackResponse.json();
+      return processGoogleBooksData(fallbackData);
     }
     
     const data = await response.json();
-    console.log('Google Books API raw response:', data);
+    return processGoogleBooksData(data);
     
-    if (!data.items) {
-      console.log('No items found in Google Books API response');
-      return [];
-    }
-    
-    const results = data.items.map((item: GoogleBook) => {
-      const book: BookSuggestion = {
-        id: item.id,
-        title: item.volumeInfo.title || 'Unknown Title',
-        author: item.volumeInfo.authors?.[0] || 'Unknown Author',
-        coverUrl: item.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || 
-                  item.volumeInfo.imageLinks?.smallThumbnail?.replace('http:', 'https:'),
-        subtitle: item.volumeInfo.description,
-        categories: item.volumeInfo.categories
-      };
-      return book;
-    });
-    
-    console.log('Processed book results:', results);
-    return results;
   } catch (error) {
     console.error('Error searching books:', error);
+    // Try one more fallback with a simpler query
+    try {
+      console.log('Attempting final fallback search...');
+      const simpleUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=${maxResults}`;
+      const simpleResponse = await fetch(simpleUrl);
+      
+      if (simpleResponse.ok) {
+        const simpleData = await simpleResponse.json();
+        return processGoogleBooksData(simpleData);
+      }
+    } catch (fallbackError) {
+      console.error('Final fallback also failed:', fallbackError);
+    }
+    
     return [];
   }
+};
+
+const processGoogleBooksData = (data: any): BookSuggestion[] => {
+  console.log('Google Books API raw response:', data);
+  
+  if (!data.items) {
+    console.log('No items found in Google Books API response');
+    return [];
+  }
+  
+  const results = data.items.map((item: GoogleBook) => {
+    const book: BookSuggestion = {
+      id: item.id,
+      title: item.volumeInfo.title || 'Unknown Title',
+      author: item.volumeInfo.authors?.[0] || 'Unknown Author',
+      coverUrl: item.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || 
+                item.volumeInfo.imageLinks?.smallThumbnail?.replace('http:', 'https:'),
+      subtitle: item.volumeInfo.description,
+      categories: item.volumeInfo.categories
+    };
+    return book;
+  });
+  
+  console.log('Processed book results:', results);
+  return results;
 };
 
 export const getBookDetails = async (bookId: string): Promise<GoogleBook | null> => {

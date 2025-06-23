@@ -33,15 +33,17 @@ const BookSearchInput = ({
 
       console.log('Starting book search for:', value);
       setIsLoading(true);
+      setSuggestions([]); // Clear previous suggestions
       
       try {
-        const results = await searchBooks(value, 8);
+        const results = await searchBooks(value, 10);
         console.log('Book search results received:', results);
         
         if (results && results.length > 0) {
           setSuggestions(results);
           setShowSuggestions(true);
         } else {
+          console.log('No book results found for:', value);
           setSuggestions([]);
           setShowSuggestions(false);
         }
@@ -52,7 +54,7 @@ const BookSearchInput = ({
       } finally {
         setIsLoading(false);
       }
-    }, 500);
+    }, 300); // Reduced debounce time
 
     return () => clearTimeout(searchDebounced);
   }, [value]);
@@ -64,7 +66,7 @@ const BookSearchInput = ({
   };
 
   const handleInputFocus = () => {
-    if (suggestions.length > 0) {
+    if (suggestions.length > 0 && value.length >= 2) {
       setShowSuggestions(true);
     }
   };
