@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { searchBooks, BookSuggestion } from "@/services/googleBooksApi";
+import { searchDebouncer } from "@/services/debounced-search";
 
 interface BookSearchInputProps {
   placeholder: string;
@@ -21,35 +22,37 @@ const BookSearchInput = ({
   const [suggestions, setSuggestions] = useState<BookSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const debounceRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
     if (value.length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
+      setIsLoading(false);
       return;
     }
 
-    debounceRef.current = setTimeout(async () => {
-      setIsLoading(true);
-      const results = await searchBooks(value);
-      setSuggestions(results);
-      setShowSuggestions(results.length > 0);
-      setIsLoading(false);
-    }, 300);
-
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
+    const searchKey = `book-search-${value}`;
+    
+    searchDebouncer.search(
+      searchKey,
+      async () => {
+        console.log('Searching for books with query:', value);
+        const results = await searchBooks(value);
+        console.log('Book search results:', results);
+        return results;
+      },
+      (results) => {
+        setSuggestions(results);
+        setShowSuggestions(results.length > 0);
+        setIsLoading(false);
       }
-    };
+    );
+
+    setIsLoading(true);
   }, [value]);
 
   const handleSuggestionClick = (book: BookSuggestion) => {
+    console.log('Book suggestion clicked:', book);
     onBookSelect(book);
     setShowSuggestions(false);
   };
