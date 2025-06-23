@@ -106,13 +106,18 @@ const AddBookModal = ({ isOpen, onClose, onAdd, editingBook }: AddBookModalProps
   }, [formData.title, formData.author, editingBook]);
 
   const handleBookSelect = (book: BookSuggestion) => {
-    console.log('Selected book with coverUrl:', book.coverUrl);
+    console.log('Selected book:', book);
+    console.log('Book author:', book.author);
+    
+    // Update form data
     setFormData(prev => ({
       ...prev,
       title: book.title,
       author: book.author,
       cover_url: book.coverUrl || ""
     }));
+    
+    // Update search fields to keep them in sync
     setTitleSearch(book.title);
     setAuthorSearch(book.author);
   };
