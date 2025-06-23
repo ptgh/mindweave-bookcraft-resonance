@@ -129,25 +129,6 @@ const AuthorMatrix = () => {
               <div className="space-y-6">
                 <div className="bg-slate-800/50 border border-cyan-400/30 rounded-lg p-6">
                   <div className="flex items-center space-x-2 mb-4">
-                    <Brain className="w-5 h-5 text-cyan-400" />
-                    <h2 className="text-lg font-medium text-cyan-300">AUTHOR MATRIX</h2>
-                    <span className="text-xs bg-cyan-500/20 text-cyan-300 px-2 py-1 rounded">ACTIVE</span>
-                  </div>
-                  
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-slate-300">Matrix Status:</span>
-                      <span className="text-cyan-400 font-mono">SYNCHRONIZED</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-300">Navigation Mode:</span>
-                      <span className="text-cyan-400 font-mono">3D PERSPECTIVE</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-slate-800/50 border border-cyan-400/30 rounded-lg p-6">
-                  <div className="flex items-center space-x-2 mb-4">
                     <Grid3X3 className="w-5 h-5 text-cyan-400" />
                     <h2 className="text-lg font-medium text-cyan-300">AUTHOR GRID</h2>
                     <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded">ONLINE</span>
@@ -193,7 +174,7 @@ const AuthorMatrix = () => {
                           {allAuthors.map((author) => (
                             <div
                               key={author.id}
-                              className={`border rounded-lg p-4 cursor-pointer transition-all duration-700 hover:scale-[1.02] ${
+                              className={`border rounded-lg p-4 cursor-pointer transition-all duration-1000 hover:scale-[1.02] ${
                                 selectedAuthor === author.name
                                   ? 'border-cyan-400 bg-cyan-400/10 shadow-cyan-400/20 shadow-lg'
                                   : 'border-slate-600 bg-slate-800/30 hover:border-cyan-400/50 hover:bg-slate-700/30'
@@ -207,9 +188,9 @@ const AuthorMatrix = () => {
                                     {author.books.length} of {author.totalBooks} {author.totalBooks === 1 ? 'portal' : 'portals'}
                                   </p>
                                 </div>
-                                <div className={`w-3 h-3 rounded-full transition-all duration-500 ${selectedAuthor === author.name ? 'bg-cyan-400' : 'bg-slate-600'}`}>
+                                <div className={`w-3 h-3 rounded-full transition-all duration-800 ${selectedAuthor === author.name ? 'bg-cyan-400' : 'bg-slate-600'}`}>
                                   {selectedAuthor === author.name && (
-                                    <div className="w-full h-full bg-cyan-400 rounded-full animate-ping opacity-40"></div>
+                                    <div className="w-full h-full bg-cyan-400 rounded-full animate-pulse opacity-40"></div>
                                   )}
                                 </div>
                               </div>
@@ -251,24 +232,24 @@ const AuthorMatrix = () => {
                           {selectedAuthorData.books.map((book, index) => (
                             <div
                               key={book.id}
-                              className="bg-slate-900/50 border border-slate-600/40 rounded-lg p-4 hover:bg-slate-700/50 hover:border-cyan-400/30 transition-all duration-500 hover:scale-[1.02] group"
+                              className="bg-slate-900/50 border border-slate-600/40 rounded-lg p-4 hover:bg-slate-700/50 hover:border-cyan-400/30 transition-all duration-800 hover:scale-[1.02] group"
                               style={{ animationDelay: `${index * 150}ms` }}
                             >
                               <div className="flex items-start space-x-4">
-                                <div className="w-16 h-20 bg-slate-700/50 border border-cyan-400/30 rounded flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:border-cyan-400/60 transition-all duration-500">
+                                <div className="w-16 h-20 bg-slate-700/50 border border-cyan-400/30 rounded flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:border-cyan-400/60 transition-all duration-800">
                                   {book.cover_url ? (
                                     <img 
                                       src={book.cover_url} 
                                       alt={book.title} 
-                                      className="w-full h-full object-cover rounded transition-transform duration-500 group-hover:scale-105"
+                                      className="w-full h-full object-cover rounded transition-transform duration-800 group-hover:scale-105"
                                     />
                                   ) : (
-                                    <BookOpen className="w-6 h-6 text-cyan-400/50 group-hover:text-cyan-400 transition-colors duration-500" />
+                                    <BookOpen className="w-6 h-6 text-cyan-400/50 group-hover:text-cyan-400 transition-colors duration-800" />
                                   )}
                                 </div>
                                 
                                 <div className="flex-1 min-w-0">
-                                  <h4 className="text-slate-200 font-medium text-sm leading-tight mb-2 group-hover:text-cyan-300 transition-colors duration-500">
+                                  <h4 className="text-slate-200 font-medium text-sm leading-tight mb-2 group-hover:text-cyan-300 transition-colors duration-800">
                                     {book.title}
                                   </h4>
                                   <p className="text-slate-400 text-sm mb-3">{book.author}</p>
@@ -276,13 +257,13 @@ const AuthorMatrix = () => {
                                   <div className="flex gap-2">
                                     <button
                                       onClick={() => setSelectedBook(book)}
-                                      className="text-xs text-cyan-400 hover:text-cyan-300 transition-all duration-300 border border-cyan-400/30 hover:border-cyan-400/60 px-2 py-1 rounded hover:bg-cyan-400/10"
+                                      className="text-xs text-cyan-400 hover:text-cyan-300 transition-all duration-500 border border-cyan-400/30 hover:border-cyan-400/60 px-2 py-1 rounded hover:bg-cyan-400/10"
                                     >
                                       View Details
                                     </button>
                                     <button
                                       onClick={() => handleAddFromAuthor(book)}
-                                      className="text-xs bg-purple-600/70 hover:bg-purple-600/90 text-white px-3 py-1 rounded transition-all duration-300 hover:scale-105"
+                                      className="text-xs text-cyan-400 hover:text-cyan-300 transition-all duration-500 border border-cyan-400/30 hover:border-cyan-400/60 px-2 py-1 rounded hover:bg-cyan-400/10"
                                     >
                                       Add to Transmissions
                                     </button>
