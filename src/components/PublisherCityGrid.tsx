@@ -66,7 +66,7 @@ const PublisherCityGrid = ({
         name: publisher,
         publisher,
         books: data.books,
-        x: index * 500 + 300, // Increased spacing between buildings
+        x: index * 600 + 400, // Increased spacing between buildings
         width: 320,
         height,
         isSelected: selectedBuilding === `building-${publisher}`
@@ -96,7 +96,7 @@ const PublisherCityGrid = ({
   const handleWheelScroll = (e: React.WheelEvent) => {
     e.preventDefault();
     const scrollAmount = 150;
-    const maxScroll = Math.max(0, (buildings.length - 1) * 500 - window.innerWidth / 3);
+    const maxScroll = Math.max(0, (buildings.length - 1) * 600 - window.innerWidth / 3);
     const newPosition = Math.max(0, Math.min(maxScroll, scrollPosition + (e.deltaX || e.deltaY) * 0.5));
     setScrollPosition(newPosition);
   };
@@ -128,7 +128,7 @@ const PublisherCityGrid = ({
         <div className="absolute inset-0 opacity-20">
           {Array.from({ length: 50 }, (_, i) => {
             const x = (i % 10) * 120 + 50;
-            const z = Math.floor(i / 10) * 80 + 500; // Moved further back
+            const z = Math.floor(i / 10) * 80 + 600; // Moved further back
             const height = 40 + Math.random() * 60;
             const width = 60 + Math.random() * 40;
             
@@ -153,7 +153,7 @@ const PublisherCityGrid = ({
       <svg className="absolute inset-0 w-full h-full pointer-events-none">
         {/* Horizontal perspective lines */}
         {Array.from({ length: 15 }, (_, i) => {
-          const y = 400 + (i * 35); // Moved grid lower to give top space
+          const y = 450 + (i * 35); // Moved grid even lower to give more top space
           const perspective = Math.max(0.2, 1 - (i * 0.06));
           const opacity = Math.max(0.15, perspective);
           return (
@@ -180,7 +180,7 @@ const PublisherCityGrid = ({
             <line
               key={`v-${i}`}
               x1={x}
-              y1="400"
+              y1="450"
               x2={endX}
               y2="100%"
               stroke={`rgba(34, 211, 238, ${opacity * 0.3})`}
@@ -192,9 +192,9 @@ const PublisherCityGrid = ({
         {/* Horizon line */}
         <line
           x1="0"
-          y1="400"
+          y1="450"
           x2="100%"
-          y2="400"
+          y2="450"
           stroke="rgba(34, 211, 238, 0.5)"
           strokeWidth="3"
           className="animate-pulse"
@@ -202,32 +202,32 @@ const PublisherCityGrid = ({
         />
       </svg>
 
-      {/* Enhanced Publisher Selector - Top Right with proper spacing */}
-      <div className="absolute top-6 right-6 z-30">
-        <div className="bg-slate-900/95 border-2 border-cyan-400/40 rounded-lg p-6 backdrop-blur-sm w-80">
+      {/* Enhanced Publisher Selector - Top Right with fixed positioning to avoid overlap */}
+      <div className="absolute top-6 right-6 z-40 max-w-sm">
+        <div className="bg-slate-900/98 border-2 border-cyan-400/40 rounded-lg p-5 backdrop-blur-sm shadow-2xl shadow-cyan-400/20">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
               <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
-              <span className="text-cyan-200 font-medium text-base tracking-wider">GRID MATRIX</span>
+              <span className="text-cyan-200 font-medium text-sm tracking-wider">GRID MATRIX</span>
             </div>
-            <div className="text-cyan-400/70 text-sm">ACTIVE</div>
+            <div className="text-cyan-400/70 text-xs">ACTIVE</div>
           </div>
           
-          <div className="space-y-4">
-            <div className="flex items-center justify-between text-base">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-sm">
               <span className="text-slate-300">Publishers Online:</span>
               <span className="text-cyan-300 font-mono">{buildings.length}</span>
             </div>
-            <div className="flex items-center justify-between text-base">
+            <div className="flex items-center justify-between text-sm">
               <span className="text-slate-300">Literary Portals:</span>
               <span className="text-cyan-300 font-mono">
                 {buildings.reduce((total, building) => total + building.books.length, 0)}
               </span>
             </div>
             {selectedBuilding && (
-              <div className="flex items-center justify-between text-base border-t border-cyan-400/20 pt-3 mt-3">
+              <div className="flex items-center justify-between text-sm border-t border-cyan-400/20 pt-3 mt-3">
                 <span className="text-slate-300">Selected:</span>
-                <span className="text-cyan-200 font-mono text-sm">
+                <span className="text-cyan-200 font-mono text-xs truncate max-w-32">
                   {buildings.find(b => b.id === selectedBuilding)?.publisher}
                 </span>
               </div>
@@ -238,12 +238,12 @@ const PublisherCityGrid = ({
           
           {/* Publisher Selection Area */}
           <div className="mt-4">
-            <div className="text-slate-400 text-sm mb-3">Navigate Grid:</div>
-            <div className="space-y-3">
+            <div className="text-slate-400 text-xs mb-3">Navigate Grid:</div>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
               {buildings.map((building) => (
                 <button
                   key={building.id}
-                  className={`p-4 rounded-lg border transition-all duration-300 text-left w-full focus:outline-none focus:ring-2 focus:ring-cyan-400/50 ${
+                  className={`p-3 rounded-lg border transition-all duration-300 text-left w-full focus:outline-none focus:ring-2 focus:ring-cyan-400/50 ${
                     building.isSelected
                       ? 'bg-cyan-400/20 border-cyan-300/60 text-cyan-200 shadow-lg shadow-cyan-400/25'
                       : 'bg-slate-800/50 border-slate-600/50 text-slate-300 hover:bg-slate-700/60 hover:border-cyan-400/40 hover:text-cyan-200'
@@ -252,8 +252,8 @@ const PublisherCityGrid = ({
                   onKeyDown={(e) => handleKeyNavigation(e, building.id)}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{building.publisher}</span>
-                    <span className="text-xs opacity-70">{building.books.length} portals</span>
+                    <span className="text-xs font-medium truncate">{building.publisher}</span>
+                    <span className="text-xs opacity-70 ml-2">{building.books.length}</span>
                   </div>
                 </button>
               ))}
@@ -262,7 +262,7 @@ const PublisherCityGrid = ({
         </div>
       </div>
 
-      {/* City Buildings - positioned lower to avoid overlap */}
+      {/* City Buildings - positioned lower with more spacing */}
       <div 
         ref={cityRef}
         className="absolute inset-0 transition-transform duration-700 ease-out"
@@ -279,7 +279,7 @@ const PublisherCityGrid = ({
               }`}
               style={{
                 left: building.x,
-                bottom: '400px', // Positioned on the horizon line
+                bottom: '450px', // Positioned on the new horizon line
                 width: building.width,
                 height: building.height,
               }}
@@ -331,9 +331,9 @@ const PublisherCityGrid = ({
                 </div>
                 
                 {/* Publisher Label - positioned with more spacing */}
-                <div className="absolute -bottom-20 left-0 right-0 text-center">
+                <div className="absolute -bottom-24 left-0 right-0 text-center">
                   <div 
-                    className={`text-base font-light tracking-widest transition-all duration-500 ${
+                    className={`text-sm font-light tracking-widest transition-all duration-500 ${
                       building.isSelected
                         ? 'text-cyan-200 text-shadow-lg shadow-cyan-400/70 scale-110'
                         : 'text-cyan-400/90'
@@ -362,25 +362,25 @@ const PublisherCityGrid = ({
         ))}
       </div>
 
-      {/* Subtle scroll hint - positioned to not overlap */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-center">
+      {/* Scroll hint - positioned to not overlap */}
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-center z-10">
         <div className="text-cyan-400/50 text-xs font-mono">
           <div className="animate-pulse">← Scroll to explore city →</div>
         </div>
       </div>
 
-      {/* Book Portals Panel - Full Height with proper positioning */}
+      {/* Book Portals Panel - Right side with proper z-index and spacing */}
       {selectedBuildingData && (
-        <div className="absolute right-0 top-0 bottom-0 w-96 bg-slate-900/95 border-l-2 border-cyan-400/30 backdrop-blur-sm overflow-hidden shadow-2xl shadow-cyan-400/10 z-20">
-          <div className="p-6 border-b-2 border-cyan-400/20">
+        <div className="absolute right-0 top-0 bottom-0 w-80 bg-slate-900/98 border-l-2 border-cyan-400/30 backdrop-blur-sm overflow-hidden shadow-2xl shadow-cyan-400/10 z-30">
+          <div className="p-4 border-b-2 border-cyan-400/20">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-cyan-200 font-medium text-lg tracking-wide">{selectedBuildingData.publisher}</h3>
-                <p className="text-slate-400 text-sm mt-1">Literary Portals: {selectedBuildingData.books.length}</p>
+                <h3 className="text-cyan-200 font-medium text-base tracking-wide truncate">{selectedBuildingData.publisher}</h3>
+                <p className="text-slate-400 text-xs mt-1">Literary Portals: {selectedBuildingData.books.length}</p>
               </div>
               <button
                 onClick={() => setSelectedBuilding(null)}
-                className="text-slate-400 hover:text-cyan-300 transition-colors text-xl p-2 hover:bg-slate-700/50 rounded focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
+                className="text-slate-400 hover:text-cyan-300 transition-colors text-lg p-1 hover:bg-slate-700/50 rounded focus:outline-none focus:ring-2 focus:ring-cyan-400/50 flex-shrink-0"
                 aria-label="Close book portals panel"
               >
                 ×
@@ -388,16 +388,16 @@ const PublisherCityGrid = ({
             </div>
           </div>
           
-          <div className="p-6 space-y-4 h-full overflow-y-auto pb-24">
+          <div className="p-4 space-y-3 h-full overflow-y-auto pb-20">
             {selectedBuildingData.books.map((book) => (
               <div
                 key={`${book.id}-${book.title}`}
-                className="group bg-slate-800/50 border border-slate-700/40 rounded-lg p-4 hover:bg-slate-700/50 hover:border-cyan-400/40 transition-all duration-300 cursor-pointer focus-within:ring-2 focus-within:ring-cyan-400/30"
+                className="group bg-slate-800/50 border border-slate-700/40 rounded-lg p-3 hover:bg-slate-700/50 hover:border-cyan-400/40 transition-all duration-300 cursor-pointer focus-within:ring-2 focus-within:ring-cyan-400/30"
                 onClick={() => handleBookClick(book)}
               >
-                <div className="flex items-start space-x-4">
+                <div className="flex items-start space-x-3">
                   {/* Book Portal Glow */}
-                  <div className="w-16 h-20 bg-slate-700/50 border border-cyan-400/30 rounded flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:shadow-lg group-hover:shadow-cyan-400/30 transition-all duration-300">
+                  <div className="w-12 h-16 bg-slate-700/50 border border-cyan-400/30 rounded flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:shadow-lg group-hover:shadow-cyan-400/30 transition-all duration-300">
                     {book.cover_url ? (
                       <img 
                         src={book.cover_url} 
@@ -411,16 +411,16 @@ const PublisherCityGrid = ({
                         }}
                       />
                     ) : null}
-                    <div className={`flex items-center justify-center text-cyan-400 text-sm absolute inset-0 ${book.cover_url ? 'hidden' : ''}`}>
-                      <div className="w-8 h-8 border border-cyan-400/50 rounded animate-pulse" />
+                    <div className={`flex items-center justify-center text-cyan-400 text-xs absolute inset-0 ${book.cover_url ? 'hidden' : ''}`}>
+                      <div className="w-6 h-6 border border-cyan-400/50 rounded animate-pulse" />
                     </div>
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-slate-200 font-medium text-sm leading-tight mb-2 line-clamp-2">{book.title}</h4>
-                    <p className="text-slate-400 text-sm mb-3">{book.author}</p>
+                    <h4 className="text-slate-200 font-medium text-xs leading-tight mb-1 line-clamp-2">{book.title}</h4>
+                    <p className="text-slate-400 text-xs mb-2">{book.author}</p>
                     {book.isbn && (
-                      <p className="text-slate-500 text-xs font-mono mb-3">ISBN: {book.isbn}</p>
+                      <p className="text-slate-500 text-xs font-mono mb-2">ISBN: {book.isbn}</p>
                     )}
                     
                     <button
@@ -428,9 +428,9 @@ const PublisherCityGrid = ({
                         e.stopPropagation();
                         onAddBook(book);
                       }}
-                      className="w-full bg-cyan-600/70 hover:bg-cyan-600/90 text-white text-sm py-2 rounded border-0 flex items-center justify-center transition-all duration-200 hover:shadow-lg hover:shadow-cyan-400/30 group-hover:animate-pulse focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
+                      className="w-full bg-cyan-600/70 hover:bg-cyan-600/90 text-white text-xs py-1.5 rounded border-0 flex items-center justify-center transition-all duration-200 hover:shadow-lg hover:shadow-cyan-400/30 group-hover:animate-pulse focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
                     >
-                      <div className="w-3 h-3 border border-white rounded-full mr-2" />
+                      <div className="w-2 h-2 border border-white rounded-full mr-1" />
                       Add to Transmissions
                     </button>
                   </div>
