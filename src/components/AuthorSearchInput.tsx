@@ -68,11 +68,18 @@ const AuthorSearchInput = ({
 
   const handleSuggestionClick = (author: ScifiAuthor) => {
     console.log('Author selected:', author);
-    onAuthorSelect(author);
-    // Clear the search state
+    
+    // Cancel any pending searches
+    searchDebouncer.cancel(`author-search-${value}`);
+    
+    // Clear the input value and search state completely
+    onValueChange('');
     setSuggestions([]);
     setShowSuggestions(false);
     setIsLoading(false);
+    
+    // Notify parent component of selection
+    onAuthorSelect(author);
   };
 
   const handleInputFocus = () => {
