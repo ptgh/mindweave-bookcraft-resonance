@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
@@ -100,10 +99,10 @@ const AuthorMatrix = () => {
         title: book.title,
         author: selectedAuthor?.name || 'Unknown',
         cover_url: book.cover_url || '',
-        tags: book.categories?.join(', ') || '',
-        resonance_labels: '',
+        tags: book.categories || [],
+        rating: {},
         notes: book.description || '',
-        status: 'want_to_read'
+        status: 'want-to-read'
       });
       
       toast({

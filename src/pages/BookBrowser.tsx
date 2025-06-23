@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -77,10 +76,10 @@ const BookBrowser = () => {
         title: book.title,
         author: book.author || 'Unknown',
         cover_url: book.coverUrl || '',
-        tags: book.categories?.join(', ') || '',
-        resonance_labels: '',
+        tags: book.categories || [],
+        rating: {},
         notes: book.subtitle || '',
-        status: 'want_to_read'
+        status: 'want-to-read'
       });
       
       toast({

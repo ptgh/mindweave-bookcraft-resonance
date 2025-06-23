@@ -19,14 +19,16 @@ export interface BookSuggestion {
   title: string;
   author: string;
   coverUrl?: string;
+  subtitle?: string;
+  categories?: string[];
 }
 
-export const searchBooks = async (query: string): Promise<BookSuggestion[]> => {
+export const searchBooks = async (query: string, maxResults: number = 5, startIndex: number = 0): Promise<BookSuggestion[]> => {
   if (!query || query.length < 2) return [];
   
   try {
     const response = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5&printType=books`
+      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=${maxResults}&startIndex=${startIndex}&printType=books`
     );
     
     if (!response.ok) return [];
@@ -37,7 +39,9 @@ export const searchBooks = async (query: string): Promise<BookSuggestion[]> => {
       id: item.id,
       title: item.volumeInfo.title || 'Unknown Title',
       author: item.volumeInfo.authors?.[0] || 'Unknown Author',
-      coverUrl: item.volumeInfo.imageLinks?.thumbnail || item.volumeInfo.imageLinks?.smallThumbnail
+      coverUrl: item.volumeInfo.imageLinks?.thumbnail || item.volumeInfo.imageLinks?.smallThumbnail,
+      subtitle: item.volumeInfo.description,
+      categories: item.volumeInfo.categories
     })) || [];
   } catch (error) {
     console.error('Error searching books:', error);
