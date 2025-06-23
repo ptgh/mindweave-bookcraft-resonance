@@ -1,8 +1,7 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { searchBooks, BookSuggestion } from "@/services/googleBooksApi";
-import { searchDebouncer } from "@/services/debounced-search";
 
 interface BookSearchInputProps {
   placeholder: string;
@@ -24,31 +23,38 @@ const BookSearchInput = ({
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (value.length < 2) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      setIsLoading(false);
-      return;
-    }
+    const searchDebounced = setTimeout(async () => {
+      if (value.length < 2) {
+        setSuggestions([]);
+        setShowSuggestions(false);
+        setIsLoading(false);
+        return;
+      }
 
-    const searchKey = `book-search-${value}`;
-    
-    searchDebouncer.search(
-      searchKey,
-      async () => {
-        console.log('Searching for books with query:', value);
-        const results = await searchBooks(value);
-        console.log('Book search results:', results);
-        return results;
-      },
-      (results) => {
-        setSuggestions(results);
-        setShowSuggestions(results.length > 0);
+      console.log('Starting book search for:', value);
+      setIsLoading(true);
+      
+      try {
+        const results = await searchBooks(value, 8);
+        console.log('Book search results received:', results);
+        
+        if (results && results.length > 0) {
+          setSuggestions(results);
+          setShowSuggestions(true);
+        } else {
+          setSuggestions([]);
+          setShowSuggestions(false);
+        }
+      } catch (error) {
+        console.error('Book search error:', error);
+        setSuggestions([]);
+        setShowSuggestions(false);
+      } finally {
         setIsLoading(false);
       }
-    );
+    }, 500);
 
-    setIsLoading(true);
+    return () => clearTimeout(searchDebounced);
   }, [value]);
 
   const handleSuggestionClick = (book: BookSuggestion) => {
@@ -57,14 +63,25 @@ const BookSearchInput = ({
     setShowSuggestions(false);
   };
 
+  const handleInputFocus = () => {
+    if (suggestions.length > 0) {
+      setShowSuggestions(true);
+    }
+  };
+
+  const handleInputBlur = () => {
+    // Delay hiding suggestions to allow click events
+    setTimeout(() => setShowSuggestions(false), 200);
+  };
+
   return (
     <div className="relative">
       <Input
         placeholder={placeholder}
         value={value}
         onChange={(e) => onValueChange(e.target.value)}
-        onFocus={() => setShowSuggestions(suggestions.length > 0)}
-        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+        onFocus={handleInputFocus}
+        onBlur={handleInputBlur}
         className="bg-slate-700 border-slate-600 text-slate-200"
         disabled={disabled}
       />
@@ -88,6 +105,9 @@ const BookSearchInput = ({
                   src={book.coverUrl} 
                   alt={book.title}
                   className="w-8 h-10 object-cover rounded flex-shrink-0"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
                 />
               )}
               <div className="flex-1 min-w-0">

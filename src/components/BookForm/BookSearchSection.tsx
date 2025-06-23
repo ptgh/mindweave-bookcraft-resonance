@@ -26,7 +26,13 @@ const BookSearchSection = ({
   onBookSelect,
   onAuthorSelect
 }: BookSearchSectionProps) => {
+  const handleBookSelection = (book: BookSuggestion) => {
+    console.log('Book selected in BookSearchSection:', book);
+    onBookSelect(book);
+  };
+
   const handleAuthorSelect = (author: ScifiAuthor) => {
+    console.log('Author selected in BookSearchSection:', author);
     onAuthorSearchChange(author.name);
     if (onAuthorSelect) {
       onAuthorSelect(author);
@@ -42,7 +48,7 @@ const BookSearchSection = ({
             placeholder="Search for a book title..."
             value={titleSearch}
             onValueChange={onTitleSearchChange}
-            onBookSelect={onBookSelect}
+            onBookSelect={handleBookSelection}
           />
         </div>
         <div>
@@ -62,6 +68,10 @@ const BookSearchSection = ({
             src={coverUrl} 
             alt={title}
             className="w-20 h-28 object-cover rounded shadow-lg"
+            onError={(e) => {
+              console.log('Cover image failed to load:', coverUrl);
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
           />
         </div>
       )}
