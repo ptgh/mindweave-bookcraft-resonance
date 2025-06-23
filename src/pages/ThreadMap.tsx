@@ -56,16 +56,16 @@ const ThreadMap = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <Header />
         
-        <main className="container mx-auto px-6 py-8">
+        <main className="container mx-auto px-4 sm:px-6 py-8">
           <div className="mb-8">
             <div className="flex items-center space-x-3 mb-2">
               <Brain className="w-8 h-8 text-blue-400" />
-              <h1 className="text-3xl font-light text-slate-200">Chrono Thread</h1>
+              <h1 className="text-2xl sm:text-3xl font-light text-slate-200">Chrono Thread</h1>
             </div>
-            <p className="text-slate-400">Consciousness mapping • Neural pathway visualization of your transmission network</p>
+            <p className="text-slate-400 text-sm sm:text-base">Consciousness mapping • Neural pathway visualization of your transmission network</p>
           </div>
 
-          <div className="mb-6 flex items-center space-x-4">
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
             <span className="text-slate-300 text-sm">Temporal Scope:</span>
             <div className="flex space-x-2">
               {(['month', 'year', 'all'] as const).map((period) => (
@@ -75,8 +75,8 @@ const ThreadMap = () => {
                   size="sm"
                   onClick={() => setTimeframe(period)}
                   className={timeframe === period 
-                    ? "bg-blue-600 hover:bg-blue-700 text-white" 
-                    : "border-slate-600 text-slate-300 hover:bg-slate-700"
+                    ? "bg-blue-600 hover:bg-blue-700 text-white focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900" 
+                    : "border-slate-600 text-slate-300 hover:bg-slate-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900"
                   }
                 >
                   {period === 'all' ? 'All Time' : period.charAt(0).toUpperCase() + period.slice(1)}
@@ -85,9 +85,9 @@ const ThreadMap = () => {
             </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-6 xl:grid-cols-3">
             {/* Mind Map Visualization */}
-            <div className="lg:col-span-2 bg-slate-800/50 rounded-lg border border-slate-700 p-6">
+            <div className="xl:col-span-2 bg-slate-800/50 rounded-lg border border-slate-700 p-4 sm:p-6">
               <div className="flex items-center space-x-2 mb-4">
                 <Brain className="w-5 h-5 text-blue-400" />
                 <h2 className="text-lg font-medium text-slate-200">Consciousness Web</h2>
@@ -95,17 +95,21 @@ const ThreadMap = () => {
               </div>
               
               {isLoading ? (
-                <div className="flex items-center justify-center h-[600px] text-slate-400">
-                  <div className="animate-spin w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full"></div>
-                  <span className="ml-3">Mapping neural pathways...</span>
+                <div className="flex items-center justify-center h-[400px] sm:h-[600px] text-slate-400">
+                  <div className="text-center">
+                    <div className="animate-spin w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <span className="ml-3">Mapping neural pathways...</span>
+                  </div>
                 </div>
               ) : filteredTransmissions.length > 0 ? (
-                <MindMap transmissions={filteredTransmissions} />
+                <div className="h-[400px] sm:h-[600px]">
+                  <MindMap transmissions={filteredTransmissions} />
+                </div>
               ) : (
-                <div className="flex items-center justify-center h-[600px] text-slate-400">
+                <div className="flex items-center justify-center h-[400px] sm:h-[600px] text-slate-400">
                   <div className="text-center">
                     <Brain className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p>No transmissions found for this timeframe</p>
+                    <p className="mb-2">No transmissions found for this timeframe</p>
                     <p className="text-sm mt-2">Start building your consciousness map by adding transmissions</p>
                   </div>
                 </div>
@@ -114,7 +118,7 @@ const ThreadMap = () => {
 
             {/* Stats Panel */}
             <div className="space-y-6">
-              <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
+              <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-4 sm:p-6">
                 <div className="flex items-center space-x-2 mb-4">
                   <TrendingUp className="w-5 h-5 text-green-400" />
                   <h2 className="text-lg font-medium text-slate-200">Signal Frequency</h2>
@@ -135,7 +139,7 @@ const ThreadMap = () => {
                 </div>
               </div>
 
-              <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
+              <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-4 sm:p-6">
                 <div className="flex items-center space-x-2 mb-4">
                   <BookOpen className="w-5 h-5 text-purple-400" />
                   <h2 className="text-lg font-medium text-slate-200">Dominant Threads</h2>
@@ -143,16 +147,16 @@ const ThreadMap = () => {
                 <div className="space-y-3">
                   {tagCounts.slice(0, 5).map((thread, index) => (
                     <div key={thread.tag} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-2 h-2 rounded-full ${
+                      <div className="flex items-center space-x-2 min-w-0 flex-1">
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                           index === 0 ? 'bg-purple-400' : 
                           index === 1 ? 'bg-blue-400' : 
                           index === 2 ? 'bg-green-400' : 
                           index === 3 ? 'bg-yellow-400' : 'bg-pink-400'
                         }`} />
-                        <span className="text-slate-300 text-sm">{thread.tag}</span>
+                        <span className="text-slate-300 text-sm truncate">{thread.tag}</span>
                       </div>
-                      <span className="text-slate-400 text-sm">{thread.count}</span>
+                      <span className="text-slate-400 text-sm flex-shrink-0 ml-2">{thread.count}</span>
                     </div>
                   ))}
                   {tagCounts.length === 0 && (
@@ -166,7 +170,7 @@ const ThreadMap = () => {
           </div>
 
           <div className="mt-12 text-center">
-            <div className="inline-flex items-center space-x-2 text-slate-500 text-xs">
+            <div className="inline-flex flex-wrap items-center justify-center space-x-2 text-slate-500 text-xs">
               <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
               <span>Neural pathways: Active</span>
               <div className="w-1 h-1 bg-slate-600 rounded-full" />

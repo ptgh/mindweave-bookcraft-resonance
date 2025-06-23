@@ -110,10 +110,10 @@ const AuthorMatrix = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <Header />
         
-        <main className="container mx-auto px-6 py-8">
+        <main className="container mx-auto px-4 sm:px-6 py-8">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-light text-slate-200 mb-4">Author Consciousness Matrix</h1>
-            <p className="text-slate-400">Navigate the literary mindscape—explore author territories and activate narrative portals in the digital grid.</p>
+            <h1 className="text-3xl sm:text-4xl font-light text-slate-200 mb-4">Author Consciousness Matrix</h1>
+            <p className="text-slate-400 text-sm sm:text-base px-4">Navigate the literary mindscape—explore author territories and activate narrative portals in the digital grid.</p>
           </div>
 
           {seriesLoading ? (
@@ -124,9 +124,9 @@ const AuthorMatrix = () => {
               </div>
             </div>
           ) : (
-            <div className="grid gap-6 lg:grid-cols-3">
+            <div className="grid gap-6 lg:grid-cols-4 xl:grid-cols-3">
               {/* Left Control Panel */}
-              <div className="space-y-6">
+              <div className="lg:col-span-1 xl:col-span-1 space-y-6">
                 <div className="bg-slate-800/50 border border-cyan-400/30 rounded-lg p-6">
                   <div className="flex items-center space-x-2 mb-4">
                     <Grid3X3 className="w-5 h-5 text-cyan-400" />
@@ -148,8 +148,8 @@ const AuthorMatrix = () => {
               </div>
 
               {/* Main Grid Display */}
-              <div className="lg:col-span-1">
-                <div className="bg-slate-900/60 border border-cyan-400/30 rounded-lg p-6 min-h-[600px]">
+              <div className="lg:col-span-2 xl:col-span-1">
+                <div className="bg-slate-900/60 border border-cyan-400/30 rounded-lg p-4 sm:p-6 min-h-[600px]">
                   {/* Grid Background Pattern */}
                   <div className="relative h-full">
                     <div className="absolute inset-0 opacity-10">
@@ -161,7 +161,7 @@ const AuthorMatrix = () => {
                     </div>
 
                     {/* Author Selection Grid */}
-                    <div className="relative z-10 p-4">
+                    <div className="relative z-10 p-2 sm:p-4">
                       <div className="mb-6">
                         <div className="text-slate-300 text-sm mb-2">SELECT AUTHOR:</div>
                         <div className="h-1 bg-slate-700 rounded overflow-hidden">
@@ -170,25 +170,35 @@ const AuthorMatrix = () => {
                       </div>
 
                       <ScrollArea className="h-[450px]">
-                        <div className="space-y-3">
+                        <div className="space-y-3 pr-2">
                           {allAuthors.map((author) => (
                             <div
                               key={author.id}
-                              className={`border rounded-lg p-4 cursor-pointer transition-all duration-1000 hover:scale-[1.02] ${
+                              className={`border rounded-lg p-3 sm:p-4 cursor-pointer transition-all duration-500 hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-900 ${
                                 selectedAuthor === author.name
                                   ? 'border-cyan-400 bg-cyan-400/10 shadow-cyan-400/20 shadow-lg'
                                   : 'border-slate-600 bg-slate-800/30 hover:border-cyan-400/50 hover:bg-slate-700/30'
                               }`}
                               onClick={() => setSelectedAuthor(selectedAuthor === author.name ? null : author.name)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  setSelectedAuthor(selectedAuthor === author.name ? null : author.name);
+                                }
+                              }}
+                              tabIndex={0}
+                              role="button"
+                              aria-pressed={selectedAuthor === author.name}
+                              aria-label={`Select author ${author.name}`}
                             >
                               <div className="flex justify-between items-center">
-                                <div>
-                                  <h3 className="text-slate-200 font-medium">{author.name}</h3>
+                                <div className="min-w-0 flex-1">
+                                  <h3 className="text-slate-200 font-medium truncate">{author.name}</h3>
                                   <p className="text-slate-400 text-sm">
                                     {author.books.length} of {author.totalBooks} {author.totalBooks === 1 ? 'portal' : 'portals'}
                                   </p>
                                 </div>
-                                <div className={`w-3 h-3 rounded-full transition-all duration-800 ${selectedAuthor === author.name ? 'bg-cyan-400' : 'bg-slate-600'}`}>
+                                <div className={`w-3 h-3 rounded-full transition-all duration-500 flex-shrink-0 ml-2 ${selectedAuthor === author.name ? 'bg-cyan-400' : 'bg-slate-600'}`}>
                                   {selectedAuthor === author.name && (
                                     <div className="w-full h-full bg-cyan-400 rounded-full animate-pulse opacity-40"></div>
                                   )}
@@ -204,16 +214,16 @@ const AuthorMatrix = () => {
               </div>
 
               {/* Right Details Panel */}
-              <div className="space-y-6">
+              <div className="lg:col-span-1 xl:col-span-1 space-y-6">
                 {selectedAuthorData ? (
                   <>
-                    <div className="bg-slate-800/50 border border-cyan-400/30 rounded-lg p-6">
+                    <div className="bg-slate-800/50 border border-cyan-400/30 rounded-lg p-4 sm:p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <h3 className="text-xl font-medium text-slate-200">{selectedAuthorData.name}</h3>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-xl font-medium text-slate-200 truncate">{selectedAuthorData.name}</h3>
                           <p className="text-slate-400">Author Collection</p>
                         </div>
-                        <span className="text-cyan-400 font-mono">
+                        <span className="text-cyan-400 font-mono text-sm flex-shrink-0 ml-2">
                           {selectedAuthorData.books.length}/{selectedAuthorData.totalBooks} books
                         </span>
                       </div>
@@ -227,43 +237,55 @@ const AuthorMatrix = () => {
                         </div>
                       </div>
 
-                      <ScrollArea className="h-96">
-                        <div className="space-y-4 pr-4">
+                      <ScrollArea className="h-80 sm:h-96">
+                        <div className="space-y-4 pr-2 sm:pr-4">
                           {selectedAuthorData.books.map((book, index) => (
                             <div
                               key={book.id}
-                              className="bg-slate-900/50 border border-slate-600/40 rounded-lg p-4 hover:bg-slate-700/50 hover:border-cyan-400/30 transition-all duration-800 hover:scale-[1.02] group"
-                              style={{ animationDelay: `${index * 150}ms` }}
+                              className="bg-slate-900/50 border border-slate-600/40 rounded-lg p-3 sm:p-4 hover:bg-slate-700/50 hover:border-cyan-400/30 transition-all duration-500 hover:scale-[1.01] group"
+                              style={{ animationDelay: `${index * 100}ms` }}
                             >
-                              <div className="flex items-start space-x-4">
-                                <div className="w-16 h-20 bg-slate-700/50 border border-cyan-400/30 rounded flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:border-cyan-400/60 transition-all duration-800">
+                              <div className="flex items-start space-x-3 sm:space-x-4">
+                                <div className="w-12 h-16 sm:w-16 sm:h-20 bg-slate-700/50 border border-cyan-400/30 rounded flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:border-cyan-400/60 transition-all duration-500">
                                   {book.cover_url ? (
                                     <img 
                                       src={book.cover_url} 
-                                      alt={book.title} 
-                                      className="w-full h-full object-cover rounded transition-transform duration-800 group-hover:scale-105"
+                                      alt={`Cover of ${book.title}`}
+                                      className="w-full h-full object-cover rounded transition-transform duration-500 group-hover:scale-105"
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        const parent = target.parentElement;
+                                        if (parent) {
+                                          const icon = document.createElement('div');
+                                          icon.innerHTML = '<svg class="w-4 h-4 sm:w-6 sm:h-6 text-cyan-400/50 group-hover:text-cyan-400 transition-colors duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>';
+                                          parent.appendChild(icon);
+                                        }
+                                      }}
                                     />
                                   ) : (
-                                    <BookOpen className="w-6 h-6 text-cyan-400/50 group-hover:text-cyan-400 transition-colors duration-800" />
+                                    <BookOpen className="w-4 h-4 sm:w-6 sm:h-6 text-cyan-400/50 group-hover:text-cyan-400 transition-colors duration-500" />
                                   )}
                                 </div>
                                 
                                 <div className="flex-1 min-w-0">
-                                  <h4 className="text-slate-200 font-medium text-sm leading-tight mb-2 group-hover:text-cyan-300 transition-colors duration-800">
+                                  <h4 className="text-slate-200 font-medium text-sm leading-tight mb-2 group-hover:text-cyan-300 transition-colors duration-500 line-clamp-2">
                                     {book.title}
                                   </h4>
-                                  <p className="text-slate-400 text-sm mb-3">{book.author}</p>
+                                  <p className="text-slate-400 text-sm mb-3 truncate">{book.author}</p>
                                   
-                                  <div className="flex gap-2">
+                                  <div className="flex flex-col sm:flex-row gap-2">
                                     <button
                                       onClick={() => setSelectedBook(book)}
-                                      className="text-xs text-cyan-400 hover:text-cyan-300 transition-all duration-500 border border-cyan-400/30 hover:border-cyan-400/60 px-2 py-1 rounded hover:bg-cyan-400/10"
+                                      className="text-xs text-cyan-400 hover:text-cyan-300 transition-all duration-300 border border-cyan-400/30 hover:border-cyan-400/60 px-2 py-1 rounded hover:bg-cyan-400/10 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+                                      aria-label={`View details for ${book.title}`}
                                     >
                                       View Details
                                     </button>
                                     <button
                                       onClick={() => handleAddFromAuthor(book)}
-                                      className="text-xs text-cyan-400 hover:text-cyan-300 transition-all duration-500 border border-cyan-400/30 hover:border-cyan-400/60 px-2 py-1 rounded hover:bg-cyan-400/10"
+                                      className="text-xs text-cyan-400 hover:text-cyan-300 transition-all duration-300 border border-cyan-400/30 hover:border-cyan-400/60 px-2 py-1 rounded hover:bg-cyan-400/10 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+                                      aria-label={`Add ${book.title} to transmissions`}
                                     >
                                       Add to Transmissions
                                     </button>
@@ -280,7 +302,7 @@ const AuthorMatrix = () => {
                   <div className="bg-slate-800/50 border border-cyan-400/30 rounded-lg p-6">
                     <div className="text-center">
                       <Users className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                      <p className="text-slate-400">Select an author from the grid to explore their consciousness</p>
+                      <p className="text-slate-400 mb-2">Select an author from the grid to explore their consciousness</p>
                       <div className="mt-4 text-xs text-slate-500">
                         Navigate through the literary matrix to discover hidden connections
                       </div>
@@ -293,7 +315,7 @@ const AuthorMatrix = () => {
 
           {/* Status indicator */}
           <div className="mt-8 text-center">
-            <div className="inline-flex items-center space-x-4 text-sm text-slate-400">
+            <div className="inline-flex flex-wrap items-center justify-center space-x-4 text-sm text-slate-400">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
                 <span>Consciousness Web: Active</span>
