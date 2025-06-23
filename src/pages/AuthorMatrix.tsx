@@ -192,19 +192,22 @@ const AuthorMatrix = () => {
             <div className="lg:col-span-3">
               {selectedAuthor ? (
                 <div>
-                  <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 mb-6">
-                    <h2 className="text-2xl font-light text-slate-200 mb-2">{selectedAuthor.name}</h2>
-                    <p className="text-slate-400 mb-4">{selectedAuthor.nationality}</p>
+                  <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3 mb-6">
+                    <h2 className="text-lg font-light text-slate-200 mb-1">{selectedAuthor.name}</h2>
+                    <p className="text-slate-400 text-sm mb-2">{selectedAuthor.nationality}</p>
                     {selectedAuthor.bio && (
-                      <p className="text-slate-300 text-sm leading-relaxed mb-4">{selectedAuthor.bio}</p>
+                      <p className="text-slate-300 text-xs leading-relaxed mb-2 line-clamp-3">{selectedAuthor.bio}</p>
                     )}
                     {selectedAuthor.notable_works && selectedAuthor.notable_works.length > 0 && (
                       <div>
-                        <h3 className="text-slate-300 font-medium mb-2">Notable Works:</h3>
-                        <ul className="text-slate-400 text-sm space-y-1">
-                          {selectedAuthor.notable_works.map((work, index) => (
+                        <h3 className="text-slate-300 font-medium text-sm mb-1">Notable Works:</h3>
+                        <ul className="text-slate-400 text-xs space-y-0.5">
+                          {selectedAuthor.notable_works.slice(0, 3).map((work, index) => (
                             <li key={index}>• {work}</li>
                           ))}
+                          {selectedAuthor.notable_works.length > 3 && (
+                            <li className="text-slate-500">+ {selectedAuthor.notable_works.length - 3} more</li>
+                          )}
                         </ul>
                       </div>
                     )}
