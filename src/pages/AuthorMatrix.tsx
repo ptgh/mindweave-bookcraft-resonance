@@ -100,9 +100,10 @@ const AuthorMatrix = () => {
         title: book.title,
         author: selectedAuthor?.name || 'Unknown',
         cover_url: book.cover_url || '',
-        tags: book.categories || [],
-        rating: {},
-        notes: book.description || ''
+        tags: book.categories?.join(', ') || '',
+        resonance_labels: '',
+        notes: book.description || '',
+        status: 'want_to_read'
       });
       
       toast({

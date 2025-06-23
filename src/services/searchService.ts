@@ -96,9 +96,9 @@ export const searchAll = async (query: string): Promise<SearchResult[]> => {
         type: 'book' as const,
         id: book.id,
         title: book.title,
-        author: book.authors?.join(', '),
+        author: book.author,
         coverUrl: book.coverUrl,
-        description: book.description
+        description: book.subtitle
       })));
     } catch (error) {
       console.warn('Google Books search failed:', error);
