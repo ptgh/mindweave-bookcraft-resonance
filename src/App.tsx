@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import Discovery from "./pages/Discovery";
 import ThreadMap from "./pages/ThreadMap";
 import AuthorMatrix from "./pages/AuthorMatrix";
+import Search from "./pages/Search";
+import BookBrowser from "./pages/BookBrowser";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -24,6 +26,8 @@ const App = () => (
           <Route path="/library" element={<Index />} />
           <Route path="/thread-map" element={<ThreadMap />} />
           <Route path="/author-matrix" element={<AuthorMatrix />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/book-browser" element={<BookBrowser />} />
           <Route path="/auth" element={<Auth />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

@@ -9,6 +9,71 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      author_books: {
+        Row: {
+          author_id: string | null
+          categories: string[] | null
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          google_books_id: string | null
+          id: string
+          info_link: string | null
+          page_count: number | null
+          preview_link: string | null
+          published_date: string | null
+          rating: number | null
+          ratings_count: number | null
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          categories?: string[] | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          google_books_id?: string | null
+          id?: string
+          info_link?: string | null
+          page_count?: number | null
+          preview_link?: string | null
+          published_date?: string | null
+          rating?: number | null
+          ratings_count?: number | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          categories?: string[] | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          google_books_id?: string | null
+          id?: string
+          info_link?: string | null
+          page_count?: number | null
+          preview_link?: string | null
+          published_date?: string | null
+          rating?: number | null
+          ratings_count?: number | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "author_books_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "scifi_authors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       publisher_books: {
         Row: {
           author: string
@@ -77,6 +142,45 @@ export type Database = {
           logo_url?: string | null
           name?: string
           publisher?: string
+        }
+        Relationships: []
+      }
+      scifi_authors: {
+        Row: {
+          bio: string | null
+          birth_year: number | null
+          created_at: string
+          death_year: number | null
+          id: string
+          name: string
+          nationality: string | null
+          notable_works: string[] | null
+          updated_at: string
+          wikipedia_url: string | null
+        }
+        Insert: {
+          bio?: string | null
+          birth_year?: number | null
+          created_at?: string
+          death_year?: number | null
+          id?: string
+          name: string
+          nationality?: string | null
+          notable_works?: string[] | null
+          updated_at?: string
+          wikipedia_url?: string | null
+        }
+        Update: {
+          bio?: string | null
+          birth_year?: number | null
+          created_at?: string
+          death_year?: number | null
+          id?: string
+          name?: string
+          nationality?: string | null
+          notable_works?: string[] | null
+          updated_at?: string
+          wikipedia_url?: string | null
         }
         Relationships: []
       }
