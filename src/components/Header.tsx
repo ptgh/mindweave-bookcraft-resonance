@@ -58,6 +58,16 @@ const Header = () => {
               Publisher Resonance
             </Link>
             <Link
+              to="/author-matrix"
+              className={`transition-colors text-sm font-medium ${
+                location.pathname === '/author-matrix' 
+                  ? 'text-cyan-400' 
+                  : 'text-slate-300 hover:text-cyan-400'
+              }`}
+            >
+              Author Matrix
+            </Link>
+            <Link
               to="/thread-map"
               className={`transition-colors text-sm font-medium ${
                 location.pathname === '/thread-map' 
