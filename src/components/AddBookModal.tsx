@@ -5,7 +5,7 @@ import BookSearchSection from "./BookForm/BookSearchSection";
 import StatusSection from "./BookForm/StatusSection";
 import ConceptualTagsSection from "./BookForm/ConceptualTagsSection";
 import PersonalResonanceSection from "./BookForm/PersonalResonanceSection";
-import NotesSection from "./NotesSection";
+import NotesSection from "./BookForm/NotesSection";
 import PublisherResonanceBadge from "./PublisherResonanceBadge";
 import { BookSuggestion } from "@/services/googleBooksApi";
 import { findMatchingPublisherSeries, PublisherSeries } from "@/services/publisherService";
