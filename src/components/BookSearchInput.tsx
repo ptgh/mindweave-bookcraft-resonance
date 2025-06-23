@@ -1,13 +1,14 @@
 
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { searchBooks, BookSuggestion } from "@/services/googleBooksApi";
+import { searchBooksEnhanced, EnhancedBookSuggestion } from "@/services/enhanced-google-books-api";
+import { searchDebouncer } from "@/services/debounced-search";
 
 interface BookSearchInputProps {
   placeholder: string;
   value: string;
   onValueChange: (value: string) => void;
-  onBookSelect: (book: BookSuggestion) => void;
+  onBookSelect: (book: EnhancedBookSuggestion) => void;
   disabled?: boolean;
 }
 
@@ -18,48 +19,41 @@ const BookSearchInput = ({
   onBookSelect,
   disabled 
 }: BookSearchInputProps) => {
-  const [suggestions, setSuggestions] = useState<BookSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<EnhancedBookSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const searchDebounced = setTimeout(async () => {
-      if (value.length < 2) {
-        setSuggestions([]);
-        setShowSuggestions(false);
-        setIsLoading(false);
-        return;
-      }
+    if (value.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      setIsLoading(false);
+      return;
+    }
 
-      console.log('Starting book search for:', value);
-      setIsLoading(true);
-      setSuggestions([]); // Clear previous suggestions
-      
-      try {
-        const results = await searchBooks(value, 10);
-        console.log('Book search results received:', results);
-        
-        if (results && results.length > 0) {
-          setSuggestions(results);
-          setShowSuggestions(true);
-        } else {
-          console.log('No book results found for:', value);
-          setSuggestions([]);
-          setShowSuggestions(false);
-        }
-      } catch (error) {
-        console.error('Book search error:', error);
-        setSuggestions([]);
-        setShowSuggestions(false);
-      } finally {
+    console.log('Book search triggered for:', value);
+    setIsLoading(true);
+    
+    const searchKey = `book-search-${value}`;
+    
+    searchDebouncer.search(
+      searchKey,
+      async () => {
+        console.log('Executing book search for:', value);
+        const results = await searchBooksEnhanced(value, 10);
+        console.log('Book search results:', results);
+        return results;
+      },
+      (results) => {
+        console.log('Setting book suggestions:', results);
+        setSuggestions(results);
+        setShowSuggestions(results.length > 0);
         setIsLoading(false);
       }
-    }, 300); // Reduced debounce time
-
-    return () => clearTimeout(searchDebounced);
+    );
   }, [value]);
 
-  const handleSuggestionClick = (book: BookSuggestion) => {
+  const handleSuggestionClick = (book: EnhancedBookSuggestion) => {
     console.log('Book suggestion clicked:', book);
     onBookSelect(book);
     setShowSuggestions(false);

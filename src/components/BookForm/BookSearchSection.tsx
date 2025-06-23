@@ -2,7 +2,7 @@
 import { Label } from "@/components/ui/label";
 import BookSearchInput from "../BookSearchInput";
 import AuthorSearchInput from "../AuthorSearchInput";
-import { BookSuggestion } from "@/services/googleBooksApi";
+import { EnhancedBookSuggestion } from "@/services/enhanced-google-books-api";
 import { ScifiAuthor } from "@/services/scifiAuthorsService";
 
 interface BookSearchSectionProps {
@@ -12,7 +12,7 @@ interface BookSearchSectionProps {
   title: string;
   onTitleSearchChange: (value: string) => void;
   onAuthorSearchChange: (value: string) => void;
-  onBookSelect: (book: BookSuggestion) => void;
+  onBookSelect: (book: EnhancedBookSuggestion) => void;
   onAuthorSelect?: (author: ScifiAuthor) => void;
 }
 
@@ -26,7 +26,7 @@ const BookSearchSection = ({
   onBookSelect,
   onAuthorSelect
 }: BookSearchSectionProps) => {
-  const handleBookSelection = (book: BookSuggestion) => {
+  const handleBookSelection = (book: EnhancedBookSuggestion) => {
     console.log('Book selected in BookSearchSection:', book);
     onBookSelect(book);
   };
