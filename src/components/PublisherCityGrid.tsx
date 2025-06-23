@@ -66,7 +66,7 @@ const PublisherCityGrid = ({
         name: publisher,
         publisher,
         books: data.books,
-        x: index * 450 + 250,
+        x: index * 500 + 300, // Increased spacing between buildings
         width: 320,
         height,
         isSelected: selectedBuilding === `building-${publisher}`
@@ -96,7 +96,7 @@ const PublisherCityGrid = ({
   const handleWheelScroll = (e: React.WheelEvent) => {
     e.preventDefault();
     const scrollAmount = 150;
-    const maxScroll = Math.max(0, (buildings.length - 1) * 450 - window.innerWidth / 2);
+    const maxScroll = Math.max(0, (buildings.length - 1) * 500 - window.innerWidth / 3);
     const newPosition = Math.max(0, Math.min(maxScroll, scrollPosition + (e.deltaX || e.deltaY) * 0.5));
     setScrollPosition(newPosition);
   };
@@ -128,7 +128,7 @@ const PublisherCityGrid = ({
         <div className="absolute inset-0 opacity-20">
           {Array.from({ length: 50 }, (_, i) => {
             const x = (i % 10) * 120 + 50;
-            const z = Math.floor(i / 10) * 80 + 400;
+            const z = Math.floor(i / 10) * 80 + 500; // Moved further back
             const height = 40 + Math.random() * 60;
             const width = 60 + Math.random() * 40;
             
@@ -153,7 +153,7 @@ const PublisherCityGrid = ({
       <svg className="absolute inset-0 w-full h-full pointer-events-none">
         {/* Horizontal perspective lines */}
         {Array.from({ length: 15 }, (_, i) => {
-          const y = 300 + (i * 35);
+          const y = 400 + (i * 35); // Moved grid lower to give top space
           const perspective = Math.max(0.2, 1 - (i * 0.06));
           const opacity = Math.max(0.15, perspective);
           return (
@@ -180,7 +180,7 @@ const PublisherCityGrid = ({
             <line
               key={`v-${i}`}
               x1={x}
-              y1="300"
+              y1="400"
               x2={endX}
               y2="100%"
               stroke={`rgba(34, 211, 238, ${opacity * 0.3})`}
@@ -192,9 +192,9 @@ const PublisherCityGrid = ({
         {/* Horizon line */}
         <line
           x1="0"
-          y1="300"
+          y1="400"
           x2="100%"
-          y2="300"
+          y2="400"
           stroke="rgba(34, 211, 238, 0.5)"
           strokeWidth="3"
           className="animate-pulse"
@@ -202,9 +202,9 @@ const PublisherCityGrid = ({
         />
       </svg>
 
-      {/* Enhanced Publisher Selector - Top Right */}
-      <div className="absolute top-8 right-8 z-30">
-        <div className="bg-slate-900/90 border-2 border-cyan-400/40 rounded-lg p-6 backdrop-blur-sm min-w-72">
+      {/* Enhanced Publisher Selector - Top Right with proper spacing */}
+      <div className="absolute top-6 right-6 z-30">
+        <div className="bg-slate-900/95 border-2 border-cyan-400/40 rounded-lg p-6 backdrop-blur-sm w-80">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
               <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
@@ -213,7 +213,7 @@ const PublisherCityGrid = ({
             <div className="text-cyan-400/70 text-sm">ACTIVE</div>
           </div>
           
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center justify-between text-base">
               <span className="text-slate-300">Publishers Online:</span>
               <span className="text-cyan-300 font-mono">{buildings.length}</span>
@@ -239,11 +239,11 @@ const PublisherCityGrid = ({
           {/* Publisher Selection Area */}
           <div className="mt-4">
             <div className="text-slate-400 text-sm mb-3">Navigate Grid:</div>
-            <div className="grid grid-cols-1 gap-2">
+            <div className="space-y-3">
               {buildings.map((building) => (
                 <button
                   key={building.id}
-                  className={`p-3 rounded-lg border transition-all duration-300 text-left w-full focus:outline-none focus:ring-2 focus:ring-cyan-400/50 ${
+                  className={`p-4 rounded-lg border transition-all duration-300 text-left w-full focus:outline-none focus:ring-2 focus:ring-cyan-400/50 ${
                     building.isSelected
                       ? 'bg-cyan-400/20 border-cyan-300/60 text-cyan-200 shadow-lg shadow-cyan-400/25'
                       : 'bg-slate-800/50 border-slate-600/50 text-slate-300 hover:bg-slate-700/60 hover:border-cyan-400/40 hover:text-cyan-200'
@@ -262,7 +262,7 @@ const PublisherCityGrid = ({
         </div>
       </div>
 
-      {/* City Buildings */}
+      {/* City Buildings - positioned lower to avoid overlap */}
       <div 
         ref={cityRef}
         className="absolute inset-0 transition-transform duration-700 ease-out"
@@ -279,7 +279,7 @@ const PublisherCityGrid = ({
               }`}
               style={{
                 left: building.x,
-                bottom: '300px',
+                bottom: '400px', // Positioned on the horizon line
                 width: building.width,
                 height: building.height,
               }}
@@ -330,8 +330,8 @@ const PublisherCityGrid = ({
                   ))}
                 </div>
                 
-                {/* Publisher Label */}
-                <div className="absolute -bottom-16 left-0 right-0 text-center">
+                {/* Publisher Label - positioned with more spacing */}
+                <div className="absolute -bottom-20 left-0 right-0 text-center">
                   <div 
                     className={`text-base font-light tracking-widest transition-all duration-500 ${
                       building.isSelected
@@ -344,7 +344,7 @@ const PublisherCityGrid = ({
                   <div className={`w-full h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent mt-2 transition-all duration-500 ${
                     building.isSelected ? 'via-cyan-300/80' : ''
                   }`} />
-                  <div className="text-cyan-400/60 text-xs mt-1 font-mono">
+                  <div className="text-cyan-400/60 text-xs mt-2 font-mono">
                     {building.books.length} PORTALS
                   </div>
                 </div>
@@ -362,16 +362,16 @@ const PublisherCityGrid = ({
         ))}
       </div>
 
-      {/* Subtle scroll hint - replaces prominent navigation arrows */}
+      {/* Subtle scroll hint - positioned to not overlap */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-center">
         <div className="text-cyan-400/50 text-xs font-mono">
           <div className="animate-pulse">← Scroll to explore city →</div>
         </div>
       </div>
 
-      {/* Book Portals Panel - Full Height */}
+      {/* Book Portals Panel - Full Height with proper positioning */}
       {selectedBuildingData && (
-        <div className="absolute right-0 top-0 bottom-0 w-96 bg-slate-900/95 border-l-2 border-cyan-400/30 backdrop-blur-sm overflow-hidden shadow-2xl shadow-cyan-400/10">
+        <div className="absolute right-0 top-0 bottom-0 w-96 bg-slate-900/95 border-l-2 border-cyan-400/30 backdrop-blur-sm overflow-hidden shadow-2xl shadow-cyan-400/10 z-20">
           <div className="p-6 border-b-2 border-cyan-400/20">
             <div className="flex items-center justify-between">
               <div>
@@ -388,7 +388,7 @@ const PublisherCityGrid = ({
             </div>
           </div>
           
-          <div className="p-6 space-y-4 h-full overflow-y-auto">
+          <div className="p-6 space-y-4 h-full overflow-y-auto pb-24">
             {selectedBuildingData.books.map((book) => (
               <div
                 key={`${book.id}-${book.title}`}
