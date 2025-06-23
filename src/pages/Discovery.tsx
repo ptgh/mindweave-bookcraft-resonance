@@ -75,7 +75,7 @@ const Discovery = () => {
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4 mb-8">
-          <Link to="/search" className="focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-lg">
+          <Link to="/author-matrix" className="focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-lg">
             <div className="bg-slate-800/30 border border-slate-700/40 rounded-lg p-6 hover:bg-slate-700/40 transition-all duration-200 hover:border-slate-600/50 focus:outline-none">
               <div className="flex items-center justify-center mb-3">
                 <div className="w-3 h-3 bg-green-400 rounded-full"></div>
