@@ -39,7 +39,10 @@ const AuthorSearchInput = ({
 
   // Filter authors based on search input
   useEffect(() => {
+    console.log('Author search effect triggered, value:', value, 'length:', value.length);
+    
     if (value.length < 1) {
+      console.log('Clearing suggestions due to empty value');
       setSuggestions([]);
       setShowSuggestions(false);
       setIsLoading(false);
@@ -51,12 +54,14 @@ const AuthorSearchInput = ({
     searchDebouncer.search(
       searchKey,
       async () => {
+        console.log('Filtering authors for:', value);
         const filtered = allAuthors.filter(author =>
           author.name.toLowerCase().includes(value.toLowerCase())
         ).slice(0, 10); // Limit to 10 suggestions
         return filtered;
       },
       (results) => {
+        console.log('Setting author suggestions:', results);
         setSuggestions(results);
         setShowSuggestions(results.length > 0);
         setIsLoading(false);
@@ -69,14 +74,17 @@ const AuthorSearchInput = ({
   const handleSuggestionClick = (author: ScifiAuthor) => {
     console.log('Author selected:', author);
     
-    // Cancel any pending searches
-    searchDebouncer.cancel(`author-search-${value}`);
+    // Cancel any pending searches first
+    const currentSearchKey = `author-search-${value}`;
+    searchDebouncer.cancel(currentSearchKey);
     
-    // Clear the input value and search state completely
-    onValueChange('');
+    // Clear all search state immediately
+    setIsLoading(false);
     setSuggestions([]);
     setShowSuggestions(false);
-    setIsLoading(false);
+    
+    // Clear the input value - this should trigger the parent to update
+    onValueChange('');
     
     // Notify parent component of selection
     onAuthorSelect(author);
