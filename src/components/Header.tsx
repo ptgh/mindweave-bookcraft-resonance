@@ -48,16 +48,6 @@ const Header = () => {
               Transmissions
             </Link>
             <Link
-              to="/publisher-resonance"
-              className={`transition-colors text-sm font-medium ${
-                location.pathname === '/publisher-resonance' 
-                  ? 'text-purple-400' 
-                  : 'text-slate-300 hover:text-purple-400'
-              }`}
-            >
-              Publisher Resonance
-            </Link>
-            <Link
               to="/author-matrix"
               className={`transition-colors text-sm font-medium ${
                 location.pathname === '/author-matrix' 
@@ -76,16 +66,6 @@ const Header = () => {
               }`}
             >
               Chrono Thread
-            </Link>
-            <Link
-              to="/test"
-              className={`transition-colors text-sm font-medium ${
-                location.pathname === '/test' 
-                  ? 'text-yellow-400' 
-                  : 'text-slate-300 hover:text-yellow-400'
-              }`}
-            >
-              Test
             </Link>
           </nav>
         </div>
