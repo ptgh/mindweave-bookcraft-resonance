@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -36,27 +37,50 @@ const BookBrowser = () => {
     setVisibleBooks(new Set());
     
     try {
-      // Search for various sci-fi related terms to get diverse results
-      const searchTerms = [
-        'science fiction',
-        'space opera',
-        'cyberpunk',
-        'dystopian',
-        'time travel',
-        'alien',
-        'robot',
-        'future',
-        'mars',
-        'artificial intelligence'
+      // Search for sci-fi specific terms to get sci-fi results only
+      const sciFiSearchTerms = [
+        'science fiction space',
+        'cyberpunk dystopian',
+        'time travel sci-fi',
+        'alien invasion',
+        'robot artificial intelligence',
+        'future technology',
+        'space exploration',
+        'galactic empire',
+        'terraforming mars',
+        'quantum physics fiction',
+        'genetic engineering sci-fi',
+        'virtual reality cyberpunk',
+        'post apocalyptic future',
+        'interstellar travel',
+        'clone wars science fiction'
       ];
       
-      const randomTerm = searchTerms[Math.floor(Math.random() * searchTerms.length)];
+      const randomTerm = sciFiSearchTerms[Math.floor(Math.random() * sciFiSearchTerms.length)];
       const startIndex = Math.floor(Math.random() * 100);
       
       const results = await searchBooks(randomTerm, 20, startIndex);
       
+      // Filter results to ensure they are sci-fi related
+      const sciFiBooks = results.filter(book => {
+        const title = book.title.toLowerCase();
+        const categories = book.categories || [];
+        const categoryText = categories.join(' ').toLowerCase();
+        
+        return categoryText.includes('science fiction') || 
+               categoryText.includes('sci-fi') ||
+               categoryText.includes('cyberpunk') ||
+               categoryText.includes('dystopian') ||
+               title.includes('space') ||
+               title.includes('future') ||
+               title.includes('robot') ||
+               title.includes('alien') ||
+               title.includes('cyber') ||
+               title.includes('time travel');
+      });
+      
       // Shuffle the results for more randomness
-      const shuffled = results.sort(() => Math.random() - 0.5);
+      const shuffled = sciFiBooks.sort(() => Math.random() - 0.5);
       setBooks(shuffled);
     } catch (error) {
       console.error('Error loading books:', error);
@@ -103,10 +127,10 @@ const BookBrowser = () => {
         <main className="container mx-auto px-6 py-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-light text-slate-200 mb-2 tracking-wider">
-              Book Browser
+              Sci-Fi Book Browser
             </h1>
             <p className="text-slate-400 text-sm mb-6">
-              Discover your next literary transmission through the quantum field of possibilities
+              Discover your next science fiction transmission through the quantum field of possibilities
             </p>
             
             <Button
@@ -114,7 +138,7 @@ const BookBrowser = () => {
               disabled={loading}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
-              {loading ? 'Scanning the Archive...' : 'Discover New Books'}
+              {loading ? 'Scanning the Archive...' : 'Discover Sci-Fi Books'}
             </Button>
           </div>
 
@@ -126,7 +150,7 @@ const BookBrowser = () => {
               <p className="text-slate-400">Scanning the consciousness archive...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
               {books.map((book, index) => (
                 <Card
                   key={`${book.id}-${index}`}
@@ -143,32 +167,42 @@ const BookBrowser = () => {
                         alt={book.title}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/placeholder.svg';
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
                         }}
                       />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
-                        <div className="text-slate-400 text-center p-4">
-                          <div className="text-lg font-medium mb-1">{book.title}</div>
-                          <div className="text-sm opacity-75">{book.author}</div>
-                        </div>
+                    ) : null}
+                    
+                    {/* Stylized placeholder for missing covers */}
+                    <div className={`w-full h-full bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800 flex flex-col items-center justify-center p-3 ${book.coverUrl ? 'hidden' : ''}`}>
+                      <div className="w-8 h-8 mb-2 rounded-full bg-blue-400/20 flex items-center justify-center">
+                        <div className="w-4 h-4 bg-blue-400 rounded-sm opacity-60"></div>
                       </div>
-                    )}
+                      <div className="text-slate-300 text-center">
+                        <div className="text-xs font-medium mb-1 line-clamp-2">{book.title}</div>
+                        <div className="text-xs opacity-75 line-clamp-1">{book.author}</div>
+                      </div>
+                      <div className="mt-2 flex space-x-1">
+                        <div className="w-1 h-1 bg-blue-400 rounded-full opacity-40"></div>
+                        <div className="w-1 h-1 bg-cyan-400 rounded-full opacity-60"></div>
+                        <div className="w-1 h-1 bg-blue-400 rounded-full opacity-40"></div>
+                      </div>
+                    </div>
                     
                     {/* Overlay with actions */}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                       <Button
                         size="sm"
                         onClick={() => addToTransmissions(book)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1"
                       >
                         Add to Library
                       </Button>
                     </div>
                   </div>
                   
-                  <div className="p-3">
-                    <h3 className="font-medium text-slate-200 text-sm line-clamp-2 mb-1">
+                  <div className="p-2">
+                    <h3 className="font-medium text-slate-200 text-xs line-clamp-2 mb-1">
                       {book.title}
                     </h3>
                     <p className="text-xs text-slate-400 line-clamp-1">
@@ -185,9 +219,9 @@ const BookBrowser = () => {
               <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center">
                 <div className="w-6 h-6 rounded-full border-2 border-cyan-400 animate-pulse" />
               </div>
-              <h3 className="text-slate-300 text-lg font-medium mb-2">No Books Found</h3>
+              <h3 className="text-slate-300 text-lg font-medium mb-2">No Sci-Fi Books Found</h3>
               <p className="text-slate-400 text-sm mb-4">
-                The archive scan returned empty. Try discovering new books.
+                The archive scan returned empty. Try discovering new sci-fi books.
               </p>
               <Button
                 onClick={loadRandomBooks}
@@ -201,7 +235,7 @@ const BookBrowser = () => {
           <div className="mt-12 text-center">
             <div className="inline-flex items-center space-x-2 text-slate-500 text-xs">
               <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
-              <span>Archive status: {books.length} books discovered</span>
+              <span>Archive status: {books.length} sci-fi books discovered</span>
               <div className="w-1 h-1 bg-slate-600 rounded-full" />
               <span>Quantum field: Stable</span>
             </div>
