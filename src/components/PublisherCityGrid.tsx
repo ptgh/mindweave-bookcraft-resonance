@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { PublisherSeries, EnrichedPublisherBook } from "@/services/publisherService";
 import BookPortalModal from "./BookPortalModal";
@@ -209,73 +208,8 @@ const PublisherCityGrid = ({
         <p className="text-slate-400 text-lg">Navigate the digital city of literature—explore publisher districts and activate book portals in the luminous grid.</p>
       </div>
 
-      {/* Enhanced Publisher Selector - Top Left with full width and no truncation */}
-      <div className="absolute top-24 left-8 z-50 w-80">
-        <div className="bg-slate-900/98 border-2 border-cyan-400/40 rounded-lg p-6 backdrop-blur-sm shadow-2xl shadow-cyan-400/20">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
-              <span className="text-cyan-200 font-medium text-sm tracking-wider">PUBLISHER GRID</span>
-            </div>
-            <div className="text-cyan-400/70 text-xs">ONLINE</div>
-          </div>
-          
-          <div className="space-y-4 mb-5">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-300">Active Publishers:</span>
-              <span className="text-cyan-300 font-mono">{buildings.length}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-300">Total Portals:</span>
-              <span className="text-cyan-300 font-mono">
-                {buildings.reduce((total, building) => total + building.books.length, 0)}
-              </span>
-            </div>
-            {selectedBuilding && (
-              <div className="flex items-center justify-between text-sm border-t border-cyan-400/20 pt-4">
-                <span className="text-slate-300">Selected Publisher:</span>
-                <span className="text-cyan-200 font-mono text-sm">
-                  {buildings.find(b => b.id === selectedBuilding)?.publisher}
-                </span>
-              </div>
-            )}
-          </div>
-          
-          <div className="w-full h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent mb-5" />
-          
-          {/* Publisher Selection Area with expanded width and no truncation */}
-          <div>
-            <div className="text-slate-400 text-xs mb-4 tracking-wider">SELECT PUBLISHER:</div>
-            <ScrollArea className="h-64">
-              <div className="space-y-4 pr-4">
-                {buildings.map((building) => (
-                  <button
-                    key={building.id}
-                    className={`p-4 rounded-lg border transition-all duration-300 text-left w-full focus:outline-none focus:ring-2 focus:ring-cyan-400/50 ${
-                      building.isSelected
-                        ? 'bg-cyan-400/20 border-cyan-300/60 text-cyan-200 shadow-lg shadow-cyan-400/25 scale-105'
-                        : 'bg-slate-800/50 border-slate-600/50 text-slate-300 hover:bg-slate-700/60 hover:border-cyan-400/40 hover:text-cyan-200'
-                    }`}
-                    onClick={() => handleBuildingClick(building.id)}
-                    onKeyDown={(e) => handleKeyNavigation(e, building.id)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-base font-medium">{building.publisher}</span>
-                      <div className="flex items-center space-x-2 ml-4">
-                        <span className="text-xs opacity-70 bg-slate-700/50 px-2 py-1 rounded">{building.books.length}</span>
-                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
-        </div>
-      </div>
-
-      {/* Grid Matrix Panel - Centered horizontally */}
-      <div className="absolute top-24 left-1/2 transform -translate-x-1/2 z-50 w-96">
+      {/* Grid Matrix Panel - Moved down to avoid covering title, centered horizontally */}
+      <div className="absolute top-36 left-1/2 transform -translate-x-1/2 z-50 w-96">
         <div className="bg-slate-900/98 border-2 border-cyan-400/40 rounded-lg p-5 backdrop-blur-sm shadow-2xl shadow-cyan-400/20">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
@@ -310,7 +244,72 @@ const PublisherCityGrid = ({
           <div className="space-y-2 text-xs text-slate-500">
             <div>• Scroll to navigate city grid</div>
             <div>• Click buildings to activate portals</div>
-            <div>• Select publisher from left panel</div>
+            <div>• Select publisher from panel below</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Publisher Selector - Moved underneath Grid Matrix, centered */}
+      <div className="absolute top-80 left-1/2 transform -translate-x-1/2 z-50 w-96">
+        <div className="bg-slate-900/98 border-2 border-cyan-400/40 rounded-lg p-6 backdrop-blur-sm shadow-2xl shadow-cyan-400/20">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center space-x-3">
+              <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
+              <span className="text-cyan-200 font-medium text-sm tracking-wider">PUBLISHER GRID</span>
+            </div>
+            <div className="text-cyan-400/70 text-xs">ONLINE</div>
+          </div>
+          
+          <div className="space-y-4 mb-5">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-300">Active Publishers:</span>
+              <span className="text-cyan-300 font-mono">{buildings.length}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-300">Total Portals:</span>
+              <span className="text-cyan-300 font-mono">
+                {buildings.reduce((total, building) => total + building.books.length, 0)}
+              </span>
+            </div>
+            {selectedBuilding && (
+              <div className="flex items-center justify-between text-sm border-t border-cyan-400/20 pt-4">
+                <span className="text-slate-300">Selected Publisher:</span>
+                <span className="text-cyan-200 font-mono text-sm">
+                  {buildings.find(b => b.id === selectedBuilding)?.publisher}
+                </span>
+              </div>
+            )}
+          </div>
+          
+          <div className="w-full h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent mb-5" />
+          
+          {/* Publisher Selection Area */}
+          <div>
+            <div className="text-slate-400 text-xs mb-4 tracking-wider">SELECT PUBLISHER:</div>
+            <ScrollArea className="h-48">
+              <div className="space-y-3 pr-4">
+                {buildings.map((building) => (
+                  <button
+                    key={building.id}
+                    className={`p-4 rounded-lg border transition-all duration-300 text-left w-full focus:outline-none focus:ring-2 focus:ring-cyan-400/50 ${
+                      building.isSelected
+                        ? 'bg-cyan-400/20 border-cyan-300/60 text-cyan-200 shadow-lg shadow-cyan-400/25 scale-105'
+                        : 'bg-slate-800/50 border-slate-600/50 text-slate-300 hover:bg-slate-700/60 hover:border-cyan-400/40 hover:text-cyan-200'
+                    }`}
+                    onClick={() => handleBuildingClick(building.id)}
+                    onKeyDown={(e) => handleKeyNavigation(e, building.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-medium">{building.publisher}</span>
+                      <div className="flex items-center space-x-2 ml-4">
+                        <span className="text-xs opacity-70 bg-slate-700/50 px-2 py-1 rounded">{building.books.length}</span>
+                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </ScrollArea>
           </div>
         </div>
       </div>
