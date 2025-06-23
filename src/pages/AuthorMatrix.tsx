@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
@@ -5,11 +6,11 @@ import SearchInput from "@/components/SearchInput";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { getScifiAuthors, getAuthorBooks, ScifiAuthor, AuthorBook } from "@/services/scifiAuthorsService";
 import { saveTransmission } from "@/services/transmissionsService";
 import { SearchResult } from "@/services/searchService";
+import { BookOpen } from "lucide-react";
 
 const AuthorMatrix = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -154,10 +155,16 @@ const AuthorMatrix = () => {
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-slate-200 text-xl font-medium mb-1">Authors</h2>
+              <p className="text-slate-400 text-sm">Consciousness archives from the science fiction masters</p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-4">
             {/* Authors List */}
             <div className="lg:col-span-1">
-              <h2 className="text-xl font-medium text-slate-200 mb-4">Authors</h2>
               {loading ? (
                 <div className="text-center py-8">
                   <div className="w-8 h-8 mx-auto mb-4 rounded-full border-2 border-blue-400 animate-spin border-t-transparent" />
@@ -166,28 +173,26 @@ const AuthorMatrix = () => {
               ) : (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {authors.slice(0, 50).map(author => (
-                    <button
+                    <div
                       key={author.id}
-                      onClick={() => handleAuthorSelect(author)}
-                      className={`w-full text-left p-3 rounded-lg transition-colors ${
-                        selectedAuthor?.id === author.id
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50'
+                      className={`bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors cursor-pointer ${
+                        selectedAuthor?.id === author.id ? 'ring-2 ring-blue-400' : ''
                       }`}
+                      onClick={() => handleAuthorSelect(author)}
                     >
-                      <div className="font-medium">{author.name}</div>
-                      <div className="text-sm opacity-75">{author.nationality}</div>
-                    </button>
+                      <div className="font-medium text-slate-200 text-sm">{author.name}</div>
+                      <div className="text-xs text-slate-400 mt-1">{author.nationality}</div>
+                    </div>
                   ))}
                 </div>
               )}
             </div>
 
             {/* Author Details & Books */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-3">
               {selectedAuthor ? (
                 <div>
-                  <div className="mb-6">
+                  <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 mb-6">
                     <h2 className="text-2xl font-light text-slate-200 mb-2">{selectedAuthor.name}</h2>
                     <p className="text-slate-400 mb-4">{selectedAuthor.nationality}</p>
                     {selectedAuthor.bio && (
@@ -207,52 +212,78 @@ const AuthorMatrix = () => {
 
                   {/* Books from Google Books API */}
                   <div>
-                    <h3 className="text-xl font-medium text-slate-200 mb-4">Available Books</h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-slate-200 text-xl font-medium mb-1">Available Books</h3>
+                        <p className="text-slate-400 text-sm">Transmissions ready for signal logging</p>
+                      </div>
+                    </div>
+                    
                     {booksLoading ? (
                       <div className="text-center py-8">
                         <div className="w-8 h-8 mx-auto mb-4 rounded-full border-2 border-blue-400 animate-spin border-t-transparent" />
                         <p className="text-slate-400 text-sm">Loading book data...</p>
                       </div>
                     ) : authorBooks.length > 0 ? (
-                      <div className="grid md:grid-cols-2 gap-4">
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {authorBooks.map(book => (
-                          <Card key={book.id} className="p-4 bg-slate-800/50 border-slate-700">
-                            <div className="flex space-x-3">
-                              {book.cover_url && (
-                                <img
-                                  src={book.cover_url}
-                                  alt={book.title}
-                                  className="w-16 h-24 object-cover rounded bg-slate-700 flex-shrink-0"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none';
-                                  }}
-                                />
-                              )}
+                          <div key={book.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors">
+                            <div className="flex items-start space-x-4">
+                              <div className="w-10 h-14 flex-shrink-0 rounded overflow-hidden">
+                                {book.cover_url ? (
+                                  <img
+                                    src={book.cover_url}
+                                    alt={book.title}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      target.style.display = 'none';
+                                      target.nextElementSibling?.classList.remove('hidden');
+                                    }}
+                                  />
+                                ) : null}
+                                <div className={`w-full h-full bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800 flex flex-col items-center justify-center ${book.cover_url ? 'hidden' : ''}`}>
+                                  <div className="w-3 h-3 mb-1 rounded-sm bg-blue-400/20 flex items-center justify-center">
+                                    <BookOpen className="w-2 h-2 text-blue-400 opacity-60" />
+                                  </div>
+                                  <div className="flex space-x-0.5">
+                                    <div className="w-0.5 h-0.5 bg-blue-400 rounded-full opacity-40"></div>
+                                    <div className="w-0.5 h-0.5 bg-cyan-400 rounded-full opacity-60"></div>
+                                    <div className="w-0.5 h-0.5 bg-blue-400 rounded-full opacity-40"></div>
+                                  </div>
+                                </div>
+                              </div>
                               <div className="flex-1 min-w-0">
-                                <h4 className="font-medium text-slate-200 mb-1">{book.title}</h4>
+                                <h4 className="font-medium text-slate-200 text-sm mb-1 leading-tight">{book.title}</h4>
                                 {book.subtitle && (
-                                  <p className="text-sm text-slate-400 mb-2">{book.subtitle}</p>
+                                  <p className="text-xs text-slate-400 mb-2">{book.subtitle}</p>
                                 )}
                                 {book.description && (
-                                  <p className="text-xs text-slate-500 mb-3 line-clamp-3">
+                                  <p className="text-xs text-slate-500 mb-3 line-clamp-2">
                                     {book.description}
                                   </p>
                                 )}
                                 <Button
                                   size="sm"
                                   onClick={() => addToTransmissions(book)}
-                                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
+                                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-7"
                                 >
-                                  Add to Transmissions
+                                  Log Signal
                                 </Button>
                               </div>
                             </div>
-                          </Card>
+                          </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-8">
-                        <p className="text-slate-400">No books found for this author.</p>
+                      <div className="text-center py-12">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-full border-2 border-cyan-400 animate-pulse" />
+                        </div>
+                        <h3 className="text-slate-300 text-lg font-medium mb-2">No Books Found</h3>
+                        <p className="text-slate-400 text-sm">
+                          No available transmissions found for this consciousness node
+                        </p>
                       </div>
                     )}
                   </div>
