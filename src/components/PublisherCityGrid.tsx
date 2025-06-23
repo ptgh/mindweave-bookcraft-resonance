@@ -67,7 +67,7 @@ const PublisherCityGrid = ({
         name: publisher,
         publisher,
         books: data.books,
-        x: index * 700 + 500,
+        x: index * 700 + 600,
         width: 320,
         height,
         isSelected: selectedBuilding === `building-${publisher}`
@@ -106,7 +106,7 @@ const PublisherCityGrid = ({
 
   return (
     <div 
-      className="relative w-full h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 overflow-hidden"
+      className="fixed inset-0 top-16 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 overflow-hidden"
       onWheel={handleWheelScroll}
     >
       {/* Enhanced Tron Grid Background with City Blocks */}
@@ -203,8 +203,14 @@ const PublisherCityGrid = ({
         />
       </svg>
 
-      {/* Enhanced Publisher Selector - Top Left with expanded layout and no truncation */}
-      <div className="absolute top-6 left-6 z-50 max-w-md">
+      {/* Page Title and Description */}
+      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 text-center z-50">
+        <h1 className="text-4xl font-light text-slate-200 mb-2">Publisher Consciousness Grid</h1>
+        <p className="text-slate-400 text-lg">Navigate the digital city of literature—explore publisher districts and activate book portals in the luminous grid.</p>
+      </div>
+
+      {/* Enhanced Publisher Selector - Top Left with full width and no truncation */}
+      <div className="absolute top-24 left-8 z-50 w-80">
         <div className="bg-slate-900/98 border-2 border-cyan-400/40 rounded-lg p-6 backdrop-blur-sm shadow-2xl shadow-cyan-400/20">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center space-x-3">
@@ -240,34 +246,36 @@ const PublisherCityGrid = ({
           {/* Publisher Selection Area with expanded width and no truncation */}
           <div>
             <div className="text-slate-400 text-xs mb-4 tracking-wider">SELECT PUBLISHER:</div>
-            <div className="space-y-4">
-              {buildings.map((building) => (
-                <button
-                  key={building.id}
-                  className={`p-4 rounded-lg border transition-all duration-300 text-left w-full min-w-0 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 ${
-                    building.isSelected
-                      ? 'bg-cyan-400/20 border-cyan-300/60 text-cyan-200 shadow-lg shadow-cyan-400/25 scale-105'
-                      : 'bg-slate-800/50 border-slate-600/50 text-slate-300 hover:bg-slate-700/60 hover:border-cyan-400/40 hover:text-cyan-200'
-                  }`}
-                  onClick={() => handleBuildingClick(building.id)}
-                  onKeyDown={(e) => handleKeyNavigation(e, building.id)}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-base font-medium whitespace-nowrap">{building.publisher}</span>
-                    <div className="flex items-center space-x-2 ml-4">
-                      <span className="text-xs opacity-70 bg-slate-700/50 px-2 py-1 rounded">{building.books.length}</span>
-                      <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
+            <ScrollArea className="h-64">
+              <div className="space-y-4 pr-4">
+                {buildings.map((building) => (
+                  <button
+                    key={building.id}
+                    className={`p-4 rounded-lg border transition-all duration-300 text-left w-full focus:outline-none focus:ring-2 focus:ring-cyan-400/50 ${
+                      building.isSelected
+                        ? 'bg-cyan-400/20 border-cyan-300/60 text-cyan-200 shadow-lg shadow-cyan-400/25 scale-105'
+                        : 'bg-slate-800/50 border-slate-600/50 text-slate-300 hover:bg-slate-700/60 hover:border-cyan-400/40 hover:text-cyan-200'
+                    }`}
+                    onClick={() => handleBuildingClick(building.id)}
+                    onKeyDown={(e) => handleKeyNavigation(e, building.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-medium">{building.publisher}</span>
+                      <div className="flex items-center space-x-2 ml-4">
+                        <span className="text-xs opacity-70 bg-slate-700/50 px-2 py-1 rounded">{building.books.length}</span>
+                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
+                      </div>
                     </div>
-                  </div>
-                </button>
-              ))}
-            </div>
+                  </button>
+                ))}
+              </div>
+            </ScrollArea>
           </div>
         </div>
       </div>
 
-      {/* Grid Matrix Panel - Moved toward center for better spacing */}
-      <div className="absolute top-6 right-1/4 z-50 w-96">
+      {/* Grid Matrix Panel - Centered horizontally */}
+      <div className="absolute top-24 left-1/2 transform -translate-x-1/2 z-50 w-96">
         <div className="bg-slate-900/98 border-2 border-cyan-400/40 rounded-lg p-5 backdrop-blur-sm shadow-2xl shadow-cyan-400/20">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
@@ -407,9 +415,9 @@ const PublisherCityGrid = ({
         ))}
       </div>
 
-      {/* Book Portals Panel - Right side with careful positioning to avoid all overlaps */}
+      {/* Book Portals Panel - Right side with full height utilization */}
       {selectedBuildingData && (
-        <div className="absolute right-6 top-6 bottom-6 w-96 bg-slate-900/98 border-l-2 border-cyan-400/30 backdrop-blur-sm overflow-hidden shadow-2xl shadow-cyan-400/10 z-45">
+        <div className="fixed right-8 top-24 bottom-8 w-96 bg-slate-900/98 border-2 border-cyan-400/30 rounded-lg backdrop-blur-sm overflow-hidden shadow-2xl shadow-cyan-400/10 z-50">
           <div className="p-5 border-b-2 border-cyan-400/20 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
@@ -426,7 +434,7 @@ const PublisherCityGrid = ({
             </div>
           </div>
           
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 h-full">
             <div className="p-5 space-y-6">
               {selectedBuildingData.books.map((book) => (
                 <div

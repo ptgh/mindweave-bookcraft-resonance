@@ -73,37 +73,23 @@ const PublisherResonance = () => {
 
   return (
     <AuthWrapper fallback={<Auth />}>
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="min-h-screen w-full overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
         <Header />
         
-        <main className="container mx-auto px-6 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-light text-slate-200 mb-2">Publisher Consciousness Grid</h1>
-            <p className="text-slate-400 text-lg">Navigate the digital city of literature—explore publisher districts and activate book portals in the luminous grid.</p>
-          </div>
-
-          {seriesLoading ? (
-            <div className="text-center py-12">
+        {seriesLoading ? (
+          <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+            <div className="text-center">
               <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full mx-auto mb-4 animate-spin"></div>
               <p className="text-slate-400">Initializing grid matrix...</p>
             </div>
-          ) : (
-            <PublisherCityGrid
-              series={publisherSeries}
-              books={allBooks}
-              onAddBook={handleAddFromPublisher}
-            />
-          )}
-
-          <div className="mt-16 text-center">
-            <div className="inline-flex items-center space-x-2 text-slate-500 text-xs">
-              <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
-              <span>Grid Status: Online</span>
-              <div className="w-1 h-1 bg-slate-600 rounded-full" />
-              <span>Literary Portals: Synchronized</span>
-            </div>
           </div>
-        </main>
+        ) : (
+          <PublisherCityGrid
+            series={publisherSeries}
+            books={allBooks}
+            onAddBook={handleAddFromPublisher}
+          />
+        )}
       </div>
     </AuthWrapper>
   );
