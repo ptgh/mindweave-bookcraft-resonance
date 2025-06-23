@@ -77,6 +77,16 @@ const Header = () => {
             >
               Chrono Thread
             </Link>
+            <Link
+              to="/test"
+              className={`transition-colors text-sm font-medium ${
+                location.pathname === '/test' 
+                  ? 'text-yellow-400' 
+                  : 'text-slate-300 hover:text-yellow-400'
+              }`}
+            >
+              Test
+            </Link>
           </nav>
         </div>
       </div>
