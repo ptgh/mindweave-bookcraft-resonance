@@ -23,6 +23,7 @@ const AuthorSearchInput = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [allAuthors, setAllAuthors] = useState<ScifiAuthor[]>([]);
+  const [justSelected, setJustSelected] = useState(false);
 
   // Load all authors on component mount
   useEffect(() => {
@@ -39,7 +40,13 @@ const AuthorSearchInput = ({
 
   // Filter authors based on search input
   useEffect(() => {
-    console.log('Author search effect triggered, value:', value, 'length:', value.length);
+    console.log('Author search effect triggered, value:', value, 'length:', value.length, 'justSelected:', justSelected);
+    
+    // If we just selected an author, don't trigger search
+    if (justSelected) {
+      console.log('Skipping search due to recent selection');
+      return;
+    }
     
     if (value.length < 1) {
       console.log('Clearing suggestions due to empty value');
@@ -61,20 +68,26 @@ const AuthorSearchInput = ({
         return filtered;
       },
       (results) => {
-        console.log('Setting author suggestions:', results);
-        setSuggestions(results);
-        setShowSuggestions(results.length > 0);
+        // Don't show results if we just made a selection
+        if (!justSelected) {
+          console.log('Setting author suggestions:', results);
+          setSuggestions(results);
+          setShowSuggestions(results.length > 0);
+        }
         setIsLoading(false);
       }
     );
 
     setIsLoading(true);
-  }, [value, allAuthors]);
+  }, [value, allAuthors, justSelected]);
 
   const handleSuggestionClick = (author: ScifiAuthor) => {
     console.log('Author selected:', author);
     
-    // Cancel any pending searches first
+    // Set the flag to prevent search from triggering
+    setJustSelected(true);
+    
+    // Cancel any pending searches
     const currentSearchKey = `author-search-${value}`;
     searchDebouncer.cancel(currentSearchKey);
     
@@ -83,15 +96,17 @@ const AuthorSearchInput = ({
     setSuggestions([]);
     setShowSuggestions(false);
     
-    // Clear the input value - this should trigger the parent to update
-    onValueChange('');
-    
     // Notify parent component of selection
     onAuthorSelect(author);
+    
+    // Reset the flag after a short delay
+    setTimeout(() => {
+      setJustSelected(false);
+    }, 100);
   };
 
   const handleInputFocus = () => {
-    if (suggestions.length > 0 && value.length >= 1) {
+    if (suggestions.length > 0 && value.length >= 1 && !justSelected) {
       setShowSuggestions(true);
     }
   };
@@ -101,25 +116,34 @@ const AuthorSearchInput = ({
     setTimeout(() => setShowSuggestions(false), 200);
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    // Reset the selection flag when user starts typing again
+    if (justSelected && newValue !== value) {
+      setJustSelected(false);
+    }
+    onValueChange(newValue);
+  };
+
   return (
     <div className="relative">
       <Input
         placeholder={placeholder}
         value={value}
-        onChange={(e) => onValueChange(e.target.value)}
+        onChange={handleInputChange}
         onFocus={handleInputFocus}
         onBlur={handleInputBlur}
         className="bg-slate-700 border-slate-600 text-slate-200"
         disabled={disabled}
       />
       
-      {isLoading && (
+      {isLoading && !justSelected && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
           <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
         </div>
       )}
       
-      {showSuggestions && suggestions.length > 0 && (
+      {showSuggestions && suggestions.length > 0 && !justSelected && (
         <div className="absolute z-50 w-full mt-1 bg-slate-700 border border-slate-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
           {suggestions.map((author) => (
             <button
