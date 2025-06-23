@@ -58,16 +58,16 @@ const PublisherCityGrid = ({
 
     const newBuildings: PublisherBuilding[] = Object.entries(publisherGroups).map(([publisher, data], index) => {
       const bookCount = data.books.length;
-      const baseHeight = 180;
-      const height = Math.max(baseHeight, baseHeight + (bookCount * 6));
+      const baseHeight = 200;
+      const height = Math.max(baseHeight, baseHeight + (bookCount * 8));
       
       return {
         id: `building-${publisher}`,
         name: publisher,
         publisher,
         books: data.books,
-        x: index * 400 + 200,
-        width: 280,
+        x: index * 450 + 250,
+        width: 320,
         height,
         isSelected: selectedBuilding === `building-${publisher}`
       };
@@ -85,10 +85,10 @@ const PublisherCityGrid = ({
   };
 
   const handleScroll = (direction: 'left' | 'right') => {
-    const scrollAmount = 400;
+    const scrollAmount = 450;
     const newPosition = direction === 'left' 
       ? Math.max(0, scrollPosition - scrollAmount)
-      : Math.min((buildings.length - 1) * 400, scrollPosition + scrollAmount);
+      : Math.min((buildings.length - 1) * 450, scrollPosition + scrollAmount);
     setScrollPosition(newPosition);
   };
 
@@ -96,27 +96,54 @@ const PublisherCityGrid = ({
 
   return (
     <div className="relative w-full h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
-      {/* Enhanced Tron Grid Background */}
-      <div 
-        className="absolute inset-0 opacity-40"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(34, 211, 238, 0.4) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(34, 211, 238, 0.4) 1px, transparent 1px),
-            linear-gradient(rgba(34, 211, 238, 0.15) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(34, 211, 238, 0.15) 1px, transparent 1px)
-          `,
-          backgroundSize: '80px 80px, 80px 80px, 20px 20px, 20px 20px'
-        }}
-      />
+      {/* Enhanced Tron Grid Background with City Blocks */}
+      <div className="absolute inset-0">
+        {/* Main grid lines */}
+        <div 
+          className="absolute inset-0 opacity-30"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(34, 211, 238, 0.4) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(34, 211, 238, 0.4) 1px, transparent 1px),
+              linear-gradient(rgba(34, 211, 238, 0.15) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(34, 211, 238, 0.15) 1px, transparent 1px)
+            `,
+            backgroundSize: '100px 100px, 100px 100px, 25px 25px, 25px 25px'
+          }}
+        />
+        
+        {/* City blocks/buildings in background */}
+        <div className="absolute inset-0 opacity-20">
+          {Array.from({ length: 50 }, (_, i) => {
+            const x = (i % 10) * 120 + 50;
+            const z = Math.floor(i / 10) * 80 + 400;
+            const height = 40 + Math.random() * 60;
+            const width = 60 + Math.random() * 40;
+            
+            return (
+              <div
+                key={`city-block-${i}`}
+                className="absolute border border-cyan-400/20 bg-gradient-to-t from-cyan-400/5 to-transparent"
+                style={{
+                  left: x,
+                  bottom: z,
+                  width: width,
+                  height: height,
+                  transform: `perspective(1000px) rotateX(${Math.random() * 5}deg)`,
+                }}
+              />
+            );
+          })}
+        </div>
+      </div>
 
       {/* Perspective Grid Lines - Enhanced */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none">
         {/* Horizontal perspective lines */}
-        {Array.from({ length: 12 }, (_, i) => {
-          const y = 300 + (i * 40);
-          const perspective = Math.max(0.3, 1 - (i * 0.08));
-          const opacity = Math.max(0.2, perspective);
+        {Array.from({ length: 15 }, (_, i) => {
+          const y = 300 + (i * 35);
+          const perspective = Math.max(0.2, 1 - (i * 0.06));
+          const opacity = Math.max(0.15, perspective);
           return (
             <line
               key={`h-${i}`}
@@ -127,15 +154,15 @@ const PublisherCityGrid = ({
               stroke={`rgba(34, 211, 238, ${opacity})`}
               strokeWidth={perspective * 2}
               className="animate-pulse"
-              style={{ animationDelay: `${i * 0.3}s`, animationDuration: '4s' }}
+              style={{ animationDelay: `${i * 0.2}s`, animationDuration: '4s' }}
             />
           );
         })}
         
         {/* Vertical perspective lines with depth */}
-        {Array.from({ length: 20 }, (_, i) => {
-          const x = (i * 100) - scrollPosition;
-          const endX = x + (i % 2 === 0 ? 30 : -30);
+        {Array.from({ length: 25 }, (_, i) => {
+          const x = (i * 80) - scrollPosition;
+          const endX = x + (i % 2 === 0 ? 25 : -25);
           const opacity = Math.max(0.1, 1 - Math.abs(x - window.innerWidth/2) / (window.innerWidth/2));
           return (
             <line
@@ -144,7 +171,7 @@ const PublisherCityGrid = ({
               y1="300"
               x2={endX}
               y2="100%"
-              stroke={`rgba(34, 211, 238, ${opacity * 0.4})`}
+              stroke={`rgba(34, 211, 238, ${opacity * 0.3})`}
               strokeWidth="1"
             />
           );
@@ -156,12 +183,48 @@ const PublisherCityGrid = ({
           y1="300"
           x2="100%"
           y2="300"
-          stroke="rgba(34, 211, 238, 0.6)"
-          strokeWidth="2"
+          stroke="rgba(34, 211, 238, 0.5)"
+          strokeWidth="3"
           className="animate-pulse"
           style={{ animationDuration: '3s' }}
         />
       </svg>
+
+      {/* Enhanced Publisher Selector - Top Right */}
+      <div className="absolute top-8 right-8 z-30">
+        <div className="bg-slate-900/90 border-2 border-cyan-400/40 rounded-lg p-4 backdrop-blur-sm min-w-64">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
+              <span className="text-cyan-200 font-medium text-sm tracking-wider">GRID MATRIX</span>
+            </div>
+            <div className="text-cyan-400/70 text-xs">ACTIVE</div>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-300">Publishers Online:</span>
+              <span className="text-cyan-300 font-mono">{buildings.length}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-300">Literary Portals:</span>
+              <span className="text-cyan-300 font-mono">
+                {buildings.reduce((total, building) => total + building.books.length, 0)}
+              </span>
+            </div>
+            {selectedBuilding && (
+              <div className="flex items-center justify-between text-sm border-t border-cyan-400/20 pt-2 mt-2">
+                <span className="text-slate-300">Selected:</span>
+                <span className="text-cyan-200 font-mono text-xs">
+                  {buildings.find(b => b.id === selectedBuilding)?.publisher}
+                </span>
+              </div>
+            )}
+          </div>
+          
+          <div className="w-full h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent mt-3" />
+        </div>
+      </div>
 
       {/* City Buildings */}
       <div 
@@ -192,46 +255,45 @@ const PublisherCityGrid = ({
                 <div 
                   className={`absolute inset-0 transition-all duration-500 ${
                     building.isSelected
-                      ? 'border-4 border-cyan-300 shadow-2xl shadow-cyan-400/40 bg-gradient-to-t from-cyan-400/15 via-cyan-400/10 to-cyan-400/5'
-                      : 'border-2 border-cyan-400/70 hover:border-cyan-300/90 hover:shadow-lg hover:shadow-cyan-400/20'
+                      ? 'border-4 border-cyan-300 shadow-2xl shadow-cyan-400/50 bg-gradient-to-t from-cyan-400/20 via-cyan-400/15 to-cyan-400/8'
+                      : 'border-2 border-cyan-400/60 hover:border-cyan-300/80 hover:shadow-lg hover:shadow-cyan-400/25'
                   }`}
                   style={{
                     background: building.isSelected 
-                      ? 'linear-gradient(180deg, rgba(34, 211, 238, 0.15) 0%, rgba(34, 211, 238, 0.08) 50%, rgba(34, 211, 238, 0.12) 100%)'
-                      : 'linear-gradient(180deg, rgba(34, 211, 238, 0.05) 0%, rgba(34, 211, 238, 0.02) 100%)'
+                      ? 'linear-gradient(180deg, rgba(34, 211, 238, 0.2) 0%, rgba(34, 211, 238, 0.12) 50%, rgba(34, 211, 238, 0.15) 100%)'
+                      : 'linear-gradient(180deg, rgba(34, 211, 238, 0.08) 0%, rgba(34, 211, 238, 0.04) 100%)'
                   }}
                 />
                 
-                {/* Building internal grid pattern */}
-                <div 
-                  className={`absolute inset-4 transition-opacity duration-500 ${
-                    building.isSelected ? 'opacity-60' : 'opacity-30'
-                  }`}
-                  style={{
-                    backgroundImage: `
-                      linear-gradient(rgba(34, 211, 238, 0.4) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(34, 211, 238, 0.4) 1px, transparent 1px)
-                    `,
-                    backgroundSize: '30px 30px'
-                  }}
-                />
-
-                {/* Windows/segments for visual depth */}
-                <div className="absolute inset-6 flex flex-col justify-between">
-                  {Array.from({ length: Math.floor(building.height / 60) }, (_, i) => (
+                {/* Building internal structure - floors */}
+                <div className="absolute inset-4 space-y-2">
+                  {Array.from({ length: Math.floor(building.height / 40) }, (_, i) => (
                     <div 
                       key={i} 
-                      className={`h-8 border border-cyan-400/30 transition-all duration-300 ${
-                        building.isSelected ? 'bg-cyan-400/10 border-cyan-300/50' : 'bg-cyan-400/5'
+                      className={`h-6 border-l-2 border-r-2 border-cyan-400/30 transition-all duration-300 flex items-center ${
+                        building.isSelected ? 'bg-cyan-400/15 border-cyan-300/60' : 'bg-cyan-400/8'
                       }`}
-                    />
+                    >
+                      {/* Floor windows */}
+                      <div className="flex space-x-2 ml-2">
+                        {Array.from({ length: 4 }, (_, j) => (
+                          <div 
+                            key={j}
+                            className={`w-2 h-2 ${
+                              building.isSelected ? 'bg-cyan-300/80' : 'bg-cyan-400/50'
+                            } rounded-full animate-pulse`}
+                            style={{ animationDelay: `${(i + j) * 0.1}s` }}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
                 
                 {/* Publisher Label */}
-                <div className="absolute -bottom-12 left-0 right-0 text-center">
+                <div className="absolute -bottom-16 left-0 right-0 text-center">
                   <div 
-                    className={`text-sm font-light tracking-widest transition-all duration-500 ${
+                    className={`text-base font-light tracking-widest transition-all duration-500 ${
                       building.isSelected
                         ? 'text-cyan-200 text-shadow-lg shadow-cyan-400/70 scale-110'
                         : 'text-cyan-400/90'
@@ -242,13 +304,16 @@ const PublisherCityGrid = ({
                   <div className={`w-full h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent mt-2 transition-all duration-500 ${
                     building.isSelected ? 'via-cyan-300/80' : ''
                   }`} />
+                  <div className="text-cyan-400/60 text-xs mt-1 font-mono">
+                    {building.books.length} PORTALS
+                  </div>
                 </div>
 
                 {/* Enhanced pulsing effect when selected */}
                 {building.isSelected && (
                   <>
-                    <div className="absolute -inset-4 border-2 border-cyan-400/40 animate-ping" />
-                    <div className="absolute -inset-8 border border-cyan-400/20 animate-ping" style={{ animationDelay: '0.5s' }} />
+                    <div className="absolute -inset-6 border-2 border-cyan-400/30 animate-ping" />
+                    <div className="absolute -inset-10 border border-cyan-400/15 animate-ping" style={{ animationDelay: '0.5s' }} />
                   </>
                 )}
               </div>
@@ -258,18 +323,18 @@ const PublisherCityGrid = ({
       </div>
 
       {/* Enhanced Navigation Controls */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-6">
+      <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 flex space-x-8">
         <button
           onClick={() => handleScroll('left')}
-          className="w-12 h-12 rounded-full border-2 border-cyan-400/60 bg-slate-900/70 text-cyan-300 hover:bg-cyan-400/15 hover:border-cyan-300 hover:text-cyan-200 transition-all duration-300 flex items-center justify-center backdrop-blur-sm text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-14 h-14 rounded-full border-2 border-cyan-400/60 bg-slate-900/80 text-cyan-300 hover:bg-cyan-400/15 hover:border-cyan-300 hover:text-cyan-200 transition-all duration-300 flex items-center justify-center backdrop-blur-sm text-xl disabled:opacity-30 disabled:cursor-not-allowed"
           disabled={scrollPosition === 0}
         >
           ←
         </button>
         <button
           onClick={() => handleScroll('right')}
-          className="w-12 h-12 rounded-full border-2 border-cyan-400/60 bg-slate-900/70 text-cyan-300 hover:bg-cyan-400/15 hover:border-cyan-300 hover:text-cyan-200 transition-all duration-300 flex items-center justify-center backdrop-blur-sm text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={scrollPosition >= (buildings.length - 1) * 400}
+          className="w-14 h-14 rounded-full border-2 border-cyan-400/60 bg-slate-900/80 text-cyan-300 hover:bg-cyan-400/15 hover:border-cyan-300 hover:text-cyan-200 transition-all duration-300 flex items-center justify-center backdrop-blur-sm text-xl disabled:opacity-30 disabled:cursor-not-allowed"
+          disabled={scrollPosition >= (buildings.length - 1) * 450}
         >
           →
         </button>
@@ -345,16 +410,6 @@ const PublisherCityGrid = ({
           </div>
         </div>
       )}
-
-      {/* Enhanced Status Display */}
-      <div className="absolute top-6 left-6">
-        <div className="flex items-center space-x-3 text-slate-400 text-sm">
-          <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
-          <span>Grid Matrix: Active</span>
-          <div className="w-2 h-2 bg-slate-600 rounded-full" />
-          <span>Publishers Online: {buildings.length}</span>
-        </div>
-      </div>
 
       {/* Book Detail Modal */}
       {selectedBook && (
