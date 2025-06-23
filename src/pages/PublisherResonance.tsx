@@ -4,14 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
-import PublisherConsciousnessGrid from "@/components/PublisherConsciousnessGrid";
+import PublisherCityGrid from "@/components/PublisherCityGrid";
 import { getPublisherSeries, getPublisherBooks, PublisherSeries, EnrichedPublisherBook } from "@/services/publisherService";
 import { saveTransmission } from "@/services/transmissionsService";
 import { useToast } from "@/hooks/use-toast";
 
 const PublisherResonance = () => {
   const [allBooks, setAllBooks] = useState<EnrichedPublisherBook[]>([]);
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const { toast } = useToast();
 
   // Get all publisher series
@@ -60,7 +59,7 @@ const PublisherResonance = () => {
       
       await saveTransmission(newBook);
       toast({
-        title: "Signal Added",
+        title: "Portal Activated",
         description: `"${book.title}" has been added to your transmissions.`,
       });
     } catch (error: any) {
@@ -72,14 +71,6 @@ const PublisherResonance = () => {
     }
   };
 
-  const handleFilterToggle = (filterId: string) => {
-    setActiveFilters(prev => 
-      prev.includes(filterId) 
-        ? prev.filter(id => id !== filterId)
-        : [...prev, filterId]
-    );
-  };
-
   return (
     <AuthWrapper fallback={<Auth />}>
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
@@ -87,21 +78,19 @@ const PublisherResonance = () => {
         
         <main className="container mx-auto px-6 py-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-light text-slate-200 mb-2">Publisher Consciousness Web</h1>
-            <p className="text-slate-400 text-lg">Navigate the living grid of literary consciousness—explore publishers, series, and your reading pathways in one seamless web.</p>
+            <h1 className="text-3xl font-light text-slate-200 mb-2">Publisher Consciousness Grid</h1>
+            <p className="text-slate-400 text-lg">Navigate the digital city of literature—explore publisher districts and activate book portals in the luminous grid.</p>
           </div>
 
           {seriesLoading ? (
             <div className="text-center py-12">
               <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full mx-auto mb-4 animate-spin"></div>
-              <p className="text-slate-400">Initializing consciousness grid...</p>
+              <p className="text-slate-400">Initializing grid matrix...</p>
             </div>
           ) : (
-            <PublisherConsciousnessGrid
+            <PublisherCityGrid
               series={publisherSeries}
               books={allBooks}
-              activeFilters={activeFilters}
-              onFilterToggle={handleFilterToggle}
               onAddBook={handleAddFromPublisher}
             />
           )}
@@ -109,9 +98,9 @@ const PublisherResonance = () => {
           <div className="mt-16 text-center">
             <div className="inline-flex items-center space-x-2 text-slate-500 text-xs">
               <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
-              <span>Grid Matrix: Active</span>
+              <span>Grid Status: Online</span>
               <div className="w-1 h-1 bg-slate-600 rounded-full" />
-              <span>Neural Pathways: Synchronized</span>
+              <span>Literary Portals: Synchronized</span>
             </div>
           </div>
         </main>
