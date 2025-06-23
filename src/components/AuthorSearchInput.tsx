@@ -42,6 +42,7 @@ const AuthorSearchInput = ({
     if (value.length < 1) {
       setSuggestions([]);
       setShowSuggestions(false);
+      setIsLoading(false);
       return;
     }
 
@@ -66,9 +67,23 @@ const AuthorSearchInput = ({
   }, [value, allAuthors]);
 
   const handleSuggestionClick = (author: ScifiAuthor) => {
+    console.log('Author selected:', author);
     onAuthorSelect(author);
-    onValueChange(author.name);
+    // Clear the search state
+    setSuggestions([]);
     setShowSuggestions(false);
+    setIsLoading(false);
+  };
+
+  const handleInputFocus = () => {
+    if (suggestions.length > 0 && value.length >= 1) {
+      setShowSuggestions(true);
+    }
+  };
+
+  const handleInputBlur = () => {
+    // Delay hiding suggestions to allow click events
+    setTimeout(() => setShowSuggestions(false), 200);
   };
 
   return (
@@ -77,8 +92,8 @@ const AuthorSearchInput = ({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onValueChange(e.target.value)}
-        onFocus={() => setShowSuggestions(suggestions.length > 0)}
-        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+        onFocus={handleInputFocus}
+        onBlur={handleInputBlur}
         className="bg-slate-700 border-slate-600 text-slate-200"
         disabled={disabled}
       />
