@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { PublisherSeries, EnrichedPublisherBook } from "@/services/publisherService";
 import BookPortalModal from "./BookPortalModal";
@@ -209,110 +208,192 @@ const PublisherCityGrid = ({
         <p className="text-slate-400 text-lg">Navigate the digital city of literature—explore publisher districts and activate book portals in the luminous grid.</p>
       </div>
 
-      {/* Grid Matrix Panel - Top left, no overlap with title */}
-      <div className="absolute top-24 left-8 z-50 w-80">
-        <div className="bg-slate-900/98 border-2 border-cyan-400/40 rounded-lg p-4 backdrop-blur-sm shadow-2xl shadow-cyan-400/20">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
-              <span className="text-cyan-200 font-medium text-sm tracking-wider">GRID MATRIX</span>
-            </div>
-            <div className="text-cyan-400/70 text-xs">ACTIVE</div>
-          </div>
+      {/* Main Panel Container - Properly spaced and sized */}
+      <div className="absolute top-32 inset-x-0 z-50 flex justify-center">
+        <div className="flex flex-row justify-center items-start gap-16 w-full max-w-screen-2xl mx-auto px-12">
           
-          <div className="space-y-2 mb-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-300">Grid Status:</span>
-              <span className="text-cyan-300 font-mono">SYNCHRONIZED</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-300">Navigation Mode:</span>
-              <span className="text-cyan-300 font-mono">3D PERSPECTIVE</span>
-            </div>
-            {selectedBuilding && (
-              <div className="flex items-center justify-between text-sm border-t border-cyan-400/20 pt-2">
-                <span className="text-slate-300">Focus:</span>
-                <span className="text-cyan-200 font-mono text-xs">
-                  {buildings.find(b => b.id === selectedBuilding)?.publisher}
-                </span>
+          {/* Grid Matrix Panel - Left side with proper spacing */}
+          <div className="min-w-[380px] max-w-[380px] flex-shrink-0">
+            <div className="bg-slate-900/98 border-2 border-cyan-400/40 rounded-lg p-6 backdrop-blur-sm shadow-2xl shadow-cyan-400/20">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
+                  <span className="text-cyan-200 font-medium text-sm tracking-wider">GRID MATRIX</span>
+                </div>
+                <div className="text-cyan-400/70 text-xs">ACTIVE</div>
               </div>
-            )}
+              
+              <div className="space-y-3 mb-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-300">Grid Status:</span>
+                  <span className="text-cyan-300 font-mono">SYNCHRONIZED</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-300">Navigation Mode:</span>
+                  <span className="text-cyan-300 font-mono">3D PERSPECTIVE</span>
+                </div>
+                {selectedBuilding && (
+                  <div className="flex items-center justify-between text-sm border-t border-cyan-400/20 pt-3">
+                    <span className="text-slate-300">Focus:</span>
+                    <span className="text-cyan-200 font-mono text-xs">
+                      {buildings.find(b => b.id === selectedBuilding)?.publisher}
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="w-full h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent mb-4" />
+              
+              <div className="text-slate-400 text-xs mb-3 tracking-wider">GRID INSTRUCTIONS:</div>
+              <div className="space-y-2 text-xs text-slate-500">
+                <div>• Scroll to navigate city grid</div>
+                <div>• Click buildings to activate portals</div>
+                <div>• Select publisher from central panel</div>
+              </div>
+            </div>
           </div>
-          
-          <div className="w-full h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent mb-3" />
-          
-          <div className="text-slate-400 text-xs mb-2 tracking-wider">GRID INSTRUCTIONS:</div>
-          <div className="space-y-1 text-xs text-slate-500">
-            <div>• Scroll to navigate city grid</div>
-            <div>• Click buildings to activate portals</div>
-            <div>• Select publisher from central panel</div>
-          </div>
-        </div>
-      </div>
 
-      {/* Publisher Selector - CENTERED, with proper spacing */}
-      <div className="absolute top-28 left-1/2 transform -translate-x-1/2 z-50 w-[500px]">
-        <div className="bg-slate-900/98 border-2 border-cyan-400/40 rounded-lg p-6 backdrop-blur-sm shadow-2xl shadow-cyan-400/20">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
-              <span className="text-cyan-200 font-medium text-sm tracking-wider">PUBLISHER GRID</span>
+          {/* Publisher Selector - Center panel with increased size */}
+          <div className="min-w-[600px] max-w-[600px] flex-1">
+            <div className="bg-slate-900/98 border-2 border-cyan-400/40 rounded-lg p-8 backdrop-blur-sm shadow-2xl shadow-cyan-400/20">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
+                  <span className="text-cyan-200 font-medium text-lg tracking-wider">PUBLISHER GRID</span>
+                </div>
+                <div className="text-cyan-400/70 text-sm">ONLINE</div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-6 mb-6 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-300">Active Publishers:</span>
+                  <span className="text-cyan-300 font-mono">{buildings.length}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-300">Total Portals:</span>
+                  <span className="text-cyan-300 font-mono">
+                    {buildings.reduce((total, building) => total + building.books.length, 0)}
+                  </span>
+                </div>
+              </div>
+              
+              {selectedBuilding && (
+                <div className="mb-6 p-4 border border-cyan-400/20 rounded bg-cyan-400/5">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-300">Selected Publisher:</span>
+                    <span className="text-cyan-200 font-mono">
+                      {buildings.find(b => b.id === selectedBuilding)?.publisher}
+                    </span>
+                  </div>
+                </div>
+              )}
+              
+              <div className="w-full h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent mb-6" />
+              
+              <div>
+                <div className="text-slate-400 text-sm mb-4 tracking-wider">SELECT PUBLISHER:</div>
+                <ScrollArea className="max-h-80">
+                  <div className="grid grid-cols-1 gap-4 pr-4">
+                    {buildings.map((building) => (
+                      <button
+                        key={building.id}
+                        className={`p-6 rounded-lg border transition-all duration-300 text-left w-full focus:outline-none focus:ring-2 focus:ring-cyan-400/50 ${
+                          building.isSelected
+                            ? 'bg-cyan-400/20 border-cyan-300/60 text-cyan-200 shadow-lg shadow-cyan-400/25 scale-[1.02]'
+                            : 'bg-slate-800/50 border-slate-600/50 text-slate-300 hover:bg-slate-700/60 hover:border-cyan-400/40 hover:text-cyan-200'
+                        }`}
+                        onClick={() => handleBuildingClick(building.id)}
+                        onKeyDown={(e) => handleKeyNavigation(e, building.id)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-lg font-medium min-w-0 flex-1">{building.publisher}</span>
+                          <div className="flex items-center space-x-4 ml-6 flex-shrink-0">
+                            <span className="text-sm opacity-70 bg-slate-700/50 px-3 py-1 rounded">{building.books.length}</span>
+                            <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
             </div>
-            <div className="text-cyan-400/70 text-xs">ONLINE</div>
           </div>
-          
-          <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-300">Active Publishers:</span>
-              <span className="text-cyan-300 font-mono">{buildings.length}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-300">Total Portals:</span>
-              <span className="text-cyan-300 font-mono">
-                {buildings.reduce((total, building) => total + building.books.length, 0)}
-              </span>
-            </div>
-          </div>
-          
-          {selectedBuilding && (
-            <div className="mb-4 p-3 border border-cyan-400/20 rounded bg-cyan-400/5">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-300">Selected Publisher:</span>
-                <span className="text-cyan-200 font-mono">
-                  {buildings.find(b => b.id === selectedBuilding)?.publisher}
-                </span>
+
+          {/* Book Portals Panel - Right side with proper spacing and sizing */}
+          {selectedBuildingData && (
+            <div className="min-w-[420px] max-w-[420px] flex-shrink-0">
+              <div className="bg-slate-900/98 border-2 border-cyan-400/30 rounded-lg backdrop-blur-sm overflow-hidden shadow-2xl shadow-cyan-400/10 h-[600px] flex flex-col">
+                <div className="p-6 border-b-2 border-cyan-400/20 flex-shrink-0">
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-cyan-200 font-medium text-xl tracking-wide">{selectedBuildingData.publisher}</h3>
+                      <p className="text-slate-400 text-sm mt-2">Literary Portals Available: {selectedBuildingData.books.length}</p>
+                    </div>
+                    <button
+                      onClick={() => setSelectedBuilding(null)}
+                      className="text-slate-400 hover:text-cyan-300 transition-colors text-2xl p-3 hover:bg-slate-700/50 rounded focus:outline-none focus:ring-2 focus:ring-cyan-400/50 flex-shrink-0 ml-4"
+                      aria-label="Close book portals panel"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+                
+                <ScrollArea className="flex-1">
+                  <div className="p-6 space-y-6">
+                    {selectedBuildingData.books.map((book) => (
+                      <div
+                        key={`${book.id}-${book.title}`}
+                        className="group bg-slate-800/50 border border-slate-700/40 rounded-lg p-5 hover:bg-slate-700/50 hover:border-cyan-400/40 transition-all duration-300 cursor-pointer focus-within:ring-2 focus:ring-cyan-400/30"
+                        onClick={() => handleBookClick(book)}
+                      >
+                        <div className="flex items-start space-x-4">
+                          <div className="w-16 h-20 bg-slate-700/50 border border-cyan-400/30 rounded flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:shadow-lg group-hover:shadow-cyan-400/30 transition-all duration-300">
+                            {book.cover_url ? (
+                              <img 
+                                src={book.cover_url} 
+                                alt={book.title} 
+                                className="w-full h-full object-cover rounded"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const fallback = target.nextElementSibling as HTMLElement;
+                                  if (fallback) fallback.classList.remove('hidden');
+                                }}
+                              />
+                            ) : null}
+                            <div className={`flex items-center justify-center text-cyan-400 text-xs absolute inset-0 ${book.cover_url ? 'hidden' : ''}`}>
+                              <div className="w-8 h-8 border border-cyan-400/50 rounded animate-pulse" />
+                            </div>
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-slate-200 font-medium text-sm leading-tight mb-3">{book.title}</h4>
+                            <p className="text-slate-400 text-sm mb-4">{book.author}</p>
+                            {book.isbn && (
+                              <p className="text-slate-500 text-xs font-mono mb-4">ISBN: {book.isbn}</p>
+                            )}
+                            
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onAddBook(book);
+                              }}
+                              className="w-full bg-cyan-600/70 hover:bg-cyan-600/90 text-white text-sm py-3 rounded border-0 flex items-center justify-center transition-all duration-200 hover:shadow-lg hover:shadow-cyan-400/30 group-hover:animate-pulse focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
+                            >
+                              <div className="w-2 h-2 border border-white rounded-full mr-3" />
+                              Add to Transmissions
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
             </div>
           )}
-          
-          <div className="w-full h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent mb-4" />
-          
-          {/* Publisher Selection Grid - More spacing, better layout */}
-          <div>
-            <div className="text-slate-400 text-xs mb-4 tracking-wider">SELECT PUBLISHER:</div>
-            <div className="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto pr-2">
-              {buildings.map((building) => (
-                <button
-                  key={building.id}
-                  className={`p-4 rounded-lg border transition-all duration-300 text-left w-full focus:outline-none focus:ring-2 focus:ring-cyan-400/50 ${
-                    building.isSelected
-                      ? 'bg-cyan-400/20 border-cyan-300/60 text-cyan-200 shadow-lg shadow-cyan-400/25 scale-[1.02]'
-                      : 'bg-slate-800/50 border-slate-600/50 text-slate-300 hover:bg-slate-700/60 hover:border-cyan-400/40 hover:text-cyan-200'
-                  }`}
-                  onClick={() => handleBuildingClick(building.id)}
-                  onKeyDown={(e) => handleKeyNavigation(e, building.id)}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-base font-medium min-w-0 flex-1">{building.publisher}</span>
-                    <div className="flex items-center space-x-3 ml-4 flex-shrink-0">
-                      <span className="text-xs opacity-70 bg-slate-700/50 px-2 py-1 rounded">{building.books.length}</span>
-                      <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
 
@@ -415,80 +496,6 @@ const PublisherCityGrid = ({
           </div>
         ))}
       </div>
-
-      {/* Book Portals Panel - Right side, properly positioned to avoid overlap */}
-      {selectedBuildingData && (
-        <div className="fixed right-6 top-24 bottom-6 w-96 bg-slate-900/98 border-2 border-cyan-400/30 rounded-lg backdrop-blur-sm overflow-hidden shadow-2xl shadow-cyan-400/10 z-50">
-          <div className="p-4 border-b-2 border-cyan-400/20 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="min-w-0 flex-1">
-                <h3 className="text-cyan-200 font-medium text-lg tracking-wide">{selectedBuildingData.publisher}</h3>
-                <p className="text-slate-400 text-sm mt-1">Literary Portals Available: {selectedBuildingData.books.length}</p>
-              </div>
-              <button
-                onClick={() => setSelectedBuilding(null)}
-                className="text-slate-400 hover:text-cyan-300 transition-colors text-xl p-2 hover:bg-slate-700/50 rounded focus:outline-none focus:ring-2 focus:ring-cyan-400/50 flex-shrink-0 ml-3"
-                aria-label="Close book portals panel"
-              >
-                ×
-              </button>
-            </div>
-          </div>
-          
-          <ScrollArea className="flex-1 h-full">
-            <div className="p-4 space-y-4">
-              {selectedBuildingData.books.map((book) => (
-                <div
-                  key={`${book.id}-${book.title}`}
-                  className="group bg-slate-800/50 border border-slate-700/40 rounded-lg p-4 hover:bg-slate-700/50 hover:border-cyan-400/40 transition-all duration-300 cursor-pointer focus-within:ring-2 focus-within:ring-cyan-400/30"
-                  onClick={() => handleBookClick(book)}
-                >
-                  <div className="flex items-start space-x-3">
-                    {/* Book Portal Glow */}
-                    <div className="w-14 h-18 bg-slate-700/50 border border-cyan-400/30 rounded flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:shadow-lg group-hover:shadow-cyan-400/30 transition-all duration-300">
-                      {book.cover_url ? (
-                        <img 
-                          src={book.cover_url} 
-                          alt={book.title} 
-                          className="w-full h-full object-cover rounded"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            const fallback = target.nextElementSibling as HTMLElement;
-                            if (fallback) fallback.classList.remove('hidden');
-                          }}
-                        />
-                      ) : null}
-                      <div className={`flex items-center justify-center text-cyan-400 text-xs absolute inset-0 ${book.cover_url ? 'hidden' : ''}`}>
-                        <div className="w-6 h-6 border border-cyan-400/50 rounded animate-pulse" />
-                      </div>
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-slate-200 font-medium text-sm leading-tight mb-2">{book.title}</h4>
-                      <p className="text-slate-400 text-xs mb-3">{book.author}</p>
-                      {book.isbn && (
-                        <p className="text-slate-500 text-xs font-mono mb-3">ISBN: {book.isbn}</p>
-                      )}
-                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAddBook(book);
-                        }}
-                        className="w-full bg-cyan-600/70 hover:bg-cyan-600/90 text-white text-xs py-2 rounded border-0 flex items-center justify-center transition-all duration-200 hover:shadow-lg hover:shadow-cyan-400/30 group-hover:animate-pulse focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
-                      >
-                        <div className="w-2 h-2 border border-white rounded-full mr-2" />
-                        Add to Transmissions
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-        </div>
-      )}
 
       {/* Book Detail Modal */}
       {selectedBook && (
