@@ -5,7 +5,7 @@ import BookSearchSection from "./BookForm/BookSearchSection";
 import StatusSection from "./BookForm/StatusSection";
 import ConceptualTagsSection from "./BookForm/ConceptualTagsSection";
 import PersonalResonanceSection from "./BookForm/PersonalResonanceSection";
-import NotesSection from "./BookForm/NotesSection";
+import NotesSection from "./NotesSection";
 import PublisherResonanceBadge from "./PublisherResonanceBadge";
 import { BookSuggestion } from "@/services/googleBooksApi";
 import { findMatchingPublisherSeries, PublisherSeries } from "@/services/publisherService";
@@ -122,6 +122,15 @@ const AddBookModal = ({ isOpen, onClose, onAdd, editingBook }: AddBookModalProps
     setAuthorSearch(book.author);
   };
 
+  const handleAuthorSelect = (author: any) => {
+    console.log('Selected author:', author);
+    setFormData(prev => ({
+      ...prev,
+      author: author.name
+    }));
+    setAuthorSearch(author.name);
+  };
+
   const handleTitleSearchChange = (value: string) => {
     setTitleSearch(value);
     setFormData(prev => ({ ...prev, title: value }));
@@ -190,9 +199,9 @@ const AddBookModal = ({ isOpen, onClose, onAdd, editingBook }: AddBookModalProps
             onTitleSearchChange={handleTitleSearchChange}
             onAuthorSearchChange={handleAuthorSearchChange}
             onBookSelect={handleBookSelect}
+            onAuthorSelect={handleAuthorSelect}
           />
           
-          {/* Publisher Resonance Detection */}
           {detectedSeries && (
             <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
               <div className="flex items-center space-x-2 mb-2">

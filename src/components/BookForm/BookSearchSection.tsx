@@ -1,8 +1,9 @@
 
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import BookSearchInput from "../BookSearchInput";
+import AuthorSearchInput from "../AuthorSearchInput";
 import { BookSuggestion } from "@/services/googleBooksApi";
+import { ScifiAuthor } from "@/services/scifiAuthorsService";
 
 interface BookSearchSectionProps {
   titleSearch: string;
@@ -12,6 +13,7 @@ interface BookSearchSectionProps {
   onTitleSearchChange: (value: string) => void;
   onAuthorSearchChange: (value: string) => void;
   onBookSelect: (book: BookSuggestion) => void;
+  onAuthorSelect?: (author: ScifiAuthor) => void;
 }
 
 const BookSearchSection = ({
@@ -21,8 +23,16 @@ const BookSearchSection = ({
   title,
   onTitleSearchChange,
   onAuthorSearchChange,
-  onBookSelect
+  onBookSelect,
+  onAuthorSelect
 }: BookSearchSectionProps) => {
+  const handleAuthorSelect = (author: ScifiAuthor) => {
+    onAuthorSearchChange(author.name);
+    if (onAuthorSelect) {
+      onAuthorSelect(author);
+    }
+  };
+
   return (
     <>
       <div className="grid grid-cols-2 gap-4">
@@ -37,12 +47,11 @@ const BookSearchSection = ({
         </div>
         <div>
           <Label htmlFor="author" className="text-slate-300 text-sm">Author</Label>
-          <Input
+          <AuthorSearchInput
+            placeholder="Search for an author..."
             value={authorSearch}
-            onChange={(e) => onAuthorSearchChange(e.target.value)}
-            className="bg-slate-700 border-slate-600 text-slate-200"
-            placeholder="Author name"
-            required
+            onValueChange={onAuthorSearchChange}
+            onAuthorSelect={handleAuthorSelect}
           />
         </div>
       </div>
