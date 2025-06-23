@@ -4,15 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
-import PublisherMindMap from "@/components/PublisherMindMap";
-import PublisherBooksGrid from "@/components/PublisherBooksGrid";
+import PublisherConsciousnessGrid from "@/components/PublisherConsciousnessGrid";
 import { getPublisherSeries, getPublisherBooks, PublisherSeries, EnrichedPublisherBook } from "@/services/publisherService";
 import { saveTransmission } from "@/services/transmissionsService";
 import { useToast } from "@/hooks/use-toast";
 
 const PublisherResonance = () => {
-  const [selectedSeriesId, setSelectedSeriesId] = useState<string>("");
-  const [selectedSeries, setSelectedSeries] = useState<PublisherSeries | null>(null);
+  const [allBooks, setAllBooks] = useState<EnrichedPublisherBook[]>([]);
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const { toast } = useToast();
 
   // Get all publisher series
@@ -21,27 +20,25 @@ const PublisherResonance = () => {
     queryFn: getPublisherSeries,
   });
 
-  // Get books for selected series
-  const { data: books = [], isLoading: booksLoading, refetch: refetchBooks } = useQuery({
-    queryKey: ['publisher-books', selectedSeriesId],
-    queryFn: () => selectedSeriesId ? getPublisherBooks(selectedSeriesId) : Promise.resolve([]),
-    enabled: !!selectedSeriesId,
-  });
-
-  // Update selected series when series ID changes
+  // Load all books for all series
   useEffect(() => {
-    if (selectedSeriesId && publisherSeries.length > 0) {
-      const series = publisherSeries.find(s => s.id === selectedSeriesId);
-      setSelectedSeries(series || null);
-    }
-  }, [selectedSeriesId, publisherSeries]);
+    const loadAllBooks = async () => {
+      if (publisherSeries.length === 0) return;
+      
+      try {
+        const allBooksPromises = publisherSeries.map(series => 
+          getPublisherBooks(series.id)
+        );
+        const booksArrays = await Promise.all(allBooksPromises);
+        const flatBooks = booksArrays.flat();
+        setAllBooks(flatBooks);
+      } catch (error) {
+        console.error('Failed to load books:', error);
+      }
+    };
 
-  // Auto-select first series if none selected
-  useEffect(() => {
-    if (!selectedSeriesId && publisherSeries.length > 0) {
-      setSelectedSeriesId(publisherSeries[0].id);
-    }
-  }, [publisherSeries, selectedSeriesId]);
+    loadAllBooks();
+  }, [publisherSeries]);
 
   const handleAddFromPublisher = async (book: EnrichedPublisherBook) => {
     try {
@@ -75,57 +72,44 @@ const PublisherResonance = () => {
     }
   };
 
+  const handleFilterToggle = (filterId: string) => {
+    setActiveFilters(prev => 
+      prev.includes(filterId) 
+        ? prev.filter(id => id !== filterId)
+        : [...prev, filterId]
+    );
+  };
+
   return (
     <AuthWrapper fallback={<Auth />}>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
         <Header />
         
         <main className="container mx-auto px-6 py-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-light text-slate-200 mb-2">Publisher Resonance</h1>
-            <p className="text-slate-400 text-lg">Navigate the consciousness web of curated collections—discover your next transmission.</p>
+            <h1 className="text-3xl font-light text-slate-200 mb-2">Publisher Consciousness Web</h1>
+            <p className="text-slate-400 text-lg">Navigate the living grid of literary consciousness—explore publishers, series, and your reading pathways in one seamless web.</p>
           </div>
 
           {seriesLoading ? (
             <div className="text-center py-12">
-              <div className="w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full mx-auto mb-4 animate-spin"></div>
-              <p className="text-slate-400">Loading publisher consciousness web...</p>
+              <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full mx-auto mb-4 animate-spin"></div>
+              <p className="text-slate-400">Initializing consciousness grid...</p>
             </div>
           ) : (
-            <>
-              <PublisherMindMap
-                series={publisherSeries}
-                selectedSeriesId={selectedSeriesId}
-                onSeriesChange={setSelectedSeriesId}
-              />
-
-              {selectedSeries && (
-                <PublisherBooksGrid
-                  books={books}
-                  series={selectedSeries}
-                  onAddBook={handleAddFromPublisher}
-                  loading={booksLoading}
-                />
-              )}
-            </>
-          )}
-
-          {publisherSeries.length === 0 && !seriesLoading && (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center">
-                <span className="text-2xl">📚</span>
-              </div>
-              <h3 className="text-slate-300 text-lg font-medium mb-2">No publisher collections available</h3>
-              <p className="text-slate-400 text-sm">
-                Publisher collections will appear here as they become available.
-              </p>
-            </div>
+            <PublisherConsciousnessGrid
+              series={publisherSeries}
+              books={allBooks}
+              activeFilters={activeFilters}
+              onFilterToggle={handleFilterToggle}
+              onAddBook={handleAddFromPublisher}
+            />
           )}
 
           <div className="mt-16 text-center">
             <div className="inline-flex items-center space-x-2 text-slate-500 text-xs">
-              <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
-              <span>Consciousness Web: Active</span>
+              <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
+              <span>Grid Matrix: Active</span>
               <div className="w-1 h-1 bg-slate-600 rounded-full" />
               <span>Neural Pathways: Synchronized</span>
             </div>
