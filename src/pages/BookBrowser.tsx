@@ -4,14 +4,17 @@ import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
+import EnhancedBookCover from "@/components/EnhancedBookCover";
+import LoadingSkeleton from "@/components/LoadingSkeleton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { searchBooks, BookSuggestion } from "@/services/googleBooksApi";
+import { searchBooksEnhanced, EnhancedBookSuggestion } from "@/services/enhanced-google-books-api";
 import { saveTransmission } from "@/services/transmissionsService";
+import { imageService } from "@/services/image-service";
 
 const BookBrowser = () => {
-  const [books, setBooks] = useState<BookSuggestion[]>([]);
+  const [books, setBooks] = useState<EnhancedBookSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [visibleBooks, setVisibleBooks] = useState<Set<number>>(new Set());
   const navigate = useNavigate();
@@ -27,8 +30,17 @@ const BookBrowser = () => {
       books.forEach((_, index) => {
         setTimeout(() => {
           setVisibleBooks(prev => new Set([...prev, index]));
-        }, index * 100);
+        }, index * 50); // Faster animation
       });
+
+      // Preload images for better performance
+      const imageUrls = books.flatMap(book => [
+        book.coverUrl,
+        book.thumbnailUrl,
+        book.smallThumbnailUrl
+      ]).filter(Boolean) as string[];
+      
+      imageService.preloadImages(imageUrls);
     }
   }, [books]);
 
@@ -37,56 +49,63 @@ const BookBrowser = () => {
     setVisibleBooks(new Set());
     
     try {
-      // Search for sci-fi specific terms to get sci-fi results only
+      // Enhanced sci-fi search terms for better results
       const sciFiSearchTerms = [
-        'science fiction space',
-        'cyberpunk dystopian',
-        'time travel sci-fi',
-        'alien invasion',
-        'robot artificial intelligence',
-        'future technology',
-        'space exploration',
-        'galactic empire',
-        'terraforming mars',
-        'quantum physics fiction',
-        'genetic engineering sci-fi',
-        'virtual reality cyberpunk',
-        'post apocalyptic future',
-        'interstellar travel',
-        'clone wars science fiction'
+        'science fiction space opera',
+        'cyberpunk dystopian future',
+        'time travel paradox',
+        'alien contact first',
+        'artificial intelligence robot',
+        'galactic empire war',
+        'terraforming colonization',
+        'quantum physics multiverse',
+        'genetic engineering biotech',
+        'virtual reality simulation',
+        'post apocalyptic survival',
+        'interstellar exploration',
+        'android consciousness',
+        'space station colony',
+        'technological singularity'
       ];
       
       const randomTerm = sciFiSearchTerms[Math.floor(Math.random() * sciFiSearchTerms.length)];
-      const startIndex = Math.floor(Math.random() * 100);
+      const startIndex = Math.floor(Math.random() * 50); // Reduced range for better results
       
-      const results = await searchBooks(randomTerm, 20, startIndex);
+      const results = await searchBooksEnhanced(randomTerm, 24, startIndex);
       
-      // Filter results to ensure they are sci-fi related
+      // Enhanced filtering for sci-fi content
       const sciFiBooks = results.filter(book => {
         const title = book.title.toLowerCase();
+        const description = (book.description || '').toLowerCase();
         const categories = book.categories || [];
         const categoryText = categories.join(' ').toLowerCase();
         
+        const sciFiKeywords = [
+          'science fiction', 'sci-fi', 'cyberpunk', 'dystopian', 'space', 'future',
+          'robot', 'alien', 'cyber', 'time travel', 'galaxy', 'quantum', 'android',
+          'terraforming', 'colony', 'starship', 'interstellar', 'posthuman', 'ai'
+        ];
+        
         return categoryText.includes('science fiction') || 
                categoryText.includes('sci-fi') ||
-               categoryText.includes('cyberpunk') ||
-               categoryText.includes('dystopian') ||
-               title.includes('space') ||
-               title.includes('future') ||
-               title.includes('robot') ||
-               title.includes('alien') ||
-               title.includes('cyber') ||
-               title.includes('time travel');
+               sciFiKeywords.some(keyword => 
+                 title.includes(keyword) || 
+                 description.includes(keyword) ||
+                 categoryText.includes(keyword)
+               );
       });
       
-      // Shuffle the results for more randomness
-      const shuffled = sciFiBooks.sort(() => Math.random() - 0.5);
+      // Shuffle and limit results
+      const shuffled = sciFiBooks
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 20);
+        
       setBooks(shuffled);
     } catch (error) {
       console.error('Error loading books:', error);
       toast({
         title: "Loading Error",
-        description: "Failed to load books. Please try again.",
+        description: "Failed to load sci-fi books. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -94,15 +113,15 @@ const BookBrowser = () => {
     }
   };
 
-  const addToTransmissions = async (book: BookSuggestion) => {
+  const addToTransmissions = async (book: EnhancedBookSuggestion) => {
     try {
       await saveTransmission({
         title: book.title,
         author: book.author || 'Unknown',
-        cover_url: book.coverUrl || '',
+        cover_url: book.coverUrl || book.thumbnailUrl || book.smallThumbnailUrl || '',
         tags: book.categories || [],
         rating: {},
-        notes: book.subtitle || '',
+        notes: book.description || '',
         status: 'want-to-read'
       });
       
@@ -150,44 +169,25 @@ const BookBrowser = () => {
               <p className="text-slate-400">Scanning the consciousness archive...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
               {books.map((book, index) => (
                 <Card
                   key={`${book.id}-${index}`}
-                  className={`group relative overflow-hidden bg-slate-800/50 border-slate-700 hover:border-blue-400/50 transition-all duration-500 ${
+                  className={`group relative overflow-hidden bg-slate-800/50 border-slate-700 hover:border-blue-400/50 transition-all duration-300 ${
                     visibleBooks.has(index) 
                       ? 'opacity-100 translate-y-0' 
                       : 'opacity-0 translate-y-4'
                   }`}
                 >
                   <div className="aspect-[3/4] relative overflow-hidden rounded-t-lg">
-                    {book.coverUrl ? (
-                      <img
-                        src={book.coverUrl}
-                        alt={book.title}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                          (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
-                        }}
-                      />
-                    ) : null}
-                    
-                    {/* Stylized placeholder for missing covers */}
-                    <div className={`w-full h-full bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800 flex flex-col items-center justify-center p-3 ${book.coverUrl ? 'hidden' : ''}`}>
-                      <div className="w-8 h-8 mb-2 rounded-full bg-blue-400/20 flex items-center justify-center">
-                        <div className="w-4 h-4 bg-blue-400 rounded-sm opacity-60"></div>
-                      </div>
-                      <div className="text-slate-300 text-center">
-                        <div className="text-xs font-medium mb-1 line-clamp-2">{book.title}</div>
-                        <div className="text-xs opacity-75 line-clamp-1">{book.author}</div>
-                      </div>
-                      <div className="mt-2 flex space-x-1">
-                        <div className="w-1 h-1 bg-blue-400 rounded-full opacity-40"></div>
-                        <div className="w-1 h-1 bg-cyan-400 rounded-full opacity-60"></div>
-                        <div className="w-1 h-1 bg-blue-400 rounded-full opacity-40"></div>
-                      </div>
-                    </div>
+                    <EnhancedBookCover
+                      title={book.title}
+                      coverUrl={book.coverUrl}
+                      thumbnailUrl={book.thumbnailUrl}
+                      smallThumbnailUrl={book.smallThumbnailUrl}
+                      className="w-full h-full"
+                      lazy={true}
+                    />
                     
                     {/* Overlay with actions */}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
@@ -208,6 +208,12 @@ const BookBrowser = () => {
                     <p className="text-xs text-slate-400 line-clamp-1">
                       {book.author}
                     </p>
+                    {book.rating && (
+                      <div className="flex items-center mt-1">
+                        <span className="text-xs text-yellow-400">★</span>
+                        <span className="text-xs text-slate-400 ml-1">{book.rating.toFixed(1)}</span>
+                      </div>
+                    )}
                   </div>
                 </Card>
               ))}
@@ -237,7 +243,9 @@ const BookBrowser = () => {
               <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
               <span>Archive status: {books.length} sci-fi books discovered</span>
               <div className="w-1 h-1 bg-slate-600 rounded-full" />
-              <span>Quantum field: Stable</span>
+              <span>Enhanced caching: Active</span>
+              <div className="w-1 h-1 bg-slate-600 rounded-full" />
+              <span>Image optimization: Enabled</span>
             </div>
           </div>
         </main>

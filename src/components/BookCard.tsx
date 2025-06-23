@@ -1,7 +1,8 @@
 
 import { useState } from "react";
-import { BookOpen, Edit, Archive, X } from "lucide-react";
+import { Edit, Archive, X } from "lucide-react";
 import PublisherResonanceBadge from "./PublisherResonanceBadge";
+import EnhancedBookCover from "./EnhancedBookCover";
 
 interface BookCardProps {
   id: number;
@@ -41,7 +42,6 @@ const BookCard = ({
   onDiscard
 }: BookCardProps) => {
   const [showActions, setShowActions] = useState(false);
-  const [imageError, setImageError] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -77,27 +77,12 @@ const BookCard = ({
       onMouseLeave={() => setShowActions(false)}
     >
       <div className="flex items-start space-x-4">
-        <div className="w-12 h-16 flex-shrink-0 rounded overflow-hidden">
-          {coverUrl && !imageError ? (
-            <img 
-              src={coverUrl} 
-              alt={title} 
-              className="w-full h-full object-cover" 
-              onError={() => setImageError(true)}
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800 flex flex-col items-center justify-center">
-              <div className="w-4 h-4 mb-1 rounded-sm bg-blue-400/20 flex items-center justify-center">
-                <BookOpen className="w-2 h-2 text-blue-400 opacity-60" />
-              </div>
-              <div className="flex space-x-0.5">
-                <div className="w-0.5 h-0.5 bg-blue-400 rounded-full opacity-40"></div>
-                <div className="w-0.5 h-0.5 bg-cyan-400 rounded-full opacity-60"></div>
-                <div className="w-0.5 h-0.5 bg-blue-400 rounded-full opacity-40"></div>
-              </div>
-            </div>
-          )}
-        </div>
+        <EnhancedBookCover
+          title={title}
+          coverUrl={coverUrl}
+          className="w-12 h-16"
+          lazy={true}
+        />
         
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between">
