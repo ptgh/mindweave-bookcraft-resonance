@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
@@ -14,6 +15,7 @@ import { SearchResult } from "@/services/searchService";
 import { searchBooksEnhanced } from "@/services/enhanced-google-books-api";
 import { searchDebouncer } from "@/services/debounced-search";
 import { imageService } from "@/services/image-service";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const AuthorMatrix = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -203,12 +205,12 @@ const AuthorMatrix = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <Header />
         
-        <main className="container mx-auto px-6 py-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-light text-slate-200 mb-2 tracking-wider">
+        <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="text-center mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-light text-slate-200 mb-2 tracking-wider">
               Author Matrix
             </h1>
-            <p className="text-slate-400 text-sm mb-6">
+            <p className="text-slate-400 text-sm mb-4 sm:mb-6">
               Navigate the consciousness territories of science fiction masters
             </p>
             
@@ -234,9 +236,9 @@ const AuthorMatrix = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div>
-              <h2 className="text-slate-200 text-xl font-medium mb-1">Authors</h2>
+              <h2 className="text-slate-200 text-lg sm:text-xl font-medium mb-1">Authors</h2>
               <p className="text-slate-400 text-sm">Consciousness archives from the science fiction masters</p>
             </div>
           </div>
@@ -248,11 +250,11 @@ const AuthorMatrix = () => {
                 <LoadingSkeleton type="author-card" count={10} />
               ) : (
                 <>
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                  <div className="space-y-2 max-h-80 sm:max-h-96 overflow-y-auto">
                     {paginatedAuthors.map(author => (
                       <div
                         key={author.id}
-                        className={`bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors cursor-pointer ${
+                        className={`bg-slate-800/50 border border-slate-700 rounded-lg p-3 sm:p-4 hover:bg-slate-800/70 transition-colors cursor-pointer touch-manipulation ${
                           selectedAuthor?.id === author.id ? 'ring-2 ring-blue-400' : ''
                         }`}
                         onClick={() => handleAuthorSelect(author)}
@@ -263,30 +265,40 @@ const AuthorMatrix = () => {
                     ))}
                   </div>
                   
-                  {/* Pagination Controls */}
+                  {/* Pagination Controls with Pulse Circle Design */}
                   {totalPages > 1 && (
-                    <div className="mt-4 flex items-center justify-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
+                    <div className="mt-4 flex items-center justify-center space-x-4">
+                      <button
                         onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
                         disabled={currentPage === 0}
-                        className="text-slate-400 border-slate-600"
+                        className={`w-10 h-10 rounded-full border-2 border-dashed flex items-center justify-center transition-all duration-300 ${
+                          currentPage === 0 
+                            ? 'border-slate-700 text-slate-600 cursor-not-allowed' 
+                            : 'border-cyan-400 text-cyan-400 hover:bg-cyan-400/10 active:scale-95'
+                        }`}
                       >
-                        Previous
-                      </Button>
-                      <span className="text-slate-400 text-sm">
-                        {currentPage + 1} of {totalPages}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
+                        <span className="text-slate-400 text-sm">
+                          {currentPage + 1} of {totalPages}
+                        </span>
+                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
+                      </div>
+                      
+                      <button
                         onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
                         disabled={currentPage === totalPages - 1}
-                        className="text-slate-400 border-slate-600"
+                        className={`w-10 h-10 rounded-full border-2 border-dashed flex items-center justify-center transition-all duration-300 ${
+                          currentPage === totalPages - 1 
+                            ? 'border-slate-700 text-slate-600 cursor-not-allowed' 
+                            : 'border-cyan-400 text-cyan-400 hover:bg-cyan-400/10 active:scale-95'
+                        }`}
                       >
-                        Next
-                      </Button>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
                     </div>
                   )}
                 </>
@@ -294,18 +306,18 @@ const AuthorMatrix = () => {
             </div>
 
             {/* Author Details & Books */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-3 mt-6 lg:mt-0">
               {selectedAuthor ? (
                 <div>
                   {booksLoading ? (
                     <LoadingSkeleton type="author-detail" />
                   ) : (
                     
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3 mb-6">
-                      <h2 className="text-lg font-light text-slate-200 mb-1">{selectedAuthor.name}</h2>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+                      <h2 className="text-lg sm:text-xl font-light text-slate-200 mb-1">{selectedAuthor.name}</h2>
                       <p className="text-slate-400 text-sm mb-2">{selectedAuthor.nationality}</p>
                       {selectedAuthor.bio && (
-                        <p className="text-slate-300 text-xs leading-relaxed mb-2 line-clamp-3">{selectedAuthor.bio}</p>
+                        <p className="text-slate-300 text-xs sm:text-sm leading-relaxed mb-2 line-clamp-3">{selectedAuthor.bio}</p>
                       )}
                       {selectedAuthor.notable_works && selectedAuthor.notable_works.length > 0 && (
                         <div>
@@ -327,7 +339,7 @@ const AuthorMatrix = () => {
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h3 className="text-slate-200 text-xl font-medium mb-1">Available Books</h3>
+                        <h3 className="text-slate-200 text-lg sm:text-xl font-medium mb-1">Available Books</h3>
                         <p className="text-slate-400 text-sm">Transmissions ready for signal logging</p>
                       </div>
                     </div>
@@ -335,14 +347,14 @@ const AuthorMatrix = () => {
                     {booksLoading ? (
                       <LoadingSkeleton type="book-grid" count={6} />
                     ) : authorBooks.length > 0 ? (
-                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                         {authorBooks.map(book => (
-                          <div key={book.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors">
-                            <div className="flex items-start space-x-4">
+                          <div key={book.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-3 sm:p-4 hover:bg-slate-800/70 transition-colors">
+                            <div className="flex items-start space-x-3 sm:space-x-4">
                               <EnhancedBookCover
                                 title={book.title}
                                 coverUrl={book.cover_url}
-                                className="w-10 h-14"
+                                className="w-8 h-12 sm:w-10 sm:h-14 flex-shrink-0"
                                 lazy={true}
                               />
                               <div className="flex-1 min-w-0">
@@ -358,7 +370,7 @@ const AuthorMatrix = () => {
                                 <Button
                                   size="sm"
                                   onClick={() => addToTransmissions(book)}
-                                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-7"
+                                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-7 touch-manipulation active:scale-95"
                                 >
                                   Log Signal
                                 </Button>
@@ -368,9 +380,9 @@ const AuthorMatrix = () => {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-12">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center">
-                          <div className="w-6 h-6 rounded-full border-2 border-cyan-400 animate-pulse" />
+                      <div className="text-center py-8 sm:py-12">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center">
+                          <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border-2 border-cyan-400 animate-pulse" />
                         </div>
                         <h3 className="text-slate-300 text-lg font-medium mb-2">No Books Found</h3>
                         <p className="text-slate-400 text-sm">
@@ -381,9 +393,9 @@ const AuthorMatrix = () => {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center">
-                    <div className="w-6 h-6 rounded-full border-2 border-cyan-400 animate-pulse" />
+                <div className="text-center py-8 sm:py-12">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center">
+                    <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border-2 border-cyan-400 animate-pulse" />
                   </div>
                   <h3 className="text-slate-300 text-lg font-medium mb-2">Select an Author</h3>
                   <p className="text-slate-400 text-sm">
@@ -394,7 +406,7 @@ const AuthorMatrix = () => {
             </div>
           </div>
 
-          <div className="mt-12 text-center">
+          <div className="mt-8 sm:mt-12 text-center">
             <div className="inline-flex items-center space-x-2 text-slate-500 text-xs">
               <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
               <span>Archive depth: {authors.length} consciousness nodes</span>
