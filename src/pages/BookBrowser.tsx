@@ -45,6 +45,7 @@ const BookBrowser = () => {
   }, [books]);
 
   const loadRandomBooks = async () => {
+    console.log('Loading random books...');
     setLoading(true);
     setVisibleBooks(new Set());
     
@@ -71,8 +72,12 @@ const BookBrowser = () => {
       const randomTerm = sciFiSearchTerms[Math.floor(Math.random() * sciFiSearchTerms.length)];
       const startIndex = Math.floor(Math.random() * 50); // Reduced range for better results
       
+      console.log('Searching for:', randomTerm, 'at index:', startIndex);
+      
       // Fetch more books to ensure we get 24 after filtering
       const results = await searchBooksEnhanced(randomTerm, 40, startIndex);
+      
+      console.log('Raw results count:', results.length);
       
       // Enhanced filtering for sci-fi content
       const sciFiBooks = results.filter(book => {
@@ -96,12 +101,24 @@ const BookBrowser = () => {
                );
       });
       
+      console.log('Filtered sci-fi books count:', sciFiBooks.length);
+      
       // Shuffle and ensure we get exactly 24 books
       const shuffled = sciFiBooks
         .sort(() => Math.random() - 0.5)
         .slice(0, 24);
         
+      console.log('Final books to display:', shuffled.length);
       setBooks(shuffled);
+      
+      if (shuffled.length === 0) {
+        console.warn('No books found after filtering');
+        toast({
+          title: "No Books Found",
+          description: "Try scanning the archive again for different results.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error('Error loading books:', error);
       toast({
