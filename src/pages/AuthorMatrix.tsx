@@ -19,6 +19,7 @@ import { searchBooksEnhanced } from "@/services/enhanced-google-books-api";
 import { searchDebouncer } from "@/services/debounced-search";
 import { imageService } from "@/services/image-service";
 import { Brain } from "lucide-react";
+import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 
 const AUTHORS_PER_PAGE = 20;
 
@@ -32,6 +33,7 @@ const AuthorMatrix = () => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const { toast } = useToast();
+  const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
 
   const totalPages = useMemo(() => Math.ceil(authors.length / AUTHORS_PER_PAGE), [authors.length]);
   const paginatedAuthors = useMemo(() => 
@@ -42,27 +44,12 @@ const AuthorMatrix = () => {
   const loadAuthors = useCallback(async () => {
     try {
       setLoading(true);
+      console.log('Loading authors...');
       const authorsData = await getScifiAuthors();
+      console.log('Authors loaded:', authorsData.length);
       setAuthors(authorsData);
-      
-      // Preload cover images for first few authors
-      const firstAuthors = authorsData.slice(0, 10);
-      firstAuthors.forEach(author => {
-        if (author.notable_works?.[0]) {
-          searchDebouncer.search(
-            `preload_${author.id}`,
-            () => searchBooksEnhanced(`${author.name} ${author.notable_works[0]}`, 1),
-            (results) => {
-              if (results.length > 0) {
-                const imageUrls = [results[0].coverUrl, results[0].thumbnailUrl, results[0].smallThumbnailUrl]
-                  .filter(Boolean) as string[];
-                imageService.preloadImages(imageUrls);
-              }
-            }
-          );
-        }
-      });
     } catch (error: any) {
+      console.error('Error loading authors:', error);
       toast({
         title: "Loading Error",
         description: error.message,
@@ -74,6 +61,7 @@ const AuthorMatrix = () => {
   }, [toast]);
 
   const handleAuthorSelect = useCallback(async (author: ScifiAuthor) => {
+    console.log('Author selected:', author.name);
     setSelectedAuthor(author);
     setSearchParams({ author: author.name });
     
@@ -83,14 +71,26 @@ const AuthorMatrix = () => {
       const dbBooks = await getAuthorBooks(author.id);
       
       if (dbBooks.length > 0) {
+        console.log('Found books in database:', dbBooks.length);
         setAuthorBooks(dbBooks);
+        
+        // Preload images for books we already have
         const imageUrls = dbBooks.map(book => book.cover_url).filter(Boolean) as string[];
-        imageService.preloadImages(imageUrls);
+        if (imageUrls.length > 0) {
+          imageService.preloadImages(imageUrls);
+        }
       } else {
+        console.log('No books in database, searching Google Books...');
+        
+        // Use a unique search key to avoid conflicts
+        const searchKey = `author_books_${author.id}_${Date.now()}`;
+        
         searchDebouncer.search(
-          `author_books_${author.id}`,
-          () => searchBooksEnhanced(`author:"${author.name}"`, 20),
+          searchKey,
+          () => searchBooksEnhanced(`author:"${author.name}"`, 15),
           (googleBooks) => {
+            console.log('Google Books results:', googleBooks.length);
+            
             const convertedBooks: AuthorBook[] = googleBooks.map(book => ({
               id: book.id,
               author_id: author.id,
@@ -112,17 +112,19 @@ const AuthorMatrix = () => {
             
             setAuthorBooks(convertedBooks);
             
-            const imageUrls = [
-              ...googleBooks.map(book => book.coverUrl),
-              ...googleBooks.map(book => book.thumbnailUrl),
-              ...googleBooks.map(book => book.smallThumbnailUrl)
-            ].filter(Boolean) as string[];
+            // Preload cover images
+            const imageUrls = googleBooks
+              .map(book => book.coverUrl)
+              .filter(Boolean) as string[];
             
-            imageService.preloadImages(imageUrls);
+            if (imageUrls.length > 0) {
+              imageService.preloadImages(imageUrls);
+            }
           }
         );
       }
     } catch (error: any) {
+      console.error('Error loading books:', error);
       toast({
         title: "Error Loading Books",
         description: error.message,
@@ -183,24 +185,26 @@ const AuthorMatrix = () => {
 
   useEffect(() => {
     loadAuthors();
-    
+  }, [loadAuthors]);
+
+  useEffect(() => {
     const authorParam = searchParams.get('author');
-    if (authorParam) {
+    if (authorParam && authors.length > 0) {
       const author = authors.find(a => a.name.toLowerCase() === authorParam.toLowerCase());
-      if (author) {
+      if (author && (!selectedAuthor || selectedAuthor.id !== author.id)) {
         handleAuthorSelect(author);
       }
     }
-  }, [searchParams, loadAuthors, authors, handleAuthorSelect]);
+  }, [searchParams, authors, selectedAuthor, handleAuthorSelect]);
 
   return (
     <AuthWrapper fallback={<Auth />}>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <Header />
         
-        <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <div className="text-center mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl font-light text-slate-200 mb-2 tracking-wider">
+        <main ref={mainContainerRef} className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div ref={addFeatureBlockRef} className="feature-block text-center mb-6 sm:mb-8">
+            <h1 ref={heroTitleRef} className="hero-title text-2xl sm:text-3xl font-light text-slate-200 mb-2 tracking-wider">
               Author Matrix
             </h1>
             <p className="text-slate-400 text-sm mb-4 sm:mb-6">
@@ -214,7 +218,7 @@ const AuthorMatrix = () => {
             />
           </div>
 
-          <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <div ref={addFeatureBlockRef} className="feature-block flex items-center justify-between mb-4 sm:mb-6">
             <div>
               <h2 className="text-slate-200 text-lg sm:text-xl font-medium mb-1">Authors</h2>
               <p className="text-slate-400 text-sm">Consciousness archives from the science fiction masters</p>
@@ -223,7 +227,7 @@ const AuthorMatrix = () => {
 
           <div className="grid gap-4 lg:grid-cols-4">
             {/* Authors List */}
-            <div className="lg:col-span-1">
+            <div ref={addFeatureBlockRef} className="feature-block lg:col-span-1">
               {loading ? (
                 <LoadingSkeleton type="author-card" count={10} />
               ) : (
@@ -239,17 +243,19 @@ const AuthorMatrix = () => {
                     ))}
                   </div>
                   
-                  <PulseCirclePagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                  />
+                  {totalPages > 1 && (
+                    <PulseCirclePagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setCurrentPage}
+                    />
+                  )}
                 </>
               )}
             </div>
 
             {/* Author Details & Books */}
-            <div className="lg:col-span-3 mt-6 lg:mt-0">
+            <div ref={addFeatureBlockRef} className="feature-block lg:col-span-3 mt-6 lg:mt-0">
               {selectedAuthor ? (
                 <div>
                   {booksLoading ? (
