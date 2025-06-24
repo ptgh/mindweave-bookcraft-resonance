@@ -71,7 +71,8 @@ const BookBrowser = () => {
       const randomTerm = sciFiSearchTerms[Math.floor(Math.random() * sciFiSearchTerms.length)];
       const startIndex = Math.floor(Math.random() * 50); // Reduced range for better results
       
-      const results = await searchBooksEnhanced(randomTerm, 24, startIndex);
+      // Fetch more books to ensure we get 24 after filtering
+      const results = await searchBooksEnhanced(randomTerm, 40, startIndex);
       
       // Enhanced filtering for sci-fi content
       const sciFiBooks = results.filter(book => {
@@ -95,10 +96,10 @@ const BookBrowser = () => {
                );
       });
       
-      // Shuffle and limit results
+      // Shuffle and ensure we get exactly 24 books
       const shuffled = sciFiBooks
         .sort(() => Math.random() - 0.5)
-        .slice(0, 20);
+        .slice(0, 24);
         
       setBooks(shuffled);
     } catch (error) {
@@ -169,7 +170,7 @@ const BookBrowser = () => {
               <p className="text-slate-400">Scanning the consciousness archive...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-8 gap-4">
               {books.map((book, index) => (
                 <Card
                   key={`${book.id}-${index}`}
