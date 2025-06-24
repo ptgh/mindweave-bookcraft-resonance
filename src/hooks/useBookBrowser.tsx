@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { searchBooksEnhanced, EnhancedBookSuggestion } from "@/services/enhanced-google-books-api";
+import { searchBooksEnhanced, EnhancedBookSuggestion } from "@/services/googleBooksApi";
 import { saveTransmission } from "@/services/transmissionsService";
 import { imageService } from "@/services/image-service";
 

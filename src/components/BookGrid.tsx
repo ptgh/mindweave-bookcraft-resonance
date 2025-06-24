@@ -2,7 +2,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import EnhancedBookCover from "@/components/EnhancedBookCover";
-import { EnhancedBookSuggestion } from "@/services/enhanced-google-books-api";
+import { EnhancedBookSuggestion } from "@/services/googleBooksApi";
 
 interface BookGridProps {
   books: EnhancedBookSuggestion[];

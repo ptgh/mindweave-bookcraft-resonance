@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getScifiAuthors, getAuthorBooks, ScifiAuthor, AuthorBook } from "@/services/scifiAuthorsService";
 import { saveTransmission } from "@/services/transmissionsService";
 import { SearchResult } from "@/services/searchService";
-import { searchBooksEnhanced } from "@/services/enhanced-google-books-api";
+import { searchBooksEnhanced, EnhancedBookSuggestion } from "@/services/googleBooksApi";
 import { searchDebouncer } from "@/services/debounced-search";
 import { imageService } from "@/services/image-service";
 
@@ -70,7 +70,7 @@ export const useAuthorMatrix = () => {
             const sciFiQuery = `author:"${author.name}" subject:"science fiction" OR author:"${author.name}" subject:"sci-fi"`;
             return searchBooksEnhanced(sciFiQuery, 20);
           },
-          (googleBooks) => {
+          (googleBooks: EnhancedBookSuggestion[]) => {
             const sciFiBooks = googleBooks.filter(book => {
               const categories = book.categories || [];
               const description = book.description || '';

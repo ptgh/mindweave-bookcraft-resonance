@@ -10,6 +10,32 @@ export interface Book {
   subtitle?: string;
 }
 
+export interface BookSuggestion {
+  id: string;
+  title: string;
+  author: string;
+  coverUrl?: string;
+  subtitle?: string;
+}
+
+export interface EnhancedBookSuggestion {
+  id: string;
+  title: string;
+  author: string;
+  coverUrl?: string;
+  thumbnailUrl?: string;
+  smallThumbnailUrl?: string;
+  subtitle?: string;
+  description?: string;
+  publishedDate?: string;
+  pageCount?: number;
+  categories?: string[];
+  rating?: number;
+  ratingsCount?: number;
+  previewLink?: string;
+  infoLink?: string;
+}
+
 export const searchBooks = async (query: string): Promise<Book[]> => {
   try {
     const books = await searchGoogleBooks(query, 10);
@@ -22,6 +48,32 @@ export const searchBooks = async (query: string): Promise<Book[]> => {
     }));
   } catch (error) {
     console.error('Error searching books:', error);
+    return [];
+  }
+};
+
+export const searchBooksEnhanced = async (query: string, maxResults = 10, startIndex = 0): Promise<EnhancedBookSuggestion[]> => {
+  try {
+    const books = await searchGoogleBooks(query, maxResults);
+    return books.map(book => ({
+      id: book.id,
+      title: book.title,
+      author: book.author,
+      coverUrl: book.coverUrl,
+      thumbnailUrl: book.coverUrl,
+      smallThumbnailUrl: book.coverUrl,
+      subtitle: book.subtitle,
+      description: book.description,
+      publishedDate: book.publishedDate,
+      pageCount: book.pageCount,
+      categories: book.categories,
+      rating: book.averageRating,
+      ratingsCount: book.ratingsCount,
+      previewLink: book.previewLink,
+      infoLink: book.infoLink
+    }));
+  } catch (error) {
+    console.error('Error searching books enhanced:', error);
     return [];
   }
 };

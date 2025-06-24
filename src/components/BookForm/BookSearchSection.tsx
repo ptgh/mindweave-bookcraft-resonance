@@ -2,7 +2,7 @@
 import { Label } from "@/components/ui/label";
 import BookSearchInput from "../BookSearchInput";
 import AuthorSearchInput from "../AuthorSearchInput";
-import { EnhancedBookSuggestion } from "@/services/enhanced-google-books-api";
+import { EnhancedBookSuggestion } from "@/services/googleBooksApi";
 import { ScifiAuthor } from "@/services/scifiAuthorsService";
 
 interface BookSearchSectionProps {

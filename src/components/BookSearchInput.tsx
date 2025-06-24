@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { searchBooksEnhanced, EnhancedBookSuggestion } from "@/services/enhanced-google-books-api";
+import { searchBooksEnhanced, EnhancedBookSuggestion } from "@/services/googleBooksApi";
 import { searchDebouncer } from "@/services/debounced-search";
 
 interface BookSearchInputProps {
