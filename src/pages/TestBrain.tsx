@@ -765,7 +765,7 @@ const TestBrain = () => {
         </div>
       </div>
 
-      {/* Enhanced Tooltip - BookCard style with limited connections */}
+      {/* Clean Tooltip - matching your design */}
       {tooltip && (
         <div 
           className="absolute z-30 pointer-events-none"
@@ -791,26 +791,8 @@ const TestBrain = () => {
                 <h4 className="font-semibold text-cyan-400 text-sm mb-1 leading-tight">{tooltip.node.title}</h4>
                 <p className="text-xs text-slate-300 mb-2">{tooltip.node.author}</p>
                 
-                {tooltip.node.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {tooltip.node.tags.slice(0, 3).map(tag => (
-                      <span
-                        key={tag}
-                        className="px-2 py-1 bg-slate-700/50 text-slate-300 text-xs rounded-full"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                    {tooltip.node.tags.length > 3 && (
-                      <span className="text-slate-400 text-xs px-2 py-1">
-                        +{tooltip.node.tags.length - 3}
-                      </span>
-                    )}
-                  </div>
-                )}
-                
                 <div className="text-xs text-cyan-300/70">
-                  {Math.min(links.filter(link => link.fromId === tooltip.node.id || link.toId === tooltip.node.id).length, 5)} connections
+                  {links.filter(link => link.fromId === tooltip.node.id || link.toId === tooltip.node.id).length} connections
                 </div>
               </div>
             </div>
@@ -818,7 +800,7 @@ const TestBrain = () => {
         </div>
       )}
 
-      {/* Node Detail Modal - BookCard style */}
+      {/* Clean Modal - matching your design */}
       {selectedNode && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-sm">
           <Card className="bg-slate-900/95 border-slate-700 text-white max-w-sm mx-4 overflow-hidden">
@@ -848,37 +830,8 @@ const TestBrain = () => {
                     </button>
                   </div>
                   
-                  {selectedNode.description && (
-                    <div className="mt-2">
-                      <p className="text-xs text-slate-400 leading-relaxed">
-                        {selectedNode.description.length > 100 
-                          ? `${selectedNode.description.substring(0, 100)}...`
-                          : selectedNode.description
-                        }
-                      </p>
-                    </div>
-                  )}
-                  
-                  {selectedNode.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {selectedNode.tags.slice(0, 3).map((tag, index) => (
-                        <span
-                          key={index}
-                          className="px-2 py-1 bg-slate-700/50 text-slate-300 text-xs rounded-full"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {selectedNode.tags.length > 3 && (
-                        <span className="text-slate-400 text-xs px-2 py-1">
-                          +{selectedNode.tags.length - 3}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  
                   <div className="mt-3 text-xs text-cyan-300/70">
-                    {links.filter(link => link.fromId === selectedNode.id || link.toId === selectedNode.id).length} synaptic connections
+                    {links.filter(link => link.fromId === selectedNode.id || link.toId === selectedNode.id).length} connections
                   </div>
                 </div>
               </div>
