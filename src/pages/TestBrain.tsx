@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
@@ -74,8 +73,8 @@ const TestBrain = () => {
           title: transmission.title || 'Unknown Title',
           author: transmission.author || 'Unknown Author',
           tags: Array.isArray(transmission.tags) ? transmission.tags : [],
-          x: Math.random() * (window.innerWidth - 200) + 100,
-          y: Math.random() * (window.innerHeight - 200) + 100,
+          x: Math.random() * (window.innerWidth - 300) + 150,
+          y: Math.random() * (window.innerHeight - 300) + 150,
           coverUrl: transmission.cover_url,
           description: transmission.notes,
           transmissionId: transmission.id
@@ -276,37 +275,9 @@ const TestBrain = () => {
     const canvas = canvasRef.current;
     const svg = svgRef.current;
     
-    // Clear existing nodes
-    canvas.querySelectorAll('.thought-node, .central-pulse').forEach(el => el.remove());
+    // Clear existing nodes (no central pulse anymore)
+    canvas.querySelectorAll('.thought-node').forEach(el => el.remove());
     svg.innerHTML = '';
-
-    // Create enhanced central pulse
-    const centralPulse = document.createElement('div');
-    centralPulse.className = 'central-pulse';
-    centralPulse.style.cssText = `
-      position: absolute;
-      width: 12px;
-      height: 12px;
-      background: radial-gradient(circle, rgba(0, 255, 255, 0.8) 0%, rgba(0, 255, 255, 0.3) 50%, transparent 100%);
-      border: 1.5px solid rgba(0, 255, 255, 0.6);
-      border-radius: 50%;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 5;
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-    `;
-    canvas.appendChild(centralPulse);
-
-    // Enhanced pulse animation
-    gsap.to(centralPulse, {
-      scale: 4,
-      opacity: 0.2,
-      duration: 4,
-      ease: "sine.inOut",
-      yoyo: true,
-      repeat: -1
-    });
 
     // Create thought nodes matching transmission card size
     nodes.forEach((node, index) => {
@@ -343,10 +314,21 @@ const TestBrain = () => {
 
       nodeElement.addEventListener('mouseenter', (e) => {
         const rect = nodeElement.getBoundingClientRect();
+        const canvasRect = canvas.getBoundingClientRect();
+        
+        // Better positioning to prevent cutoff
+        let tooltipX = rect.left - canvasRect.left + rect.width / 2;
+        let tooltipY = rect.top - canvasRect.top - 10;
+        
+        // Adjust if too close to edges
+        if (tooltipX < 150) tooltipX = 150;
+        if (tooltipX > window.innerWidth - 150) tooltipX = window.innerWidth - 150;
+        if (tooltipY < 80) tooltipY = rect.bottom - canvasRect.top + 10;
+        
         setTooltip({
           node,
-          x: rect.left + rect.width / 2,
-          y: rect.top - 10
+          x: tooltipX,
+          y: tooltipY
         });
         
         gsap.to(nodeElement, {
@@ -783,27 +765,55 @@ const TestBrain = () => {
         </div>
       </div>
 
-      {/* Enhanced Tooltip */}
+      {/* Enhanced Tooltip - BookCard style with limited connections */}
       {tooltip && (
         <div 
-          className="absolute z-30 bg-black/95 backdrop-blur-sm text-white p-3 rounded-lg border border-cyan-400/50 pointer-events-none max-w-xs shadow-lg"
+          className="absolute z-30 pointer-events-none"
           style={{ 
             left: tooltip.x - 100, 
-            top: tooltip.y - 70,
+            top: tooltip.y,
             transform: 'translateX(-50%)'
           }}
         >
-          <h4 className="font-semibold text-cyan-400 text-sm mb-1">{tooltip.node.title}</h4>
-          <p className="text-xs text-gray-300 mb-2">{tooltip.node.author}</p>
-          <div className="flex flex-wrap gap-1 mb-2">
-            {tooltip.node.tags.slice(0, 3).map(tag => (
-              <Badge key={tag} variant="outline" className="text-xs border-cyan-400/50 text-cyan-300">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-          <div className="text-xs text-cyan-300/70">
-            {links.filter(link => link.fromId === tooltip.node.id || link.toId === tooltip.node.id).length} connections
+          <div className="bg-slate-800/95 border border-cyan-400/50 rounded-lg p-4 max-w-xs shadow-lg">
+            <div className="flex items-start space-x-4">
+              {tooltip.node.coverUrl && (
+                <div className="w-12 h-16 bg-slate-700 rounded border border-slate-600 overflow-hidden flex-shrink-0">
+                  <img 
+                    src={tooltip.node.coverUrl} 
+                    alt={tooltip.node.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-cyan-400 text-sm mb-1 leading-tight">{tooltip.node.title}</h4>
+                <p className="text-xs text-slate-300 mb-2">{tooltip.node.author}</p>
+                
+                {tooltip.node.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {tooltip.node.tags.slice(0, 3).map(tag => (
+                      <span
+                        key={tag}
+                        className="px-2 py-1 bg-slate-700/50 text-slate-300 text-xs rounded-full"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                    {tooltip.node.tags.length > 3 && (
+                      <span className="text-slate-400 text-xs px-2 py-1">
+                        +{tooltip.node.tags.length - 3}
+                      </span>
+                    )}
+                  </div>
+                )}
+                
+                <div className="text-xs text-cyan-300/70">
+                  {Math.min(links.filter(link => link.fromId === tooltip.node.id || link.toId === tooltip.node.id).length, 5)} connections
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
