@@ -126,55 +126,23 @@ const EnhancedBookCover = ({
 };
 
 const PlaceholderCover = ({ title, className = "w-12 h-16" }: { title: string; className?: string }) => {
-  // Generate a more thematic placeholder based on the title and sci-fi genre
-  const getPlaceholderElements = (title: string) => {
-    const lowerTitle = title.toLowerCase();
-    
-    if (lowerTitle.includes('space') || lowerTitle.includes('opera') || lowerTitle.includes('galaxy')) {
-      return { icon: '🚀', color: 'from-purple-600 to-blue-700', accent: 'bg-purple-400' };
-    }
-    if (lowerTitle.includes('cyberpunk') || lowerTitle.includes('cyber') || lowerTitle.includes('punk')) {
-      return { icon: '🤖', color: 'from-cyan-600 to-indigo-700', accent: 'bg-cyan-400' };
-    }
-    if (lowerTitle.includes('time') || lowerTitle.includes('future') || lowerTitle.includes('past')) {
-      return { icon: '⏰', color: 'from-green-600 to-teal-700', accent: 'bg-green-400' };
-    }
-    if (lowerTitle.includes('alien') || lowerTitle.includes('extraterrestrial')) {
-      return { icon: '👽', color: 'from-violet-600 to-purple-700', accent: 'bg-violet-400' };
-    }
-    if (lowerTitle.includes('robot') || lowerTitle.includes('android') || lowerTitle.includes('ai')) {
-      return { icon: '🤖', color: 'from-orange-600 to-red-700', accent: 'bg-orange-400' };
-    }
-    if (lowerTitle.includes('dystopian') || lowerTitle.includes('apocalypse')) {
-      return { icon: '🌆', color: 'from-red-600 to-gray-800', accent: 'bg-red-400' };
-    }
-    
-    // Default sci-fi themed placeholder
-    return { icon: '📚', color: 'from-slate-600 to-slate-800', accent: 'bg-blue-400' };
-  };
-
-  const { icon, color, accent } = getPlaceholderElements(title);
-
   return (
-    <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-gradient-to-br ${color} flex flex-col items-center justify-center relative`}>
-      {/* Subtle circuit pattern background */}
-      <div className="absolute inset-0 opacity-10">
-        <svg className="w-full h-full" viewBox="0 0 40 40" fill="none">
-          <path d="M8 8h4v4H8zm8 0h4v4h-4zm8 0h4v4h-4zM8 16h4v4H8zm16 0h4v4h-4zM8 24h4v4H8zm8 0h4v4h-4zm8 0h4v4h-4z" fill="currentColor"/>
-        </svg>
-      </div>
+    <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-gradient-to-br from-black via-gray-900 to-black flex flex-col items-center justify-center relative`}>
+      {/* Glossy overlay effect */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-40" />
+      <div className="absolute top-2 left-2 right-8 h-px bg-white/10" />
       
       <div className="relative z-10 flex flex-col items-center justify-center">
-        <div className={`w-6 h-6 mb-2 rounded-sm ${accent}/20 flex items-center justify-center`}>
-          <BookOpen className={`w-3 h-3 text-${accent.split('-')[1]}-300 opacity-80`} />
+        <div className="w-8 h-8 mb-2 rounded-sm bg-white/5 flex items-center justify-center backdrop-blur-sm">
+          <BookOpen className="w-4 h-4 text-white/60" />
         </div>
-        <div className="text-lg opacity-80 mb-2">{icon}</div>
-        <div className="flex space-x-1">
-          <div className={`w-1 h-1 ${accent} rounded-full opacity-60 animate-pulse`}></div>
-          <div className={`w-1 h-1 ${accent} rounded-full opacity-80 animate-pulse`} style={{ animationDelay: '0.2s' }}></div>
-          <div className={`w-1 h-1 ${accent} rounded-full opacity-60 animate-pulse`} style={{ animationDelay: '0.4s' }}></div>
+        <div className="text-xs text-white/40 text-center px-2 leading-tight">
+          {title.length > 20 ? title.substring(0, 20) + '...' : title}
         </div>
       </div>
+      
+      {/* Bottom shine effect */}
+      <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-white/3 to-transparent" />
     </div>
   );
 };
