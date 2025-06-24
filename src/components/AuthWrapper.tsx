@@ -1,7 +1,5 @@
 
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 
 interface AuthWrapperProps {
   children: React.ReactNode;
@@ -10,23 +8,6 @@ interface AuthWrapperProps {
 
 const AuthWrapper = ({ children, fallback }: AuthWrapperProps) => {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    // If user is authenticated and on certain protected pages, redirect to home
-    if (user && !loading) {
-      // Only redirect if we're on a page that might have auth issues
-      if (location.pathname === '/author-matrix' || location.pathname === '/thread-map') {
-        // Small delay to ensure page is ready
-        setTimeout(() => {
-          if (!document.querySelector('[data-content-loaded]')) {
-            navigate('/', { replace: true });
-          }
-        }, 3000);
-      }
-    }
-  }, [user, loading, location.pathname, navigate]);
 
   if (loading) {
     return (
