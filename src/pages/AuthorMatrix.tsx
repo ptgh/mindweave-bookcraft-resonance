@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
@@ -221,7 +220,7 @@ const AuthorMatrix = () => {
           <div ref={addFeatureBlockRef} className="feature-block flex items-center justify-between mb-4 sm:mb-6">
             <div>
               <h2 className="text-slate-200 text-lg sm:text-xl font-medium mb-1">Authors</h2>
-              <p className="text-slate-400 text-sm">Consciousness archives from the science fiction masters</p>
+              <p className="text-slate-400 text-sm">Consciousness archives from the SF masters</p>
             </div>
           </div>
 
