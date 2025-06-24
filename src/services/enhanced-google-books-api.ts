@@ -45,34 +45,23 @@ const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 const MAX_RETRIES = 2;
 const RETRY_DELAY = 500;
 
-// Science fiction keywords for filtering
-const SCIFI_KEYWORDS = [
-  'science fiction', 'sci-fi', 'space opera', 'cyberpunk', 'dystopian',
-  'utopian', 'time travel', 'alien', 'extraterrestrial', 'robot', 'android',
-  'artificial intelligence', 'ai', 'future', 'futuristic', 'spaceship',
-  'galactic', 'interstellar', 'mars', 'colonization', 'terraforming',
-  'genetic engineering', 'bioengineering', 'nanotechnology', 'virtual reality',
-  'alternate reality', 'parallel universe', 'multiverse', 'quantum',
-  'apocalyptic', 'post-apocalyptic', 'steampunk', 'biopunk', 'hard science fiction'
-];
-
+// Simple sci-fi detection
 const isSciFiBook = (book: GoogleBook): boolean => {
   const categories = book.volumeInfo.categories || [];
   const description = book.volumeInfo.description || '';
   const title = book.volumeInfo.title || '';
   
-  // Check categories first
-  const categoryMatch = categories.some(category => 
-    category.toLowerCase().includes('science fiction') ||
-    category.toLowerCase().includes('sci-fi') ||
-    category.toLowerCase().includes('fantasy')
-  );
+  const text = `${title} ${description} ${categories.join(' ')}`.toLowerCase();
   
-  if (categoryMatch) return true;
+  // Basic sci-fi indicators
+  const indicators = [
+    'science fiction', 'sci-fi', 'science-fiction',
+    'space', 'future', 'robot', 'alien', 'cyberpunk',
+    'dystopian', 'utopian', 'time travel', 'galaxy',
+    'artificial intelligence', 'technology', 'cyber'
+  ];
   
-  // Check title and description for sci-fi keywords
-  const textToCheck = `${title} ${description}`.toLowerCase();
-  return SCIFI_KEYWORDS.some(keyword => textToCheck.includes(keyword.toLowerCase()));
+  return indicators.some(indicator => text.includes(indicator));
 };
 
 class GoogleBooksCache {
@@ -182,22 +171,25 @@ export const searchBooksEnhanced = async (
   maxResults: number = 20,
   startIndex: number = 0
 ): Promise<EnhancedBookSuggestion[]> => {
-  if (!query || query.length < 2) return [];
+  if (!query || query.length < 2) {
+    console.log('Query too short or empty:', query);
+    return [];
+  }
   
   const cacheKey = `search_${query}_${maxResults}_${startIndex}`;
   const cached = cache.get(cacheKey);
   if (cached) {
-    console.log('Returning cached results for:', query);
+    console.log('Returning cached results for:', query, 'Count:', cached.length);
     return cached;
   }
   
   try {
-    console.log('Making API call for:', query, 'maxResults:', maxResults, 'startIndex:', startIndex);
+    console.log(`Making API call for: "${query}", maxResults: ${maxResults}, startIndex: ${startIndex}`);
     
     const data = await retryWithBackoff(async () => {
-      // Simplified query - don't add subject filter here as it may be too restrictive
+      // Simple, direct search
       const searchQuery = encodeURIComponent(query);
-      const url = `https://www.googleapis.com/books/v1/volumes?q=${searchQuery}&maxResults=${maxResults}&startIndex=${startIndex}&printType=books&orderBy=relevance&langRestrict=en`;
+      const url = `https://www.googleapis.com/books/v1/volumes?q=${searchQuery}&maxResults=${maxResults}&startIndex=${startIndex}&printType=books&langRestrict=en`;
       
       console.log('API URL:', url);
       
@@ -205,12 +197,17 @@ export const searchBooksEnhanced = async (
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('API error response:', response.status, errorText);
-        throw new Error(`Google Books API error: ${response.status} - ${errorText}`);
+        console.error('API error response:', response.status, response.statusText, errorText);
+        throw new Error(`Google Books API error: ${response.status} - ${response.statusText}`);
       }
       
       const responseData = await response.json();
-      console.log('API response received, items count:', responseData.items?.length || 0);
+      console.log('Raw API response:', {
+        totalItems: responseData.totalItems,
+        itemsCount: responseData.items?.length || 0,
+        firstItem: responseData.items?.[0]?.volumeInfo?.title
+      });
+      
       return responseData;
     });
     
@@ -219,44 +216,67 @@ export const searchBooksEnhanced = async (
       return [];
     }
     
-    const allResults = data.items.map((item: GoogleBook) => {
-      const imageLinks = processImageLinks(item.volumeInfo.imageLinks);
-      
-      return {
-        id: item.id,
-        title: item.volumeInfo.title || 'Unknown Title',
-        subtitle: item.volumeInfo.subtitle,
-        author: item.volumeInfo.authors?.[0] || 'Unknown Author',
-        description: item.volumeInfo.description,
-        categories: item.volumeInfo.categories,
-        publishedDate: item.volumeInfo.publishedDate,
-        pageCount: item.volumeInfo.pageCount,
-        previewLink: item.volumeInfo.previewLink,
-        infoLink: item.volumeInfo.infoLink,
-        rating: item.volumeInfo.averageRating,
-        ratingsCount: item.volumeInfo.ratingsCount,
-        ...imageLinks,
-        originalBook: item
-      };
-    });
+    console.log(`Processing ${data.items.length} items from API`);
     
-    // Filter for science fiction books
-    const sciFiResults = allResults.filter((book: any) => 
-      isSciFiBook(book.originalBook)
-    );
+    const processedResults = data.items
+      .filter((item: GoogleBook) => {
+        // Basic validation
+        if (!item.id || !item.volumeInfo) return false;
+        if (!item.volumeInfo.title) return false;
+        return true;
+      })
+      .map((item: GoogleBook) => {
+        const imageLinks = processImageLinks(item.volumeInfo.imageLinks);
+        
+        return {
+          id: item.id,
+          title: item.volumeInfo.title || 'Unknown Title',
+          subtitle: item.volumeInfo.subtitle,
+          author: item.volumeInfo.authors?.[0] || 'Unknown Author',
+          description: item.volumeInfo.description,
+          categories: item.volumeInfo.categories,
+          publishedDate: item.volumeInfo.publishedDate,
+          pageCount: item.volumeInfo.pageCount,
+          previewLink: item.volumeInfo.previewLink,
+          infoLink: item.volumeInfo.infoLink,
+          rating: item.volumeInfo.averageRating,
+          ratingsCount: item.volumeInfo.ratingsCount,
+          ...imageLinks,
+          originalBook: item
+        };
+      });
+    
+    console.log(`Processed ${processedResults.length} valid books`);
+    
+    // Filter for sci-fi books if the query is generic
+    const shouldFilter = !query.toLowerCase().includes('science fiction') && 
+                        !query.toLowerCase().includes('sci-fi') &&
+                        !query.toLowerCase().includes('cyberpunk') &&
+                        !query.toLowerCase().includes('space opera');
+    
+    let finalResults;
+    if (shouldFilter) {
+      finalResults = processedResults.filter((book: any) => 
+        isSciFiBook(book.originalBook)
+      );
+      console.log(`Filtered to ${finalResults.length} sci-fi books`);
+    } else {
+      finalResults = processedResults;
+      console.log(`Using all ${finalResults.length} books (query was specific)`);
+    }
     
     // Clean up the results
-    const results = sciFiResults.map(book => {
+    const cleanResults = finalResults.map(book => {
       const { originalBook, ...cleanBook } = book;
       return cleanBook;
     });
     
-    console.log(`Processed ${allResults.length} results, filtered to ${results.length} sci-fi books for query: ${query}`);
+    console.log(`Final result count for "${query}": ${cleanResults.length}`);
     
-    cache.set(cacheKey, results);
-    return results;
+    cache.set(cacheKey, cleanResults);
+    return cleanResults;
   } catch (error) {
-    console.error('Enhanced search failed:', error);
+    console.error('Enhanced search failed for query:', query, 'Error:', error);
     // Return empty array instead of throwing to prevent breaking the UI
     return [];
   }

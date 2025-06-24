@@ -30,7 +30,7 @@ const BookBrowser = () => {
       books.forEach((_, index) => {
         setTimeout(() => {
           setVisibleBooks(prev => new Set([...prev, index]));
-        }, index * 50); // Faster animation
+        }, index * 50);
       });
 
       // Preload images for better performance
@@ -45,90 +45,84 @@ const BookBrowser = () => {
   }, [books]);
 
   const loadRandomBooks = async () => {
-    console.log('Loading random books...');
+    console.log('=== Starting loadRandomBooks ===');
     setLoading(true);
     setVisibleBooks(new Set());
     
     try {
-      // Enhanced sci-fi search terms for better results
-      const sciFiSearchTerms = [
-        'science fiction space opera',
-        'cyberpunk dystopian future',
-        'time travel paradox',
-        'alien contact first',
-        'artificial intelligence robot',
-        'galactic empire war',
-        'terraforming colonization',
-        'quantum physics multiverse',
-        'genetic engineering biotech',
-        'virtual reality simulation',
-        'post apocalyptic survival',
-        'interstellar exploration',
-        'android consciousness',
-        'space station colony',
-        'technological singularity'
+      // Simple, reliable search terms
+      const searchTerms = [
+        'science fiction',
+        'cyberpunk',
+        'space opera',
+        'dystopian fiction',
+        'time travel',
+        'artificial intelligence',
+        'space exploration'
       ];
       
-      let allBooks: EnhancedBookSuggestion[] = [];
-      let attempts = 0;
-      const maxAttempts = 3;
+      console.log('Available search terms:', searchTerms);
       
-      // Try multiple search terms to get enough books
-      while (allBooks.length < 24 && attempts < maxAttempts) {
-        const randomTerm = sciFiSearchTerms[Math.floor(Math.random() * sciFiSearchTerms.length)];
-        const startIndex = Math.floor(Math.random() * 30);
-        
-        console.log(`Attempt ${attempts + 1}: Searching for: "${randomTerm}" at index: ${startIndex}`);
+      let allBooks: EnhancedBookSuggestion[] = [];
+      
+      // Try each search term
+      for (let i = 0; i < searchTerms.length && allBooks.length < 24; i++) {
+        const term = searchTerms[i];
+        console.log(`\n--- Searching for: "${term}" ---`);
         
         try {
-          const results = await searchBooksEnhanced(randomTerm, 40, startIndex);
-          console.log(`Got ${results.length} results for "${randomTerm}"`);
+          const results = await searchBooksEnhanced(term, 15, 0);
+          console.log(`Results for "${term}":`, results.length, 'books');
           
-          // Add new books, avoiding duplicates
-          const newBooks = results.filter(book => 
-            !allBooks.some(existing => existing.id === book.id)
-          );
-          
-          allBooks.push(...newBooks);
-          console.log(`Total unique books so far: ${allBooks.length}`);
-          
-          // If we got good results, break early
-          if (results.length > 10) {
-            break;
+          if (results.length > 0) {
+            console.log('Sample result:', results[0]);
+            
+            // Add new books, avoiding duplicates
+            const newBooks = results.filter(book => 
+              !allBooks.some(existing => existing.id === book.id)
+            );
+            
+            allBooks.push(...newBooks);
+            console.log(`Added ${newBooks.length} new books. Total: ${allBooks.length}`);
+          } else {
+            console.warn(`No results for "${term}"`);
           }
-        } catch (error) {
-          console.error(`Search failed for "${randomTerm}":`, error);
+        } catch (searchError) {
+          console.error(`Search failed for "${term}":`, searchError);
         }
         
-        attempts++;
+        // Small delay between searches
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
       
-      console.log(`Final book count before shuffle: ${allBooks.length}`);
+      console.log('\n=== Final Results ===');
+      console.log('Total books found:', allBooks.length);
       
-      // Shuffle and take exactly 24 books
-      const shuffled = allBooks
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 24);
+      if (allBooks.length > 0) {
+        // Shuffle and take exactly 24 books
+        const shuffled = allBooks
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 24);
+          
+        console.log('Setting books:', shuffled.length);
+        setBooks(shuffled);
         
-      console.log('Final books to display:', shuffled.length);
-      setBooks(shuffled);
-      
-      if (shuffled.length === 0) {
-        console.warn('No books found after all attempts');
+        toast({
+          title: "Books Loaded",
+          description: `Found ${shuffled.length} sci-fi books for you to explore.`,
+        });
+      } else {
+        console.error('No books found after all search attempts');
+        setBooks([]);
         toast({
           title: "No Books Found",
           description: "Unable to load sci-fi books. Please try again.",
           variant: "destructive",
         });
-      } else if (shuffled.length < 24) {
-        console.warn(`Only found ${shuffled.length} books instead of 24`);
-        toast({
-          title: "Partial Results",
-          description: `Loaded ${shuffled.length} sci-fi books. Try scanning again for more.`,
-        });
       }
     } catch (error) {
-      console.error('Error loading books:', error);
+      console.error('Error in loadRandomBooks:', error);
+      setBooks([]);
       toast({
         title: "Loading Error",
         description: "Failed to load sci-fi books. Please check your connection and try again.",
@@ -136,10 +130,12 @@ const BookBrowser = () => {
       });
     } finally {
       setLoading(false);
+      console.log('=== loadRandomBooks completed ===');
     }
   };
 
   const addToTransmissions = async (book: EnhancedBookSuggestion) => {
+    console.log('Adding book to transmissions:', book.title);
     try {
       await saveTransmission({
         title: book.title,
@@ -156,12 +152,23 @@ const BookBrowser = () => {
         description: `"${book.title}" has been added to your transmissions.`,
       });
     } catch (error: any) {
+      console.error('Error adding to transmissions:', error);
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
     }
+  };
+
+  const handleDiscoverClick = () => {
+    console.log('Discover button clicked');
+    loadRandomBooks();
+  };
+
+  const handleScanClick = () => {
+    console.log('Scan button clicked');
+    loadRandomBooks();
   };
 
   return (
@@ -179,7 +186,7 @@ const BookBrowser = () => {
             </p>
             
             <Button
-              onClick={loadRandomBooks}
+              onClick={handleDiscoverClick}
               disabled={loading}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
@@ -256,7 +263,7 @@ const BookBrowser = () => {
                 The archive scan returned empty. Try discovering new sci-fi books.
               </p>
               <Button
-                onClick={loadRandomBooks}
+                onClick={handleScanClick}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Scan Archive
