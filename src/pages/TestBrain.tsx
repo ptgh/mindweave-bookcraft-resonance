@@ -34,6 +34,7 @@ interface BookLink {
   toId: string;
   type: 'tag_shared' | 'manual';
   strength: number;
+  sharedTags: string[];
 }
 
 const TestBrain = () => {
@@ -103,7 +104,8 @@ const TestBrain = () => {
             fromId: node1.id,
             toId: node2.id,
             type: 'tag_shared',
-            strength: sharedTags.length
+            strength: sharedTags.length,
+            sharedTags
           });
         }
       }
@@ -112,7 +114,72 @@ const TestBrain = () => {
     return connections;
   };
 
-  // Create and animate nodes with more dynamic synaptic behavior
+  // Enhanced synaptic firing animation
+  const triggerSynapticFiring = (sourceNode: BrainNode) => {
+    const relatedLinks = links.filter(link => 
+      link.fromId === sourceNode.id || link.toId === sourceNode.id
+    );
+
+    relatedLinks.forEach((link, index) => {
+      const fromNode = nodes.find(n => n.id === link.fromId);
+      const toNode = nodes.find(n => n.id === link.toId);
+      
+      if (!fromNode || !toNode) return;
+
+      // Create firing particle
+      const particle = document.createElement('div');
+      particle.className = 'synaptic-particle';
+      particle.style.cssText = `
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        background: #00ffff;
+        border-radius: 50%;
+        box-shadow: 0 0 8px #00ffff;
+        z-index: 15;
+        pointer-events: none;
+      `;
+      
+      canvasRef.current?.appendChild(particle);
+
+      // Animate particle along the connection path
+      gsap.set(particle, {
+        x: fromNode.x + 2,
+        y: fromNode.y + 2
+      });
+
+      gsap.to(particle, {
+        x: toNode.x + 2,
+        y: toNode.y + 2,
+        duration: 0.8 + Math.random() * 0.4,
+        delay: index * 0.1,
+        ease: "power2.out",
+        onComplete: () => {
+          // Flash destination node
+          if (toNode.element) {
+            gsap.to(toNode.element, {
+              scale: 2,
+              boxShadow: '0 0 20px #00ffff',
+              duration: 0.2,
+              yoyo: true,
+              repeat: 1
+            });
+          }
+          particle.remove();
+        }
+      });
+
+      // Scale up the particle during travel
+      gsap.to(particle, {
+        scale: 2,
+        duration: 0.4,
+        yoyo: true,
+        repeat: 1
+      });
+    });
+  };
+
+  // Create and animate nodes with enhanced synaptic behavior
   useEffect(() => {
     if (!canvasRef.current || !svgRef.current || nodes.length === 0) return;
 
@@ -123,15 +190,15 @@ const TestBrain = () => {
     canvas.querySelectorAll('.thought-node, .central-pulse').forEach(el => el.remove());
     svg.innerHTML = '';
 
-    // Create subtle central pulse
+    // Create more subtle central pulse
     const centralPulse = document.createElement('div');
     centralPulse.className = 'central-pulse';
     centralPulse.style.cssText = `
       position: absolute;
-      width: 4px;
-      height: 4px;
-      background: rgba(0, 255, 255, 0.2);
-      border: 1px solid rgba(0, 255, 255, 0.3);
+      width: 6px;
+      height: 6px;
+      background: rgba(0, 255, 255, 0.1);
+      border: 1px solid rgba(0, 255, 255, 0.2);
       border-radius: 50%;
       left: 50%;
       top: 50%;
@@ -140,33 +207,33 @@ const TestBrain = () => {
     `;
     canvas.appendChild(centralPulse);
 
-    // More dynamic central pulse with synaptic bursts
+    // Subtle pulse animation
     gsap.to(centralPulse, {
-      scale: 2,
-      opacity: 0.6,
-      duration: 2,
-      ease: "power2.inOut",
+      scale: 1.5,
+      opacity: 0.4,
+      duration: 3,
+      ease: "sine.inOut",
       yoyo: true,
       repeat: -1
     });
 
-    // Create thought nodes
+    // Create thought nodes (same size as BookCard)
     nodes.forEach((node, index) => {
       const nodeElement = document.createElement('div');
       nodeElement.className = 'thought-node user-node';
       nodeElement.style.cssText = `
         position: absolute;
-        width: 6px;
-        height: 6px;
+        width: 4px;
+        height: 4px;
         background: #00d4ff;
         border-radius: 50%;
         left: ${node.x}px;
         top: ${node.y}px;
         cursor: pointer;
-        box-shadow: 0 0 6px rgba(0, 212, 255, 0.5);
+        box-shadow: 0 0 4px rgba(0, 212, 255, 0.6);
         opacity: 0;
         z-index: 10;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
       `;
 
       (nodeElement as any).nodeData = node;
@@ -180,50 +247,24 @@ const TestBrain = () => {
           y: rect.top - 10
         });
         
-        // More dramatic synaptic response
+        // Enhanced synaptic response with firing
         gsap.to(nodeElement, {
-          scale: 3,
-          boxShadow: '0 0 15px rgba(0, 212, 255, 0.8)',
-          duration: 0.2,
+          scale: 4,
+          boxShadow: '0 0 20px rgba(0, 212, 255, 1)',
+          duration: 0.3,
           ease: "back.out(2)"
         });
 
-        // Pulse connected nodes
-        links.forEach(link => {
-          if (link.fromId === node.id || link.toId === node.id) {
-            const connectedNodeId = link.fromId === node.id ? link.toId : link.fromId;
-            const connectedNode = nodes.find(n => n.id === connectedNodeId);
-            if (connectedNode?.element) {
-              gsap.to(connectedNode.element, {
-                scale: 1.8,
-                opacity: 1,
-                duration: 0.3
-              });
-            }
-          }
-        });
+        // Trigger synaptic firing to connected nodes
+        triggerSynapticFiring(node);
       });
 
       nodeElement.addEventListener('mouseleave', () => {
         setTooltip(null);
         gsap.to(nodeElement, {
           scale: 1,
-          boxShadow: '0 0 6px rgba(0, 212, 255, 0.5)',
-          duration: 0.2
-        });
-
-        // Reset connected nodes
-        links.forEach(link => {
-          if (link.fromId === node.id || link.toId === node.id) {
-            const connectedNodeId = link.fromId === node.id ? link.toId : link.fromId;
-            const connectedNode = nodes.find(n => n.id === connectedNodeId);
-            if (connectedNode?.element) {
-              gsap.to(connectedNode.element, {
-                scale: 1,
-                duration: 0.3
-              });
-            }
-          }
+          boxShadow: '0 0 4px rgba(0, 212, 255, 0.6)',
+          duration: 0.3
         });
       });
 
@@ -232,47 +273,50 @@ const TestBrain = () => {
         
         // Synaptic burst effect on click
         gsap.to(nodeElement, {
-          scale: 4,
+          scale: 6,
           duration: 0.1,
           yoyo: true,
           repeat: 1,
           ease: "power2.inOut"
         });
+
+        // Trigger stronger synaptic firing
+        triggerSynapticFiring(node);
       });
 
       canvas.appendChild(nodeElement);
 
-      // More dynamic appearance animation
+      // Enhanced appearance animation
       gsap.to(nodeElement, {
         opacity: 1,
-        scale: 1.2,
-        duration: 0.6,
-        delay: index * 0.08,
+        scale: 1.5,
+        duration: 0.8,
+        delay: index * 0.1,
         ease: "elastic.out(1, 0.5)"
       });
 
-      // More complex floating with synaptic micro-movements
+      // Floating animation
       gsap.to(nodeElement, {
-        x: `+=${Math.random() * 30 - 15}`,
-        y: `+=${Math.random() * 30 - 15}`,
-        duration: 4 + Math.random() * 3,
+        x: `+=${Math.random() * 20 - 10}`,
+        y: `+=${Math.random() * 20 - 10}`,
+        duration: 5 + Math.random() * 3,
         ease: "sine.inOut",
         yoyo: true,
         repeat: -1
       });
 
-      // Add micro-pulse for synaptic activity
+      // Breathing pulse
       gsap.to(nodeElement, {
-        opacity: 0.7,
-        duration: 1.5 + Math.random() * 2,
-        ease: "power2.inOut",
+        opacity: 0.8,
+        duration: 2 + Math.random() * 2,
+        ease: "sine.inOut",
         yoyo: true,
         repeat: -1,
         delay: Math.random() * 2
       });
     });
 
-    // Draw connections with enhanced dynamics
+    // Draw enhanced connections
     drawConnections(svg, nodes, links);
 
   }, [nodes, links]);
@@ -295,28 +339,28 @@ const TestBrain = () => {
       if (!fromNode || !toNode) return;
 
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', (fromNode.x + 3).toString());
-      line.setAttribute('y1', (fromNode.y + 3).toString());
-      line.setAttribute('x2', (toNode.x + 3).toString());
-      line.setAttribute('y2', (toNode.y + 3).toString());
-      line.setAttribute('stroke', 'rgba(0, 212, 255, 0.2)');
-      line.setAttribute('stroke-width', Math.min(connection.strength * 0.3 + 0.3, 1.2).toString());
+      line.setAttribute('x1', (fromNode.x + 2).toString());
+      line.setAttribute('y1', (fromNode.y + 2).toString());
+      line.setAttribute('x2', (toNode.x + 2).toString());
+      line.setAttribute('y2', (toNode.y + 2).toString());
+      line.setAttribute('stroke', 'rgba(0, 212, 255, 0.4)');
+      line.setAttribute('stroke-width', Math.min(connection.strength * 0.5 + 0.5, 2).toString());
       line.setAttribute('opacity', '0');
       svg.appendChild(line);
 
-      // More dynamic line appearance
+      // Enhanced line appearance with glow
       gsap.to(line, {
-        opacity: 0.3,
-        duration: 0.8,
-        delay: index * 0.05,
+        opacity: 0.6,
+        duration: 1,
+        delay: index * 0.08,
         ease: "power2.out"
       });
 
-      // Enhanced synaptic pulse animation
+      // Synaptic pulse along connections
       gsap.to(line, {
-        opacity: 0.6,
-        strokeWidth: Math.min(connection.strength * 0.5 + 0.5, 1.8),
-        duration: 3 + Math.random() * 2,
+        opacity: 0.9,
+        strokeWidth: Math.min(connection.strength * 0.8 + 0.8, 2.5),
+        duration: 2.5 + Math.random() * 2,
         ease: "sine.inOut",
         yoyo: true,
         repeat: -1,
@@ -408,20 +452,20 @@ const TestBrain = () => {
         </div>
       </div>
 
-      {/* Tooltip */}
+      {/* Enhanced Tooltip */}
       {tooltip && (
         <div 
-          className="absolute z-30 bg-black/90 backdrop-blur-sm text-white p-2 rounded-lg border border-cyan-400/30 pointer-events-none max-w-xs"
+          className="absolute z-30 bg-black/95 backdrop-blur-sm text-white p-3 rounded-lg border border-cyan-400/50 pointer-events-none max-w-xs shadow-lg"
           style={{ 
-            left: tooltip.x - 80, 
-            top: tooltip.y - 60,
+            left: tooltip.x - 100, 
+            top: tooltip.y - 70,
             transform: 'translateX(-50%)'
           }}
         >
-          <h4 className="font-semibold text-cyan-400 text-xs mb-1">{tooltip.node.title}</h4>
-          <p className="text-xs text-gray-300 mb-1">{tooltip.node.author}</p>
+          <h4 className="font-semibold text-cyan-400 text-sm mb-1">{tooltip.node.title}</h4>
+          <p className="text-xs text-gray-300 mb-2">{tooltip.node.author}</p>
           <div className="flex flex-wrap gap-1">
-            {tooltip.node.tags.slice(0, 2).map(tag => (
+            {tooltip.node.tags.slice(0, 3).map(tag => (
               <Badge key={tag} variant="outline" className="text-xs border-cyan-400/50 text-cyan-300">
                 {tag}
               </Badge>
@@ -430,32 +474,32 @@ const TestBrain = () => {
         </div>
       )}
 
-      {/* Smaller Node Detail Modal */}
+      {/* Smaller Node Detail Modal - matching BookCard style */}
       {selectedNode && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <Card className="w-full max-w-lg mx-4 bg-black/90 border-cyan-400/30 text-white">
+          <Card className="w-full max-w-md mx-4 bg-slate-800/50 border-slate-700 text-white">
             <div className="p-4">
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <h2 className="text-lg font-bold text-cyan-400 mb-1">{selectedNode.title}</h2>
-                  <p className="text-sm text-gray-300">{selectedNode.author}</p>
+                  <h2 className="text-lg font-medium text-slate-200 mb-1">{selectedNode.title}</h2>
+                  <p className="text-sm text-slate-400">{selectedNode.author}</p>
                 </div>
                 <button
                   onClick={() => setSelectedNode(null)}
-                  className="text-gray-400 hover:text-white transition-colors"
+                  className="text-slate-400 hover:text-white transition-colors"
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </div>
               
-              <div className="grid md:grid-cols-3 gap-4">
+              <div className="grid md:grid-cols-3 gap-3">
                 <div className="md:col-span-2">
                   {selectedNode.description && (
                     <div className="mb-3">
-                      <h3 className="text-xs font-semibold text-cyan-400 mb-1">Notes</h3>
-                      <p className="text-xs text-gray-300 leading-relaxed">
-                        {selectedNode.description.length > 200 
-                          ? `${selectedNode.description.substring(0, 200)}...`
+                      <h3 className="text-xs font-medium text-slate-300 mb-1">Notes</h3>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        {selectedNode.description.length > 150 
+                          ? `${selectedNode.description.substring(0, 150)}...`
                           : selectedNode.description
                         }
                       </p>
@@ -463,12 +507,15 @@ const TestBrain = () => {
                   )}
                   
                   <div>
-                    <h3 className="text-xs font-semibold text-cyan-400 mb-1">Tags</h3>
+                    <h3 className="text-xs font-medium text-slate-300 mb-1">Tags</h3>
                     <div className="flex flex-wrap gap-1">
                       {selectedNode.tags.map(tag => (
-                        <Badge key={tag} variant="outline" className="text-xs border-cyan-400/50 text-cyan-300">
+                        <span
+                          key={tag}
+                          className="px-2 py-1 bg-slate-700/50 text-slate-300 text-xs rounded-full"
+                        >
                           {tag}
-                        </Badge>
+                        </span>
                       ))}
                     </div>
                   </div>
@@ -479,8 +526,8 @@ const TestBrain = () => {
                     <img 
                       src={selectedNode.coverUrl} 
                       alt={selectedNode.title}
-                      className="max-w-full h-auto rounded border border-cyan-400/30"
-                      style={{ maxHeight: '150px' }}
+                      className="max-w-full h-auto rounded border border-slate-600"
+                      style={{ maxHeight: '120px' }}
                     />
                   </div>
                 )}

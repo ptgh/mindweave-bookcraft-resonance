@@ -1,4 +1,3 @@
-
 import { memo, useState } from "react";
 import BookCard from "./BookCard";
 import EmptyState from "./EmptyState";
@@ -23,15 +22,29 @@ const TransmissionsList = memo(({
   onAddNew 
 }: TransmissionsListProps) => {
   const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
+  const [optimisticTransmissions, setOptimisticTransmissions] = useState<Transmission[]>([]);
+
+  // Keep optimistic list in sync with props
+  React.useEffect(() => {
+    setOptimisticTransmissions(transmissions);
+  }, [transmissions]);
 
   const handleDiscard = async (book: Transmission) => {
-    // Add the book ID to deletingIds to show local feedback
+    // Immediately remove from local state for instant feedback
+    setOptimisticTransmissions(prev => prev.filter(t => t.id !== book.id));
     setDeletingIds(prev => new Set(prev).add(book.id));
     
     try {
       await onDiscard(book);
+      // Clean up deletion state on success
+      setDeletingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(book.id);
+        return newSet;
+      });
     } catch (error) {
-      // If deletion fails, remove the ID from deletingIds
+      // Restore the book if deletion fails
+      setOptimisticTransmissions(transmissions);
       setDeletingIds(prev => {
         const newSet = new Set(prev);
         newSet.delete(book.id);
@@ -40,7 +53,7 @@ const TransmissionsList = memo(({
     }
   };
 
-  if (loading) {
+  if (loading && optimisticTransmissions.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center">
@@ -51,7 +64,7 @@ const TransmissionsList = memo(({
     );
   }
 
-  if (transmissions.length === 0 && deletingIds.size === 0) {
+  if (optimisticTransmissions.length === 0) {
     return (
       <EmptyState
         title="No signals yet"
@@ -70,11 +83,11 @@ const TransmissionsList = memo(({
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {transmissions.map(book => (
+      {optimisticTransmissions.map(book => (
         <div 
           key={book.id}
           className={`transition-all duration-300 ${
-            deletingIds.has(book.id) ? 'opacity-50 scale-95 pointer-events-none' : ''
+            deletingIds.has(book.id) ? 'opacity-0 scale-95 pointer-events-none' : ''
           }`}
         >
           <BookCard
