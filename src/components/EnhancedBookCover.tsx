@@ -132,12 +132,14 @@ const PlaceholderCover = ({ title, className = "w-12 h-16" }: { title: string; c
       <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-40" />
       <div className="absolute top-2 left-2 right-8 h-px bg-white/10" />
       
-      <div className="relative z-10 flex flex-col items-center justify-center">
-        <div className="w-8 h-8 mb-2 rounded-sm bg-white/5 flex items-center justify-center backdrop-blur-sm">
-          <BookOpen className="w-4 h-4 text-white/60" />
+      <div className="relative z-10 flex flex-col items-center justify-center h-full p-1">
+        <div className="w-6 h-6 mb-1 rounded-sm bg-white/5 flex items-center justify-center backdrop-blur-sm flex-shrink-0">
+          <BookOpen className="w-3 h-3 text-white/60" />
         </div>
-        <div className="text-xs text-white/40 text-center px-2 leading-tight">
-          {title.length > 20 ? title.substring(0, 20) + '...' : title}
+        <div className="text-[9px] text-white/40 text-center px-1 leading-tight flex-1 flex items-center">
+          <span className="break-words hyphens-auto" style={{ wordBreak: 'break-word' }}>
+            {title}
+          </span>
         </div>
       </div>
       
