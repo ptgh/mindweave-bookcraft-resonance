@@ -1,5 +1,6 @@
 
 import { Circle } from "lucide-react";
+import MiniBrainVisual from "./MiniBrainVisual";
 
 interface SignalInFocusProps {
   book: {
@@ -23,8 +24,8 @@ const SignalInFocus = ({ book }: SignalInFocusProps) => {
         </div>
       </div>
       
-      <div className="flex items-center space-x-4">
-        <div className="w-16 h-20 bg-slate-700 rounded flex items-center justify-center">
+      <div className="flex items-start space-x-4 mb-4">
+        <div className="w-16 h-20 bg-slate-700 rounded flex items-center justify-center flex-shrink-0">
           {book.coverUrl ? (
             <img 
               src={book.coverUrl} 
@@ -38,7 +39,7 @@ const SignalInFocus = ({ book }: SignalInFocusProps) => {
           )}
         </div>
         
-        <div>
+        <div className="flex-1 min-w-0">
           <h3 className="text-slate-200 text-lg font-medium mb-1">
             {book.title}
           </h3>
@@ -46,6 +47,19 @@ const SignalInFocus = ({ book }: SignalInFocusProps) => {
             {book.author}
           </p>
         </div>
+      </div>
+
+      {/* Mini Brain Visual */}
+      <div className="mt-4 border-t border-slate-700/50 pt-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-slate-500 text-xs font-medium tracking-wider">
+            CONSCIOUSNESS WEB
+          </span>
+          <span className="text-slate-500 text-xs">
+            Live Network
+          </span>
+        </div>
+        <MiniBrainVisual />
       </div>
     </div>
   );
