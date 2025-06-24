@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -17,6 +16,7 @@ const BookBrowser = () => {
   const [books, setBooks] = useState<EnhancedBookSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [visibleBooks, setVisibleBooks] = useState<Set<number>>(new Set());
+  const [previouslyShownBooks, setPreviouslyShownBooks] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -46,6 +46,7 @@ const BookBrowser = () => {
 
   const loadRandomBooks = async () => {
     console.log('=== Starting loadRandomBooks ===');
+    console.log('Previously shown books count:', previouslyShownBooks.size);
     setLoading(true);
     setVisibleBooks(new Set());
     
@@ -58,48 +59,59 @@ const BookBrowser = () => {
         'dystopian fiction',
         'time travel',
         'artificial intelligence',
-        'space exploration'
+        'space exploration',
+        'hard science fiction',
+        'biopunk',
+        'steampunk',
+        'alternate history',
+        'post apocalyptic'
       ];
       
       console.log('Available search terms:', searchTerms);
       
       let allBooks: EnhancedBookSuggestion[] = [];
+      let attempts = 0;
+      const maxAttempts = searchTerms.length * 2; // Allow multiple passes through search terms
       
-      // Try each search term
-      for (let i = 0; i < searchTerms.length && allBooks.length < 24; i++) {
-        const term = searchTerms[i];
-        console.log(`\n--- Searching for: "${term}" ---`);
+      // Keep searching until we have enough unique books
+      while (allBooks.length < 24 && attempts < maxAttempts) {
+        const termIndex = attempts % searchTerms.length;
+        const term = searchTerms[termIndex];
+        const startIndex = Math.floor(attempts / searchTerms.length) * 15; // Offset for pagination
+        
+        console.log(`\n--- Attempt ${attempts + 1}: Searching for: "${term}" (startIndex: ${startIndex}) ---`);
         
         try {
-          const results = await searchBooksEnhanced(term, 15, 0);
+          const results = await searchBooksEnhanced(term, 15, startIndex);
           console.log(`Results for "${term}":`, results.length, 'books');
           
           if (results.length > 0) {
-            console.log('Sample result:', results[0]);
-            
-            // Add new books, avoiding duplicates
+            // Filter out previously shown books and duplicates
             const newBooks = results.filter(book => 
-              !allBooks.some(existing => existing.id === book.id)
+              !allBooks.some(existing => existing.id === book.id) &&
+              !previouslyShownBooks.has(book.id)
             );
             
             allBooks.push(...newBooks);
-            console.log(`Added ${newBooks.length} new books. Total: ${allBooks.length}`);
+            console.log(`Added ${newBooks.length} new unique books. Total: ${allBooks.length}`);
           } else {
-            console.warn(`No results for "${term}"`);
+            console.warn(`No results for "${term}" at startIndex ${startIndex}`);
           }
         } catch (searchError) {
           console.error(`Search failed for "${term}":`, searchError);
         }
+        
+        attempts++;
         
         // Small delay between searches
         await new Promise(resolve => setTimeout(resolve, 100));
       }
       
       console.log('\n=== Final Results ===');
-      console.log('Total books found:', allBooks.length);
+      console.log('Total unique books found:', allBooks.length);
       
       if (allBooks.length > 0) {
-        // Shuffle and take exactly 24 books
+        // Shuffle and take exactly 24 books (or all if less than 24)
         const shuffled = allBooks
           .sort(() => Math.random() - 0.5)
           .slice(0, 24);
@@ -107,18 +119,36 @@ const BookBrowser = () => {
         console.log('Setting books:', shuffled.length);
         setBooks(shuffled);
         
+        // Add these books to the previously shown set
+        const newBookIds = new Set(shuffled.map(book => book.id));
+        setPreviouslyShownBooks(prev => new Set([...prev, ...newBookIds]));
+        console.log('Updated previously shown books count:', previouslyShownBooks.size + newBookIds.size);
+        
         toast({
           title: "Books Loaded",
-          description: `Found ${shuffled.length} sci-fi books for you to explore.`,
+          description: `Found ${shuffled.length} new sci-fi books for you to explore.`,
         });
       } else {
-        console.error('No books found after all search attempts');
-        setBooks([]);
-        toast({
-          title: "No Books Found",
-          description: "Unable to load sci-fi books. Please try again.",
-          variant: "destructive",
-        });
+        console.error('No new books found after all search attempts');
+        
+        // If we can't find any new books, clear the history and try again
+        if (previouslyShownBooks.size > 0) {
+          console.log('Clearing previously shown books history and retrying...');
+          setPreviouslyShownBooks(new Set());
+          toast({
+            title: "Refreshing Library",
+            description: "Cleared viewing history to show fresh recommendations.",
+          });
+          // Don't call loadRandomBooks again here to avoid infinite loop
+          setBooks([]);
+        } else {
+          setBooks([]);
+          toast({
+            title: "No Books Found",
+            description: "Unable to load sci-fi books. Please try again.",
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error('Error in loadRandomBooks:', error);
@@ -171,6 +201,15 @@ const BookBrowser = () => {
     loadRandomBooks();
   };
 
+  const handleClearHistory = () => {
+    console.log('Clear history clicked');
+    setPreviouslyShownBooks(new Set());
+    toast({
+      title: "History Cleared",
+      description: "Viewing history has been reset. Next discovery will include all books again.",
+    });
+  };
+
   return (
     <AuthWrapper fallback={<Auth />}>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -185,13 +224,25 @@ const BookBrowser = () => {
               Discover your next science fiction transmission through the quantum field of possibilities
             </p>
             
-            <Button
-              onClick={handleDiscoverClick}
-              disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              {loading ? 'Scanning the Archive...' : 'Discover Sci-Fi Books'}
-            </Button>
+            <div className="flex items-center justify-center gap-4">
+              <Button
+                onClick={handleDiscoverClick}
+                disabled={loading}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {loading ? 'Scanning the Archive...' : 'Discover Sci-Fi Books'}
+              </Button>
+              
+              {previouslyShownBooks.size > 0 && (
+                <Button
+                  onClick={handleClearHistory}
+                  variant="outline"
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                >
+                  Clear History ({previouslyShownBooks.size})
+                </Button>
+              )}
+            </div>
           </div>
 
           {loading ? (
@@ -275,6 +326,8 @@ const BookBrowser = () => {
             <div className="inline-flex items-center space-x-2 text-slate-500 text-xs">
               <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
               <span>Archive status: {books.length} sci-fi books discovered</span>
+              <div className="w-1 h-1 bg-slate-600 rounded-full" />
+              <span>Previously viewed: {previouslyShownBooks.size} books</span>
               <div className="w-1 h-1 bg-slate-600 rounded-full" />
               <span>Enhanced caching: Active</span>
               <div className="w-1 h-1 bg-slate-600 rounded-full" />
