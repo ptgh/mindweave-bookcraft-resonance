@@ -69,42 +69,44 @@ const BookBrowser = () => {
         'technological singularity'
       ];
       
-      const randomTerm = sciFiSearchTerms[Math.floor(Math.random() * sciFiSearchTerms.length)];
-      const startIndex = Math.floor(Math.random() * 50); // Reduced range for better results
+      let allBooks: EnhancedBookSuggestion[] = [];
+      let attempts = 0;
+      const maxAttempts = 3;
       
-      console.log('Searching for:', randomTerm, 'at index:', startIndex);
-      
-      // Fetch more books to ensure we get 24 after filtering
-      const results = await searchBooksEnhanced(randomTerm, 40, startIndex);
-      
-      console.log('Raw results count:', results.length);
-      
-      // Enhanced filtering for sci-fi content
-      const sciFiBooks = results.filter(book => {
-        const title = book.title.toLowerCase();
-        const description = (book.description || '').toLowerCase();
-        const categories = book.categories || [];
-        const categoryText = categories.join(' ').toLowerCase();
+      // Try multiple search terms to get enough books
+      while (allBooks.length < 24 && attempts < maxAttempts) {
+        const randomTerm = sciFiSearchTerms[Math.floor(Math.random() * sciFiSearchTerms.length)];
+        const startIndex = Math.floor(Math.random() * 30);
         
-        const sciFiKeywords = [
-          'science fiction', 'sci-fi', 'cyberpunk', 'dystopian', 'space', 'future',
-          'robot', 'alien', 'cyber', 'time travel', 'galaxy', 'quantum', 'android',
-          'terraforming', 'colony', 'starship', 'interstellar', 'posthuman', 'ai'
-        ];
+        console.log(`Attempt ${attempts + 1}: Searching for: "${randomTerm}" at index: ${startIndex}`);
         
-        return categoryText.includes('science fiction') || 
-               categoryText.includes('sci-fi') ||
-               sciFiKeywords.some(keyword => 
-                 title.includes(keyword) || 
-                 description.includes(keyword) ||
-                 categoryText.includes(keyword)
-               );
-      });
+        try {
+          const results = await searchBooksEnhanced(randomTerm, 40, startIndex);
+          console.log(`Got ${results.length} results for "${randomTerm}"`);
+          
+          // Add new books, avoiding duplicates
+          const newBooks = results.filter(book => 
+            !allBooks.some(existing => existing.id === book.id)
+          );
+          
+          allBooks.push(...newBooks);
+          console.log(`Total unique books so far: ${allBooks.length}`);
+          
+          // If we got good results, break early
+          if (results.length > 10) {
+            break;
+          }
+        } catch (error) {
+          console.error(`Search failed for "${randomTerm}":`, error);
+        }
+        
+        attempts++;
+      }
       
-      console.log('Filtered sci-fi books count:', sciFiBooks.length);
+      console.log(`Final book count before shuffle: ${allBooks.length}`);
       
-      // Shuffle and ensure we get exactly 24 books
-      const shuffled = sciFiBooks
+      // Shuffle and take exactly 24 books
+      const shuffled = allBooks
         .sort(() => Math.random() - 0.5)
         .slice(0, 24);
         
@@ -112,18 +114,24 @@ const BookBrowser = () => {
       setBooks(shuffled);
       
       if (shuffled.length === 0) {
-        console.warn('No books found after filtering');
+        console.warn('No books found after all attempts');
         toast({
           title: "No Books Found",
-          description: "Try scanning the archive again for different results.",
+          description: "Unable to load sci-fi books. Please try again.",
           variant: "destructive",
+        });
+      } else if (shuffled.length < 24) {
+        console.warn(`Only found ${shuffled.length} books instead of 24`);
+        toast({
+          title: "Partial Results",
+          description: `Loaded ${shuffled.length} sci-fi books. Try scanning again for more.`,
         });
       }
     } catch (error) {
       console.error('Error loading books:', error);
       toast({
         title: "Loading Error",
-        description: "Failed to load sci-fi books. Please try again.",
+        description: "Failed to load sci-fi books. Please check your connection and try again.",
         variant: "destructive",
       });
     } finally {

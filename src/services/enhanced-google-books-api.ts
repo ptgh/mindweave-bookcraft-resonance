@@ -1,4 +1,3 @@
-
 export interface GoogleBook {
   id: string;
   volumeInfo: {
@@ -43,8 +42,8 @@ export interface EnhancedBookSuggestion {
 }
 
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000;
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 500;
 
 // Science fiction keywords for filtering
 const SCIFI_KEYWORDS = [
@@ -66,7 +65,7 @@ const isSciFiBook = (book: GoogleBook): boolean => {
   const categoryMatch = categories.some(category => 
     category.toLowerCase().includes('science fiction') ||
     category.toLowerCase().includes('sci-fi') ||
-    category.toLowerCase().includes('fantasy') // Some sci-fi is categorized as fantasy
+    category.toLowerCase().includes('fantasy')
   );
   
   if (categoryMatch) return true;
@@ -81,7 +80,6 @@ class GoogleBooksCache {
 
   set(key: string, data: any) {
     this.cache.set(key, { data, timestamp: Date.now() });
-    // Store in localStorage for persistence
     try {
       localStorage.setItem(`gb_cache_${key}`, JSON.stringify({ data, timestamp: Date.now() }));
     } catch (error) {
@@ -93,7 +91,6 @@ class GoogleBooksCache {
     let cached = this.cache.get(key);
     
     if (!cached) {
-      // Try to load from localStorage
       try {
         const stored = localStorage.getItem(`gb_cache_${key}`);
         if (stored) {
@@ -147,7 +144,6 @@ const enforceHttps = (url?: string): string | undefined => {
 const processImageLinks = (imageLinks?: GoogleBook['volumeInfo']['imageLinks']) => {
   if (!imageLinks) return {};
   
-  // Try to get the best available image, prioritizing higher quality
   const coverOptions = [
     imageLinks.extraLarge,
     imageLinks.large,
@@ -190,28 +186,40 @@ export const searchBooksEnhanced = async (
   
   const cacheKey = `search_${query}_${maxResults}_${startIndex}`;
   const cached = cache.get(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    console.log('Returning cached results for:', query);
+    return cached;
+  }
   
   try {
+    console.log('Making API call for:', query, 'maxResults:', maxResults, 'startIndex:', startIndex);
+    
     const data = await retryWithBackoff(async () => {
-      // Enhanced query to prioritize sci-fi results
-      const enhancedQuery = query.includes('subject:') ? query : `${query} subject:science fiction OR subject:sci-fi`;
+      // Simplified query - don't add subject filter here as it may be too restrictive
+      const searchQuery = encodeURIComponent(query);
+      const url = `https://www.googleapis.com/books/v1/volumes?q=${searchQuery}&maxResults=${maxResults}&startIndex=${startIndex}&printType=books&orderBy=relevance&langRestrict=en`;
       
-      const response = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(enhancedQuery)}&maxResults=${Math.min(maxResults * 2, 40)}&startIndex=${startIndex}&printType=books&orderBy=relevance&langRestrict=en`
-      );
+      console.log('API URL:', url);
+      
+      const response = await fetch(url);
       
       if (!response.ok) {
-        if (response.status === 429) {
-          throw new Error('Rate limit exceeded');
-        }
-        throw new Error(`API error: ${response.status}`);
+        const errorText = await response.text();
+        console.error('API error response:', response.status, errorText);
+        throw new Error(`Google Books API error: ${response.status} - ${errorText}`);
       }
       
-      return await response.json();
+      const responseData = await response.json();
+      console.log('API response received, items count:', responseData.items?.length || 0);
+      return responseData;
     });
     
-    const allResults = data.items?.map((item: GoogleBook) => {
+    if (!data.items || data.items.length === 0) {
+      console.log('No items returned from API for query:', query);
+      return [];
+    }
+    
+    const allResults = data.items.map((item: GoogleBook) => {
       const imageLinks = processImageLinks(item.volumeInfo.imageLinks);
       
       return {
@@ -228,27 +236,28 @@ export const searchBooksEnhanced = async (
         rating: item.volumeInfo.averageRating,
         ratingsCount: item.volumeInfo.ratingsCount,
         ...imageLinks,
-        originalBook: item // Keep reference for filtering
+        originalBook: item
       };
-    }) || [];
+    });
     
-    // Filter for science fiction books only
+    // Filter for science fiction books
     const sciFiResults = allResults.filter((book: any) => 
       isSciFiBook(book.originalBook)
     );
     
-    // Clean up the results and remove the original book reference
+    // Clean up the results
     const results = sciFiResults.map(book => {
       const { originalBook, ...cleanBook } = book;
       return cleanBook;
-    }).slice(0, maxResults);
+    });
     
-    console.log(`Filtered ${allResults.length} results to ${results.length} sci-fi books for query: ${query}`);
+    console.log(`Processed ${allResults.length} results, filtered to ${results.length} sci-fi books for query: ${query}`);
     
     cache.set(cacheKey, results);
     return results;
   } catch (error) {
     console.error('Enhanced search failed:', error);
+    // Return empty array instead of throwing to prevent breaking the UI
     return [];
   }
 };
@@ -273,7 +282,6 @@ export const getBookDetailsEnhanced = async (bookId: string): Promise<GoogleBook
   }
 };
 
-// Enhanced search specifically for "The New Space Opera" series
 export const searchSpaceOperaBooks = async (): Promise<EnhancedBookSuggestion[]> => {
   console.log('Searching for Space Opera books...');
   
