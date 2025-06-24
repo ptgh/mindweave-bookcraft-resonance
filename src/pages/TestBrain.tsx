@@ -44,6 +44,7 @@ const TestBrain = () => {
   const [nodes, setNodes] = useState<BrainNode[]>([]);
   const [links, setLinks] = useState<BookLink[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<BrainNode | null>(null);
   const [tooltip, setTooltip] = useState<NodeTooltip | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
@@ -55,16 +56,24 @@ const TestBrain = () => {
     const initBrain = async () => {
       try {
         setLoading(true);
+        setError(null);
         
+        console.log('Fetching transmissions...');
         const transmissions = await getTransmissions();
         
         console.log('User transmissions:', transmissions);
+
+        if (!transmissions || transmissions.length === 0) {
+          console.log('No transmissions found');
+          setLoading(false);
+          return;
+        }
 
         const userNodes: BrainNode[] = transmissions.map((transmission, index) => ({
           id: `transmission-${transmission.id}`,
           title: transmission.title || 'Unknown Title',
           author: transmission.author || 'Unknown Author',
-          tags: transmission.tags || [],
+          tags: Array.isArray(transmission.tags) ? transmission.tags : [],
           x: Math.random() * (window.innerWidth - 200) + 100,
           y: Math.random() * (window.innerHeight - 200) + 100,
           coverUrl: transmission.cover_url,
@@ -72,6 +81,7 @@ const TestBrain = () => {
           transmissionId: transmission.id
         }));
 
+        console.log('Created nodes:', userNodes);
         setNodes(userNodes);
 
         const uniqueTags = Array.from(new Set(
@@ -85,6 +95,7 @@ const TestBrain = () => {
         setLoading(false);
       } catch (error) {
         console.error('Error initializing brain:', error);
+        setError(error instanceof Error ? error.message : 'Failed to load transmissions');
         setLoading(false);
       }
     };
@@ -685,6 +696,36 @@ const TestBrain = () => {
         <div className="text-center">
           <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-cyan-400 animate-pulse" />
           <p className="text-cyan-400">Initializing synaptic network...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-red-400" />
+          <p className="text-red-400 mb-2">Error loading transmissions</p>
+          <p className="text-red-300 text-sm">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (nodes.length === 0) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-cyan-400" />
+          <p className="text-cyan-400 mb-2">No transmissions found</p>
+          <p className="text-cyan-300 text-sm">Add some books to your library to see the neural network</p>
         </div>
       </div>
     );
