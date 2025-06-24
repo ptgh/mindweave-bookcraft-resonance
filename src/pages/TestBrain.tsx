@@ -800,43 +800,40 @@ const TestBrain = () => {
         </div>
       )}
 
-      {/* Clean Modal - matching your design */}
+      {/* Clean Modal - matching Foundation card design */}
       {selectedNode && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <Card className="bg-slate-900/95 border-slate-700 text-white max-w-sm mx-4 overflow-hidden">
-            <div className="p-4">
-              <div className="flex items-start space-x-4">
-                {selectedNode.coverUrl && (
+          <div className="bg-slate-800/95 border border-slate-700 rounded-lg p-4 max-w-sm mx-4 relative">
+            <button
+              onClick={() => setSelectedNode(null)}
+              className="absolute top-2 right-2 text-slate-400 hover:text-white transition-colors p-1 rounded hover:bg-slate-700/50"
+            >
+              <X size={16} />
+            </button>
+            
+            <div className="flex items-start space-x-4">
+              {selectedNode.coverUrl && (
+                <div className="w-12 h-16 bg-slate-700 rounded border border-slate-600 overflow-hidden flex-shrink-0">
                   <img 
                     src={selectedNode.coverUrl} 
                     alt={selectedNode.title}
-                    className="w-12 h-16 rounded border border-slate-600 flex-shrink-0 object-cover"
+                    className="w-full h-full object-cover"
                   />
-                )}
+                </div>
+              )}
+              
+              <div className="flex-1 min-w-0">
+                <h3 className="text-slate-200 font-medium text-sm leading-tight mb-1">
+                  {selectedNode.title}
+                </h3>
+                <p className="text-slate-400 text-xs">{selectedNode.author}</p>
                 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-slate-200 font-medium text-sm leading-tight">
-                        {selectedNode.title}
-                      </h3>
-                      <p className="text-slate-400 text-xs mt-1">{selectedNode.author}</p>
-                    </div>
-                    <button
-                      onClick={() => setSelectedNode(null)}
-                      className="text-slate-400 hover:text-white transition-colors ml-2"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                  
-                  <div className="mt-3 text-xs text-cyan-300/70">
-                    {links.filter(link => link.fromId === selectedNode.id || link.toId === selectedNode.id).length} connections
-                  </div>
+                <div className="text-xs text-slate-400 mt-2">
+                  {links.filter(link => link.fromId === selectedNode.id || link.toId === selectedNode.id).length} connections
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
         </div>
       )}
     </div>
