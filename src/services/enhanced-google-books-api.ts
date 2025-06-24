@@ -9,6 +9,10 @@ export interface GoogleBook {
     imageLinks?: {
       thumbnail?: string;
       smallThumbnail?: string;
+      small?: string;
+      medium?: string;
+      large?: string;
+      extraLarge?: string;
     };
     publishedDate?: string;
     categories?: string[];
@@ -41,6 +45,36 @@ export interface EnhancedBookSuggestion {
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
+
+// Science fiction keywords for filtering
+const SCIFI_KEYWORDS = [
+  'science fiction', 'sci-fi', 'space opera', 'cyberpunk', 'dystopian',
+  'utopian', 'time travel', 'alien', 'extraterrestrial', 'robot', 'android',
+  'artificial intelligence', 'ai', 'future', 'futuristic', 'spaceship',
+  'galactic', 'interstellar', 'mars', 'colonization', 'terraforming',
+  'genetic engineering', 'bioengineering', 'nanotechnology', 'virtual reality',
+  'alternate reality', 'parallel universe', 'multiverse', 'quantum',
+  'apocalyptic', 'post-apocalyptic', 'steampunk', 'biopunk', 'hard science fiction'
+];
+
+const isSciFiBook = (book: GoogleBook): boolean => {
+  const categories = book.volumeInfo.categories || [];
+  const description = book.volumeInfo.description || '';
+  const title = book.volumeInfo.title || '';
+  
+  // Check categories first
+  const categoryMatch = categories.some(category => 
+    category.toLowerCase().includes('science fiction') ||
+    category.toLowerCase().includes('sci-fi') ||
+    category.toLowerCase().includes('fantasy') // Some sci-fi is categorized as fantasy
+  );
+  
+  if (categoryMatch) return true;
+  
+  // Check title and description for sci-fi keywords
+  const textToCheck = `${title} ${description}`.toLowerCase();
+  return SCIFI_KEYWORDS.some(keyword => textToCheck.includes(keyword.toLowerCase()));
+};
 
 class GoogleBooksCache {
   private cache = new Map<string, { data: any; timestamp: number }>();
@@ -113,10 +147,20 @@ const enforceHttps = (url?: string): string | undefined => {
 const processImageLinks = (imageLinks?: GoogleBook['volumeInfo']['imageLinks']) => {
   if (!imageLinks) return {};
   
+  // Try to get the best available image, prioritizing higher quality
+  const coverOptions = [
+    imageLinks.extraLarge,
+    imageLinks.large,
+    imageLinks.medium,
+    imageLinks.thumbnail,
+    imageLinks.small,
+    imageLinks.smallThumbnail
+  ].filter(Boolean);
+
   return {
-    coverUrl: enforceHttps(imageLinks.thumbnail) || enforceHttps(imageLinks.smallThumbnail),
-    thumbnailUrl: enforceHttps(imageLinks.thumbnail),
-    smallThumbnailUrl: enforceHttps(imageLinks.smallThumbnail)
+    coverUrl: enforceHttps(coverOptions[0]),
+    thumbnailUrl: enforceHttps(imageLinks.thumbnail || imageLinks.medium),
+    smallThumbnailUrl: enforceHttps(imageLinks.smallThumbnail || imageLinks.small)
   };
 };
 
@@ -150,8 +194,11 @@ export const searchBooksEnhanced = async (
   
   try {
     const data = await retryWithBackoff(async () => {
+      // Enhanced query to prioritize sci-fi results
+      const enhancedQuery = query.includes('subject:') ? query : `${query} subject:science fiction OR subject:sci-fi`;
+      
       const response = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=${maxResults}&startIndex=${startIndex}&printType=books&orderBy=relevance`
+        `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(enhancedQuery)}&maxResults=${Math.min(maxResults * 2, 40)}&startIndex=${startIndex}&printType=books&orderBy=relevance&langRestrict=en`
       );
       
       if (!response.ok) {
@@ -164,7 +211,7 @@ export const searchBooksEnhanced = async (
       return await response.json();
     });
     
-    const results = data.items?.map((item: GoogleBook) => {
+    const allResults = data.items?.map((item: GoogleBook) => {
       const imageLinks = processImageLinks(item.volumeInfo.imageLinks);
       
       return {
@@ -180,9 +227,23 @@ export const searchBooksEnhanced = async (
         infoLink: item.volumeInfo.infoLink,
         rating: item.volumeInfo.averageRating,
         ratingsCount: item.volumeInfo.ratingsCount,
-        ...imageLinks
+        ...imageLinks,
+        originalBook: item // Keep reference for filtering
       };
     }) || [];
+    
+    // Filter for science fiction books only
+    const sciFiResults = allResults.filter((book: any) => 
+      isSciFiBook(book.originalBook)
+    );
+    
+    // Clean up the results and remove the original book reference
+    const results = sciFiResults.map(book => {
+      const { originalBook, ...cleanBook } = book;
+      return cleanBook;
+    }).slice(0, maxResults);
+    
+    console.log(`Filtered ${allResults.length} results to ${results.length} sci-fi books for query: ${query}`);
     
     cache.set(cacheKey, results);
     return results;
@@ -210,6 +271,40 @@ export const getBookDetailsEnhanced = async (bookId: string): Promise<GoogleBook
     console.error('Failed to fetch book details:', error);
     return null;
   }
+};
+
+// Enhanced search specifically for "The New Space Opera" series
+export const searchSpaceOperaBooks = async (): Promise<EnhancedBookSuggestion[]> => {
+  console.log('Searching for Space Opera books...');
+  
+  const queries = [
+    '"The New Space Opera" anthology',
+    '"New Space Opera" Gardner Dozois',
+    'space opera anthology science fiction',
+    '"Space Opera Renaissance"'
+  ];
+  
+  const allResults: EnhancedBookSuggestion[] = [];
+  
+  for (const query of queries) {
+    try {
+      const results = await searchBooksEnhanced(query, 10);
+      allResults.push(...results);
+    } catch (error) {
+      console.warn(`Failed to search for: ${query}`, error);
+    }
+  }
+  
+  // Remove duplicates based on title similarity
+  const uniqueResults = allResults.filter((book, index, self) => 
+    index === self.findIndex(b => 
+      b.title.toLowerCase().includes('space opera') && 
+      b.id === book.id
+    )
+  );
+  
+  console.log(`Found ${uniqueResults.length} unique Space Opera books`);
+  return uniqueResults;
 };
 
 export { cache as booksCache };

@@ -36,13 +36,24 @@ const EnhancedBookCover = ({
       setIsLoading(true);
       setHasError(false);
 
-      const fallbacks = [thumbnailUrl, smallThumbnailUrl].filter(Boolean) as string[];
+      // Create comprehensive fallback list with multiple image sizes
+      const fallbacks = [
+        coverUrl,
+        thumbnailUrl,
+        smallThumbnailUrl,
+        // Try alternative Google Books image URLs
+        coverUrl?.replace('&edge=curl', ''),
+        thumbnailUrl?.replace('&edge=curl', ''),
+        // Try zoom parameter variations
+        coverUrl?.replace('zoom=1', 'zoom=0'),
+        thumbnailUrl?.replace('zoom=1', 'zoom=0')
+      ].filter(Boolean) as string[];
       
       try {
         const src = await imageService.loadImage({
-          src: coverUrl || thumbnailUrl || smallThumbnailUrl || '',
-          fallbacks,
-          timeout: 5000 // Reduced timeout for better performance
+          src: fallbacks[0] || '',
+          fallbacks: fallbacks.slice(1),
+          timeout: 3000 // Reduced timeout for faster fallback
         });
         setCurrentSrc(src);
         setIsLoading(false);
@@ -106,17 +117,32 @@ const EnhancedBookCover = ({
   );
 };
 
-const PlaceholderCover = ({ title, className = "w-12 h-16" }: { title: string; className?: string }) => (
-  <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800 flex flex-col items-center justify-center`}>
-    <div className="w-4 h-4 mb-1 rounded-sm bg-blue-400/20 flex items-center justify-center">
-      <BookOpen className="w-2 h-2 text-blue-400 opacity-60" />
+const PlaceholderCover = ({ title, className = "w-12 h-16" }: { title: string; className?: string }) => {
+  // Generate a more specific placeholder based on the title
+  const getPlaceholderIcon = (title: string) => {
+    const lowerTitle = title.toLowerCase();
+    if (lowerTitle.includes('space') || lowerTitle.includes('opera')) {
+      return '🚀';
+    }
+    if (lowerTitle.includes('new') || lowerTitle.includes('anthology')) {
+      return '📖';
+    }
+    return '📚';
+  };
+
+  return (
+    <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800 flex flex-col items-center justify-center relative`}>
+      <div className="w-4 h-4 mb-1 rounded-sm bg-blue-400/20 flex items-center justify-center">
+        <BookOpen className="w-2 h-2 text-blue-400 opacity-60" />
+      </div>
+      <div className="text-xs opacity-60 mb-1">{getPlaceholderIcon(title)}</div>
+      <div className="flex space-x-0.5">
+        <div className="w-0.5 h-0.5 bg-blue-400 rounded-full opacity-40"></div>
+        <div className="w-0.5 h-0.5 bg-cyan-400 rounded-full opacity-60"></div>
+        <div className="w-0.5 h-0.5 bg-blue-400 rounded-full opacity-40"></div>
+      </div>
     </div>
-    <div className="flex space-x-0.5">
-      <div className="w-0.5 h-0.5 bg-blue-400 rounded-full opacity-40"></div>
-      <div className="w-0.5 h-0.5 bg-cyan-400 rounded-full opacity-60"></div>
-      <div className="w-0.5 h-0.5 bg-blue-400 rounded-full opacity-40"></div>
-    </div>
-  </div>
-);
+  );
+};
 
 export default EnhancedBookCover;

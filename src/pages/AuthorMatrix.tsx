@@ -81,16 +81,44 @@ const AuthorMatrix = () => {
       } else {
         console.log('No books in database, searching Google Books...');
         
-        // Use a unique search key to avoid conflicts
+        // Enhanced search with science fiction filtering
         const searchKey = `author_books_${author.id}_${Date.now()}`;
         
         searchDebouncer.search(
           searchKey,
-          () => searchBooksEnhanced(`author:"${author.name}"`, 15),
+          () => {
+            // Use more specific sci-fi query
+            const sciFiQuery = `author:"${author.name}" subject:"science fiction" OR author:"${author.name}" subject:"sci-fi"`;
+            return searchBooksEnhanced(sciFiQuery, 20);
+          },
           (googleBooks) => {
             console.log('Google Books results:', googleBooks.length);
             
-            const convertedBooks: AuthorBook[] = googleBooks.map(book => ({
+            // Additional filtering to ensure only sci-fi books
+            const sciFiBooks = googleBooks.filter(book => {
+              const categories = book.categories || [];
+              const description = book.description || '';
+              const title = book.title || '';
+              
+              // Check if it's clearly science fiction
+              const isSciFi = categories.some(cat => 
+                cat.toLowerCase().includes('science fiction') ||
+                cat.toLowerCase().includes('sci-fi')
+              ) || 
+              [title, description].some(text => 
+                text.toLowerCase().includes('science fiction') ||
+                text.toLowerCase().includes('sci-fi') ||
+                text.toLowerCase().includes('space') ||
+                text.toLowerCase().includes('future') ||
+                text.toLowerCase().includes('alien')
+              );
+              
+              return isSciFi;
+            });
+            
+            console.log(`Filtered to ${sciFiBooks.length} sci-fi books from ${googleBooks.length} total`);
+            
+            const convertedBooks: AuthorBook[] = sciFiBooks.map(book => ({
               id: book.id,
               author_id: author.id,
               google_books_id: book.id,
@@ -111,9 +139,10 @@ const AuthorMatrix = () => {
             
             setAuthorBooks(convertedBooks);
             
-            // Preload cover images
-            const imageUrls = googleBooks
-              .map(book => book.coverUrl)
+            // Preload cover images with multiple fallbacks
+            const imageUrls = sciFiBooks
+              .map(book => [book.coverUrl, book.thumbnailUrl, book.smallThumbnailUrl])
+              .flat()
               .filter(Boolean) as string[];
             
             if (imageUrls.length > 0) {
