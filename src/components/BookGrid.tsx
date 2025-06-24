@@ -36,9 +36,9 @@ const BookGrid = ({ books, visibleBooks, onAddToTransmissions }: BookGridProps) 
               <Button
                 size="sm"
                 onClick={() => onAddToTransmissions(book)}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1"
+                className="cta-button bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 touch-manipulation active:scale-95"
               >
-                Add to Library
+                +Log Signal
               </Button>
             </div>
           </div>
