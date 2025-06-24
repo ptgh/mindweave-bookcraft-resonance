@@ -11,23 +11,35 @@ export const useAuth = () => {
   useEffect(() => {
     console.log('Auth hook initializing...');
     
-    // Set up auth state listener
+    // Get initial session first
+    const getInitialSession = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        console.log('Initial session check:', initialSession?.user?.email);
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+      } catch (error) {
+        console.error('Error getting initial session:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getInitialSession();
+
+    // Set up auth state listener after initial session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
-        setLoading(false);
+        
+        // Only set loading to false if we haven't already
+        if (loading) {
+          setLoading(false);
+        }
       }
     );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', session?.user?.email);
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
 
     return () => {
       console.log('Auth cleanup');
@@ -39,7 +51,7 @@ export const useAuth = () => {
     try {
       console.log('Signing out...');
       await supabase.auth.signOut();
-      window.location.href = '/auth';
+      // Don't force redirect here - let the routing handle it
     } catch (error) {
       console.error('Error signing out:', error);
     }

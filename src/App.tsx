@@ -32,16 +32,26 @@ const AppRoutes = () => {
     );
   }
 
+  // If user is not authenticated, only show auth page
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/auth" element={<Auth />} />
+        <Route path="*" element={<Navigate to="/auth" replace />} />
+      </Routes>
+    );
+  }
+
+  // If user is authenticated, show all routes
   return (
     <Routes>
-      <Route path="/" element={user ? <Discovery /> : <Navigate to="/auth" replace />} />
-      <Route path="/library" element={user ? <Index /> : <Navigate to="/auth" replace />} />
-      <Route path="/thread-map" element={user ? <ThreadMap /> : <Navigate to="/auth" replace />} />
-      <Route path="/author-matrix" element={user ? <AuthorMatrix /> : <Navigate to="/auth" replace />} />
-      <Route path="/search" element={user ? <Search /> : <Navigate to="/auth" replace />} />
-      <Route path="/book-browser" element={user ? <BookBrowser /> : <Navigate to="/auth" replace />} />
-      <Route path="/auth" element={!user ? <Auth /> : <Navigate to="/" replace />} />
-      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+      <Route path="/" element={<Discovery />} />
+      <Route path="/library" element={<Index />} />
+      <Route path="/thread-map" element={<ThreadMap />} />
+      <Route path="/author-matrix" element={<AuthorMatrix />} />
+      <Route path="/search" element={<Search />} />
+      <Route path="/book-browser" element={<BookBrowser />} />
+      <Route path="/auth" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
