@@ -201,15 +201,6 @@ const BookBrowser = () => {
     loadRandomBooks();
   };
 
-  const handleClearHistory = () => {
-    console.log('Clear history clicked');
-    setPreviouslyShownBooks(new Set());
-    toast({
-      title: "History Cleared",
-      description: "Viewing history has been reset. Next discovery will include all books again.",
-    });
-  };
-
   return (
     <AuthWrapper fallback={<Auth />}>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -232,16 +223,6 @@ const BookBrowser = () => {
               >
                 {loading ? 'Scanning the Archive...' : 'Discover Sci-Fi Books'}
               </Button>
-              
-              {previouslyShownBooks.size > 0 && (
-                <Button
-                  onClick={handleClearHistory}
-                  variant="outline"
-                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                >
-                  Clear History ({previouslyShownBooks.size})
-                </Button>
-              )}
             </div>
           </div>
 
