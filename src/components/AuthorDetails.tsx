@@ -9,7 +9,7 @@ interface AuthorDetailsProps {
 const AuthorDetails = memo(({ author }: AuthorDetailsProps) => {
   return (
     <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
-      <h2 className="text-lg sm:text-xl font-light text-slate-200 mb-1">{author.name}</h2>
+      <h2 className="text-sm font-medium text-slate-300 mb-1">{author.name}</h2>
       <p className="text-slate-400 text-sm mb-2">{author.nationality}</p>
       {author.bio && (
         <p className="text-slate-300 text-xs sm:text-sm leading-relaxed mb-2 line-clamp-3">{author.bio}</p>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { getScifiAuthors, ScifiAuthor } from "@/services/scifiAuthorsService";
@@ -143,7 +144,7 @@ const AuthorSearchInput = ({
       )}
       
       {showSuggestions && suggestions.length > 0 && !justSelected && (
-        <div className="absolute z-[60] w-full mt-2 bg-slate-700 border border-slate-600 rounded-md shadow-xl max-h-60 overflow-y-auto">
+        <div className="absolute z-[9999] w-full mt-2 bg-slate-700 border border-slate-600 rounded-md shadow-xl max-h-60 overflow-y-auto">
           {suggestions.map((author) => (
             <button
               key={author.id}
