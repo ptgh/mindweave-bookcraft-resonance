@@ -32,9 +32,10 @@ interface NodeTooltip {
 interface BookLink {
   fromId: string;
   toId: string;
-  type: 'tag_shared' | 'manual';
+  type: 'tag_shared' | 'author_shared' | 'title_similarity' | 'manual';
   strength: number;
   sharedTags: string[];
+  connectionReason: string;
 }
 
 const TestBrain = () => {
@@ -47,6 +48,7 @@ const TestBrain = () => {
   const [tooltip, setTooltip] = useState<NodeTooltip | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [allTags, setAllTags] = useState<string[]>([]);
+  const [remappingActive, setRemappingActive] = useState(false);
 
   // Initialize brain data from user's transmissions only
   useEffect(() => {
@@ -74,10 +76,10 @@ const TestBrain = () => {
 
         const uniqueTags = Array.from(new Set(
           userNodes.flatMap(node => node.tags)
-        )).filter(tag => tag && tag.trim() !== '').slice(0, 15);
+        )).filter(tag => tag && tag.trim() !== '').slice(0, 20);
         setAllTags(uniqueTags);
 
-        const connections = generateConnections(userNodes);
+        const connections = generateOrganicConnections(userNodes);
         setLinks(connections);
 
         setLoading(false);
@@ -90,22 +92,69 @@ const TestBrain = () => {
     initBrain();
   }, []);
 
-  const generateConnections = (nodes: BrainNode[]): BookLink[] => {
+  const generateOrganicConnections = (nodes: BrainNode[]): BookLink[] => {
     const connections: BookLink[] = [];
     
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
         const node1 = nodes[i];
         const node2 = nodes[j];
-        const sharedTags = node1.tags.filter(tag => node2.tags.includes(tag));
         
+        // Tag-based connections (strongest)
+        const sharedTags = node1.tags.filter(tag => node2.tags.includes(tag));
         if (sharedTags.length > 0) {
           connections.push({
             fromId: node1.id,
             toId: node2.id,
             type: 'tag_shared',
-            strength: sharedTags.length,
-            sharedTags
+            strength: sharedTags.length * 2,
+            sharedTags,
+            connectionReason: `Shared themes: ${sharedTags.join(', ')}`
+          });
+        }
+        
+        // Author-based connections
+        if (node1.author === node2.author && node1.author !== 'Unknown Author') {
+          connections.push({
+            fromId: node1.id,
+            toId: node2.id,
+            type: 'author_shared',
+            strength: 1.5,
+            sharedTags: [],
+            connectionReason: `Same author: ${node1.author}`
+          });
+        }
+        
+        // Title similarity connections (for series, similar themes)
+        const title1Words = node1.title.toLowerCase().split(' ').filter(word => word.length > 3);
+        const title2Words = node2.title.toLowerCase().split(' ').filter(word => word.length > 3);
+        const sharedWords = title1Words.filter(word => title2Words.includes(word));
+        
+        if (sharedWords.length > 0) {
+          connections.push({
+            fromId: node1.id,
+            toId: node2.id,
+            type: 'title_similarity',
+            strength: sharedWords.length * 0.8,
+            sharedTags: [],
+            connectionReason: `Similar titles: ${sharedWords.join(', ')}`
+          });
+        }
+        
+        // Create some organic random connections for books with few connections
+        const existingConnections = connections.filter(conn => 
+          conn.fromId === node1.id || conn.toId === node1.id ||
+          conn.fromId === node2.id || conn.toId === node2.id
+        );
+        
+        if (existingConnections.length < 2 && Math.random() < 0.15) {
+          connections.push({
+            fromId: node1.id,
+            toId: node2.id,
+            type: 'manual',
+            strength: 0.5,
+            sharedTags: [],
+            connectionReason: 'Thematic resonance'
           });
         }
       }
@@ -127,74 +176,82 @@ const TestBrain = () => {
       if (!fromNode || !toNode) return;
 
       // Create multiple firing particles with organic movement
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 5; i++) {
         const particle = document.createElement('div');
         particle.className = 'synaptic-particle';
-        const glowIntensity = 6 + i * 3;
+        const glowIntensity = 4 + i * 2;
+        const particleSize = 0.8 + i * 0.3;
         particle.style.cssText = `
           position: absolute;
-          width: ${1.5 + i * 0.5}px;
-          height: ${1.5 + i * 0.5}px;
-          background: radial-gradient(circle, #00ffff ${20 + i * 10}%, transparent 70%);
+          width: ${particleSize}px;
+          height: ${particleSize}px;
+          background: radial-gradient(circle, #00ffff ${30 + i * 15}%, transparent 80%);
           border-radius: 50%;
           box-shadow: 
             0 0 ${glowIntensity}px #00ffff,
-            0 0 ${glowIntensity * 2}px rgba(0, 255, 255, 0.6),
-            0 0 ${glowIntensity * 3}px rgba(0, 255, 255, 0.3);
+            0 0 ${glowIntensity * 2}px rgba(0, 255, 255, 0.7),
+            0 0 ${glowIntensity * 3}px rgba(0, 255, 255, 0.4);
           z-index: 15;
           pointer-events: none;
-          opacity: ${1 - i * 0.15};
+          opacity: ${0.9 - i * 0.12};
         `;
         
         canvasRef.current?.appendChild(particle);
 
-        // Calculate curved path with control points
-        const midX = (fromNode.x + toNode.x) / 2 + (Math.random() - 0.5) * 100;
-        const midY = (fromNode.y + toNode.y) / 2 + (Math.random() - 0.5) * 100;
+        // Calculate highly curved organic path
+        const dx = toNode.x - fromNode.x;
+        const dy = toNode.y - fromNode.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
         
-        // Create organic curved motion path
+        // Create multiple control points for organic curves
+        const midX1 = fromNode.x + dx * 0.25 + (Math.random() - 0.5) * distance * 0.4;
+        const midY1 = fromNode.y + dy * 0.25 + (Math.random() - 0.5) * distance * 0.4;
+        const midX2 = fromNode.x + dx * 0.75 + (Math.random() - 0.5) * distance * 0.4;
+        const midY2 = fromNode.y + dy * 0.75 + (Math.random() - 0.5) * distance * 0.4;
+        
+        // Create organic curved motion path with multiple control points
         gsap.set(particle, {
           x: fromNode.x + 3,
           y: fromNode.y + 3
         });
 
-        // Animate along curved path
+        // Animate along highly curved path
         gsap.to(particle, {
           motionPath: {
-            path: `M${fromNode.x + 3},${fromNode.y + 3} Q${midX},${midY} ${toNode.x + 3},${toNode.y + 3}`,
+            path: `M${fromNode.x + 3},${fromNode.y + 3} C${midX1},${midY1} ${midX2},${midY2} ${toNode.x + 3},${toNode.y + 3}`,
             autoRotate: false
           },
-          duration: 0.8 + Math.random() * 0.4,
-          delay: index * 0.03 + i * 0.02,
+          duration: 1.2 + Math.random() * 0.8,
+          delay: index * 0.04 + i * 0.03,
           ease: "power2.inOut",
           onComplete: () => {
             // Enhanced synaptic burst at destination
             if (toNode.element) {
               gsap.timeline()
                 .to(toNode.element, {
-                  scale: 2.5,
-                  boxShadow: '0 0 25px #00ffff, 0 0 50px #00ffff80, 0 0 75px #00ffff40',
-                  duration: 0.1,
+                  scale: 3,
+                  boxShadow: '0 0 30px #00ffff, 0 0 60px #00ffff80, 0 0 90px #00ffff40',
+                  duration: 0.15,
                   ease: "power3.out"
                 })
                 .to(toNode.element, {
                   scale: 1,
                   boxShadow: '0 0 8px rgba(0, 212, 255, 0.8)',
-                  duration: 0.4,
-                  ease: "elastic.out(1, 0.4)"
+                  duration: 0.5,
+                  ease: "elastic.out(1, 0.5)"
                 });
             }
             particle.remove();
           }
         });
 
-        // Particle pulsing during travel
+        // Enhanced particle pulsing during travel
         gsap.to(particle, {
-          scale: 1.8 + i * 0.3,
-          opacity: 0.6 + i * 0.1,
-          duration: 0.2,
+          scale: 2 + i * 0.4,
+          opacity: 0.7 + i * 0.1,
+          duration: 0.25,
           yoyo: true,
-          repeat: 3,
+          repeat: 4,
           ease: "sine.inOut"
         });
       }
@@ -217,24 +274,24 @@ const TestBrain = () => {
     centralPulse.className = 'central-pulse';
     centralPulse.style.cssText = `
       position: absolute;
-      width: 8px;
-      height: 8px;
-      background: radial-gradient(circle, rgba(0, 255, 255, 0.6) 0%, rgba(0, 255, 255, 0.2) 50%, transparent 100%);
-      border: 1px solid rgba(0, 255, 255, 0.5);
+      width: 12px;
+      height: 12px;
+      background: radial-gradient(circle, rgba(0, 255, 255, 0.8) 0%, rgba(0, 255, 255, 0.3) 50%, transparent 100%);
+      border: 1.5px solid rgba(0, 255, 255, 0.6);
       border-radius: 50%;
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
       z-index: 5;
-      box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
     `;
     canvas.appendChild(centralPulse);
 
     // Enhanced pulse animation
     gsap.to(centralPulse, {
-      scale: 3,
-      opacity: 0.3,
-      duration: 3,
+      scale: 4,
+      opacity: 0.2,
+      duration: 4,
       ease: "sine.inOut",
       yoyo: true,
       repeat: -1
@@ -244,19 +301,26 @@ const TestBrain = () => {
     nodes.forEach((node, index) => {
       const nodeElement = document.createElement('div');
       nodeElement.className = 'thought-node user-node';
+      
+      // Dynamic node size based on connections
+      const nodeConnections = links.filter(link => 
+        link.fromId === node.id || link.toId === node.id
+      ).length;
+      const nodeSize = Math.max(3, Math.min(7, 3 + nodeConnections * 0.5));
+      
       nodeElement.style.cssText = `
         position: absolute;
-        width: 4px;
-        height: 4px;
+        width: ${nodeSize}px;
+        height: ${nodeSize}px;
         background: radial-gradient(circle, #00d4ff 0%, #0099cc 100%);
         border-radius: 50%;
         left: ${node.x}px;
         top: ${node.y}px;
         cursor: pointer;
         box-shadow: 
-          0 0 6px rgba(0, 212, 255, 0.9),
-          0 0 12px rgba(0, 212, 255, 0.5),
-          0 0 18px rgba(0, 212, 255, 0.2);
+          0 0 ${nodeSize * 1.5}px rgba(0, 212, 255, 0.9),
+          0 0 ${nodeSize * 3}px rgba(0, 212, 255, 0.5),
+          0 0 ${nodeSize * 4.5}px rgba(0, 212, 255, 0.2);
         opacity: 0;
         z-index: 10;
         transition: all 0.3s ease;
@@ -275,8 +339,8 @@ const TestBrain = () => {
         });
         
         gsap.to(nodeElement, {
-          scale: 4,
-          boxShadow: '0 0 20px rgba(0, 212, 255, 1), 0 0 40px rgba(0, 212, 255, 0.7), 0 0 60px rgba(0, 212, 255, 0.4)',
+          scale: 5,
+          boxShadow: `0 0 ${nodeSize * 4}px rgba(0, 212, 255, 1), 0 0 ${nodeSize * 8}px rgba(0, 212, 255, 0.7), 0 0 ${nodeSize * 12}px rgba(0, 212, 255, 0.4)`,
           duration: 0.3,
           ease: "back.out(2)"
         });
@@ -288,7 +352,7 @@ const TestBrain = () => {
         setTooltip(null);
         gsap.to(nodeElement, {
           scale: 1,
-          boxShadow: '0 0 6px rgba(0, 212, 255, 0.9), 0 0 12px rgba(0, 212, 255, 0.5), 0 0 18px rgba(0, 212, 255, 0.2)',
+          boxShadow: `0 0 ${nodeSize * 1.5}px rgba(0, 212, 255, 0.9), 0 0 ${nodeSize * 3}px rgba(0, 212, 255, 0.5), 0 0 ${nodeSize * 4.5}px rgba(0, 212, 255, 0.2)`,
           duration: 0.3
         });
       });
@@ -298,7 +362,7 @@ const TestBrain = () => {
         
         gsap.timeline()
           .to(nodeElement, {
-            scale: 6,
+            scale: 8,
             duration: 0.1,
             ease: "power2.out"
           })
@@ -309,8 +373,8 @@ const TestBrain = () => {
           });
 
         // Trigger multiple synaptic waves
-        for (let wave = 0; wave < 3; wave++) {
-          setTimeout(() => triggerSynapticFiring(node), wave * 150);
+        for (let wave = 0; wave < 4; wave++) {
+          setTimeout(() => triggerSynapticFiring(node), wave * 120);
         }
       });
 
@@ -320,16 +384,16 @@ const TestBrain = () => {
       gsap.to(nodeElement, {
         opacity: 1,
         scale: 1.5,
-        duration: 1,
-        delay: index * 0.1,
+        duration: 1.2,
+        delay: index * 0.08,
         ease: "elastic.out(1, 0.6)"
       });
 
       // Organic floating animation
       gsap.to(nodeElement, {
-        x: `+=${Math.random() * 20 - 10}`,
-        y: `+=${Math.random() * 20 - 10}`,
-        duration: 4 + Math.random() * 3,
+        x: `+=${Math.random() * 15 - 7.5}`,
+        y: `+=${Math.random() * 15 - 7.5}`,
+        duration: 5 + Math.random() * 3,
         ease: "sine.inOut",
         yoyo: true,
         repeat: -1
@@ -337,9 +401,9 @@ const TestBrain = () => {
 
       // Breathing pulse
       gsap.to(nodeElement, {
-        opacity: 0.8,
-        scale: 1.1,
-        duration: 2 + Math.random() * 1.5,
+        opacity: 0.7,
+        scale: 1.2,
+        duration: 2.5 + Math.random() * 1.5,
         ease: "sine.inOut",
         yoyo: true,
         repeat: -1,
@@ -366,16 +430,16 @@ const TestBrain = () => {
     // Create enhanced gradient and filter definitions
     const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
     
-    // Create glow filter
+    // Create enhanced glow filter
     const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
     filter.setAttribute('id', 'synaptic-glow');
-    filter.setAttribute('x', '-50%');
-    filter.setAttribute('y', '-50%');
-    filter.setAttribute('width', '200%');
-    filter.setAttribute('height', '200%');
+    filter.setAttribute('x', '-100%');
+    filter.setAttribute('y', '-100%');
+    filter.setAttribute('width', '300%');
+    filter.setAttribute('height', '300%');
 
     const feGaussianBlur = document.createElementNS('http://www.w3.org/2000/svg', 'feGaussianBlur');
-    feGaussianBlur.setAttribute('stdDeviation', '2');
+    feGaussianBlur.setAttribute('stdDeviation', '1.5');
     feGaussianBlur.setAttribute('result', 'coloredBlur');
 
     const feMerge = document.createElementNS('http://www.w3.org/2000/svg', 'feMerge');
@@ -397,19 +461,22 @@ const TestBrain = () => {
       
       if (!fromNode || !toNode) return;
 
-      // Create organic curved path
-      const midX = (fromNode.x + toNode.x) / 2 + (Math.random() - 0.5) * 80;
-      const midY = (fromNode.y + toNode.y) / 2 + (Math.random() - 0.5) * 80;
+      // Create highly organic curved path with multiple control points
+      const dx = toNode.x - fromNode.x;
+      const dy = toNode.y - fromNode.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
       
-      // Control points for more organic curves
-      const cp1X = fromNode.x + (midX - fromNode.x) * 0.5 + (Math.random() - 0.5) * 40;
-      const cp1Y = fromNode.y + (midY - fromNode.y) * 0.5 + (Math.random() - 0.5) * 40;
-      const cp2X = toNode.x + (midX - toNode.x) * 0.5 + (Math.random() - 0.5) * 40;
-      const cp2Y = toNode.y + (midY - toNode.y) * 0.5 + (Math.random() - 0.5) * 40;
+      // Multiple control points for complex organic curves
+      const cp1X = fromNode.x + dx * 0.2 + (Math.random() - 0.5) * distance * 0.3;
+      const cp1Y = fromNode.y + dy * 0.2 + (Math.random() - 0.5) * distance * 0.3;
+      const cp2X = fromNode.x + dx * 0.5 + (Math.random() - 0.5) * distance * 0.4;
+      const cp2Y = fromNode.y + dy * 0.5 + (Math.random() - 0.5) * distance * 0.4;
+      const cp3X = fromNode.x + dx * 0.8 + (Math.random() - 0.5) * distance * 0.3;
+      const cp3Y = fromNode.y + dy * 0.8 + (Math.random() - 0.5) * distance * 0.3;
 
-      const pathData = `M${fromNode.x + 2},${fromNode.y + 2} C${cp1X},${cp1Y} ${cp2X},${cp2Y} ${toNode.x + 2},${toNode.y + 2}`;
+      const pathData = `M${fromNode.x + 2},${fromNode.y + 2} C${cp1X},${cp1Y} ${cp2X},${cp2Y} ${cp3X},${cp3Y} L${toNode.x + 2},${toNode.y + 2}`;
 
-      // Create gradient for each connection
+      // Create dynamic gradient for each connection
       const gradientId = `synaptic-gradient-${index}`;
       const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
       gradient.setAttribute('id', gradientId);
@@ -418,12 +485,23 @@ const TestBrain = () => {
       gradient.setAttribute('x2', '100%');
       gradient.setAttribute('y2', '0%');
 
+      // Different colors based on connection type
+      const getConnectionColor = (type: string) => {
+        switch (type) {
+          case 'tag_shared': return { base: '#00ffff', intensity: 0.9 };
+          case 'author_shared': return { base: '#00d4ff', intensity: 0.7 };
+          case 'title_similarity': return { base: '#0099cc', intensity: 0.6 };
+          default: return { base: '#006699', intensity: 0.4 };
+        }
+      };
+
+      const colorConfig = getConnectionColor(connection.type);
       const stops = [
-        { offset: '0%', color: 'rgba(0, 180, 255, 0.2)', opacity: '0.3' },
-        { offset: '25%', color: 'rgba(0, 200, 255, 0.6)', opacity: '0.7' },
-        { offset: '50%', color: 'rgba(0, 255, 255, 0.9)', opacity: '1' },
-        { offset: '75%', color: 'rgba(0, 200, 255, 0.6)', opacity: '0.7' },
-        { offset: '100%', color: 'rgba(0, 180, 255, 0.2)', opacity: '0.3' }
+        { offset: '0%', color: `${colorConfig.base}20`, opacity: '0.2' },
+        { offset: '20%', color: `${colorConfig.base}60`, opacity: `${colorConfig.intensity * 0.6}` },
+        { offset: '50%', color: `${colorConfig.base}`, opacity: `${colorConfig.intensity}` },
+        { offset: '80%', color: `${colorConfig.base}60`, opacity: `${colorConfig.intensity * 0.6}` },
+        { offset: '100%', color: `${colorConfig.base}20`, opacity: '0.2' }
       ];
 
       stops.forEach(stop => {
@@ -436,11 +514,12 @@ const TestBrain = () => {
 
       defs.appendChild(gradient);
 
-      // Create the main synaptic path
+      // Create the main synaptic path - much thinner but with depth
+      const baseWidth = Math.max(0.3, Math.min(connection.strength * 0.2 + 0.2, 1));
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       path.setAttribute('d', pathData);
       path.setAttribute('stroke', `url(#${gradientId})`);
-      path.setAttribute('stroke-width', Math.min(connection.strength * 0.8 + 0.5, 1.5).toString());
+      path.setAttribute('stroke-width', baseWidth.toString());
       path.setAttribute('fill', 'none');
       path.setAttribute('opacity', '0');
       path.setAttribute('filter', 'url(#synaptic-glow)');
@@ -449,61 +528,129 @@ const TestBrain = () => {
 
       // Enhanced appearance animation
       gsap.to(path, {
-        opacity: connection.strength > 1 ? 0.9 : 0.7,
-        duration: 1.5,
-        delay: index * 0.08,
+        opacity: connection.strength > 1.5 ? 0.95 : 0.75,
+        duration: 2,
+        delay: index * 0.06,
         ease: "power2.out"
       });
 
-      // Intense pulsing animation
+      // Intense pulsing animation with depth
       gsap.to(path, {
-        opacity: connection.strength > 1 ? 1 : 0.9,
-        strokeWidth: Math.min(connection.strength * 1.2 + 1, 2.5),
-        duration: 1.5 + Math.random() * 1,
+        opacity: connection.strength > 1.5 ? 1 : 0.9,
+        strokeWidth: baseWidth * (1.5 + connection.strength * 0.3),
+        duration: 2 + Math.random() * 1.5,
         ease: "sine.inOut",
         yoyo: true,
         repeat: -1,
-        delay: Math.random() * 2
+        delay: Math.random() * 3
       });
 
-      // Create flowing energy particles along the path
-      if (Math.random() < 0.3) { // 30% chance for energy flow
+      // Create flowing energy particles along the path for stronger connections
+      if (connection.strength > 1) {
         setTimeout(() => {
-          const energyParticle = document.createElement('div');
-          energyParticle.style.cssText = `
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            background: #00ffff;
-            border-radius: 50%;
-            box-shadow: 0 0 4px #00ffff;
-            z-index: 8;
-            pointer-events: none;
-          `;
-          canvasRef.current?.appendChild(energyParticle);
+          const createEnergyFlow = () => {
+            const energyParticle = document.createElement('div');
+            energyParticle.style.cssText = `
+              position: absolute;
+              width: 0.8px;
+              height: 0.8px;
+              background: ${colorConfig.base};
+              border-radius: 50%;
+              box-shadow: 0 0 3px ${colorConfig.base};
+              z-index: 8;
+              pointer-events: none;
+              opacity: ${colorConfig.intensity};
+            `;
+            canvasRef.current?.appendChild(energyParticle);
 
-          gsap.set(energyParticle, { x: fromNode.x + 2, y: fromNode.y + 2 });
-          gsap.to(energyParticle, {
-            motionPath: {
-              path: pathData,
-              autoRotate: false
-            },
-            duration: 3 + Math.random() * 2,
-            ease: "none",
-            repeat: -1,
-            onComplete: () => energyParticle.remove()
-          });
-        }, Math.random() * 5000);
+            gsap.set(energyParticle, { x: fromNode.x + 2, y: fromNode.y + 2 });
+            gsap.to(energyParticle, {
+              motionPath: {
+                path: pathData,
+                autoRotate: false
+              },
+              duration: 4 + Math.random() * 3,
+              ease: "none",
+              onComplete: () => energyParticle.remove()
+            });
+          };
+
+          // Create multiple energy flows for stronger connections
+          for (let i = 0; i < Math.min(connection.strength, 3); i++) {
+            setTimeout(createEnergyFlow, i * 1500);
+          }
+          
+          // Repeat the flow
+          setInterval(() => {
+            for (let i = 0; i < Math.min(connection.strength, 3); i++) {
+              setTimeout(createEnergyFlow, i * 1500);
+            }
+          }, 8000);
+        }, Math.random() * 3000);
       }
     });
   };
 
   const handleTagFilter = (tag: string) => {
+    setRemappingActive(true);
+    
     if (activeFilters.includes(tag)) {
       setActiveFilters(activeFilters.filter(f => f !== tag));
     } else {
       setActiveFilters([...activeFilters, tag]);
     }
+    
+    // Trigger remapping animation
+    setTimeout(() => {
+      remapConnections(tag);
+      setRemappingActive(false);
+    }, 300);
+  };
+
+  const remapConnections = (focusTag?: string) => {
+    // Create new connections based on active filters
+    let newConnections: BookLink[] = [];
+    
+    if (activeFilters.length > 0) {
+      // Filter-based remapping
+      const filteredNodes = nodes.filter(node => 
+        activeFilters.some(filter => node.tags.includes(filter))
+      );
+      
+      newConnections = generateOrganicConnections(filteredNodes);
+      
+      // Add stronger connections for nodes with the focus tag
+      if (focusTag) {
+        const focusNodes = filteredNodes.filter(node => node.tags.includes(focusTag));
+        for (let i = 0; i < focusNodes.length; i++) {
+          for (let j = i + 1; j < focusNodes.length; j++) {
+            const existingConnection = newConnections.find(conn =>
+              (conn.fromId === focusNodes[i].id && conn.toId === focusNodes[j].id) ||
+              (conn.fromId === focusNodes[j].id && conn.toId === focusNodes[i].id)
+            );
+            
+            if (existingConnection) {
+              existingConnection.strength += 1;
+              existingConnection.connectionReason = `Enhanced by ${focusTag} filter`;
+            } else {
+              newConnections.push({
+                fromId: focusNodes[i].id,
+                toId: focusNodes[j].id,
+                type: 'manual',
+                strength: 2,
+                sharedTags: [focusTag],
+                connectionReason: `Connected by ${focusTag}`
+              });
+            }
+          }
+        }
+      }
+    } else {
+      // Reset to original organic connections
+      newConnections = generateOrganicConnections(nodes);
+    }
+    
+    setLinks(newConnections);
   };
 
   useEffect(() => {
@@ -517,12 +664,20 @@ const TestBrain = () => {
         activeFilters.some(filter => nodeData.tags.includes(filter));
 
       gsap.to(nodeElement, {
-        opacity: isVisible ? 1 : 0.1,
-        scale: isVisible ? 1 : 0.6,
-        duration: 0.4
+        opacity: isVisible ? 1 : 0.15,
+        scale: isVisible ? 1 : 0.7,
+        duration: 0.5,
+        ease: "power2.out"
       });
     });
   }, [activeFilters]);
+
+  // Remap connections when filters change
+  useEffect(() => {
+    if (!remappingActive) {
+      remapConnections();
+    }
+  }, [activeFilters, nodes]);
 
   if (loading) {
     return (
@@ -563,6 +718,9 @@ const TestBrain = () => {
             </Badge>
           ))}
         </div>
+        <div className="text-cyan-400/70 text-xs">
+          Click tags to remap connections • {activeFilters.length > 0 ? 'Filtered view' : 'All connections'}
+        </div>
       </div>
 
       {/* Node Counter */}
@@ -578,6 +736,9 @@ const TestBrain = () => {
               <span>Links: {links.length}</span>
             </div>
           </div>
+          {remappingActive && (
+            <div className="text-cyan-300 text-xs mt-1">Remapping...</div>
+          )}
         </div>
       </div>
 
@@ -593,12 +754,15 @@ const TestBrain = () => {
         >
           <h4 className="font-semibold text-cyan-400 text-sm mb-1">{tooltip.node.title}</h4>
           <p className="text-xs text-gray-300 mb-2">{tooltip.node.author}</p>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1 mb-2">
             {tooltip.node.tags.slice(0, 3).map(tag => (
               <Badge key={tag} variant="outline" className="text-xs border-cyan-400/50 text-cyan-300">
                 {tag}
               </Badge>
             ))}
+          </div>
+          <div className="text-xs text-cyan-300/70">
+            {links.filter(link => link.fromId === tooltip.node.id || link.toId === tooltip.node.id).length} connections
           </div>
         </div>
       )}
@@ -661,6 +825,10 @@ const TestBrain = () => {
                       )}
                     </div>
                   )}
+                  
+                  <div className="mt-3 text-xs text-cyan-300/70">
+                    {links.filter(link => link.fromId === selectedNode.id || link.toId === selectedNode.id).length} synaptic connections
+                  </div>
                 </div>
               </div>
             </div>
