@@ -3,10 +3,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 import { getTransmissions, Transmission } from '@/services/transmissionsService';
-import { searchBooksEnhanced, EnhancedBookSuggestion } from '@/services/enhanced-google-books-api';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { X, Link as LinkIcon } from 'lucide-react';
 
 // Register GSAP plugins
 gsap.registerPlugin(MotionPathPlugin);
@@ -18,10 +18,10 @@ interface BrainNode {
   tags: string[];
   x: number;
   y: number;
-  source: 'supabase' | 'google';
   coverUrl?: string;
   description?: string;
   element?: HTMLElement;
+  transmissionId: number;
 }
 
 interface NodeTooltip {
@@ -30,64 +30,61 @@ interface NodeTooltip {
   y: number;
 }
 
+interface BookLink {
+  fromId: string;
+  toId: string;
+  type: 'tag_shared' | 'manual';
+  strength: number;
+}
+
 const TestBrain = () => {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const [nodes, setNodes] = useState<BrainNode[]>([]);
+  const [links, setLinks] = useState<BookLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedNode, setSelectedNode] = useState<BrainNode | null>(null);
   const [tooltip, setTooltip] = useState<NodeTooltip | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [allTags, setAllTags] = useState<string[]>([]);
+  const [linkingMode, setLinkingMode] = useState(false);
+  const [selectedForLinking, setSelectedForLinking] = useState<BrainNode | null>(null);
 
-  // Initialize brain data from both sources
+  // Initialize brain data from user's transmissions only
   useEffect(() => {
     const initBrain = async () => {
       try {
         setLoading(true);
         
-        // Fetch data from both sources concurrently
-        const [supabaseData, googleData] = await Promise.all([
-          getTransmissions(),
-          searchBooksEnhanced('science fiction', 20)
-        ]);
+        // Fetch only user's transmissions from Supabase
+        const transmissions = await getTransmissions();
+        
+        console.log('User transmissions:', transmissions);
 
-        console.log('Supabase data:', supabaseData);
-        console.log('Google Books data:', googleData);
-
-        // Process Supabase data
-        const supabaseNodes: BrainNode[] = supabaseData.map((transmission, index) => ({
-          id: `supabase-${transmission.id}`,
+        // Process user's transmissions into brain nodes
+        const userNodes: BrainNode[] = transmissions.map((transmission, index) => ({
+          id: `transmission-${transmission.id}`,
           title: transmission.title || 'Unknown Title',
           author: transmission.author || 'Unknown Author',
           tags: transmission.tags || [],
           x: Math.random() * (window.innerWidth - 200) + 100,
           y: Math.random() * (window.innerHeight - 200) + 100,
-          source: 'supabase',
           coverUrl: transmission.cover_url,
-          description: transmission.notes
+          description: transmission.notes,
+          transmissionId: transmission.id
         }));
 
-        // Process Google Books data
-        const googleNodes: BrainNode[] = googleData.map((book, index) => ({
-          id: `google-${book.id}`,
-          title: book.title,
-          author: book.author,
-          tags: book.categories || ['Science Fiction'],
-          x: Math.random() * (window.innerWidth - 200) + 100,
-          y: Math.random() * (window.innerHeight - 200) + 100,
-          source: 'google',
-          coverUrl: book.coverUrl,
-          description: book.description
-        }));
+        setNodes(userNodes);
 
-        const allNodes = [...supabaseNodes, ...googleNodes];
-        setNodes(allNodes);
-
-        // Extract all unique tags
+        // Extract all unique tags from user's data only
         const uniqueTags = Array.from(new Set(
-          allNodes.flatMap(node => node.tags)
-        )).slice(0, 10); // Limit to 10 most common tags
+          userNodes.flatMap(node => node.tags)
+        )).filter(tag => tag && tag.trim() !== '').slice(0, 15);
         setAllTags(uniqueTags);
+
+        // Generate connections based on shared tags
+        const connections = generateConnections(userNodes);
+        setLinks(connections);
 
         setLoading(false);
       } catch (error) {
@@ -99,57 +96,85 @@ const TestBrain = () => {
     initBrain();
   }, []);
 
+  // Generate connections between nodes with shared tags
+  const generateConnections = (nodes: BrainNode[]): BookLink[] => {
+    const connections: BookLink[] = [];
+    
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const node1 = nodes[i];
+        const node2 = nodes[j];
+        const sharedTags = node1.tags.filter(tag => node2.tags.includes(tag));
+        
+        if (sharedTags.length > 0) {
+          connections.push({
+            fromId: node1.id,
+            toId: node2.id,
+            type: 'tag_shared',
+            strength: sharedTags.length
+          });
+        }
+      }
+    }
+
+    return connections;
+  };
+
   // Create and animate nodes
   useEffect(() => {
-    if (!canvasRef.current || nodes.length === 0) return;
+    if (!canvasRef.current || !svgRef.current || nodes.length === 0) return;
 
     const canvas = canvasRef.current;
+    const svg = svgRef.current;
     
     // Clear existing nodes
-    canvas.innerHTML = '';
+    canvas.querySelectorAll('.thought-node, .central-pulse').forEach(el => el.remove());
+    svg.innerHTML = '';
 
-    // Create central node
-    const centralNode = document.createElement('div');
-    centralNode.className = 'central-node';
-    centralNode.style.cssText = `
+    // Create subtle central pulse (not a dominant orb)
+    const centralPulse = document.createElement('div');
+    centralPulse.className = 'central-pulse';
+    centralPulse.style.cssText = `
       position: absolute;
-      width: 60px;
-      height: 60px;
-      background: radial-gradient(circle, #00ffff, #0088ff);
+      width: 8px;
+      height: 8px;
+      background: rgba(0, 255, 255, 0.3);
+      border: 2px solid rgba(0, 255, 255, 0.5);
       border-radius: 50%;
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
-      box-shadow: 0 0 30px #00ffff;
-      z-index: 10;
+      z-index: 5;
     `;
-    canvas.appendChild(centralNode);
+    canvas.appendChild(centralPulse);
 
-    // Animate central node pulse
-    gsap.to(centralNode, {
-      scale: 1.2,
-      duration: 2,
+    // Animate central pulse subtly
+    gsap.to(centralPulse, {
+      scale: 1.5,
+      opacity: 0.8,
+      duration: 3,
       ease: "power2.inOut",
       yoyo: true,
       repeat: -1
     });
 
-    // Create thought nodes
+    // Create thought nodes (smaller size)
     nodes.forEach((node, index) => {
       const nodeElement = document.createElement('div');
-      nodeElement.className = `thought-node ${node.source}`;
+      nodeElement.className = 'thought-node user-node';
       nodeElement.style.cssText = `
         position: absolute;
-        width: 12px;
-        height: 12px;
-        background: ${node.source === 'supabase' ? '#ff6b6b' : '#4ecdc4'};
+        width: 8px;
+        height: 8px;
+        background: #00d4ff;
         border-radius: 50%;
         left: ${node.x}px;
         top: ${node.y}px;
         cursor: pointer;
-        box-shadow: 0 0 10px ${node.source === 'supabase' ? '#ff6b6b' : '#4ecdc4'};
+        box-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
         opacity: 0;
-        z-index: 5;
+        z-index: 10;
+        transition: all 0.3s ease;
       `;
 
       // Store reference to node data
@@ -166,7 +191,7 @@ const TestBrain = () => {
         });
         
         gsap.to(nodeElement, {
-          scale: 2,
+          scale: 2.5,
           duration: 0.3,
           ease: "back.out(1.7)"
         });
@@ -181,7 +206,11 @@ const TestBrain = () => {
       });
 
       nodeElement.addEventListener('click', () => {
-        setSelectedNode(node);
+        if (linkingMode) {
+          handleNodeLinking(node);
+        } else {
+          setSelectedNode(node);
+        }
       });
 
       canvas.appendChild(nodeElement);
@@ -189,92 +218,106 @@ const TestBrain = () => {
       // Animate node appearance
       gsap.to(nodeElement, {
         opacity: 1,
-        duration: 0.5,
-        delay: index * 0.1,
+        duration: 0.8,
+        delay: index * 0.15,
         ease: "power2.out"
       });
 
-      // Floating animation
+      // Subtle floating animation
       gsap.to(nodeElement, {
-        x: `+=${Math.random() * 40 - 20}`,
-        y: `+=${Math.random() * 40 - 20}`,
-        duration: 4 + Math.random() * 4,
+        x: `+=${Math.random() * 20 - 10}`,
+        y: `+=${Math.random() * 20 - 10}`,
+        duration: 6 + Math.random() * 4,
         ease: "sine.inOut",
         yoyo: true,
         repeat: -1
       });
-
-      // Flickering effect
-      gsap.to(nodeElement, {
-        opacity: 0.6,
-        duration: 2 + Math.random() * 3,
-        ease: "power2.inOut",
-        yoyo: true,
-        repeat: -1
-      });
     });
 
-    // Create connection trails between nodes with shared tags
-    createConnectionTrails(canvas, nodes);
+    // Draw connections
+    drawConnections(svg, nodes, links);
 
-  }, [nodes]);
+  }, [nodes, links, linkingMode]);
 
-  // Create connection trails between related nodes
-  const createConnectionTrails = (canvas: HTMLElement, nodes: BrainNode[]) => {
-    const connections: Array<{from: BrainNode, to: BrainNode, strength: number}> = [];
-    
-    // Find connections based on shared tags
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        const node1 = nodes[i];
-        const node2 = nodes[j];
-        const sharedTags = node1.tags.filter(tag => node2.tags.includes(tag));
-        
-        if (sharedTags.length > 0) {
-          connections.push({
-            from: node1,
-            to: node2,
-            strength: sharedTags.length
-          });
-        }
-      }
-    }
-
-    // Create SVG for trails
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  // Draw connections between related nodes
+  const drawConnections = (svg: SVGSVGElement, nodes: BrainNode[], connections: BookLink[]) => {
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
     svg.style.cssText = `
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
       pointer-events: none;
       z-index: 1;
     `;
-    canvas.appendChild(svg);
 
-    // Draw connection lines
-    connections.slice(0, 20).forEach((connection, index) => { // Limit connections to avoid clutter
+    connections.forEach((connection, index) => {
+      const fromNode = nodes.find(n => n.id === connection.fromId);
+      const toNode = nodes.find(n => n.id === connection.toId);
+      
+      if (!fromNode || !toNode) return;
+
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', connection.from.x.toString());
-      line.setAttribute('y1', connection.from.y.toString());
-      line.setAttribute('x2', connection.to.x.toString());
-      line.setAttribute('y2', connection.to.y.toString());
-      line.setAttribute('stroke', '#333');
-      line.setAttribute('stroke-width', Math.min(connection.strength, 3).toString());
-      line.setAttribute('opacity', '0.3');
+      line.setAttribute('x1', (fromNode.x + 4).toString());
+      line.setAttribute('y1', (fromNode.y + 4).toString());
+      line.setAttribute('x2', (toNode.x + 4).toString());
+      line.setAttribute('y2', (toNode.y + 4).toString());
+      line.setAttribute('stroke', connection.type === 'manual' ? '#ff6b6b' : 'rgba(0, 212, 255, 0.3)');
+      line.setAttribute('stroke-width', Math.min(connection.strength * 0.5 + 0.5, 2).toString());
+      line.setAttribute('opacity', '0');
       svg.appendChild(line);
 
       // Animate line appearance
-      gsap.fromTo(line, {
-        strokeDasharray: '0,1000'
-      }, {
-        strokeDasharray: '1000,0',
-        duration: 2,
-        delay: index * 0.2,
+      gsap.to(line, {
+        opacity: connection.type === 'manual' ? 0.8 : 0.4,
+        duration: 1,
+        delay: index * 0.1,
         ease: "power2.out"
       });
+
+      // Subtle pulse animation for connections
+      gsap.to(line, {
+        opacity: connection.type === 'manual' ? 0.9 : 0.5,
+        duration: 4,
+        ease: "sine.inOut",
+        yoyo: true,
+        repeat: -1
+      });
     });
+  };
+
+  // Handle node linking in linking mode
+  const handleNodeLinking = (node: BrainNode) => {
+    if (!selectedForLinking) {
+      setSelectedForLinking(node);
+      // Highlight selected node
+      if (node.element) {
+        gsap.to(node.element, {
+          boxShadow: '0 0 15px #ff6b6b',
+          duration: 0.3
+        });
+      }
+    } else if (selectedForLinking.id !== node.id) {
+      // Create manual link
+      const newLink: BookLink = {
+        fromId: selectedForLinking.id,
+        toId: node.id,
+        type: 'manual',
+        strength: 3
+      };
+      
+      setLinks(prev => [...prev, newLink]);
+      
+      // Reset linking state
+      if (selectedForLinking.element) {
+        gsap.to(selectedForLinking.element, {
+          boxShadow: '0 0 8px rgba(0, 212, 255, 0.6)',
+          duration: 0.3
+        });
+      }
+      setSelectedForLinking(null);
+      setLinkingMode(false);
+    }
   };
 
   // Filter nodes by tags
@@ -298,8 +341,8 @@ const TestBrain = () => {
         activeFilters.some(filter => nodeData.tags.includes(filter));
 
       gsap.to(nodeElement, {
-        opacity: isVisible ? 1 : 0.1,
-        scale: isVisible ? 1 : 0.5,
+        opacity: isVisible ? 1 : 0.2,
+        scale: isVisible ? 1 : 0.8,
         duration: 0.5
       });
     });
@@ -309,8 +352,8 @@ const TestBrain = () => {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-cyan-400 animate-pulse" />
-          <p className="text-cyan-400">Initializing neural network...</p>
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-cyan-400 animate-pulse" />
+          <p className="text-cyan-400">Initializing neural map...</p>
         </div>
       </div>
     );
@@ -324,23 +367,47 @@ const TestBrain = () => {
         className="brain-canvas absolute inset-0 w-full h-full"
         style={{ zIndex: 1 }}
       />
+      
+      {/* SVG for connections */}
+      <svg ref={svgRef} className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 2 }} />
 
-      {/* Tag Filters */}
-      <div className="absolute top-4 left-4 z-20 flex flex-wrap gap-2 max-w-md">
-        {allTags.map(tag => (
-          <Badge
-            key={tag}
-            variant={activeFilters.includes(tag) ? "default" : "outline"}
-            className={`cursor-pointer transition-all ${
-              activeFilters.includes(tag) 
-                ? 'bg-cyan-400 text-black hover:bg-cyan-300' 
-                : 'border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black'
-            }`}
-            onClick={() => handleTagFilter(tag)}
-          >
-            {tag}
-          </Badge>
-        ))}
+      {/* Controls */}
+      <div className="absolute top-4 left-4 z-20 space-y-4">
+        {/* Link Books Button */}
+        <Button
+          onClick={() => {
+            setLinkingMode(!linkingMode);
+            setSelectedForLinking(null);
+          }}
+          variant={linkingMode ? "default" : "outline"}
+          size="sm"
+          className={`${
+            linkingMode 
+              ? 'bg-red-500 text-white hover:bg-red-600' 
+              : 'border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black'
+          }`}
+        >
+          <LinkIcon size={16} className="mr-2" />
+          {linkingMode ? 'Cancel Linking' : '📎 Link Books'}
+        </Button>
+
+        {/* Tag Filters */}
+        <div className="flex flex-wrap gap-2 max-w-md">
+          {allTags.map(tag => (
+            <Badge
+              key={tag}
+              variant={activeFilters.includes(tag) ? "default" : "outline"}
+              className={`cursor-pointer text-xs transition-all ${
+                activeFilters.includes(tag) 
+                  ? 'bg-cyan-400 text-black hover:bg-cyan-300' 
+                  : 'border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black'
+              }`}
+              onClick={() => handleTagFilter(tag)}
+            >
+              {tag}
+            </Badge>
+          ))}
+        </div>
       </div>
 
       {/* Node Counter */}
@@ -348,16 +415,31 @@ const TestBrain = () => {
         <div className="bg-black/50 backdrop-blur-sm rounded-lg p-3">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-              <span>Supabase: {nodes.filter(n => n.source === 'supabase').length}</span>
+              <div className="w-3 h-3 bg-cyan-400 rounded-full"></div>
+              <span>Your Books: {nodes.length}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-teal-400 rounded-full"></div>
-              <span>Google: {nodes.filter(n => n.source === 'google').length}</span>
+              <div className="w-3 h-3 bg-red-400 rounded-full opacity-50"></div>
+              <span>Links: {links.length}</span>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Linking Instructions */}
+      {linkingMode && (
+        <div className="absolute bottom-20 left-4 z-20 text-red-400 text-sm">
+          <div className="bg-black/70 backdrop-blur-sm rounded-lg p-3 max-w-md">
+            <p className="mb-1">🔗 Linking Mode Active</p>
+            <p className="text-xs">Click two books to create a conceptual link between them.</p>
+            {selectedForLinking && (
+              <p className="text-xs mt-2 text-red-300">
+                Selected: "{selectedForLinking.title}" - Click another book to link
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Tooltip */}
       {tooltip && (
@@ -403,7 +485,7 @@ const TestBrain = () => {
                 <div className="md:col-span-2">
                   {selectedNode.description && (
                     <div className="mb-4">
-                      <h3 className="text-sm font-semibold text-cyan-400 mb-2">Description</h3>
+                      <h3 className="text-sm font-semibold text-cyan-400 mb-2">Your Notes</h3>
                       <p className="text-sm text-gray-300 leading-relaxed">
                         {selectedNode.description.length > 300 
                           ? `${selectedNode.description.substring(0, 300)}...`
@@ -414,7 +496,7 @@ const TestBrain = () => {
                   )}
                   
                   <div>
-                    <h3 className="text-sm font-semibold text-cyan-400 mb-2">Tags</h3>
+                    <h3 className="text-sm font-semibold text-cyan-400 mb-2">Your Tags</h3>
                     <div className="flex flex-wrap gap-2">
                       {selectedNode.tags.map(tag => (
                         <Badge key={tag} variant="outline" className="border-cyan-400/50 text-cyan-300">
@@ -425,11 +507,8 @@ const TestBrain = () => {
                   </div>
 
                   <div className="mt-4">
-                    <Badge 
-                      variant="outline" 
-                      className={`${selectedNode.source === 'supabase' ? 'border-red-400/50 text-red-300' : 'border-teal-400/50 text-teal-300'}`}
-                    >
-                      Source: {selectedNode.source === 'supabase' ? 'Your Library' : 'Google Books'}
+                    <Badge variant="outline" className="border-cyan-400/50 text-cyan-300">
+                      From Your Library
                     </Badge>
                   </div>
                 </div>
@@ -453,10 +532,11 @@ const TestBrain = () => {
       {/* Instructions */}
       <div className="absolute bottom-4 left-4 z-20 text-cyan-400/60 text-xs max-w-md">
         <div className="bg-black/30 backdrop-blur-sm rounded-lg p-3">
-          <p className="mb-1">🧠 Neural Map of Book Relationships</p>
-          <p className="mb-1">• Hover over nodes to see details</p>
-          <p className="mb-1">• Click nodes for full information</p>
-          <p>• Use tag filters to explore connections</p>
+          <p className="mb-1">🧠 Your Reading Neural Map</p>
+          <p className="mb-1">• Only shows books from your library</p>
+          <p className="mb-1">• Lines connect books with shared tags</p>
+          <p className="mb-1">• Use "Link Books" to manually connect ideas</p>
+          <p>• Filter by your own tags to explore themes</p>
         </div>
       </div>
     </div>
