@@ -44,7 +44,6 @@ const TestBrain = () => {
   const [links, setLinks] = useState<BookLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedNode, setSelectedNode] = useState<BrainNode | null>(null);
   const [tooltip, setTooltip] = useState<NodeTooltip | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [allTags, setAllTags] = useState<string[]>([]);
@@ -461,52 +460,7 @@ const TestBrain = () => {
         });
       });
 
-      nodeElement.addEventListener('click', () => {
-        setSelectedNode(node);
-        
-        // Enhanced click animation with ripple effect
-        gsap.timeline()
-          .to(nodeElement, {
-            scale: 10,
-            duration: 0.15,
-            ease: "power3.out"
-          })
-          .to(nodeElement, {
-            scale: 1,
-            duration: 0.6,
-            ease: "elastic.out(1, 0.6)"
-          });
-
-        // Create ripple effect
-        for (let i = 0; i < 5; i++) {
-          const ripple = document.createElement('div');
-          ripple.style.cssText = `
-            position: absolute;
-            width: ${baseSize}px;
-            height: ${baseSize}px;
-            border: 2px solid #00ffff60;
-            border-radius: 50%;
-            left: ${node.x}px;
-            top: ${node.y}px;
-            pointer-events: none;
-            z-index: 8;
-          `;
-          canvas.appendChild(ripple);
-          
-          gsap.to(ripple, {
-            scale: 15 + i * 5,
-            opacity: 0,
-            duration: 1.5 + i * 0.3,
-            ease: "power2.out",
-            onComplete: () => ripple.remove()
-          });
-        }
-
-        // Trigger multiple waves of synaptic activity
-        for (let wave = 0; wave < 6; wave++) {
-          setTimeout(() => triggerSynapticFiring(node), wave * 150);
-        }
-      });
+      // Click event listener removed - only hover functionality remains
 
       canvas.appendChild(nodeElement);
 
@@ -986,42 +940,6 @@ const TestBrain = () => {
                 
                 <div className="text-xs text-cyan-300/70">
                   {links.filter(link => link.fromId === tooltip.node.id || link.toId === tooltip.node.id).length} connections
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {selectedNode && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="bg-slate-800/95 border border-slate-700 rounded-lg p-4 max-w-sm mx-4 relative">
-            <button
-              onClick={() => setSelectedNode(null)}
-              className="absolute top-2 right-2 text-slate-400 hover:text-white transition-colors p-1 rounded hover:bg-slate-700/50"
-            >
-              <X size={16} />
-            </button>
-            
-            <div className="flex items-start space-x-4">
-              {selectedNode.coverUrl && (
-                <div className="w-12 h-16 bg-slate-700 rounded border border-slate-600 overflow-hidden flex-shrink-0">
-                  <img 
-                    src={selectedNode.coverUrl} 
-                    alt={selectedNode.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              
-              <div className="flex-1 min-w-0">
-                <h3 className="text-slate-200 font-medium text-sm leading-tight mb-1">
-                  {selectedNode.title}
-                </h3>
-                <p className="text-slate-400 text-xs">{selectedNode.author}</p>
-                
-                <div className="text-xs text-slate-400 mt-2">
-                  {links.filter(link => link.fromId === selectedNode.id || link.toId === selectedNode.id).length} connections
                 </div>
               </div>
             </div>
