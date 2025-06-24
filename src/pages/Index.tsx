@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import Header from "@/components/Header";
 import SignalInFocus from "@/components/SignalInFocus";
@@ -26,24 +27,29 @@ const Index = () => {
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
 
   const loadTransmissions = useCallback(async () => {
+    if (!user) return;
+    
     try {
       setLoading(true);
       const transmissions = await getTransmissions();
       setBooks(transmissions);
     } catch (error: any) {
+      console.error('Failed to load transmissions:', error);
       toast({
         title: "Signal Error",
-        description: "Failed to load transmissions: " + error.message,
+        description: "Failed to load transmissions. Please try again.",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, user]);
 
   useEffect(() => {
     if (user) {
       loadTransmissions();
+    } else {
+      setLoading(false);
     }
   }, [user, loadTransmissions]);
 
@@ -65,9 +71,10 @@ const Index = () => {
       await loadTransmissions();
       setEditingBook(null);
     } catch (error: any) {
+      console.error('Error saving transmission:', error);
       toast({
         title: "Transmission Error",
-        description: error.message,
+        description: "Failed to save transmission. Please try again.",
         variant: "destructive",
       });
     }
@@ -94,9 +101,10 @@ const Index = () => {
         description: `"${book.title}" has been removed from your transmissions.`,
       });
     } catch (error: any) {
+      console.error('Error deleting transmission:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to delete transmission. Please try again.",
         variant: "destructive",
       });
     }

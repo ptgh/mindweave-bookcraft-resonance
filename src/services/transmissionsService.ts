@@ -74,6 +74,7 @@ export const updateTransmission = async (id: number, transmission: Partial<Omit<
   return data;
 };
 
+// Use optimized version for better performance
 export const getTransmissions = async (): Promise<Transmission[]> => {
   const { data, error } = await supabase
     .from('transmissions')
@@ -86,11 +87,12 @@ export const getTransmissions = async (): Promise<Transmission[]> => {
         badge_emoji
       )
     `)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(50); // Limit for better performance
 
   if (error) throw error;
   
-  return data.map(item => ({
+  return (data || []).map(item => ({
     id: item.id,
     title: item.title || '',
     author: item.author || '',
