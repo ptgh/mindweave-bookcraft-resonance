@@ -12,6 +12,7 @@ import AuthorMatrix from "./pages/AuthorMatrix";
 import Search from "./pages/Search";
 import BookBrowser from "./pages/BookBrowser";
 import Auth from "./pages/Auth";
+import TestBrain from "./pages/TestBrain";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,17 +33,18 @@ const AppRoutes = () => {
     );
   }
 
-  // If user is not authenticated, only show auth page
+  // If user is not authenticated, show auth page and test-brain (for demo)
   if (!user) {
     return (
       <Routes>
         <Route path="/auth" element={<Auth />} />
+        <Route path="/test-brain" element={<TestBrain />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes>
     );
   }
 
-  // If user is authenticated, show all routes
+  // If user is authenticated, show all routes including test-brain
   return (
     <Routes>
       <Route path="/" element={<Discovery />} />
@@ -51,6 +53,7 @@ const AppRoutes = () => {
       <Route path="/author-matrix" element={<AuthorMatrix />} />
       <Route path="/search" element={<Search />} />
       <Route path="/book-browser" element={<BookBrowser />} />
+      <Route path="/test-brain" element={<TestBrain />} />
       <Route path="/auth" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
