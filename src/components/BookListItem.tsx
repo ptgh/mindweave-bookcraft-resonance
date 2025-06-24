@@ -24,11 +24,20 @@ const BookListItem = memo(({ book, onAddToTransmissions }: BookListItemProps) =>
           {book.subtitle && (
             <p className="text-xs text-slate-400 mb-2">{book.subtitle}</p>
           )}
-          {book.description && (
-            <p className="text-xs text-slate-500 mb-3 line-clamp-2">
-              {book.description}
-            </p>
-          )}
+          
+          {/* Always render description container to maintain consistent spacing */}
+          <div className="mb-3 min-h-[2.5rem] flex items-start">
+            {book.description ? (
+              <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
+                {book.description}
+              </p>
+            ) : (
+              <p className="text-xs text-slate-600 italic leading-relaxed">
+                Signal data partially encrypted - core transmission available
+              </p>
+            )}
+          </div>
+          
           <Button
             size="sm"
             onClick={() => onAddToTransmissions(book)}

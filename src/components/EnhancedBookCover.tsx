@@ -42,7 +42,7 @@ const EnhancedBookCover = ({
         const src = await imageService.loadImage({
           src: coverUrl || thumbnailUrl || smallThumbnailUrl || '',
           fallbacks,
-          timeout: 8000
+          timeout: 5000 // Reduced timeout for better performance
         });
         setCurrentSrc(src);
         setIsLoading(false);
@@ -107,16 +107,14 @@ const EnhancedBookCover = ({
 };
 
 const PlaceholderCover = ({ title, className = "w-12 h-16" }: { title: string; className?: string }) => (
-  <div className={`${className} flex-shrink-0 rounded overflow-hidden`}>
-    <div className="w-full h-full bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800 flex flex-col items-center justify-center">
-      <div className="w-4 h-4 mb-1 rounded-sm bg-blue-400/20 flex items-center justify-center">
-        <BookOpen className="w-2 h-2 text-blue-400 opacity-60" />
-      </div>
-      <div className="flex space-x-0.5">
-        <div className="w-0.5 h-0.5 bg-blue-400 rounded-full opacity-40"></div>
-        <div className="w-0.5 h-0.5 bg-cyan-400 rounded-full opacity-60"></div>
-        <div className="w-0.5 h-0.5 bg-blue-400 rounded-full opacity-40"></div>
-      </div>
+  <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800 flex flex-col items-center justify-center`}>
+    <div className="w-4 h-4 mb-1 rounded-sm bg-blue-400/20 flex items-center justify-center">
+      <BookOpen className="w-2 h-2 text-blue-400 opacity-60" />
+    </div>
+    <div className="flex space-x-0.5">
+      <div className="w-0.5 h-0.5 bg-blue-400 rounded-full opacity-40"></div>
+      <div className="w-0.5 h-0.5 bg-cyan-400 rounded-full opacity-60"></div>
+      <div className="w-0.5 h-0.5 bg-blue-400 rounded-full opacity-40"></div>
     </div>
   </div>
 );
