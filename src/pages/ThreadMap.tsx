@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
@@ -69,18 +68,17 @@ const ThreadMap = () => {
             <span className="text-slate-300 text-sm">Temporal Scope:</span>
             <div className="flex space-x-2">
               {(['month', 'year', 'all'] as const).map((period) => (
-                <Button
+                <button
                   key={period}
-                  variant={timeframe === period ? "default" : "outline"}
-                  size="sm"
                   onClick={() => setTimeframe(period)}
-                  className={timeframe === period 
-                    ? "bg-blue-600 hover:bg-blue-700 text-white focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900" 
-                    : "border-slate-600 text-slate-300 hover:bg-slate-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900"
-                  }
+                  className={`bg-transparent border text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-200 flex items-center space-x-1 ${
+                    timeframe === period 
+                      ? "border-[#89b4fa] text-[#89b4fa] shadow-[0_0_10px_rgba(137,180,250,0.3)]" 
+                      : "border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)]"
+                  }`}
                 >
-                  {period === 'all' ? 'All Time' : period.charAt(0).toUpperCase() + period.slice(1)}
-                </Button>
+                  <span>{period === 'all' ? 'All Time' : period.charAt(0).toUpperCase() + period.slice(1)}</span>
+                </button>
               ))}
             </div>
           </div>
@@ -95,18 +93,18 @@ const ThreadMap = () => {
               </div>
               
               {isLoading ? (
-                <div className="flex items-center justify-center h-[400px] text-slate-400">
+                <div className="flex items-center justify-center h-[500px] text-slate-400">
                   <div className="text-center">
                     <div className="animate-spin w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full mx-auto mb-4"></div>
                     <span className="ml-3">Mapping neural pathways...</span>
                   </div>
                 </div>
               ) : filteredTransmissions.length > 0 ? (
-                <div className="h-[400px]">
+                <div className="h-[500px]">
                   <MindMap transmissions={filteredTransmissions} />
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-[400px] text-slate-400">
+                <div className="flex items-center justify-center h-[500px] text-slate-400">
                   <div className="text-center">
                     <Brain className="w-16 h-16 mx-auto mb-4 opacity-50" />
                     <p className="mb-2">No transmissions found for this timeframe</p>
