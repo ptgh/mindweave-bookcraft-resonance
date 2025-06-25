@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, LogOut, User, MessageSquare } from "lucide-react";
+import { Menu, X, LogOut, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
@@ -11,13 +11,13 @@ const Header = () => {
   const { user, signOut } = useAuth();
 
   const navigation = [
-    { name: "Discovery", href: "/", icon: "🔮" },
-    { name: "Library", href: "/library", icon: "📚" },
-    { name: "Chrono Thread", href: "/thread-map", icon: "🧠" },
-    { name: "Author Matrix", href: "/author-matrix", icon: "👥" },
-    { name: "Search", href: "/search", icon: "🔍" },
+    { name: "Home", href: "/", icon: "🏠" },
+    { name: "Transmissions", href: "/library", icon: "📚" },
     { name: "Signal Archive", href: "/book-browser", icon: "📡" },
+    { name: "Author Matrix", href: "/author-matrix", icon: "👥" },
+    { name: "Chrono Thread", href: "/thread-map", icon: "🧠" },
     { name: "Publisher Resonance", href: "/publisher-resonance", icon: "🏢" },
+    { name: "Neural Map", href: "/test-brain", icon: "🔮" },
   ];
 
   const handleSignOut = async () => {
@@ -62,14 +62,6 @@ const Header = () => {
 
           {/* Desktop User Menu */}
           <div className="hidden lg:flex items-center space-x-4">
-            <Link
-              to="/contact"
-              className="flex items-center space-x-2 px-3 py-2 text-slate-300 hover:text-cyan-400 transition-colors"
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span className="text-sm">Contact</span>
-            </Link>
-            
             {user && (
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2 text-slate-400 text-sm">
@@ -121,15 +113,6 @@ const Header = () => {
                   </Link>
                 );
               })}
-              
-              <Link
-                to="/contact"
-                onClick={() => setIsMenuOpen(false)}
-                className="flex items-center px-4 py-3 rounded-lg text-sm font-medium text-slate-300 hover:text-cyan-400 hover:bg-slate-800/50 transition-colors"
-              >
-                <MessageSquare className="w-4 h-4 mr-3" />
-                Contact
-              </Link>
               
               {user && (
                 <>

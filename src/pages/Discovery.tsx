@@ -4,7 +4,7 @@ import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Brain, BookOpen, Users, Search, Map, Eye, Building } from "lucide-react";
+import { Brain, BookOpen, Users, Search, Map, Eye, Building, Mail, MessageSquare } from "lucide-react";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 
 const Discovery = () => {
@@ -39,7 +39,7 @@ const Discovery = () => {
           <div className="flex flex-col space-y-8 max-w-4xl mx-auto">
             <div ref={addFeatureBlockRef} className="feature-block">
               <Link 
-                to="/library" 
+                to="/" 
                 className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10 flex items-center space-x-6 w-full"
               >
                 <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
@@ -63,7 +63,7 @@ const Discovery = () => {
                   <Search className="w-6 h-6 text-blue-400" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-medium text-slate-200 mb-2">Book Browser</h2>
+                  <h2 className="text-xl font-medium text-slate-200 mb-2">Signal Archive</h2>
                   <p className="text-slate-400 leading-relaxed text-sm">
                     Discover new sci-fi signals
                   </p>
@@ -137,6 +137,42 @@ const Discovery = () => {
                   </p>
                 </div>
               </Link>
+            </div>
+          </div>
+
+          {/* Contact Section */}
+          <div ref={addFeatureBlockRef} className="feature-block max-w-2xl mx-auto mt-16">
+            <div className="bg-slate-800/30 border border-slate-700/50 rounded-lg p-8">
+              <div className="text-center mb-6">
+                <div className="flex items-center justify-center space-x-3 mb-4">
+                  <MessageSquare className="w-6 h-6 text-cyan-400" />
+                  <h2 className="text-xl font-medium text-slate-200">Establish Connection</h2>
+                </div>
+                <p className="text-slate-400 text-sm">
+                  Ready to transmit your signal? Connect with us directly.
+                </p>
+              </div>
+              
+              <div className="text-center">
+                <div className="flex items-center justify-center space-x-2 mb-4">
+                  <Mail className="w-4 h-4 text-cyan-400" />
+                  <a 
+                    href="mailto:connect@leafnode.co.uk" 
+                    className="text-cyan-400 hover:text-cyan-300 transition-colors"
+                  >
+                    connect@leafnode.co.uk
+                  </a>
+                </div>
+                
+                <Link to="/contact">
+                  <Button 
+                    variant="outline" 
+                    className="border-cyan-400/50 text-cyan-400 hover:bg-cyan-400/10 hover:border-cyan-400"
+                  >
+                    Send Message
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
 

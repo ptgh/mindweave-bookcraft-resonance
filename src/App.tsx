@@ -50,7 +50,8 @@ const AppRoutes = () => {
   // If user is authenticated, show all routes
   return (
     <Routes>
-      <Route path="/" element={<Discovery />} />
+      <Route path="/" element={<Index />} />
+      <Route path="/discovery" element={<Discovery />} />
       <Route path="/library" element={<Index />} />
       <Route path="/thread-map" element={<ThreadMap />} />
       <Route path="/author-matrix" element={<AuthorMatrix />} />
