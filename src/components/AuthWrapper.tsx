@@ -1,5 +1,6 @@
 
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 interface AuthWrapperProps {
   children: React.ReactNode;
@@ -7,7 +8,18 @@ interface AuthWrapperProps {
 }
 
 const AuthWrapper = ({ children, fallback }: AuthWrapperProps) => {
-  const { user, loading } = useAuth();
+  const { user, loading, error } = useAuthContext();
+
+  // Redirect to auth page if there's a persistent error
+  useEffect(() => {
+    if (error && !loading) {
+      console.error('Auth error in wrapper:', error);
+      // Only redirect if we're not already on the auth page
+      if (!window.location.pathname.includes('/auth')) {
+        window.location.href = '/auth';
+      }
+    }
+  }, [error, loading]);
 
   if (loading) {
     return (
@@ -17,6 +29,11 @@ const AuthWrapper = ({ children, fallback }: AuthWrapperProps) => {
             <div className="w-6 h-6 rounded-full border-2 border-blue-400 animate-pulse" />
           </div>
           <p className="text-slate-400">Establishing connection...</p>
+          {error && (
+            <p className="text-red-400 text-sm mt-2">
+              Authentication error detected. Redirecting...
+            </p>
+          )}
         </div>
       </div>
     );
