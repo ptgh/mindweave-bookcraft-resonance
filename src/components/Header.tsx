@@ -1,4 +1,3 @@
-
 import { BookOpen, LogOut } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 import { StandardButton } from "./ui/standard-button";
@@ -109,7 +108,9 @@ const Header = () => {
 
             {user && (
               <div className="flex items-center space-x-4">
-                <span className="text-slate-300 text-sm">{user.email}</span>
+                <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-xs font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 py-1 px-2 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)]">
+                  {user.email}
+                </span>
                 <StandardButton
                   onClick={signOut}
                   variant="standard"
