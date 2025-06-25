@@ -18,7 +18,7 @@ const BookBrowserHeader = ({ loading, onDiscover }: BookBrowserHeaderProps) => {
         <button
           onClick={onDiscover}
           disabled={loading}
-          className="cta-button bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-1.5 px-3 rounded-md transition-all duration-200 flex items-center space-x-1"
+          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-1.5 px-3 rounded-md transition-all duration-200 flex items-center space-x-1"
         >
           <span>{loading ? 'Scanning the Archive...' : 'Discover Scan Signal Archive'}</span>
         </button>
