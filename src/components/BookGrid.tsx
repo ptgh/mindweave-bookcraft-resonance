@@ -36,7 +36,7 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                 <EnhancedBookCover
                   title={book.title}
                   coverUrl={book.coverUrl || book.thumbnailUrl || book.smallThumbnailUrl}
-                  className="w-full h-40 rounded object-cover"
+                  className="w-full h-24 rounded object-cover"
                   lazy={true}
                 />
                 
@@ -48,13 +48,13 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                       handleDeepLinkClick(bookId, deepLink.url);
                     }}
                     disabled={isLoading(bookId)}
-                    className="absolute top-2 right-2 w-7 h-7 bg-slate-900/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-slate-800/90 hover:shadow-lg hover:shadow-blue-400/30 transition-all duration-200 border border-slate-600/50 hover:border-blue-400/60 cursor-pointer"
-                    title={`Open in ${deepLink.type === 'apple' ? 'Apple Books' : deepLink.type === 'google' ? 'Google Books' : 'Open Library'}`}
+                    className="absolute top-1 right-1 w-6 h-6 bg-slate-900/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-slate-800/90 hover:shadow-lg hover:shadow-blue-400/30 transition-all duration-200 border border-slate-600/50 hover:border-blue-400/60 cursor-pointer opacity-0 group-hover:opacity-100"
+                    title="Open in Google Books"
                   >
                     {isLoading(bookId) ? (
                       <div className="w-3 h-3 border border-slate-400 border-t-transparent rounded-full animate-spin" />
                     ) : (
-                      <span className="text-slate-200 text-sm drop-shadow-sm">{deepLink.icon}</span>
+                      <span className="text-slate-200 text-xs drop-shadow-sm">📖</span>
                     )}
                   </button>
                 )}
@@ -62,7 +62,7 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
               
               <div className="flex-1 flex flex-col justify-between">
                 <div className="space-y-2 mb-3">
-                  <h3 className="text-slate-200 text-sm font-medium leading-tight line-clamp-2 min-h-[2.5rem]">
+                  <h3 className="text-slate-200 text-sm font-medium leading-tight line-clamp-3 min-h-[3rem]">
                     {book.title}
                   </h3>
                   <p className="text-slate-400 text-xs line-clamp-1">

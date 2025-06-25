@@ -81,16 +81,6 @@ const Header = () => {
             >
               Chrono Thread
             </Link>
-            <Link
-              to="/test-brain"
-              className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
-                location.pathname === '/test-brain' 
-                  ? 'text-blue-400' 
-                  : 'text-slate-300 hover:text-blue-400'
-              }`}
-            >
-              🧠 Brain
-            </Link>
           </nav>
 
           {/* Mobile Navigation Toggle - for future mobile menu implementation */}

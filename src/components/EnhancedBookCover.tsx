@@ -53,7 +53,7 @@ const EnhancedBookCover = ({
         const src = await imageService.loadImage({
           src: fallbacks[0] || '',
           fallbacks: fallbacks.slice(1),
-          timeout: 2000 // Reduced timeout for better performance
+          timeout: 2000
         });
         setCurrentSrc(src);
         setIsLoading(false);
