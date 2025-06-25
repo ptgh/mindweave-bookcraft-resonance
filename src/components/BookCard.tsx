@@ -1,8 +1,8 @@
+
 import { useState } from "react";
 import { Edit, Archive, X } from "lucide-react";
 import PublisherResonanceBadge from "./PublisherResonanceBadge";
 import EnhancedBookCover from "./EnhancedBookCover";
-import { useDeepLinking } from "@/hooks/useDeepLinking";
 
 interface BookCardProps {
   id: number;
@@ -48,7 +48,6 @@ const BookCard = ({
   onDiscard
 }: BookCardProps) => {
   const [showActions, setShowActions] = useState(false);
-  const { getDeepLink, handleDeepLinkClick, isLoading } = useDeepLinking();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -77,27 +76,6 @@ const BookCard = ({
 
   const resonanceLabels = getResonanceLabels();
 
-  // Create a mock book object for deep linking
-  const mockBook = {
-    id: id.toString(),
-    title,
-    author,
-    isbn,
-    apple_link,
-    volumeInfo: {
-      industryIdentifiers: isbn ? [{ type: 'ISBN_13', identifier: isbn }] : [],
-      previewLink: null
-    }
-  };
-
-  const deepLink = getDeepLink(mockBook);
-
-  const generateAppleLink = () => {
-    if (apple_link) return apple_link;
-    const query = encodeURIComponent(`${title} ${author}`);
-    return `https://books.apple.com/search?term=${query}`;
-  };
-
   return (
     <div 
       className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors relative group"
@@ -105,39 +83,12 @@ const BookCard = ({
       onMouseLeave={() => setShowActions(false)}
     >
       <div className="flex items-start space-x-4">
-        <div className="relative">
-          <EnhancedBookCover
-            title={title}
-            coverUrl={coverUrl}
-            className="w-12 h-16"
-            lazy={true}
-          />
-          
-          {/* Google Books Link */}
-          {deepLink && (
-            <button
-              onClick={() => handleDeepLinkClick(id, deepLink.url)}
-              disabled={isLoading(id)}
-              className="absolute -top-1 -right-1 w-5 h-5 bg-slate-900/90 backdrop-blur-sm rounded-full flex items-center justify-center text-xs hover:bg-slate-800/90 hover:shadow-md hover:shadow-blue-400/20 transition-all duration-200 opacity-0 group-hover:opacity-100"
-              title="Open in Google Books"
-            >
-              {isLoading(id) ? (
-                <div className="w-2 h-2 border border-slate-400 border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <span className="text-slate-300 text-xs">📖</span>
-              )}
-            </button>
-          )}
-
-          {/* Apple Books Link */}
-          <button
-            onClick={() => window.open(generateAppleLink(), '_blank', 'noopener,noreferrer')}
-            className="absolute -top-1 -left-1 w-5 h-5 bg-slate-900/90 backdrop-blur-sm rounded-full flex items-center justify-center text-xs hover:bg-slate-800/90 hover:shadow-md hover:shadow-red-400/20 transition-all duration-200 opacity-0 group-hover:opacity-100"
-            title="Open in Apple Books"
-          >
-            <span className="text-slate-300 text-xs">🍎</span>
-          </button>
-        </div>
+        <EnhancedBookCover
+          title={title}
+          coverUrl={coverUrl}
+          className="w-12 h-16"
+          lazy={true}
+        />
         
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between">
