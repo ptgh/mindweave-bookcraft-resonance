@@ -12,7 +12,7 @@ const Header = () => {
 
   const navigation = [
     { name: "Home", href: "/", icon: "🏠" },
-    { name: "Transmissions", href: "/library", icon: "📚" },
+    { name: "Transmissions", href: "/transmissions", icon: "📚" },
     { name: "Signal Archive", href: "/book-browser", icon: "📡" },
     { name: "Author Matrix", href: "/author-matrix", icon: "👥" },
     { name: "Chrono Thread", href: "/thread-map", icon: "🧠" },

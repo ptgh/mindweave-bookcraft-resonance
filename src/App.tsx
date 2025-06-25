@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
-import Discovery from "./pages/Discovery";
 import ThreadMap from "./pages/ThreadMap";
 import AuthorMatrix from "./pages/AuthorMatrix";
 import Search from "./pages/Search";
@@ -51,8 +50,7 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
-      <Route path="/discovery" element={<Discovery />} />
-      <Route path="/library" element={<Index />} />
+      <Route path="/transmissions" element={<Index />} />
       <Route path="/thread-map" element={<ThreadMap />} />
       <Route path="/author-matrix" element={<AuthorMatrix />} />
       <Route path="/search" element={<Search />} />
