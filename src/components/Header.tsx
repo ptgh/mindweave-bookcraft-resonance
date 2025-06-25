@@ -108,15 +108,18 @@ const Header = () => {
             </nav>
 
             {user && (
-              <StandardButton
-                onClick={signOut}
-                variant="standard"
-                size="sm"
-                className="flex items-center space-x-1"
-              >
-                <LogOut className="w-3 h-3" />
-                <span>Logout</span>
-              </StandardButton>
+              <div className="flex items-center space-x-4">
+                <span className="text-slate-300 text-sm">{user.email}</span>
+                <StandardButton
+                  onClick={signOut}
+                  variant="standard"
+                  size="sm"
+                  className="flex items-center space-x-1"
+                >
+                  <LogOut className="w-3 h-3" />
+                  <span>Sign Out</span>
+                </StandardButton>
+              </div>
             )}
 
             {/* Mobile Navigation Toggle - for future mobile menu implementation */}
