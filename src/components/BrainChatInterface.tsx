@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -61,31 +60,78 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
     }
   }, [isOpen]);
 
-  // Clean data to avoid circular references
+  // Clean data to avoid circular references with deep cleaning
   const cleanBrainData = (nodes: BrainNode[], links: BookLink[]) => {
-    const cleanNodes = nodes.map(node => ({
-      id: node.id,
-      title: node.title,
-      author: node.author,
-      tags: node.tags,
-      transmissionId: node.transmissionId,
-      // Remove the element property and other DOM references that cause circular refs
-      x: node.x,
-      y: node.y,
-      coverUrl: node.coverUrl,
-      description: node.description
-    }));
+    console.log('Original nodes length:', nodes.length);
+    console.log('Original links length:', links.length);
+    
+    try {
+      // Create completely clean node objects with only serializable data
+      const cleanNodes = nodes.map(node => {
+        const cleanNode = {
+          id: String(node.id || ''),
+          title: String(node.title || ''),
+          author: String(node.author || ''),
+          tags: Array.isArray(node.tags) ? node.tags.filter(tag => typeof tag === 'string') : [],
+          transmissionId: node.transmissionId ? Number(node.transmissionId) : undefined,
+          x: typeof node.x === 'number' ? node.x : undefined,
+          y: typeof node.y === 'number' ? node.y : undefined,
+          coverUrl: typeof node.coverUrl === 'string' ? node.coverUrl : undefined,
+          description: typeof node.description === 'string' ? node.description : undefined
+        };
+        
+        // Remove undefined values
+        Object.keys(cleanNode).forEach(key => {
+          if (cleanNode[key] === undefined) {
+            delete cleanNode[key];
+          }
+        });
+        
+        return cleanNode;
+      });
 
-    const cleanLinks = links.map(link => ({
-      fromId: link.fromId,
-      toId: link.toId,
-      type: link.type,
-      strength: link.strength,
-      sharedTags: link.sharedTags,
-      connectionReason: link.connectionReason
-    }));
+      // Create completely clean link objects
+      const cleanLinks = links.map(link => {
+        const cleanLink = {
+          fromId: String(link.fromId || ''),
+          toId: String(link.toId || ''),
+          type: String(link.type || ''),
+          strength: typeof link.strength === 'number' ? link.strength : 1,
+          sharedTags: Array.isArray(link.sharedTags) ? link.sharedTags.filter(tag => typeof tag === 'string') : [],
+          connectionReason: typeof link.connectionReason === 'string' ? link.connectionReason : undefined
+        };
+        
+        // Remove undefined values
+        Object.keys(cleanLink).forEach(key => {
+          if (cleanLink[key] === undefined) {
+            delete cleanLink[key];
+          }
+        });
+        
+        return cleanLink;
+      });
 
-    return { nodes: cleanNodes, links: cleanLinks };
+      console.log('Cleaned nodes length:', cleanNodes.length);
+      console.log('Cleaned links length:', cleanLinks.length);
+      
+      // Test serialization before returning
+      try {
+        JSON.stringify({ nodes: cleanNodes, links: cleanLinks });
+        console.log('Serialization test passed');
+      } catch (serError) {
+        console.error('Serialization test failed:', serError);
+        throw new Error('Data still contains circular references after cleaning');
+      }
+
+      return { nodes: cleanNodes, links: cleanLinks };
+    } catch (error) {
+      console.error('Error cleaning brain data:', error);
+      // Return minimal safe data structure
+      return { 
+        nodes: [], 
+        links: []
+      };
+    }
   };
 
   const handleSendMessage = async () => {
@@ -103,26 +149,39 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
     setIsLoading(true);
 
     try {
-      console.log('Sending message to brain-chat function:', {
-        message: inputText,
-        nodeCount: nodes.length,
-        linkCount: links.length
-      });
+      console.log('Preparing to send message to brain-chat function');
+      console.log('Input message:', inputText);
+      console.log('Original data counts - nodes:', nodes.length, 'links:', links.length);
 
       // Clean the brain data to avoid circular references
       const cleanData = cleanBrainData(nodes, links);
+      console.log('Cleaned data counts - nodes:', cleanData.nodes.length, 'links:', cleanData.links.length);
+
+      // Create the payload and test it
+      const payload = {
+        message: inputText,
+        brainData: {
+          ...cleanData,
+          activeFilters: Array.isArray(activeFilters) ? activeFilters : []
+        }
+      };
+
+      // Final serialization test
+      try {
+        JSON.stringify(payload);
+        console.log('Final payload serialization test passed');
+      } catch (finalSerError) {
+        console.error('Final payload serialization failed:', finalSerError);
+        throw new Error('Payload contains non-serializable data');
+      }
+
+      console.log('Calling supabase function with payload size:', JSON.stringify(payload).length, 'characters');
 
       const { data, error } = await supabase.functions.invoke('brain-chat', {
-        body: {
-          message: inputText,
-          brainData: {
-            ...cleanData,
-            activeFilters
-          }
-        }
+        body: payload
       });
 
-      console.log('Response from brain-chat function:', { data, error });
+      console.log('Response received:', { data, error });
 
       if (error) {
         console.error('Supabase function error:', error);
