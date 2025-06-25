@@ -164,7 +164,7 @@ export const useBookBrowser = () => {
 
       requestAnimationFrame(showBooks);
 
-      // Optimized image preloading with error handling
+      // Optimized image preloading with error handling - fix the void.catch() issue
       const imageUrls = books
         .flatMap(book => [book.coverUrl, book.thumbnailUrl, book.smallThumbnailUrl])
         .filter(Boolean)
@@ -172,9 +172,13 @@ export const useBookBrowser = () => {
       
       if (imageUrls.length > 0) {
         setTimeout(() => {
-          imageService.preloadImages(imageUrls).catch(err => {
-            console.warn('Image preloading failed:', err);
-          });
+          // Fix: Handle the promise properly instead of calling .catch() on void
+          const preloadPromise = imageService.preloadImages(imageUrls);
+          if (preloadPromise) {
+            preloadPromise.catch(err => {
+              console.warn('Image preloading failed:', err);
+            });
+          }
         }, 200);
       }
     }
