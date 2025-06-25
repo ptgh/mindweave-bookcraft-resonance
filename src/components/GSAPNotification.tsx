@@ -80,32 +80,29 @@ const GSAPNotification = ({ isVisible, title, message, onClose }: GSAPNotificati
   return (
     <div
       ref={backdropRef}
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 pointer-events-none"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-16 pointer-events-none"
       style={{ display: "none" }}
     >
       <div
         ref={notificationRef}
-        className="bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 rounded-lg p-4 shadow-xl max-w-sm mx-4 pointer-events-auto"
+        className="bg-slate-800/90 backdrop-blur-sm border border-slate-600/40 rounded-md px-3 py-2 text-xs text-slate-300 hover:bg-slate-700/50 transition-all duration-200 pointer-events-auto flex items-center space-x-2 shadow-lg"
         style={{ 
-          boxShadow: "0 0 20px rgba(59, 130, 246, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3)" 
+          minWidth: "200px",
+          maxWidth: "280px"
         }}
       >
-        <div className="flex items-start justify-between">
-          <div className="flex-1 mr-3">
-            <div className="flex items-center space-x-2 mb-1">
-              <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
-              <h4 className="text-slate-200 font-medium text-sm">{title}</h4>
-            </div>
-            <p className="text-slate-400 text-xs leading-relaxed">{message}</p>
-          </div>
-          
-          <button
-            onClick={onClose}
-            className="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 transition-all duration-200"
-          >
-            <X className="w-3 h-3" />
-          </button>
+        <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <span className="font-medium text-slate-200">{title}</span>
+          <span className="text-slate-400 ml-1">{message}</span>
         </div>
+        
+        <button
+          onClick={onClose}
+          className="w-4 h-4 rounded flex items-center justify-center text-slate-400 hover:text-slate-200 hover:bg-slate-600/50 transition-all duration-200 flex-shrink-0"
+        >
+          <X className="w-2.5 h-2.5" />
+        </button>
       </div>
     </div>
   );
