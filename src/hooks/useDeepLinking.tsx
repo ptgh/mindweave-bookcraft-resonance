@@ -1,6 +1,5 @@
 
 import { useState, useCallback } from 'react';
-import { updateTransmission } from '@/services/transmissionsService';
 
 export interface DeepLinkInfo {
   type: 'google';
@@ -48,14 +47,10 @@ export const useDeepLinking = () => {
     setLoadingIds(prev => new Set(prev).add(bookId));
 
     try {
-      const updates: any = {
-        open_count: 1
-      };
-
-      await updateTransmission(bookId, updates);
+      // Simplified - just open the URL without database updates for book browser
       window.open(url, '_blank', 'noopener,noreferrer');
     } catch (error) {
-      console.error('Error updating book open count:', error);
+      console.error('Error opening book link:', error);
       window.open(url, '_blank', 'noopener,noreferrer');
     } finally {
       setLoadingIds(prev => {

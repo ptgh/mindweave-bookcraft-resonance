@@ -13,37 +13,36 @@ export const useBookBrowser = () => {
   const [previouslyShownBooks, setPreviouslyShownBooks] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
-  // Memoize search terms for better performance
+  // Optimized search terms for better performance
   const searchTerms = useMemo(() => [
     'science fiction', 'cyberpunk', 'space opera', 'dystopian fiction',
     'time travel', 'artificial intelligence', 'space exploration',
-    'hard science fiction', 'biopunk', 'steampunk', 'alternate history',
-    'post apocalyptic'
+    'hard science fiction', 'biopunk', 'steampunk', 'alternate history'
   ], []);
 
-  // Debounced loading function for better performance
+  // Optimized loading function
   const debouncedLoadBooks = useMemo(
     () => debounce(async () => {
-      console.log('Starting loadRandomBooks');
+      console.log('Loading books...');
       setLoading(true);
       setVisibleBooks(new Set());
       
       try {
         let allBooks: EnhancedBookSuggestion[] = [];
         let attempts = 0;
-        const maxAttempts = Math.min(searchTerms.length * 2, 10); // Limit attempts for better performance
+        const maxAttempts = 6; // Reduced for better performance
         
-        while (allBooks.length < 24 && attempts < maxAttempts) {
+        while (allBooks.length < 18 && attempts < maxAttempts) {
           const termIndex = attempts % searchTerms.length;
           const term = searchTerms[termIndex];
-          const startIndex = Math.floor(attempts / searchTerms.length) * 12; // Reduced batch size
+          const startIndex = Math.floor(attempts / searchTerms.length) * 10;
           
           try {
-            const results = await searchBooksEnhanced(term, 12, startIndex);
+            const results = await searchBooksEnhanced(term, 10, startIndex);
             
             if (results.length > 0) {
               const newBooks = results.filter(book => 
-                book.title && book.author && // Ensure required fields
+                book.title && book.author &&
                 !allBooks.some(existing => existing.id === book.id) &&
                 !previouslyShownBooks.has(book.id)
               );
@@ -55,14 +54,14 @@ export const useBookBrowser = () => {
           }
           
           attempts++;
-          // Small delay to prevent API rate limiting
-          await new Promise(resolve => setTimeout(resolve, 50));
+          // Reduced delay for better performance
+          await new Promise(resolve => setTimeout(resolve, 30));
         }
         
         if (allBooks.length > 0) {
           const shuffled = allBooks
             .sort(() => Math.random() - 0.5)
-            .slice(0, 24);
+            .slice(0, 18);
             
           setBooks(shuffled);
           
@@ -91,7 +90,7 @@ export const useBookBrowser = () => {
           }
         }
       } catch (error) {
-        console.error('Error in loadRandomBooks:', error);
+        console.error('Error loading books:', error);
         setBooks([]);
         toast({
           title: "Loading Error",
@@ -111,8 +110,6 @@ export const useBookBrowser = () => {
 
   const addToTransmissions = useCallback(async (book: EnhancedBookSuggestion) => {
     try {
-      const isbn = undefined; // Will be extracted from enhanced book data if available
-
       await saveTransmission({
         title: book.title,
         author: book.author || 'Unknown',
@@ -121,8 +118,8 @@ export const useBookBrowser = () => {
         rating: {},
         notes: book.description || '',
         status: 'want-to-read',
-        isbn: isbn,
-        apple_link: isbn ? `https://books.apple.com/book/isbn${isbn}` : undefined,
+        isbn: undefined,
+        apple_link: undefined,
         open_count: 0
       });
       
@@ -151,23 +148,22 @@ export const useBookBrowser = () => {
         books.forEach((_, index) => {
           setTimeout(() => {
             setVisibleBooks(prev => new Set([...prev, index]));
-          }, index * 30); // Reduced delay for faster loading
+          }, index * 50);
         });
       };
 
-      // Use requestAnimationFrame for smoother animations
       requestAnimationFrame(showBooks);
 
       // Optimized image preloading
       const imageUrls = books
         .flatMap(book => [book.coverUrl, book.thumbnailUrl, book.smallThumbnailUrl])
         .filter(Boolean)
-        .slice(0, 12) as string[]; // Limit preloading for better performance
+        .slice(0, 9) as string[];
       
       if (imageUrls.length > 0) {
         setTimeout(() => {
           imageService.preloadImages(imageUrls);
-        }, 100);
+        }, 200);
       }
     }
   }, [books]);
