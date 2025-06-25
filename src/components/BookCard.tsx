@@ -111,10 +111,10 @@ const BookCard = ({
           {/* Deep Link Icon */}
           {deepLink && (
             <button
-              onClick={() => handleDeepLinkClick(id, deepLink.url, isbn)}
+              onClick={() => handleDeepLinkClick(id, deepLink.url)}
               disabled={isLoading(id)}
               className="absolute -top-1 -right-1 w-5 h-5 bg-slate-900/90 backdrop-blur-sm rounded-full flex items-center justify-center text-xs hover:bg-slate-800/90 hover:shadow-md hover:shadow-blue-400/20 transition-all duration-200 opacity-0 group-hover:opacity-100"
-              title={`Open in ${deepLink.type === 'apple' ? 'Apple Books' : deepLink.type === 'google' ? 'Google Books' : 'Open Library'}`}
+              title="Open in Google Books"
             >
               {isLoading(id) ? (
                 <div className="w-2 h-2 border border-slate-400 border-t-transparent rounded-full animate-spin" />
