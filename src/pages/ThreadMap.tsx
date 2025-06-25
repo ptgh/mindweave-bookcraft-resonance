@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
@@ -83,10 +84,10 @@ const ThreadMap = () => {
             </div>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-3">
+          <div className="grid gap-8 xl:grid-cols-3">
             {/* Mind Map Visualization */}
-            <div className="xl:col-span-2 bg-slate-800/50 rounded-lg border border-slate-700 p-4 sm:p-6">
-              <div className="flex items-center space-x-2 mb-4">
+            <div className="xl:col-span-2 bg-slate-800/50 rounded-lg border border-slate-700 p-6">
+              <div className="flex items-center space-x-2 mb-6">
                 <Brain className="w-5 h-5 text-blue-400" />
                 <h2 className="text-lg font-medium text-slate-200">Consciousness Web</h2>
                 <span className="text-slate-400 text-sm">• {filteredTransmissions.length} active nodes</span>
@@ -115,13 +116,13 @@ const ThreadMap = () => {
             </div>
 
             {/* Stats Panel */}
-            <div className="space-y-6">
-              <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-4 sm:p-6">
-                <div className="flex items-center space-x-2 mb-4">
+            <div className="space-y-8">
+              <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
+                <div className="flex items-center space-x-2 mb-6">
                   <TrendingUp className="w-5 h-5 text-green-400" />
                   <h2 className="text-lg font-medium text-slate-200">Signal Frequency</h2>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-300 text-sm">This Month</span>
                     <span className="text-green-400 font-medium">{currentMonthTransmissions} signals</span>
@@ -137,12 +138,12 @@ const ThreadMap = () => {
                 </div>
               </div>
 
-              <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-4 sm:p-6">
-                <div className="flex items-center space-x-2 mb-4">
+              <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
+                <div className="flex items-center space-x-2 mb-6">
                   <BookOpen className="w-5 h-5 text-purple-400" />
                   <h2 className="text-lg font-medium text-slate-200">Dominant Threads</h2>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {tagCounts.slice(0, 5).map((thread, index) => (
                     <div key={thread.tag} className="flex items-center justify-between">
                       <div className="flex items-center space-x-2 min-w-0 flex-1">
@@ -167,7 +168,7 @@ const ThreadMap = () => {
             </div>
           </div>
 
-          <div className="mt-8 text-center">
+          <div className="mt-12 text-center">
             <div className="inline-flex flex-wrap items-center justify-center space-x-2 text-slate-500 text-xs">
               <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
               <span>Neural pathways: Active</span>
