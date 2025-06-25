@@ -13,11 +13,13 @@ interface GoogleBooksPopupProps {
 const GoogleBooksPopup = ({ isOpen, onClose, bookTitle, bookAuthor, previewUrl }: GoogleBooksPopupProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (isOpen) {
       setIsLoading(true);
       setHasError(false);
+      setRetryCount(0);
     }
   }, [isOpen, previewUrl]);
 
@@ -37,34 +39,41 @@ const GoogleBooksPopup = ({ isOpen, onClose, bookTitle, bookAuthor, previewUrl }
     setHasError(true);
   };
 
-  // Enhanced URL handling for better Google Books integration
-  const getEnhancedPreviewUrl = (url: string) => {
+  // Enhanced URL handling with better fallback logic
+  const getEnhancedPreviewUrl = (url: string, attempt: number = 0) => {
     try {
-      console.log('Original URL:', url);
+      console.log('Original URL:', url, 'Attempt:', attempt);
       
-      // If it's a search URL, try to convert to embedded view
-      if (url.includes('books.google.com/books?q=')) {
-        // For search URLs, we can't embed directly, so we'll show the search page
-        const enhancedUrl = url.includes('&output=embed') ? url : url + '&output=embed';
-        console.log('Enhanced search URL:', enhancedUrl);
-        return enhancedUrl;
+      // Attempt 0: Try the original URL with embed parameter
+      if (attempt === 0) {
+        if (url.includes('books.google.com')) {
+          const enhancedUrl = url.includes('&output=embed') ? url : url + '&output=embed';
+          console.log('Enhanced original URL:', enhancedUrl);
+          return enhancedUrl;
+        }
       }
       
-      // If it's a book-specific URL, enhance for embedding
-      if (url.includes('books.google.com/books?id=')) {
-        const enhancedUrl = url.replace('/books?id=', '/books/reader?id=') + '&output=embed';
-        console.log('Enhanced book URL:', enhancedUrl);
-        return enhancedUrl;
+      // Attempt 1: Try reader view if it's a book ID URL
+      if (attempt === 1 && url.includes('books.google.com/books?id=')) {
+        const bookId = url.match(/id=([^&]+)/)?.[1];
+        if (bookId) {
+          const readerUrl = `https://books.google.com/books/reader?id=${bookId}&output=embed`;
+          console.log('Reader URL:', readerUrl);
+          return readerUrl;
+        }
       }
       
-      // For preview links, make them embed-friendly
-      if (url.includes('books.google.com/books/') && url.includes('preview')) {
-        const enhancedUrl = url.includes('&output=embed') ? url : url + '&output=embed';
-        console.log('Enhanced preview URL:', enhancedUrl);
-        return enhancedUrl;
+      // Attempt 2: Try preview URL format
+      if (attempt === 2 && url.includes('books.google.com/books?id=')) {
+        const bookId = url.match(/id=([^&]+)/)?.[1];
+        if (bookId) {
+          const previewUrl = `https://books.google.com/books/publisher/content/images/frontcover/${bookId}?fife=w400-h600&source=gbs_api`;
+          console.log('Preview URL:', previewUrl);
+          return previewUrl;
+        }
       }
       
-      console.log('Using original URL:', url);
+      console.log('Using fallback URL:', url);
       return url;
     } catch (error) {
       console.error('Error enhancing preview URL:', error);
@@ -72,7 +81,18 @@ const GoogleBooksPopup = ({ isOpen, onClose, bookTitle, bookAuthor, previewUrl }
     }
   };
 
-  const enhancedUrl = getEnhancedPreviewUrl(previewUrl);
+  const enhancedUrl = getEnhancedPreviewUrl(previewUrl, retryCount);
+
+  const handleRetry = () => {
+    if (retryCount < 2) {
+      setRetryCount(prev => prev + 1);
+      setIsLoading(true);
+      setHasError(false);
+    } else {
+      // Final fallback: open in new tab
+      window.open(previewUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
@@ -97,7 +117,11 @@ const GoogleBooksPopup = ({ isOpen, onClose, bookTitle, bookAuthor, previewUrl }
               <div className="text-center">
                 <div className="w-12 h-12 border-3 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
                 <p className="text-slate-300 text-base mb-2">Loading book preview...</p>
-                <p className="text-slate-500 text-sm">Connecting to Google Books...</p>
+                <p className="text-slate-500 text-sm">
+                  {retryCount === 0 && 'Connecting to Google Books...'}
+                  {retryCount === 1 && 'Trying alternative view...'}
+                  {retryCount === 2 && 'Loading preview image...'}
+                </p>
               </div>
             </div>
           )}
@@ -110,19 +134,34 @@ const GoogleBooksPopup = ({ isOpen, onClose, bookTitle, bookAuthor, previewUrl }
                 </div>
                 <p className="text-slate-300 text-lg mb-2">Preview not available</p>
                 <p className="text-slate-400 mb-6 max-w-md">
-                  This book's preview may be restricted or not available for embedding.
+                  {retryCount < 2 
+                    ? 'This view failed to load. Trying another approach...' 
+                    : 'This book\'s preview may be restricted or not available for embedding.'
+                  }
                 </p>
-                <button
-                  onClick={() => window.open(previewUrl, '_blank')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors"
-                >
-                  Open in Google Books
-                </button>
+                <div className="space-x-4">
+                  {retryCount < 2 ? (
+                    <button
+                      onClick={handleRetry}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors"
+                    >
+                      Try Alternative View
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => window.open(previewUrl, '_blank', 'noopener,noreferrer')}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors"
+                    >
+                      Open in Google Books
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           )}
           
           <iframe
+            key={`${previewUrl}-${retryCount}`}
             src={enhancedUrl}
             className="w-full h-full"
             onLoad={handleIframeLoad}

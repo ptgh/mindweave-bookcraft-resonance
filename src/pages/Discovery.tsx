@@ -4,7 +4,7 @@ import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Brain, BookOpen, Users, Search, Map, Eye } from "lucide-react";
+import { Brain, BookOpen, Users, Search, Map, Eye, Building } from "lucide-react";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 
 const Discovery = () => {
@@ -36,7 +36,7 @@ const Discovery = () => {
             </p>
           </div>
 
-          <div ref={addFeatureBlockRef} className="feature-block grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div ref={addFeatureBlockRef} className="feature-block grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             <Link 
               to="/library" 
               className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10"
@@ -94,6 +94,36 @@ const Discovery = () => {
               </div>
               <p className="text-slate-400 leading-relaxed text-sm">
                 Timeline consciousness map
+              </p>
+            </Link>
+
+            <Link 
+              to="/publisher-resonance" 
+              className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-purple-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-purple-500/10"
+            >
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
+                  <Building className="w-6 h-6 text-purple-400" />
+                </div>
+                <h2 className="text-xl font-medium text-slate-200">Publisher Resonance</h2>
+              </div>
+              <p className="text-slate-400 leading-relaxed text-sm">
+                Explore publisher consciousness
+              </p>
+            </Link>
+
+            <Link 
+              to="/test-brain" 
+              className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-cyan-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-cyan-500/10"
+            >
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center group-hover:bg-cyan-500/30 transition-colors">
+                  <Brain className="w-6 h-6 text-cyan-400" />
+                </div>
+                <h2 className="text-xl font-medium text-slate-200">Neural Map</h2>
+              </div>
+              <p className="text-slate-400 leading-relaxed text-sm">
+                Neural consciousness visualization
               </p>
             </Link>
           </div>

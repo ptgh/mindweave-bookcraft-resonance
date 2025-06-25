@@ -82,6 +82,16 @@ const Header = () => {
               Chrono Thread
             </Link>
             <Link
+              to="/publisher-resonance"
+              className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                location.pathname === '/publisher-resonance' 
+                  ? 'text-purple-400' 
+                  : 'text-slate-300 hover:text-purple-400'
+              }`}
+            >
+              Publisher Resonance
+            </Link>
+            <Link
               to="/test-brain"
               className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
                 location.pathname === '/test-brain' 

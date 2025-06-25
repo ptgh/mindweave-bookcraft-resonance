@@ -11,6 +11,7 @@ import ThreadMap from "./pages/ThreadMap";
 import AuthorMatrix from "./pages/AuthorMatrix";
 import Search from "./pages/Search";
 import BookBrowser from "./pages/BookBrowser";
+import PublisherResonance from "./pages/PublisherResonance";
 import Auth from "./pages/Auth";
 import TestBrain from "./pages/TestBrain";
 import NotFound from "./pages/NotFound";
@@ -53,6 +54,7 @@ const AppRoutes = () => {
       <Route path="/author-matrix" element={<AuthorMatrix />} />
       <Route path="/search" element={<Search />} />
       <Route path="/book-browser" element={<BookBrowser />} />
+      <Route path="/publisher-resonance" element={<PublisherResonance />} />
       <Route path="/test-brain" element={<TestBrain />} />
       <Route path="/auth" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />

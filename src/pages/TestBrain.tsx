@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
 import BrainChatInterface from '@/components/BrainChatInterface';
+import Header from '@/components/Header';
 
 // Register GSAP plugins
 gsap.registerPlugin(MotionPathPlugin);
@@ -855,10 +856,13 @@ const TestBrain = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-cyan-400 animate-pulse" />
-          <p className="text-cyan-400">Initializing neural consciousness...</p>
+      <div className="min-h-screen bg-black">
+        <Header />
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+          <div className="text-center">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-cyan-400 animate-pulse" />
+            <p className="text-cyan-400">Initializing neural consciousness...</p>
+          </div>
         </div>
       </div>
     );
@@ -866,17 +870,20 @@ const TestBrain = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-red-400" />
-          <p className="text-red-400 mb-2">Error loading transmissions</p>
-          <p className="text-red-300 text-sm">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-          >
-            Retry
-          </button>
+      <div className="min-h-screen bg-black">
+        <Header />
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+          <div className="text-center">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-red-400" />
+            <p className="text-red-400 mb-2">Error loading transmissions</p>
+            <p className="text-red-300 text-sm">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -884,107 +891,113 @@ const TestBrain = () => {
 
   if (nodes.length === 0) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-cyan-400" />
-          <p className="text-cyan-400 mb-2">No transmissions found</p>
-          <p className="text-cyan-300 text-sm">Add some books to your library to see the neural network</p>
+      <div className="min-h-screen bg-black">
+        <Header />
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+          <div className="text-center">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-cyan-400" />
+            <p className="text-cyan-400 mb-2">No transmissions found</p>
+            <p className="text-cyan-300 text-sm">Add some books to your library to see the neural network</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-black overflow-hidden">
-      <div 
-        ref={canvasRef}
-        className="brain-canvas absolute inset-0 w-full h-full"
-        style={{ zIndex: 1 }}
-      />
-      
-      <svg ref={svgRef} className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 2 }} />
-
-      <div className="absolute top-4 left-4 z-20 space-y-4">
-        <div className="flex flex-wrap gap-2 max-w-md">
-          {allTags.map(tag => (
-            <Badge
-              key={tag}
-              variant={activeFilters.includes(tag) ? "default" : "outline"}
-              className={`cursor-pointer text-xs transition-all ${
-                activeFilters.includes(tag) 
-                  ? 'bg-cyan-400 text-black hover:bg-cyan-300' 
-                  : 'border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black'
-              } ${chatHighlights.tags.includes(tag) ? 'border-red-400 text-red-400' : ''}`}
-              onClick={() => handleTagFilter(tag)}
-            >
-              {tag}
-            </Badge>
-          ))}
-        </div>
-        <div className="text-cyan-400/70 text-xs">
-          Click tags to remap connections • {activeFilters.length > 0 ? 'Filtered view' : 'All connections'}
-        </div>
-      </div>
-
-      <div className="absolute top-4 right-4 z-20 text-cyan-400 text-sm">
-        <div className="bg-black/50 backdrop-blur-sm rounded-lg p-3">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse"></div>
-              <span>Books: {nodes.length}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-cyan-400/50 rounded-full animate-pulse"></div>
-              <span>Links: {links.length}</span>
-            </div>
-          </div>
-          {remappingActive && (
-            <div className="text-cyan-300 text-xs mt-1">Remapping...</div>
-          )}
-        </div>
-      </div>
-
-      {tooltip && (
+    <div className="min-h-screen bg-black">
+      <Header />
+      <div className="relative min-h-[calc(100vh-80px)] overflow-hidden">
         <div 
-          className="absolute z-30 pointer-events-none"
-          style={{ 
-            left: tooltip.x - 100, 
-            top: tooltip.y,
-            transform: 'translateX(-50%)'
-          }}
-        >
-          <div className="bg-slate-800/95 border border-cyan-400/50 rounded-lg p-4 max-w-xs shadow-lg">
-            <div className="flex items-start space-x-4">
-              {tooltip.node.coverUrl && (
-                <div className="w-12 h-16 bg-slate-700 rounded border border-slate-600 overflow-hidden flex-shrink-0">
-                  <img 
-                    src={tooltip.node.coverUrl} 
-                    alt={tooltip.node.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-cyan-400 text-sm mb-1 leading-tight">{tooltip.node.title}</h4>
-                <p className="text-xs text-slate-300 mb-2">{tooltip.node.author}</p>
+          ref={canvasRef}
+          className="brain-canvas absolute inset-0 w-full h-full"
+          style={{ zIndex: 1 }}
+        />
+        
+        <svg ref={svgRef} className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 2 }} />
+
+        <div className="absolute top-4 left-4 z-20 space-y-4">
+          <div className="flex flex-wrap gap-2 max-w-md">
+            {allTags.map(tag => (
+              <Badge
+                key={tag}
+                variant={activeFilters.includes(tag) ? "default" : "outline"}
+                className={`cursor-pointer text-xs transition-all ${
+                  activeFilters.includes(tag) 
+                    ? 'bg-cyan-400 text-black hover:bg-cyan-300' 
+                    : 'border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black'
+                } ${chatHighlights.tags.includes(tag) ? 'border-red-400 text-red-400' : ''}`}
+                onClick={() => handleTagFilter(tag)}
+              >
+                {tag}
+              </Badge>
+            ))}
+          </div>
+          <div className="text-cyan-400/70 text-xs">
+            Click tags to remap connections • {activeFilters.length > 0 ? 'Filtered view' : 'All connections'}
+          </div>
+        </div>
+
+        <div className="absolute top-4 right-4 z-20 text-cyan-400 text-sm">
+          <div className="bg-black/50 backdrop-blur-sm rounded-lg p-3">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse"></div>
+                <span>Books: {nodes.length}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-cyan-400/50 rounded-full animate-pulse"></div>
+                <span>Links: {links.length}</span>
+              </div>
+            </div>
+            {remappingActive && (
+              <div className="text-cyan-300 text-xs mt-1">Remapping...</div>
+            )}
+          </div>
+        </div>
+
+        {tooltip && (
+          <div 
+            className="absolute z-30 pointer-events-none"
+            style={{ 
+              left: tooltip.x - 100, 
+              top: tooltip.y,
+              transform: 'translateX(-50%)'
+            }}
+          >
+            <div className="bg-slate-800/95 border border-cyan-400/50 rounded-lg p-4 max-w-xs shadow-lg">
+              <div className="flex items-start space-x-4">
+                {tooltip.node.coverUrl && (
+                  <div className="w-12 h-16 bg-slate-700 rounded border border-slate-600 overflow-hidden flex-shrink-0">
+                    <img 
+                      src={tooltip.node.coverUrl} 
+                      alt={tooltip.node.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
                 
-                <div className="text-xs text-cyan-300/70">
-                  {links.filter(link => link.fromId === tooltip.node.id || link.toId === tooltip.node.id).length} connections
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-cyan-400 text-sm mb-1 leading-tight">{tooltip.node.title}</h4>
+                  <p className="text-xs text-slate-300 mb-2">{tooltip.node.author}</p>
+                  
+                  <div className="text-xs text-cyan-300/70">
+                    {links.filter(link => link.fromId === tooltip.node.id || link.toId === tooltip.node.id).length} connections
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Chat Interface */}
-      <BrainChatInterface
-        nodes={nodes}
-        links={links}
-        activeFilters={activeFilters}
-        onHighlight={handleChatHighlight}
-      />
+        {/* Chat Interface */}
+        <BrainChatInterface
+          nodes={nodes}
+          links={links}
+          activeFilters={activeFilters}
+          onHighlight={handleChatHighlight}
+        />
+      </div>
     </div>
   );
 };
