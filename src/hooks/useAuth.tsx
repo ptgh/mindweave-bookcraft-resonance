@@ -24,12 +24,34 @@ export const useAuth = () => {
 
     const initializeAuth = async () => {
       try {
-        // Set up auth state listener FIRST
+        // Get initial session first
+        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Error getting initial session:', sessionError);
+          if (mounted) {
+            setError('Failed to retrieve authentication session');
+            setLoading(false);
+          }
+          // Clean up potentially corrupt session data
+          cleanupAuthState();
+          return;
+        }
+
+        console.log('Initial session check:', initialSession?.user?.email || 'No session');
+        
+        if (mounted) {
+          setSession(initialSession);
+          setUser(initialSession?.user ?? null);
+          setLoading(false);
+        }
+
+        // Set up auth state listener after initial session check
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, session) => {
             if (!mounted) return;
             
-            console.log('Auth state changed:', event, session?.user?.email);
+            console.log('Auth state changed:', event, session?.user?.email || 'No session');
             
             // Handle different auth events
             switch (event) {
@@ -57,29 +79,8 @@ export const useAuth = () => {
                 setSession(session);
                 setUser(session?.user ?? null);
             }
-            
-            // Set loading to false after any auth event
-            setLoading(false);
           }
         );
-
-        // THEN check for existing session
-        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error('Error getting initial session:', sessionError);
-          setError('Failed to retrieve authentication session');
-          // Clean up potentially corrupt session data
-          cleanupAuthState();
-        } else {
-          console.log('Initial session check:', initialSession?.user?.email);
-        }
-        
-        if (mounted) {
-          setSession(initialSession);
-          setUser(initialSession?.user ?? null);
-          setLoading(false);
-        }
 
         return () => {
           console.log('Auth cleanup - unsubscribing');

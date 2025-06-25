@@ -10,16 +10,27 @@ const NotFound = () => {
   const { user, loading } = useAuthContext();
 
   useEffect(() => {
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      location.pathname
-    );
+    console.log('404 Page accessed:', location.pathname);
+    
+    // Don't redirect if we're still loading auth state
+    if (loading) return;
+    
+    // For specific problematic paths, redirect to home
+    const problematicPaths = ['/test-brain', '/brain', '/undefined'];
+    if (problematicPaths.includes(location.pathname)) {
+      console.log('Redirecting problematic path to home:', location.pathname);
+      navigate('/', { replace: true });
+      return;
+    }
     
     // If user is not authenticated and trying to access a protected route
-    // redirect them to auth instead of showing 404
-    if (!loading && !user && location.pathname !== '/auth') {
-      console.log('Redirecting unauthenticated user to auth page');
-      navigate('/auth');
+    // only redirect auth routes, not all routes
+    if (!user && location.pathname.startsWith('/')) {
+      const publicPaths = ['/auth', '/'];
+      if (!publicPaths.includes(location.pathname)) {
+        console.log('Redirecting unauthenticated user to auth page');
+        navigate('/auth', { replace: true });
+      }
     }
   }, [location.pathname, user, loading, navigate]);
 
@@ -51,7 +62,7 @@ const NotFound = () => {
         
         <div className="space-y-2">
           <Button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/', { replace: true })}
             className="bg-cyan-600 hover:bg-cyan-700 text-white mr-2"
           >
             Return to Home
@@ -59,7 +70,7 @@ const NotFound = () => {
           
           {!user && (
             <Button
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate('/auth', { replace: true })}
               variant="outline"
               className="border-slate-600 text-slate-300 hover:bg-slate-700"
             >
