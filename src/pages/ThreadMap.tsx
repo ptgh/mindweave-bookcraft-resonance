@@ -95,18 +95,18 @@ const ThreadMap = () => {
               </div>
               
               {isLoading ? (
-                <div className="flex items-center justify-center h-[400px] sm:h-[600px] text-slate-400">
+                <div className="flex items-center justify-center h-[400px] text-slate-400">
                   <div className="text-center">
                     <div className="animate-spin w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full mx-auto mb-4"></div>
                     <span className="ml-3">Mapping neural pathways...</span>
                   </div>
                 </div>
               ) : filteredTransmissions.length > 0 ? (
-                <div className="h-[400px] sm:h-[600px]">
+                <div className="h-[400px]">
                   <MindMap transmissions={filteredTransmissions} />
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-[400px] sm:h-[600px] text-slate-400">
+                <div className="flex items-center justify-center h-[400px] text-slate-400">
                   <div className="text-center">
                     <Brain className="w-16 h-16 mx-auto mb-4 opacity-50" />
                     <p className="mb-2">No transmissions found for this timeframe</p>
@@ -169,7 +169,7 @@ const ThreadMap = () => {
             </div>
           </div>
 
-          <div className="mt-12 text-center">
+          <div className="mt-8 text-center">
             <div className="inline-flex flex-wrap items-center justify-center space-x-2 text-slate-500 text-xs">
               <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
               <span>Neural pathways: Active</span>
