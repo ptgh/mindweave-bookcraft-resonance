@@ -1,8 +1,7 @@
-
 import React, { memo, useState } from "react";
 import BookCard from "./BookCard";
 import EmptyState from "./EmptyState";
-import { Button } from "./ui/button";
+import { StandardButton } from "./ui/standard-button";
 import { Transmission } from "@/services/transmissionsService";
 
 interface TransmissionsListProps {
@@ -71,12 +70,13 @@ const TransmissionsList = memo(({
         title="No signals yet"
         description="Begin mapping your intellectual journey through the books that shape you"
         action={
-          <Button
+          <StandardButton
             onClick={onAddNew}
-            className="bg-blue-600 hover:bg-blue-700 text-white touch-manipulation active:scale-95"
+            variant="primary"
+            className="touch-manipulation active:scale-95"
           >
             Log Your First Signal
-          </Button>
+          </StandardButton>
         }
       />
     );

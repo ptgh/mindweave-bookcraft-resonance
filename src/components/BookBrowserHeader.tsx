@@ -1,4 +1,6 @@
 
+import { StandardButton } from "./ui/standard-button";
+
 interface BookBrowserHeaderProps {
   loading: boolean;
   onDiscover: () => void;
@@ -15,13 +17,13 @@ const BookBrowserHeader = ({ loading, onDiscover }: BookBrowserHeaderProps) => {
       </p>
       
       <div className="flex items-center justify-center gap-4">
-        <button
+        <StandardButton
           onClick={onDiscover}
           disabled={loading}
-          className="bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-200 hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)] flex items-center space-x-1"
+          className="flex items-center space-x-1"
         >
           <span>{loading ? 'Scanning the Archive...' : 'Discover Scan Signal Archive'}</span>
-        </button>
+        </StandardButton>
       </div>
     </div>
   );

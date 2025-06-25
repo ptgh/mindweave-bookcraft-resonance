@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import Header from "@/components/Header";
 import SignalInFocus from "@/components/SignalInFocus";
@@ -6,7 +5,7 @@ import AddBookModal from "@/components/AddBookModal";
 import AuthWrapper from "@/components/AuthWrapper";
 import TransmissionsList from "@/components/TransmissionsList";
 import Auth from "./Auth";
-import { Button } from "@/components/ui/button";
+import { StandardButton } from "@/components/ui/standard-button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { getTransmissions, saveTransmission, updateTransmission, deleteTransmission, Transmission } from "@/services/transmissionsService";
@@ -131,12 +130,13 @@ const Index = () => {
               <p className="text-slate-400 text-sm">Your reading frequency across time and space</p>
             </div>
             
-            <Button
+            <StandardButton
               onClick={() => setIsAddModalOpen(true)}
-              className="cta-button bg-blue-600 hover:bg-blue-700 text-white touch-manipulation active:scale-95"
+              variant="primary"
+              className="touch-manipulation active:scale-95"
             >
               + Log Signal
-            </Button>
+            </StandardButton>
           </div>
           
           <div ref={addFeatureBlockRef} className="feature-block">

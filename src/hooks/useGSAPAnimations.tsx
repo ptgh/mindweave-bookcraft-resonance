@@ -64,18 +64,18 @@ export const useGSAPAnimations = () => {
         }
       });
 
-      // 4. Enhanced button hover effects with smoother transitions
-      const buttons = document.querySelectorAll('.cta-button, button, [role="button"]');
-      buttons.forEach((button) => {
+      // 4. Enhanced standardized button hover effects
+      const standardButtons = document.querySelectorAll('button[class*="border-[rgba(255,255,255,0.15)]"], .cta-button, button, [role="button"]');
+      standardButtons.forEach((button) => {
         const buttonEl = button as HTMLElement;
         
-        // Mouse enter - elegant scale with glow
+        // Mouse enter - elegant glow and scale effect
         const handleMouseEnter = () => {
           gsap.to(buttonEl, {
             scale: 1.05,
-            duration: 0.4,
+            duration: 0.3,
             ease: "power2.out",
-            boxShadow: "0 12px 30px rgba(59, 130, 246, 0.25)"
+            boxShadow: "0 0 20px rgba(137, 180, 250, 0.4)"
           });
         };
 
@@ -83,14 +83,26 @@ export const useGSAPAnimations = () => {
         const handleMouseLeave = () => {
           gsap.to(buttonEl, {
             scale: 1,
-            duration: 0.4,
+            duration: 0.3,
             ease: "power2.out",
-            boxShadow: "0 0 0 rgba(59, 130, 246, 0)"
+            boxShadow: "0 0 0 rgba(137, 180, 250, 0)"
+          });
+        };
+
+        // Click animation - subtle press effect
+        const handleClick = () => {
+          gsap.to(buttonEl, {
+            scale: 0.98,
+            duration: 0.1,
+            ease: "power2.out",
+            yoyo: true,
+            repeat: 1
           });
         };
 
         buttonEl.addEventListener('mouseenter', handleMouseEnter);
         buttonEl.addEventListener('mouseleave', handleMouseLeave);
+        buttonEl.addEventListener('click', handleClick);
       });
 
       // 5. Card hover animations for enhanced interactivity
