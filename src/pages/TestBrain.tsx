@@ -129,10 +129,6 @@ const TestBrain = () => {
               onNodeHover={handleNodeHover}
               onLinkHover={handleLinkHover}
               onBackgroundClick={handleBgClick}
-              // zoom strategy
-              // zoomToFit={true}
-              // enable zoom on double click
-              enableZoomInteraction={true}
             />
           </div>
 
