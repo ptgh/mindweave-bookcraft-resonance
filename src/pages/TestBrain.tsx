@@ -1,7 +1,11 @@
+
 import Header from "@/components/Header";
 import { useState, useEffect, useRef } from 'react';
 import ForceGraph3D from 'react-force-graph-3d';
-import { gData } from '@/data/test-brain';
+import { gData, BrainNode, BookLink } from '@/data/test-brain';
+
+// Export types for other components to use
+export type { BrainNode, BookLink };
 
 const TestBrain = () => {
   const [highlightNodes, setHighlightNodes] = useState<Set<string>>(new Set());
