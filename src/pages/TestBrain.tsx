@@ -5,11 +5,12 @@ import { getTransmissions, Transmission } from '@/services/transmissionsService'
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
+import BrainChatInterface from '@/components/BrainChatInterface';
 
 // Register GSAP plugins
 gsap.registerPlugin(MotionPathPlugin);
 
-interface BrainNode {
+export interface BrainNode {
   id: string;
   title: string;
   author: string;
@@ -28,7 +29,7 @@ interface NodeTooltip {
   y: number;
 }
 
-interface BookLink {
+export interface BookLink {
   fromId: string;
   toId: string;
   type: 'tag_shared' | 'author_shared' | 'title_similarity' | 'manual';
@@ -48,6 +49,13 @@ const TestBrain = () => {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [allTags, setAllTags] = useState<string[]>([]);
   const [remappingActive, setRemappingActive] = useState(false);
+  
+  // Chat highlighting state
+  const [chatHighlights, setChatHighlights] = useState<{
+    nodeIds: string[];
+    linkIds: string[];
+    tags: string[];
+  }>({ nodeIds: [], linkIds: [], tags: [] });
 
   // Initialize brain data from user's transmissions only
   useEffect(() => {
@@ -387,12 +395,17 @@ const TestBrain = () => {
       const baseSize = Math.max(4, Math.min(8, 4 + nodeConnections * 0.6));
       const isHighActivity = nodeConnections > 2;
       
+      // Check if node is highlighted by chat
+      const isHighlighted = chatHighlights.nodeIds.includes(node.id);
+      const highlightColor = isHighlighted ? '#ff6b6b' : (isHighActivity ? '#00ffff' : '#00d4ff');
+      const highlightIntensity = isHighlighted ? 1.5 : 1;
+      
       nodeElement.style.cssText = `
         position: absolute;
-        width: ${baseSize}px;
-        height: ${baseSize}px;
+        width: ${baseSize * (isHighlighted ? 1.3 : 1)}px;
+        height: ${baseSize * (isHighlighted ? 1.3 : 1)}px;
         background: radial-gradient(circle, 
-          ${isHighActivity ? '#00ffff' : '#00d4ff'} 0%, 
+          ${highlightColor} 0%, 
           ${isHighActivity ? '#00d4ff' : '#0099cc'} 60%, 
           ${isHighActivity ? '#0099cc40' : '#00669940'} 100%);
         border-radius: 50%;
@@ -400,14 +413,14 @@ const TestBrain = () => {
         top: ${node.y}px;
         cursor: pointer;
         box-shadow: 
-          0 0 ${baseSize * 2}px ${isHighActivity ? '#00ffff' : '#00d4ff'}90,
-          0 0 ${baseSize * 4}px ${isHighActivity ? '#00ffff' : '#00d4ff'}50,
-          0 0 ${baseSize * 6}px ${isHighActivity ? '#00ffff' : '#00d4ff'}20,
-          inset 0 0 ${baseSize}px ${isHighActivity ? '#00ffff' : '#00d4ff'}30;
+          0 0 ${baseSize * 2 * highlightIntensity}px ${highlightColor}90,
+          0 0 ${baseSize * 4 * highlightIntensity}px ${highlightColor}50,
+          0 0 ${baseSize * 6 * highlightIntensity}px ${highlightColor}20,
+          inset 0 0 ${baseSize}px ${highlightColor}30;
         opacity: 0;
         z-index: 10;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid ${isHighActivity ? '#00ffff80' : '#00d4ff60'};
+        border: 1px solid ${highlightColor}80;
       `;
 
       (nodeElement as any).nodeData = node;
@@ -452,9 +465,9 @@ const TestBrain = () => {
         gsap.to(nodeElement, {
           scale: 1,
           boxShadow: `
-            0 0 ${baseSize * 2}px ${isHighActivity ? '#00ffff' : '#00d4ff'}90,
-            0 0 ${baseSize * 4}px ${isHighActivity ? '#00ffff' : '#00d4ff'}50,
-            0 0 ${baseSize * 6}px ${isHighActivity ? '#00ffff' : '#00d4ff'}20
+            0 0 ${baseSize * 2 * highlightIntensity}px ${highlightColor}90,
+            0 0 ${baseSize * 4 * highlightIntensity}px ${highlightColor}50,
+            0 0 ${baseSize * 6 * highlightIntensity}px ${highlightColor}20
           `,
           duration: 0.4
         });
@@ -489,7 +502,7 @@ const TestBrain = () => {
 
       // Breathing pulse with variation
       gsap.to(nodeElement, {
-        scale: 1.3 + Math.random() * 0.4,
+        scale: (1.3 + Math.random() * 0.4) * (isHighlighted ? 1.2 : 1),
         opacity: 0.7 + Math.random() * 0.2,
         duration: 3 + Math.random() * 2,
         ease: "sine.inOut",
@@ -535,7 +548,7 @@ const TestBrain = () => {
       clearInterval(ambientFlowInterval);
     };
 
-  }, [nodes, links]);
+  }, [nodes, links, chatHighlights]);
 
   const drawLivingConnections = (svg: SVGSVGElement, nodes: BrainNode[], connections: BookLink[]) => {
     svg.setAttribute('width', '100%');
@@ -822,6 +835,24 @@ const TestBrain = () => {
     }
   }, [activeFilters, nodes]);
 
+  // Handle chat highlights
+  const handleChatHighlight = (highlights: { nodeIds: string[]; linkIds: string[]; tags: string[] }) => {
+    setChatHighlights(highlights);
+    
+    // Trigger synaptic firing for highlighted nodes
+    highlights.nodeIds.forEach(nodeId => {
+      const node = nodes.find(n => n.id === nodeId);
+      if (node) {
+        setTimeout(() => triggerSynapticFiring(node), Math.random() * 1000);
+      }
+    });
+
+    // Clear highlights after 10 seconds
+    setTimeout(() => {
+      setChatHighlights({ nodeIds: [], linkIds: [], tags: [] });
+    }, 10000);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -883,7 +914,7 @@ const TestBrain = () => {
                 activeFilters.includes(tag) 
                   ? 'bg-cyan-400 text-black hover:bg-cyan-300' 
                   : 'border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black'
-              }`}
+              } ${chatHighlights.tags.includes(tag) ? 'border-red-400 text-red-400' : ''}`}
               onClick={() => handleTagFilter(tag)}
             >
               {tag}
@@ -946,6 +977,14 @@ const TestBrain = () => {
           </div>
         </div>
       )}
+
+      {/* Chat Interface */}
+      <BrainChatInterface
+        nodes={nodes}
+        links={links}
+        activeFilters={activeFilters}
+        onHighlight={handleChatHighlight}
+      />
     </div>
   );
 };
