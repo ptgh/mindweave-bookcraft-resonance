@@ -1,3 +1,4 @@
+
 import { BookOpen, LogOut } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 import { StandardButton } from "./ui/standard-button";
@@ -17,12 +18,7 @@ const Header = () => {
             aria-label="Leafnode - Home"
           >
             <div className="w-8 h-8 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="w-6 h-6 text-blue-400" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M12 2C10.5 2 9.2 2.8 8.5 4C7.8 2.8 6.5 2 5 2C2.8 2 1 3.8 1 6C1 8.2 2.8 10 5 10C6.5 10 7.8 9.2 8.5 8C9.2 9.2 10.5 10 12 10C14.2 10 16 8.2 16 6C16 3.8 14.2 2 12 2M12 22C17.5 22 22 17.5 22 12C22 11.3 21.9 10.7 21.8 10.1C21.2 10.7 20.4 11 19.5 11C17.6 11 16 9.4 16 7.5C16 6.6 16.3 5.8 16.9 5.2C16.3 5.1 15.7 5 15 5C9.5 5 5 9.5 5 15C5 20.5 9.5 25 15 25C20.5 25 25 20.5 25 15C25 10.8 22.4 7.2 18.7 5.8C18.9 6.5 19 7.2 19 8C19 13.5 14.5 18 9 18C8.3 18 7.7 17.9 7.1 17.8C7.7 18.4 8.5 18.7 9.4 18.7C11.3 18.7 12.9 17.1 12.9 15.2C12.9 14.3 12.6 13.5 12 12.9C12.6 12.3 13 11.5 13 10.6C13 8.7 11.4 7.1 9.5 7.1C8.6 7.1 7.8 7.4 7.2 8C7.1 7.4 7 6.8 7 6.2C7 0.7 11.5 -3.8 17 -3.8"
-                />
-              </svg>
+              <div className="w-6 h-6 bg-blue-400 rounded-full animate-pulse" />
             </div>
             <div>
               <h1 className="text-xl font-light text-slate-200 tracking-wider">
