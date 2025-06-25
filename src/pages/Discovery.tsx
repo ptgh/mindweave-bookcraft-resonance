@@ -36,96 +36,108 @@ const Discovery = () => {
             </p>
           </div>
 
-          <div ref={addFeatureBlockRef} className="feature-block grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <Link 
-              to="/library" 
-              className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10"
-            >
-              <div className="flex items-center space-x-4 mb-4">
+          <div className="flex flex-col space-y-8 max-w-4xl mx-auto">
+            <div ref={addFeatureBlockRef} className="feature-block">
+              <Link 
+                to="/library" 
+                className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10 flex items-center space-x-6 w-full"
+              >
                 <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
                   <BookOpen className="w-6 h-6 text-blue-400" />
                 </div>
-                <h2 className="text-xl font-medium text-slate-200">Transmissions</h2>
-              </div>
-              <p className="text-slate-400 leading-relaxed text-sm">
-                Your saved signal archive
-              </p>
-            </Link>
+                <div>
+                  <h2 className="text-xl font-medium text-slate-200 mb-2">Transmissions</h2>
+                  <p className="text-slate-400 leading-relaxed text-sm">
+                    Your saved signal archive
+                  </p>
+                </div>
+              </Link>
+            </div>
 
-            <Link 
-              to="/book-browser" 
-              className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10"
-            >
-              <div className="flex items-center space-x-4 mb-4">
+            <div ref={addFeatureBlockRef} className="feature-block">
+              <Link 
+                to="/book-browser" 
+                className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10 flex items-center space-x-6 w-full"
+              >
                 <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
                   <Search className="w-6 h-6 text-blue-400" />
                 </div>
-                <h2 className="text-xl font-medium text-slate-200">Book Browser</h2>
-              </div>
-              <p className="text-slate-400 leading-relaxed text-sm">
-                Discover new sci-fi signals
-              </p>
-            </Link>
+                <div>
+                  <h2 className="text-xl font-medium text-slate-200 mb-2">Book Browser</h2>
+                  <p className="text-slate-400 leading-relaxed text-sm">
+                    Discover new sci-fi signals
+                  </p>
+                </div>
+              </Link>
+            </div>
 
-            <Link 
-              to="/author-matrix" 
-              className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10"
-            >
-              <div className="flex items-center space-x-4 mb-4">
+            <div ref={addFeatureBlockRef} className="feature-block">
+              <Link 
+                to="/author-matrix" 
+                className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10 flex items-center space-x-6 w-full"
+              >
                 <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
                   <Eye className="w-6 h-6 text-blue-400" />
                 </div>
-                <h2 className="text-xl font-medium text-slate-200">Author Matrix</h2>
-              </div>
-              <p className="text-slate-400 leading-relaxed text-sm">
-                Explore author consciousness maps
-              </p>
-            </Link>
+                <div>
+                  <h2 className="text-xl font-medium text-slate-200 mb-2">Author Matrix</h2>
+                  <p className="text-slate-400 leading-relaxed text-sm">
+                    Explore author consciousness maps
+                  </p>
+                </div>
+              </Link>
+            </div>
 
-            <Link 
-              to="/thread-map" 
-              className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10"
-            >
-              <div className="flex items-center space-x-4 mb-4">
+            <div ref={addFeatureBlockRef} className="feature-block">
+              <Link 
+                to="/thread-map" 
+                className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10 flex items-center space-x-6 w-full"
+              >
                 <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
                   <Map className="w-6 h-6 text-blue-400" />
                 </div>
-                <h2 className="text-xl font-medium text-slate-200">Chrono Thread</h2>
-              </div>
-              <p className="text-slate-400 leading-relaxed text-sm">
-                Timeline consciousness map
-              </p>
-            </Link>
+                <div>
+                  <h2 className="text-xl font-medium text-slate-200 mb-2">Chrono Thread</h2>
+                  <p className="text-slate-400 leading-relaxed text-sm">
+                    Timeline consciousness map
+                  </p>
+                </div>
+              </Link>
+            </div>
 
-            <Link 
-              to="/publisher-resonance" 
-              className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-purple-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-purple-500/10"
-            >
-              <div className="flex items-center space-x-4 mb-4">
+            <div ref={addFeatureBlockRef} className="feature-block">
+              <Link 
+                to="/publisher-resonance" 
+                className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-purple-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-purple-500/10 flex items-center space-x-6 w-full"
+              >
                 <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
                   <Building className="w-6 h-6 text-purple-400" />
                 </div>
-                <h2 className="text-xl font-medium text-slate-200">Publisher Resonance</h2>
-              </div>
-              <p className="text-slate-400 leading-relaxed text-sm">
-                Explore publisher consciousness
-              </p>
-            </Link>
+                <div>
+                  <h2 className="text-xl font-medium text-slate-200 mb-2">Publisher Resonance</h2>
+                  <p className="text-slate-400 leading-relaxed text-sm">
+                    Explore publisher consciousness
+                  </p>
+                </div>
+              </Link>
+            </div>
 
-            <Link 
-              to="/test-brain" 
-              className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-cyan-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-cyan-500/10"
-            >
-              <div className="flex items-center space-x-4 mb-4">
+            <div ref={addFeatureBlockRef} className="feature-block">
+              <Link 
+                to="/test-brain" 
+                className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-cyan-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-cyan-500/10 flex items-center space-x-6 w-full"
+              >
                 <div className="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center group-hover:bg-cyan-500/30 transition-colors">
                   <Brain className="w-6 h-6 text-cyan-400" />
                 </div>
-                <h2 className="text-xl font-medium text-slate-200">Neural Map</h2>
-              </div>
-              <p className="text-slate-400 leading-relaxed text-sm">
-                Neural consciousness visualization
-              </p>
-            </Link>
+                <div>
+                  <h2 className="text-xl font-medium text-slate-200 mb-2">Neural Map</h2>
+                  <p className="text-slate-400 leading-relaxed text-sm">
+                    Neural consciousness visualization
+                  </p>
+                </div>
+              </Link>
+            </div>
           </div>
 
           <div ref={addFeatureBlockRef} className="feature-block text-center mt-16">

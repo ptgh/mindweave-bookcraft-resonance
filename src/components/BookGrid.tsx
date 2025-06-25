@@ -191,37 +191,35 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                   </div>
                 </div>
                 
-                <div className="flex flex-col space-y-3">
+                <div className="flex flex-row space-x-2">
                   <button
                     ref={addToAddRefs}
                     onClick={() => onAddToTransmissions(book)}
-                    className="px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa] w-full"
+                    className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
                     style={{
                       boxShadow: "0 0 0px transparent"
                     }}
                   >
                     <Plus className="w-3 h-3 mr-2 inline" />
-                    +Log Signal
+                    Log Signal
                   </button>
                   
                   {deepLink && (
-                    <div className="flex items-center justify-center">
-                      <button
-                        ref={addToRefs}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleGoogleBooksClick(book);
-                        }}
-                        className="px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
-                        title="Preview book"
-                        style={{
-                          boxShadow: "0 0 0px transparent"
-                        }}
-                      >
-                        Preview
-                      </button>
-                    </div>
+                    <button
+                      ref={addToRefs}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleGoogleBooksClick(book);
+                      }}
+                      className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+                      title="Preview book"
+                      style={{
+                        boxShadow: "0 0 0px transparent"
+                      }}
+                    >
+                      Preview
+                    </button>
                   )}
                 </div>
               </div>
