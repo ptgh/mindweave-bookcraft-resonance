@@ -3,12 +3,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { BrainCanvas } from '@/components/BrainCanvas';
-import { ChatBrainInterface } from '@/components/ChatBrainInterface';
 import { useBrainMap } from '@/hooks/useBrainMap';
 import { createBackgroundEnergyField } from '@/utils/synapticEffects';
-import { MessageCircle, X } from 'lucide-react';
 
 // Register GSAP plugins
 gsap.registerPlugin(MotionPathPlugin);
@@ -18,8 +15,6 @@ const TestBrain = () => {
   const { nodes, links, loading, error, allTags, remapConnections } = useBrainMap();
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [remappingActive, setRemappingActive] = useState(false);
-  const [showChatInterface, setShowChatInterface] = useState(false);
-  const [highlightedNodes, setHighlightedNodes] = useState<string[]>([]);
 
   // Initialize background energy field
   useEffect(() => {
@@ -45,12 +40,6 @@ const TestBrain = () => {
       remapConnections(theme);
       setRemappingActive(false);
     }, 300);
-  };
-
-  const handleHighlightNodes = (nodeIds: string[]) => {
-    setHighlightedNodes(nodeIds);
-    // Reset highlights after 5 seconds
-    setTimeout(() => setHighlightedNodes([]), 5000);
   };
 
   if (loading) {
@@ -263,38 +252,12 @@ const TestBrain = () => {
         </div>
       </div>
 
-      {/* Chat Interface Toggle */}
-      <div className="absolute bottom-4 right-4 z-20">
-        <Button
-          onClick={() => setShowChatInterface(!showChatInterface)}
-          className="bg-cyan-600/80 hover:bg-cyan-700 text-white rounded-full p-3"
-        >
-          {showChatInterface ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
-        </Button>
-      </div>
-
-      {/* Chat Interface */}
-      {showChatInterface && (
-        <div className="absolute bottom-20 right-4 z-30">
-          <ChatBrainInterface
-            nodes={nodes}
-            links={links}
-            onHighlightNodes={handleHighlightNodes}
-          />
-        </div>
-      )}
-
       {/* Consciousness state indicator */}
       <div className="absolute bottom-4 left-4 z-20">
         <div className="bg-black/20 backdrop-blur-sm border border-cyan-400/10 rounded-lg px-4 py-2">
           <div className="flex items-center gap-2 text-xs text-cyan-400/70">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
             <span>Science Fiction Neural Web: Active</span>
-            {highlightedNodes.length > 0 && (
-              <span className="text-orange-400 ml-2">
-                • {highlightedNodes.length} nodes highlighted
-              </span>
-            )}
           </div>
         </div>
       </div>
