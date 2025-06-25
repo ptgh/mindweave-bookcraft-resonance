@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X, LogOut, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { StandardButton } from "@/components/ui/standard-button";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -11,13 +12,13 @@ const Header = () => {
   const { user, signOut } = useAuth();
 
   const navigation = [
-    { name: "Home", href: "/", icon: "🏠" },
-    { name: "Transmissions", href: "/transmissions", icon: "📚" },
-    { name: "Signal Archive", href: "/book-browser", icon: "📡" },
-    { name: "Author Matrix", href: "/author-matrix", icon: "👥" },
-    { name: "Chrono Thread", href: "/thread-map", icon: "🧠" },
-    { name: "Publisher Resonance", href: "/publisher-resonance", icon: "🏢" },
-    { name: "Neural Map", href: "/test-brain", icon: "🔮" },
+    { name: "Home", href: "/" },
+    { name: "Transmissions", href: "/transmissions" },
+    { name: "Signal Archive", href: "/book-browser" },
+    { name: "Author Matrix", href: "/author-matrix" },
+    { name: "Chrono Thread", href: "/thread-map" },
+    { name: "Publisher Resonance", href: "/publisher-resonance" },
+    { name: "Neural Map", href: "/test-brain" },
   ];
 
   const handleSignOut = async () => {
@@ -40,21 +41,18 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-1">
+          <nav className="hidden lg:flex items-center space-x-2">
             {navigation.map((item) => {
               const isActive = location.pathname === item.href;
               return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActive
-                      ? "bg-slate-800 text-cyan-400 shadow-sm"
-                      : "text-slate-300 hover:text-cyan-400 hover:bg-slate-800/50"
-                  }`}
-                >
-                  <span className="mr-2">{item.icon}</span>
-                  {item.name}
+                <Link key={item.name} to={item.href}>
+                  <StandardButton
+                    variant={isActive ? "primary" : "standard"}
+                    size="sm"
+                    className="transition-all duration-200"
+                  >
+                    {item.name}
+                  </StandardButton>
                 </Link>
               );
             })}
@@ -102,14 +100,15 @@ const Header = () => {
                     key={item.name}
                     to={item.href}
                     onClick={() => setIsMenuOpen(false)}
-                    className={`flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? "bg-slate-800 text-cyan-400"
-                        : "text-slate-300 hover:text-cyan-400 hover:bg-slate-800/50"
-                    }`}
+                    className="block w-full"
                   >
-                    <span className="mr-3">{item.icon}</span>
-                    {item.name}
+                    <StandardButton
+                      variant={isActive ? "primary" : "standard"}
+                      size="sm"
+                      className="w-full justify-start"
+                    >
+                      {item.name}
+                    </StandardButton>
                   </Link>
                 );
               })}

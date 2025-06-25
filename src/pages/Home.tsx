@@ -9,6 +9,16 @@ import { useAuth } from "@/hooks/useAuth";
 const Home = () => {
   const { user } = useAuth();
 
+  const navigation = [
+    { name: "Home", href: "/" },
+    { name: "Transmissions", href: "/transmissions" },
+    { name: "Signal Archive", href: "/book-browser" },
+    { name: "Author Matrix", href: "/author-matrix" },
+    { name: "Chrono Thread", href: "/thread-map" },
+    { name: "Publisher Resonance", href: "/publisher-resonance" },
+    { name: "Neural Map", href: "/test-brain" },
+  ];
+
   return (
     <AuthWrapper fallback={<Auth />}>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -25,6 +35,23 @@ const Home = () => {
             <p className="text-slate-500 text-sm">
               For the future-literate
             </p>
+          </div>
+
+          {/* Navigation Section */}
+          <div className="text-center mb-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 max-w-6xl mx-auto">
+              {navigation.map((item) => (
+                <Link key={item.name} to={item.href}>
+                  <StandardButton
+                    variant="standard"
+                    size="sm"
+                    className="w-full"
+                  >
+                    {item.name}
+                  </StandardButton>
+                </Link>
+              ))}
+            </div>
           </div>
 
           <div className="text-center mt-12">
