@@ -1,4 +1,3 @@
-
 import { BookOpen } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 
@@ -53,13 +52,23 @@ const Header = () => {
             </Link>
             <Link
               to="/book-browser"
-              className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+              className={`transition-colors text-sm font-medium focus:outline-none focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
                 location.pathname === '/book-browser' 
                   ? 'text-blue-400' 
                   : 'text-slate-300 hover:text-blue-400'
               }`}
             >
               Book Browser
+            </Link>
+            <Link
+              to="/test-brain"
+              className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                location.pathname === '/test-brain' 
+                  ? 'text-blue-400' 
+                  : 'text-slate-300 hover:text-blue-400'
+              }`}
+            >
+              Neural Map
             </Link>
             <Link
               to="/author-matrix"
@@ -81,16 +90,9 @@ const Header = () => {
             >
               Chrono Thread
             </Link>
-            <Link
-              to="/test-brain"
-              className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
-                location.pathname === '/test-brain' 
-                  ? 'text-blue-400' 
-                  : 'text-slate-300 hover:text-blue-400'
-              }`}
-            >
-              Neural Map
-            </Link>
+            <span className="text-slate-500 text-sm font-medium px-2 py-1 cursor-not-allowed">
+              Publisher Resonance
+            </span>
           </nav>
 
           {/* Mobile Navigation Toggle - for future mobile menu implementation */}
