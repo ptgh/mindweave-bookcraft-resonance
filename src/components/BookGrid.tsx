@@ -1,11 +1,12 @@
 
-import { memo, useState } from "react";
+import { memo, useState, useEffect, useRef } from "react";
 import { EnhancedBookSuggestion } from "@/services/googleBooksApi";
 import EnhancedBookCover from "./EnhancedBookCover";
 import GoogleBooksPopup from "./GoogleBooksPopup";
 import { Button } from "./ui/button";
 import { Plus } from "lucide-react";
 import { useDeepLinking } from "@/hooks/useDeepLinking";
+import { gsap } from "gsap";
 
 interface BookGridProps {
   books: EnhancedBookSuggestion[];
@@ -15,6 +16,7 @@ interface BookGridProps {
 
 const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridProps) => {
   const { getDeepLink } = useDeepLinking();
+  const previewButtonsRef = useRef<HTMLButtonElement[]>([]);
   const [popupData, setPopupData] = useState<{
     isOpen: boolean;
     bookTitle: string;
@@ -26,6 +28,76 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
     bookAuthor: "",
     previewUrl: ""
   });
+
+  // Add buttons to refs array
+  const addToRefs = (el: HTMLButtonElement | null) => {
+    if (el && !previewButtonsRef.current.includes(el)) {
+      previewButtonsRef.current.push(el);
+    }
+  };
+
+  // GSAP animations on mount
+  useEffect(() => {
+    if (previewButtonsRef.current.length > 0) {
+      // Initial state - hidden
+      gsap.set(previewButtonsRef.current, { 
+        opacity: 0, 
+        y: 10 
+      });
+
+      // Animate in with stagger
+      gsap.to(previewButtonsRef.current, {
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        ease: "power2.out",
+        stagger: 0.1,
+        delay: 0.2
+      });
+
+      // Setup hover animations
+      previewButtonsRef.current.forEach((button) => {
+        if (button) {
+          const handleMouseEnter = () => {
+            gsap.to(button, {
+              borderColor: "#89b4fa",
+              boxShadow: "0 0 8px #89b4fa66",
+              duration: 0.3,
+              ease: "power2.inOut"
+            });
+          };
+
+          const handleMouseLeave = () => {
+            gsap.to(button, {
+              borderColor: "rgba(255, 255, 255, 0.15)",
+              boxShadow: "0 0 0px transparent",
+              duration: 0.3,
+              ease: "power2.inOut"
+            });
+          };
+
+          button.addEventListener('mouseenter', handleMouseEnter);
+          button.addEventListener('mouseleave', handleMouseLeave);
+
+          // Cleanup function stored on the element
+          (button as any)._cleanupHover = () => {
+            button.removeEventListener('mouseenter', handleMouseEnter);
+            button.removeEventListener('mouseleave', handleMouseLeave);
+          };
+        }
+      });
+    }
+
+    // Cleanup function
+    return () => {
+      previewButtonsRef.current.forEach((button) => {
+        if (button && (button as any)._cleanupHover) {
+          (button as any)._cleanupHover();
+        }
+      });
+      previewButtonsRef.current = [];
+    };
+  }, [books]);
 
   const handleGoogleBooksClick = (book: EnhancedBookSuggestion) => {
     const deepLink = getDeepLink(book);
@@ -121,15 +193,19 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                   {deepLink && (
                     <div className="flex items-center justify-center">
                       <button
+                        ref={addToRefs}
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           handleGoogleBooksClick(book);
                         }}
-                        className="text-xs text-slate-400 hover:text-blue-400 transition-colors underline"
-                        title="Preview in Google Books"
+                        className="px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+                        title="Preview book"
+                        style={{
+                          boxShadow: "0 0 0px transparent"
+                        }}
                       >
-                        Preview Book
+                        Preview
                       </button>
                     </div>
                   )}
