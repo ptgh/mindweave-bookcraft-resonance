@@ -17,6 +17,7 @@ interface BookGridProps {
 const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridProps) => {
   const { getDeepLink } = useDeepLinking();
   const previewButtonsRef = useRef<HTMLButtonElement[]>([]);
+  const addButtonsRef = useRef<HTMLButtonElement[]>([]);
   const [popupData, setPopupData] = useState<{
     isOpen: boolean;
     bookTitle: string;
@@ -36,17 +37,25 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
     }
   };
 
+  const addToAddRefs = (el: HTMLButtonElement | null) => {
+    if (el && !addButtonsRef.current.includes(el)) {
+      addButtonsRef.current.push(el);
+    }
+  };
+
   // GSAP animations on mount
   useEffect(() => {
-    if (previewButtonsRef.current.length > 0) {
+    const allButtons = [...previewButtonsRef.current, ...addButtonsRef.current];
+    
+    if (allButtons.length > 0) {
       // Initial state - hidden
-      gsap.set(previewButtonsRef.current, { 
+      gsap.set(allButtons, { 
         opacity: 0, 
         y: 10 
       });
 
       // Animate in with stagger
-      gsap.to(previewButtonsRef.current, {
+      gsap.to(allButtons, {
         opacity: 1,
         y: 0,
         duration: 0.6,
@@ -55,8 +64,8 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
         delay: 0.2
       });
 
-      // Setup hover animations
-      previewButtonsRef.current.forEach((button) => {
+      // Setup hover animations for all buttons
+      allButtons.forEach((button) => {
         if (button) {
           const handleMouseEnter = () => {
             gsap.to(button, {
@@ -90,12 +99,14 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
 
     // Cleanup function
     return () => {
-      previewButtonsRef.current.forEach((button) => {
+      const allButtons = [...previewButtonsRef.current, ...addButtonsRef.current];
+      allButtons.forEach((button) => {
         if (button && (button as any)._cleanupHover) {
           (button as any)._cleanupHover();
         }
       });
       previewButtonsRef.current = [];
+      addButtonsRef.current = [];
     };
   }, [books]);
 
@@ -181,14 +192,17 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                 </div>
                 
                 <div className="flex flex-col space-y-3">
-                  <Button
+                  <button
+                    ref={addToAddRefs}
                     onClick={() => onAddToTransmissions(book)}
-                    className="bg-slate-700/80 hover:bg-slate-600 text-slate-300 hover:text-blue-400 transition-colors text-sm h-8 w-full"
-                    variant="outline"
+                    className="px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa] w-full"
+                    style={{
+                      boxShadow: "0 0 0px transparent"
+                    }}
                   >
-                    <Plus className="w-3 h-3 mr-2" />
-                    Add to Signals
-                  </Button>
+                    <Plus className="w-3 h-3 mr-2 inline" />
+                    +Log Signal
+                  </button>
                   
                   {deepLink && (
                     <div className="flex items-center justify-center">
