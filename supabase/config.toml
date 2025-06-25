@@ -11,8 +11,13 @@ max_rows = 1000
 [auth]
 enabled = true
 port = 54322
-site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://localhost:3000"]
+site_url = "https://www.leafnode.co.uk"
+additional_redirect_urls = [
+  "https://www.leafnode.co.uk",
+  "https://leafnode.co.uk",
+  "http://localhost:3000",
+  "https://localhost:3000"
+]
 jwt_expiry = 3600
 enable_signup = true
 enable_anonymous_sign_ins = false
