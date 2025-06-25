@@ -132,7 +132,7 @@ const Index = () => {
             
             <StandardButton
               onClick={() => setIsAddModalOpen(true)}
-              variant="primary"
+              variant="standard"
               className="touch-manipulation active:scale-95"
             >
               + Log Signal

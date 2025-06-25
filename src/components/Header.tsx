@@ -1,9 +1,12 @@
 
-import { BookOpen } from "lucide-react";
+import { BookOpen, LogOut } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
+import { StandardButton } from "./ui/standard-button";
+import { useAuth } from "@/hooks/useAuth";
 
 const Header = () => {
   const location = useLocation();
+  const { user, signOut } = useAuth();
   
   return (
     <header className="bg-slate-900 border-b border-slate-700">
@@ -30,89 +33,103 @@ const Header = () => {
             </div>
           </Link>
           
-          <nav className="hidden md:flex items-center space-x-6" role="navigation" aria-label="Main navigation">
-            <Link
-              to="/"
-              className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
-                location.pathname === '/' 
-                  ? 'text-blue-400' 
-                  : 'text-slate-300 hover:text-blue-400'
-              }`}
-            >
-              Home
-            </Link>
-            <Link
-              to="/library"
-              className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
-                location.pathname === '/library' 
-                  ? 'text-blue-400' 
-                  : 'text-slate-300 hover:text-blue-400'
-              }`}
-            >
-              Transmissions
-            </Link>
-            <Link
-              to="/book-browser"
-              className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
-                location.pathname === '/book-browser' 
-                  ? 'text-blue-400' 
-                  : 'text-slate-300 hover:text-blue-400'
-              }`}
-            >
-              Signal Archive
-            </Link>
-            <Link
-              to="/author-matrix"
-              className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
-                location.pathname === '/author-matrix' 
-                  ? 'text-blue-400' 
-                  : 'text-slate-300 hover:text-blue-400'
-              }`}
-            >
-              Author Matrix
-            </Link>
-            <Link
-              to="/thread-map"
-              className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
-                location.pathname === '/thread-map' 
-                  ? 'text-blue-400' 
-                  : 'text-slate-300 hover:text-blue-400'
-              }`}
-            >
-              Chrono Thread
-            </Link>
-            <Link
-              to="/publisher-resonance"
-              className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
-                location.pathname === '/publisher-resonance' 
-                  ? 'text-purple-400' 
-                  : 'text-slate-300 hover:text-purple-400'
-              }`}
-            >
-              Publisher Resonance
-            </Link>
-            <Link
-              to="/test-brain"
-              className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
-                location.pathname === '/test-brain' 
-                  ? 'text-blue-400' 
-                  : 'text-slate-300 hover:text-blue-400'
-              }`}
-            >
-              Neural Map
-            </Link>
-          </nav>
+          <div className="flex items-center space-x-6">
+            <nav className="hidden md:flex items-center space-x-6" role="navigation" aria-label="Main navigation">
+              <Link
+                to="/"
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                  location.pathname === '/' 
+                    ? 'text-blue-400' 
+                    : 'text-slate-300 hover:text-blue-400'
+                }`}
+              >
+                Home
+              </Link>
+              <Link
+                to="/library"
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                  location.pathname === '/library' 
+                    ? 'text-blue-400' 
+                    : 'text-slate-300 hover:text-blue-400'
+                }`}
+              >
+                Transmissions
+              </Link>
+              <Link
+                to="/book-browser"
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                  location.pathname === '/book-browser' 
+                    ? 'text-blue-400' 
+                    : 'text-slate-300 hover:text-blue-400'
+                }`}
+              >
+                Signal Archive
+              </Link>
+              <Link
+                to="/author-matrix"
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                  location.pathname === '/author-matrix' 
+                    ? 'text-blue-400' 
+                    : 'text-slate-300 hover:text-blue-400'
+                }`}
+              >
+                Author Matrix
+              </Link>
+              <Link
+                to="/thread-map"
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                  location.pathname === '/thread-map' 
+                    ? 'text-blue-400' 
+                    : 'text-slate-300 hover:text-blue-400'
+                }`}
+              >
+                Chrono Thread
+              </Link>
+              <Link
+                to="/publisher-resonance"
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                  location.pathname === '/publisher-resonance' 
+                    ? 'text-purple-400' 
+                    : 'text-slate-300 hover:text-purple-400'
+                }`}
+              >
+                Publisher Resonance
+              </Link>
+              <Link
+                to="/test-brain"
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                  location.pathname === '/test-brain' 
+                    ? 'text-blue-400' 
+                    : 'text-slate-300 hover:text-blue-400'
+                }`}
+              >
+                Neural Map
+              </Link>
+            </nav>
 
-          {/* Mobile Navigation Toggle - for future mobile menu implementation */}
-          <button 
-            className="md:hidden text-slate-300 hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded p-1"
-            aria-label="Open navigation menu"
-            aria-expanded="false"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+            {user && (
+              <StandardButton
+                onClick={signOut}
+                variant="standard"
+                size="sm"
+                className="flex items-center space-x-1"
+              >
+                <LogOut className="w-3 h-3" />
+                <span>Logout</span>
+              </StandardButton>
+            )}
+
+            {/* Mobile Navigation Toggle - for future mobile menu implementation */}
+            <button 
+              className="md:hidden text-slate-300 hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded p-1"
+              aria-label="Open navigation menu"
+              aria-expanded="false"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </header>
