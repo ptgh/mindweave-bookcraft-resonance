@@ -1,87 +1,24 @@
-
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import { useAuthContext } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
 
 const NotFound = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, loading } = useAuthContext();
 
   useEffect(() => {
-    console.log('404 Page accessed:', location.pathname);
-    
-    // Don't redirect if we're still loading auth state
-    if (loading) return;
-    
-    // For specific problematic paths, redirect to home
-    const problematicPaths = ['/test-brain', '/brain', '/undefined'];
-    if (problematicPaths.includes(location.pathname)) {
-      console.log('Redirecting problematic path to home:', location.pathname);
-      navigate('/', { replace: true });
-      return;
-    }
-    
-    // If user is not authenticated and trying to access a protected route
-    // only redirect auth routes, not all routes
-    if (!user && location.pathname.startsWith('/')) {
-      const publicPaths = ['/auth', '/'];
-      if (!publicPaths.includes(location.pathname)) {
-        console.log('Redirecting unauthenticated user to auth page');
-        navigate('/auth', { replace: true });
-      }
-    }
-  }, [location.pathname, user, loading, navigate]);
-
-  // Don't show 404 if we're still loading auth state
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center">
-            <div className="w-6 h-6 rounded-full border-2 border-blue-400 animate-pulse" />
-          </div>
-          <p className="text-slate-400">Loading...</p>
-        </div>
-      </div>
+    console.error(
+      "404 Error: User attempted to access non-existent route:",
+      location.pathname
     );
-  }
+  }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="text-center">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-red-500/30 bg-red-500/10 flex items-center justify-center">
-          <span className="text-2xl">🔍</span>
-        </div>
-        <h1 className="text-4xl font-bold mb-4 text-slate-200">404</h1>
-        <p className="text-xl text-slate-400 mb-4">Oops! Page not found</p>
-        <p className="text-sm text-slate-500 mb-6">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        
-        <div className="space-y-2">
-          <Button
-            onClick={() => navigate('/', { replace: true })}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white mr-2"
-          >
-            Return to Home
-          </Button>
-          
-          {!user && (
-            <Button
-              onClick={() => navigate('/auth', { replace: true })}
-              variant="outline"
-              className="border-slate-600 text-slate-300 hover:bg-slate-700"
-            >
-              Sign In
-            </Button>
-          )}
-        </div>
-        
-        <div className="mt-8 text-xs text-slate-500">
-          Path: {location.pathname}
-        </div>
+        <h1 className="text-4xl font-bold mb-4">404</h1>
+        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
+        <a href="/" className="text-blue-500 hover:text-blue-700 underline">
+          Return to Home
+        </a>
       </div>
     </div>
   );

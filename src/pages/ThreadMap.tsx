@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
-import EnhancedMindMap from "@/components/EnhancedMindMap";
+import MindMap from "@/components/MindMap";
+import { Button } from "@/components/ui/button";
 import { Calendar, Clock, BookOpen, TrendingUp, Brain } from "lucide-react";
 import { getTransmissions } from "@/services/transmissionsService";
 
@@ -84,7 +84,7 @@ const ThreadMap = () => {
           </div>
 
           <div className="grid gap-6 xl:grid-cols-3">
-            {/* Enhanced Mind Map Visualization */}
+            {/* Mind Map Visualization */}
             <div className="xl:col-span-2 bg-slate-800/50 rounded-lg border border-slate-700 p-4 sm:p-6">
               <div className="flex items-center space-x-2 mb-4">
                 <Brain className="w-5 h-5 text-blue-400" />
@@ -101,7 +101,7 @@ const ThreadMap = () => {
                 </div>
               ) : filteredTransmissions.length > 0 ? (
                 <div className="h-[500px]">
-                  <EnhancedMindMap transmissions={filteredTransmissions} />
+                  <MindMap transmissions={filteredTransmissions} />
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-[500px] text-slate-400">

@@ -5,7 +5,6 @@ import Auth from "./Auth";
 import BookBrowserHeader from "@/components/BookBrowserHeader";
 import BookGrid from "@/components/BookGrid";
 import BookBrowserEmpty from "@/components/BookBrowserEmpty";
-import BookBrowserError from "@/components/BookBrowserError";
 import BookBrowserStatus from "@/components/BookBrowserStatus";
 import { useBookBrowser } from "@/hooks/useBookBrowser";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
@@ -14,7 +13,6 @@ const BookBrowser = () => {
   const {
     books,
     loading,
-    error,
     visibleBooks,
     previouslyShownBooks,
     loadRandomBooks,
@@ -36,15 +34,7 @@ const BookBrowser = () => {
             />
           </div>
 
-          {error ? (
-            <div ref={addFeatureBlockRef} className="feature-block">
-              <BookBrowserError 
-                error={error}
-                onRetry={loadRandomBooks}
-                isRetrying={loading}
-              />
-            </div>
-          ) : loading ? (
+          {loading ? (
             <div ref={addFeatureBlockRef} className="feature-block text-center py-12">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center">
                 <div className="w-6 h-6 rounded-full border-2 border-blue-400 animate-spin border-t-transparent" />
