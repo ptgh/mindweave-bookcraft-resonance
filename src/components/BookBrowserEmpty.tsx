@@ -15,7 +15,7 @@ const BookBrowserEmpty = ({ onScan }: BookBrowserEmptyProps) => {
       </p>
       <button
         onClick={onScan}
-        className="cta-button bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-1.5 px-3 rounded-md transition-all duration-200 flex items-center space-x-1"
+        className="bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-200 hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)] flex items-center space-x-1"
       >
         <span>Scan Archive</span>
       </button>
