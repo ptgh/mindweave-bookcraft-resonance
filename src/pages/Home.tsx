@@ -1,6 +1,5 @@
 
 import Header from "@/components/Header";
-import SignalInFocus from "@/components/SignalInFocus";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
 import { StandardButton } from "@/components/ui/standard-button";
@@ -9,11 +8,6 @@ import { useAuth } from "@/hooks/useAuth";
 
 const Home = () => {
   const { user } = useAuth();
-  
-  const currentSignal = {
-    title: "Signal Detected",
-    author: "Awaiting Transmission"
-  };
 
   return (
     <AuthWrapper fallback={<Auth />}>
@@ -33,8 +27,6 @@ const Home = () => {
             </p>
           </div>
 
-          <SignalInFocus book={currentSignal} />
-          
           <div className="text-center mt-12">
             <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-12">
               <div className="bg-slate-800/30 border border-slate-700 rounded-lg p-6">
