@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { StandardButton } from "@/components/ui/standard-button";
 import BookSearchSection from "./BookSearchSection";
 import StatusSection from "./StatusSection";
 import ConceptualTagsSection from "./ConceptualTagsSection";
@@ -214,20 +214,21 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModal
           />
           
           <div className="flex justify-end space-x-3 pt-4">
-            <Button
+            <StandardButton
               type="button"
-              variant="outline"
+              variant="standard"
               onClick={onClose}
-              className="border-slate-600 text-slate-300 hover:bg-slate-700 touch-manipulation"
+              className="touch-manipulation"
             >
               Cancel
-            </Button>
-            <Button
+            </StandardButton>
+            <StandardButton
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white touch-manipulation active:scale-95"
+              variant="standard"
+              className="touch-manipulation active:scale-95"
             >
               {editingBook ? "Update Signal" : "Log Signal"}
-            </Button>
+            </StandardButton>
           </div>
         </form>
       </div>
