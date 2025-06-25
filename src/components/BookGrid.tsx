@@ -22,6 +22,8 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
         const deepLink = getDeepLink(book);
         const bookId = parseInt(book.id) || index; // Fallback to index if no proper ID
         
+        console.log('Deep link for book:', book.title, deepLink); // Debug log
+        
         return (
           <div
             key={book.id}
@@ -40,23 +42,22 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                   lazy={true}
                 />
                 
-                {/* Deep Link Icon */}
+                {/* Deep Link Icon - Always show if we have a link */}
                 {deepLink && (
                   <button
                     onClick={() => {
-                      // Extract ISBN from book - since EnhancedBookSuggestion doesn't have volumeInfo,
-                      // we'll need to pass undefined for now and let the service handle it
+                      // Extract any available ISBN data
                       const isbn = undefined; // Will be handled by the deep linking service
                       handleDeepLinkClick(bookId, deepLink.url, isbn);
                     }}
                     disabled={isLoading(bookId)}
-                    className="absolute top-1 right-1 w-6 h-6 bg-slate-900/80 backdrop-blur-sm rounded-full flex items-center justify-center text-xs hover:bg-slate-800/90 hover:shadow-md hover:shadow-blue-400/20 transition-all duration-200 opacity-0 group-hover:opacity-100"
+                    className="absolute top-1 right-1 w-6 h-6 bg-slate-900/90 backdrop-blur-sm rounded-full flex items-center justify-center text-xs hover:bg-slate-800/90 hover:shadow-md hover:shadow-blue-400/30 transition-all duration-200 border border-slate-600/30 hover:border-blue-400/50"
                     title={`Open in ${deepLink.type === 'apple' ? 'Apple Books' : deepLink.type === 'google' ? 'Google Books' : 'Open Library'}`}
                   >
                     {isLoading(bookId) ? (
                       <div className="w-3 h-3 border border-slate-400 border-t-transparent rounded-full animate-spin" />
                     ) : (
-                      <span className="text-slate-300">{deepLink.icon}</span>
+                      <span className="text-slate-200 drop-shadow-sm">{deepLink.icon}</span>
                     )}
                   </button>
                 )}

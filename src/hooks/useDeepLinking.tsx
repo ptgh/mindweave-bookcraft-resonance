@@ -24,6 +24,11 @@ export const useDeepLinking = () => {
     return `https://openlibrary.org/isbn/${isbn}`;
   }, []);
 
+  const generateGoogleSearchLink = useCallback((title: string, author: string) => {
+    const query = encodeURIComponent(`${title} ${author}`);
+    return `https://www.google.com/search?q=${query}+book`;
+  }, []);
+
   const getDeepLink = useCallback((book: any): DeepLinkInfo | null => {
     // Try to extract ISBN from various possible sources
     const isbn = book.isbn || 
@@ -35,9 +40,11 @@ export const useDeepLinking = () => {
                  )?.identifier;
 
     const isApple = isAppleDevice();
+    const title = book.title || '';
+    const author = book.author || '';
 
     // Priority 1: Apple Books (prioritized on Apple devices, but only if we have ISBN)
-    if (isbn && (isApple || (!book.volumeInfo?.previewLink && !book.previewLink))) {
+    if (isbn && isApple) {
       return {
         type: 'apple',
         url: generateAppleLink(isbn),
@@ -55,7 +62,16 @@ export const useDeepLinking = () => {
       };
     }
 
-    // Priority 3: Open Library (if we have ISBN)
+    // Priority 3: Apple Books (even on non-Apple devices if we have ISBN)
+    if (isbn) {
+      return {
+        type: 'apple',
+        url: generateAppleLink(isbn),
+        icon: '🍎'
+      };
+    }
+
+    // Priority 4: Open Library (if we have ISBN)
     if (isbn) {
       return {
         type: 'openlibrary',
@@ -64,9 +80,18 @@ export const useDeepLinking = () => {
       };
     }
 
+    // Fallback: Google Search for the book (always available)
+    if (title && author) {
+      return {
+        type: 'google',
+        url: generateGoogleSearchLink(title, author),
+        icon: '🔍'
+      };
+    }
+
     // No valid link found
     return null;
-  }, [isAppleDevice, generateAppleLink, generateOpenLibraryLink]);
+  }, [isAppleDevice, generateAppleLink, generateOpenLibraryLink, generateGoogleSearchLink]);
 
   const handleDeepLinkClick = useCallback(async (bookId: number, url: string, isbn?: string) => {
     if (loadingIds.has(bookId)) return;
