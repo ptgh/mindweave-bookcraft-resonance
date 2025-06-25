@@ -69,6 +69,11 @@ const TestBrain = () => {
     setHighlightLinks(newHighlightLinks);
   };
 
+  // Wrapper function for onNodeClick that matches expected signature
+  const handleNodeClick = (node: any, event: MouseEvent) => {
+    highlightNode(node, true); // Enable auto zoom on click
+  };
+
   const nodeColor = (node: any) => {
     if (highlightNodes.size === 0) {
       return 'rgba(30, 58, 138, 0.8)'; // Default node color
@@ -120,7 +125,7 @@ const TestBrain = () => {
               linkColor={linkColor}
               linkDirectionalParticles={2}
               linkDirectionalParticleWidth={link => highlightLinks.has(link.id) ? 1 : 0}
-              onNodeClick={highlightNode}
+              onNodeClick={handleNodeClick}
               onNodeHover={handleNodeHover}
               onLinkHover={handleLinkHover}
               onBackgroundClick={handleBgClick}
