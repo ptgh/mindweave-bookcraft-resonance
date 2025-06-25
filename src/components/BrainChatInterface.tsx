@@ -61,6 +61,33 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
     }
   }, [isOpen]);
 
+  // Clean data to avoid circular references
+  const cleanBrainData = (nodes: BrainNode[], links: BookLink[]) => {
+    const cleanNodes = nodes.map(node => ({
+      id: node.id,
+      title: node.title,
+      author: node.author,
+      tags: node.tags,
+      transmissionId: node.transmissionId,
+      // Remove the element property and other DOM references that cause circular refs
+      x: node.x,
+      y: node.y,
+      coverUrl: node.coverUrl,
+      description: node.description
+    }));
+
+    const cleanLinks = links.map(link => ({
+      fromId: link.fromId,
+      toId: link.toId,
+      type: link.type,
+      strength: link.strength,
+      sharedTags: link.sharedTags,
+      connectionReason: link.connectionReason
+    }));
+
+    return { nodes: cleanNodes, links: cleanLinks };
+  };
+
   const handleSendMessage = async () => {
     if (!inputText.trim() || isLoading) return;
 
@@ -82,12 +109,14 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         linkCount: links.length
       });
 
+      // Clean the brain data to avoid circular references
+      const cleanData = cleanBrainData(nodes, links);
+
       const { data, error } = await supabase.functions.invoke('brain-chat', {
         body: {
           message: inputText,
           brainData: {
-            nodes,
-            links,
+            ...cleanData,
             activeFilters
           }
         }
