@@ -68,10 +68,8 @@ export const useBookBrowser = () => {
           const newBookIds = new Set(shuffled.map(book => book.id));
           setPreviouslyShownBooks(prev => new Set([...prev, ...newBookIds]));
           
-          toast({
-            title: "Books Loaded",
-            description: `Found ${shuffled.length} new sci-fi books for you to explore.`,
-          });
+          // Removed the toast notification
+          console.log(`Loaded ${shuffled.length} new sci-fi books`);
         } else {
           if (previouslyShownBooks.size > 0) {
             setPreviouslyShownBooks(new Set());
