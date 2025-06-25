@@ -39,28 +39,68 @@ serve(async (req) => {
   }
 
   try {
+    // Check if OpenAI API key is configured
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    console.log('Checking OpenAI API key...', openAIApiKey ? 'Key found' : 'Key missing');
+    
     if (!openAIApiKey) {
-      console.error('OpenAI API key not configured');
-      throw new Error('OpenAI API key not configured');
+      console.error('OpenAI API key not found in environment variables');
+      return new Response(JSON.stringify({ 
+        error: 'OpenAI API key is not configured. Please add your OpenAI API key in the Supabase Edge Function secrets.' 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    const requestBody = await req.json();
-    console.log('Received request:', { 
-      message: requestBody.message, 
-      nodeCount: requestBody.brainData?.nodes?.length || 0,
-      linkCount: requestBody.brainData?.links?.length || 0 
-    });
+    // Parse request body
+    let requestBody;
+    try {
+      requestBody = await req.json();
+      console.log('Request received successfully');
+    } catch (parseError) {
+      console.error('Failed to parse request body:', parseError);
+      return new Response(JSON.stringify({ 
+        error: 'Invalid request format' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const { message, brainData }: ChatRequest = requestBody;
 
-    if (!message || !brainData) {
-      throw new Error('Missing message or brain data');
+    // Validate required fields
+    if (!message) {
+      console.error('Missing message in request');
+      return new Response(JSON.stringify({ 
+        error: 'Message is required' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Create intelligent brain context
+    if (!brainData || !brainData.nodes || !brainData.links) {
+      console.error('Missing or invalid brain data');
+      return new Response(JSON.stringify({ 
+        error: 'Brain data is required' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('Request validation passed:', {
+      messageLength: message.length,
+      nodeCount: brainData.nodes.length,
+      linkCount: brainData.links.length,
+      activeFilters: brainData.activeFilters.length
+    });
+
+    // Generate brain context
     const brainContext = generateBrainContext(brainData);
-    console.log('Generated brain context length:', brainContext.length);
+    console.log('Brain context generated, length:', brainContext.length);
     
     const systemPrompt = `You are an AI assistant specialized in analyzing book reading networks and neural knowledge graphs. You have access to the user's personal library visualization showing books as nodes connected by thematic, author, and conceptual relationships.
 
@@ -84,6 +124,9 @@ When referencing specific books, use their exact titles. When discussing connect
 Keep responses conversational, insightful, and focused on the neural network aspects of their library.`;
 
     console.log('Making OpenAI API request...');
+    console.log('Using model: gpt-4o-mini');
+    
+    // Test OpenAI API connection
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -101,21 +144,67 @@ Keep responses conversational, insightful, and focused on the neural network asp
       }),
     });
 
+    console.log('OpenAI API response status:', response.status);
+    console.log('OpenAI API response headers:', Object.fromEntries(response.headers.entries()));
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      console.error('OpenAI API error details:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
+      
+      if (response.status === 401) {
+        return new Response(JSON.stringify({ 
+          error: 'Invalid OpenAI API key. Please check your API key in the Supabase Edge Function secrets.' 
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } else if (response.status === 429) {
+        return new Response(JSON.stringify({ 
+          error: 'OpenAI API rate limit exceeded. Please try again in a moment.' 
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } else {
+        return new Response(JSON.stringify({ 
+          error: `OpenAI API error (${response.status}): ${errorText}` 
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
-    const data = await response.json();
-    console.log('OpenAI response received');
-    
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    let data;
+    try {
+      data = await response.json();
+      console.log('OpenAI response parsed successfully');
+    } catch (jsonError) {
+      console.error('Failed to parse OpenAI response:', jsonError);
+      return new Response(JSON.stringify({ 
+        error: 'Invalid response from OpenAI API' 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
       console.error('Invalid OpenAI response structure:', data);
-      throw new Error('Invalid response from OpenAI');
+      return new Response(JSON.stringify({ 
+        error: 'Invalid response structure from OpenAI API' 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const aiResponse = data.choices[0].message.content;
+    console.log('AI response received, length:', aiResponse.length);
 
     // Analyze response for actionable highlights
     const highlights = extractHighlights(aiResponse, brainData);
@@ -129,7 +218,7 @@ Keep responses conversational, insightful, and focused on the neural network asp
     });
 
   } catch (error) {
-    console.error('Error in brain-chat function:', error);
+    console.error('Unexpected error in brain-chat function:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     
     return new Response(JSON.stringify({ 

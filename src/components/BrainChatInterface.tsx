@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { MessageCircle, Send, X, Sparkles } from 'lucide-react';
+import { MessageCircle, Send, X, Sparkles, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { BrainNode, BookLink } from '@/pages/TestBrain';
 import { BrainContextService } from '@/services/brainContextService';
@@ -17,6 +17,7 @@ interface Message {
     linkIds: string[];
     tags: string[];
   };
+  isError?: boolean;
 }
 
 interface BrainChatInterfaceProps {
@@ -96,15 +97,15 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
 
       if (error) {
         console.error('Supabase function error:', error);
-        throw error;
+        throw new Error(`Function call failed: ${error.message}`);
       }
 
-      if (data.error) {
+      if (data?.error) {
         console.error('Function returned error:', data.error);
         throw new Error(data.error);
       }
 
-      if (!data.response) {
+      if (!data?.response) {
         console.error('No response in data:', data);
         throw new Error('No response received from AI');
       }
@@ -128,9 +129,10 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
       console.error('Chat error:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'Sorry, I encountered an error processing your request. Please try again.',
+        text: error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.',
         isUser: false,
-        timestamp: new Date()
+        timestamp: new Date(),
+        isError: true
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
@@ -216,9 +218,17 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
                 className={`max-w-[80%] p-3 rounded-lg text-sm ${
                   message.isUser
                     ? 'bg-cyan-500/20 text-cyan-100 border border-cyan-400/30'
+                    : message.isError
+                    ? 'bg-red-500/20 text-red-100 border border-red-400/30'
                     : 'bg-slate-800/50 text-slate-200 border border-slate-600/30'
                 }`}
               >
+                {message.isError && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="w-4 h-4 text-red-400" />
+                    <span className="text-red-400 text-xs font-medium">Error</span>
+                  </div>
+                )}
                 {message.text}
                 {message.highlights && (message.highlights.nodeIds.length > 0 || message.highlights.tags.length > 0) && (
                   <div className="mt-2 pt-2 border-t border-slate-600/30">
