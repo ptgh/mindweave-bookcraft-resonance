@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Edit, Archive, X } from "lucide-react";
 import PublisherResonanceBadge from "./PublisherResonanceBadge";
@@ -93,6 +92,12 @@ const BookCard = ({
 
   const deepLink = getDeepLink(mockBook);
 
+  const generateAppleLink = () => {
+    if (apple_link) return apple_link;
+    const query = encodeURIComponent(`${title} ${author}`);
+    return `https://books.apple.com/search?term=${query}`;
+  };
+
   return (
     <div 
       className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors relative group"
@@ -108,7 +113,7 @@ const BookCard = ({
             lazy={true}
           />
           
-          {/* Deep Link Icon */}
+          {/* Google Books Link */}
           {deepLink && (
             <button
               onClick={() => handleDeepLinkClick(id, deepLink.url)}
@@ -119,10 +124,19 @@ const BookCard = ({
               {isLoading(id) ? (
                 <div className="w-2 h-2 border border-slate-400 border-t-transparent rounded-full animate-spin" />
               ) : (
-                <span className="text-slate-300 text-xs">{deepLink.icon}</span>
+                <span className="text-slate-300 text-xs">📖</span>
               )}
             </button>
           )}
+
+          {/* Apple Books Link */}
+          <button
+            onClick={() => window.open(generateAppleLink(), '_blank', 'noopener,noreferrer')}
+            className="absolute -top-1 -left-1 w-5 h-5 bg-slate-900/90 backdrop-blur-sm rounded-full flex items-center justify-center text-xs hover:bg-slate-800/90 hover:shadow-md hover:shadow-red-400/20 transition-all duration-200 opacity-0 group-hover:opacity-100"
+            title="Open in Apple Books"
+          >
+            <span className="text-slate-300 text-xs">🍎</span>
+          </button>
         </div>
         
         <div className="flex-1 min-w-0">

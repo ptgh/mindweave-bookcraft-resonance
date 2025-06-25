@@ -15,11 +15,17 @@ interface BookGridProps {
 const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridProps) => {
   const { getDeepLink, handleDeepLinkClick, isLoading } = useDeepLinking();
 
+  const generateAppleLink = (title: string, author: string) => {
+    const query = encodeURIComponent(`${title} ${author}`);
+    return `https://books.apple.com/search?term=${query}`;
+  };
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
       {books.map((book, index) => {
         const isVisible = visibleBooks.has(index);
         const deepLink = getDeepLink(book);
+        const appleLink = generateAppleLink(book.title, book.author || '');
         const bookId = parseInt(book.id) || index;
         
         return (
@@ -36,10 +42,11 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                 <EnhancedBookCover
                   title={book.title}
                   coverUrl={book.coverUrl || book.thumbnailUrl || book.smallThumbnailUrl}
-                  className="w-full h-24 rounded object-cover"
+                  className="w-full h-32 rounded"
                   lazy={true}
                 />
                 
+                {/* Google Books Link */}
                 {deepLink && (
                   <button
                     onClick={(e) => {
@@ -58,6 +65,19 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                     )}
                   </button>
                 )}
+
+                {/* Apple Books Link */}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.open(appleLink, '_blank', 'noopener,noreferrer');
+                  }}
+                  className="absolute top-1 left-1 w-6 h-6 bg-slate-900/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-slate-800/90 hover:shadow-lg hover:shadow-red-400/30 transition-all duration-200 border border-slate-600/50 hover:border-red-400/60 cursor-pointer opacity-0 group-hover:opacity-100"
+                  title="Open in Apple Books"
+                >
+                  <span className="text-slate-200 text-xs drop-shadow-sm">🍎</span>
+                </button>
               </div>
               
               <div className="flex-1 flex flex-col justify-between">
