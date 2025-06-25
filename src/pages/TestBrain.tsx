@@ -171,7 +171,7 @@ const TestBrain = () => {
       )}
 
       {/* CSS animations for enhanced effects */}
-      <style jsx>{`
+      <style>{`
         @keyframes fadeInFloat {
           0% {
             opacity: 0;
