@@ -75,6 +75,12 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
     setIsLoading(true);
 
     try {
+      console.log('Sending message to brain-chat function:', {
+        message: inputText,
+        nodeCount: nodes.length,
+        linkCount: links.length
+      });
+
       const { data, error } = await supabase.functions.invoke('brain-chat', {
         body: {
           message: inputText,
@@ -86,7 +92,22 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         }
       });
 
-      if (error) throw error;
+      console.log('Response from brain-chat function:', { data, error });
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+
+      if (data.error) {
+        console.error('Function returned error:', data.error);
+        throw new Error(data.error);
+      }
+
+      if (!data.response) {
+        console.error('No response in data:', data);
+        throw new Error('No response received from AI');
+      }
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),

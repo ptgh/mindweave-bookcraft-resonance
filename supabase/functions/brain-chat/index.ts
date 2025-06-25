@@ -41,13 +41,26 @@ serve(async (req) => {
   try {
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
+      console.error('OpenAI API key not configured');
       throw new Error('OpenAI API key not configured');
     }
 
-    const { message, brainData }: ChatRequest = await req.json();
+    const requestBody = await req.json();
+    console.log('Received request:', { 
+      message: requestBody.message, 
+      nodeCount: requestBody.brainData?.nodes?.length || 0,
+      linkCount: requestBody.brainData?.links?.length || 0 
+    });
+
+    const { message, brainData }: ChatRequest = requestBody;
+
+    if (!message || !brainData) {
+      throw new Error('Missing message or brain data');
+    }
 
     // Create intelligent brain context
     const brainContext = generateBrainContext(brainData);
+    console.log('Generated brain context length:', brainContext.length);
     
     const systemPrompt = `You are an AI assistant specialized in analyzing book reading networks and neural knowledge graphs. You have access to the user's personal library visualization showing books as nodes connected by thematic, author, and conceptual relationships.
 
@@ -70,6 +83,7 @@ When referencing specific books, use their exact titles. When discussing connect
 
 Keep responses conversational, insightful, and focused on the neural network aspects of their library.`;
 
+    console.log('Making OpenAI API request...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -88,14 +102,24 @@ Keep responses conversational, insightful, and focused on the neural network asp
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
       throw new Error(`OpenAI API error: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log('OpenAI response received');
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error('Invalid OpenAI response structure:', data);
+      throw new Error('Invalid response from OpenAI');
+    }
+
     const aiResponse = data.choices[0].message.content;
 
     // Analyze response for actionable highlights
     const highlights = extractHighlights(aiResponse, brainData);
+    console.log('Extracted highlights:', highlights);
 
     return new Response(JSON.stringify({ 
       response: aiResponse,
@@ -106,8 +130,10 @@ Keep responses conversational, insightful, and focused on the neural network asp
 
   } catch (error) {
     console.error('Error in brain-chat function:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    
     return new Response(JSON.stringify({ 
-      error: error.message || 'Failed to process chat request' 
+      error: `Failed to process chat request: ${errorMessage}` 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -118,45 +144,59 @@ Keep responses conversational, insightful, and focused on the neural network asp
 function generateBrainContext(brainData: { nodes: BrainNode[], links: BookLink[], activeFilters: string[] }): string {
   const { nodes, links } = brainData;
   
-  // Analyze connection patterns
-  const connectionStats = links.reduce((acc, link) => {
-    acc[link.type] = (acc[link.type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  if (!nodes || nodes.length === 0) {
+    return "No books in the library yet.";
+  }
+  
+  try {
+    // Analyze connection patterns
+    const connectionStats = links.reduce((acc, link) => {
+      acc[link.type] = (acc[link.type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
 
-  // Analyze tag frequencies
-  const tagFrequency = nodes.reduce((acc, node) => {
-    node.tags.forEach(tag => {
-      acc[tag] = (acc[tag] || 0) + 1;
-    });
-    return acc;
-  }, {} as Record<string, number>);
+    // Analyze tag frequencies
+    const tagFrequency = nodes.reduce((acc, node) => {
+      if (node.tags && Array.isArray(node.tags)) {
+        node.tags.forEach(tag => {
+          if (tag && tag.trim() !== '') {
+            acc[tag] = (acc[tag] || 0) + 1;
+          }
+        });
+      }
+      return acc;
+    }, {} as Record<string, number>);
 
-  const topTags = Object.entries(tagFrequency)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 10)
-    .map(([tag, count]) => `${tag} (${count})`);
+    const topTags = Object.entries(tagFrequency)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 10)
+      .map(([tag, count]) => `${tag} (${count})`);
 
-  // Analyze author networks
-  const authorBooks = nodes.reduce((acc, node) => {
-    acc[node.author] = (acc[node.author] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+    // Analyze author networks
+    const authorBooks = nodes.reduce((acc, node) => {
+      if (node.author && node.author !== 'Unknown Author') {
+        acc[node.author] = (acc[node.author] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>);
 
-  const topAuthors = Object.entries(authorBooks)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 5)
-    .map(([author, count]) => `${author} (${count} books)`);
+    const topAuthors = Object.entries(authorBooks)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([author, count]) => `${author} (${count} books)`);
 
-  // Find highly connected nodes
-  const nodeConnections = nodes.map(node => {
-    const connections = links.filter(link => 
-      link.fromId === node.id || link.toId === node.id
-    ).length;
-    return { title: node.title, connections };
-  }).sort((a, b) => b.connections - a.connections).slice(0, 5);
+    // Find highly connected nodes
+    const nodeConnections = nodes.map(node => {
+      const connections = links.filter(link => 
+        link.fromId === node.id || link.toId === node.id
+      ).length;
+      return { title: node.title, connections };
+    }).sort((a, b) => b.connections - a.connections).slice(0, 5);
 
-  return `
+    const maxPossibleConnections = nodes.length * (nodes.length - 1) / 2;
+    const density = maxPossibleConnections > 0 ? ((links.length / maxPossibleConnections) * 100).toFixed(2) : '0';
+
+    return `
 Connection Types: ${Object.entries(connectionStats).map(([type, count]) => `${type}: ${count}`).join(', ')}
 
 Top Themes: ${topTags.join(', ')}
@@ -165,8 +205,13 @@ Most Prolific Authors: ${topAuthors.join(', ')}
 
 Most Connected Books: ${nodeConnections.map(n => `"${n.title}" (${n.connections} connections)`).join(', ')}
 
-Network Density: ${((links.length / (nodes.length * (nodes.length - 1))) * 100).toFixed(2)}% connectivity
+Network Density: ${density}% connectivity
 `.trim();
+
+  } catch (error) {
+    console.error('Error generating brain context:', error);
+    return `Library contains ${nodes.length} books with ${links.length} connections.`;
+  }
 }
 
 function extractHighlights(response: string, brainData: { nodes: BrainNode[], links: BookLink[] }): { nodeIds: string[], linkIds: string[], tags: string[] } {
@@ -176,20 +221,26 @@ function extractHighlights(response: string, brainData: { nodes: BrainNode[], li
     tags: [] as string[]
   };
 
-  // Extract book titles mentioned in response
-  brainData.nodes.forEach(node => {
-    if (response.toLowerCase().includes(node.title.toLowerCase())) {
-      highlights.nodeIds.push(node.id);
-    }
-  });
+  try {
+    // Extract book titles mentioned in response
+    brainData.nodes.forEach(node => {
+      if (response.toLowerCase().includes(node.title.toLowerCase())) {
+        highlights.nodeIds.push(node.id);
+      }
+    });
 
-  // Extract tags mentioned in response
-  const allTags = Array.from(new Set(brainData.nodes.flatMap(node => node.tags)));
-  allTags.forEach(tag => {
-    if (response.toLowerCase().includes(tag.toLowerCase())) {
-      highlights.tags.push(tag);
-    }
-  });
+    // Extract tags mentioned in response
+    const allTags = Array.from(new Set(brainData.nodes.flatMap(node => node.tags || [])));
+    allTags.forEach(tag => {
+      if (tag && response.toLowerCase().includes(tag.toLowerCase())) {
+        highlights.tags.push(tag);
+      }
+    });
+
+    console.log('Highlights extracted:', highlights);
+  } catch (error) {
+    console.error('Error extracting highlights:', error);
+  }
 
   return highlights;
 }
