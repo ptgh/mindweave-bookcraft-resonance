@@ -9,6 +9,8 @@ import { debounce } from "@/utils/performance";
 export const useBookBrowser = () => {
   const [books, setBooks] = useState<EnhancedBookSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const [visibleBooks, setVisibleBooks] = useState<Set<number>>(new Set());
   const [previouslyShownBooks, setPreviouslyShownBooks] = useState<Set<string>>(new Set());
   const { toast } = useToast();
@@ -20,19 +22,21 @@ export const useBookBrowser = () => {
     'hard science fiction', 'biopunk', 'steampunk', 'alternate history'
   ], []);
 
-  // Optimized loading function
+  // Enhanced loading function with better error handling
   const debouncedLoadBooks = useMemo(
     () => debounce(async () => {
       console.log('Loading books...');
       setLoading(true);
+      setError(null);
       setVisibleBooks(new Set());
       
       try {
         let allBooks: EnhancedBookSuggestion[] = [];
         let attempts = 0;
-        const maxAttempts = 6; // Reduced for better performance
+        const maxAttempts = 6;
+        let consecutiveFailures = 0;
         
-        while (allBooks.length < 18 && attempts < maxAttempts) {
+        while (allBooks.length < 18 && attempts < maxAttempts && consecutiveFailures < 3) {
           const termIndex = attempts % searchTerms.length;
           const term = searchTerms[termIndex];
           const startIndex = Math.floor(attempts / searchTerms.length) * 10;
@@ -48,13 +52,21 @@ export const useBookBrowser = () => {
               );
               
               allBooks.push(...newBooks);
+              consecutiveFailures = 0; // Reset failure counter on success
+            } else {
+              consecutiveFailures++;
             }
           } catch (searchError) {
             console.error(`Search failed for "${term}":`, searchError);
+            consecutiveFailures++;
+            
+            // If we have some books already, continue with what we have
+            if (allBooks.length > 6 && consecutiveFailures >= 2) {
+              break;
+            }
           }
           
           attempts++;
-          // Reduced delay for better performance
           await new Promise(resolve => setTimeout(resolve, 30));
         }
         
@@ -68,41 +80,41 @@ export const useBookBrowser = () => {
           const newBookIds = new Set(shuffled.map(book => book.id));
           setPreviouslyShownBooks(prev => new Set([...prev, ...newBookIds]));
           
-          // Removed the toast notification
           console.log(`Loaded ${shuffled.length} new sci-fi books`);
+          setRetryCount(0); // Reset retry count on success
         } else {
           if (previouslyShownBooks.size > 0) {
             setPreviouslyShownBooks(new Set());
             toast({
-              title: "Refreshing Library",
+              title: "Refreshing Archive",
               description: "Cleared viewing history to show fresh recommendations.",
             });
             setBooks([]);
           } else {
+            setError("No sci-fi transmissions found in the quantum field. The archive may be temporarily inaccessible.");
             setBooks([]);
-            toast({
-              title: "No Books Found",
-              description: "Unable to load sci-fi books. Please try again.",
-              variant: "destructive",
-            });
           }
         }
       } catch (error) {
         console.error('Error loading books:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        setError(`Archive scan failed: ${errorMessage}`);
         setBooks([]);
+        
         toast({
-          title: "Loading Error",
-          description: "Failed to load sci-fi books. Please check your connection and try again.",
+          title: "Archive Scan Error",
+          description: "Failed to load sci-fi transmissions. Check your connection and try again.",
           variant: "destructive",
         });
       } finally {
         setLoading(false);
       }
     }, 300),
-    [previouslyShownBooks, toast, searchTerms]
+    [previouslyShownBooks, toast, searchTerms, retryCount]
   );
 
   const loadRandomBooks = useCallback(() => {
+    setRetryCount(prev => prev + 1);
     debouncedLoadBooks();
   }, [debouncedLoadBooks]);
 
@@ -139,7 +151,7 @@ export const useBookBrowser = () => {
     loadRandomBooks();
   }, []);
 
-  // Optimized visibility animation
+  // Enhanced visibility animation with error handling
   useEffect(() => {
     if (books.length > 0) {
       const showBooks = () => {
@@ -152,7 +164,7 @@ export const useBookBrowser = () => {
 
       requestAnimationFrame(showBooks);
 
-      // Optimized image preloading
+      // Optimized image preloading with error handling
       const imageUrls = books
         .flatMap(book => [book.coverUrl, book.thumbnailUrl, book.smallThumbnailUrl])
         .filter(Boolean)
@@ -160,7 +172,9 @@ export const useBookBrowser = () => {
       
       if (imageUrls.length > 0) {
         setTimeout(() => {
-          imageService.preloadImages(imageUrls);
+          imageService.preloadImages(imageUrls).catch(err => {
+            console.warn('Image preloading failed:', err);
+          });
         }, 200);
       }
     }
@@ -169,6 +183,7 @@ export const useBookBrowser = () => {
   return {
     books,
     loading,
+    error,
     visibleBooks,
     previouslyShownBooks,
     loadRandomBooks,
