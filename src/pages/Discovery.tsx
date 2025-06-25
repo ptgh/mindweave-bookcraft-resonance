@@ -52,41 +52,50 @@ const Discovery = () => {
               </p>
             </Link>
 
-            <div className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-slate-500/30 transition-all duration-500">
+            <Link 
+              to="/book-browser" 
+              className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10"
+            >
               <div className="flex items-center space-x-4 mb-4">
-                <div className="w-12 h-12 bg-slate-500/20 rounded-lg flex items-center justify-center group-hover:bg-slate-500/30 transition-colors">
-                  <Search className="w-6 h-6 text-slate-400" />
+                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+                  <Search className="w-6 h-6 text-blue-400" />
                 </div>
-                <h2 className="text-xl font-medium text-slate-200">Search</h2>
+                <h2 className="text-xl font-medium text-slate-200">Book Browser</h2>
               </div>
               <p className="text-slate-400 leading-relaxed text-sm">
-                Discover new signals • Coming Soon
+                Discover new sci-fi signals
               </p>
-            </div>
+            </Link>
 
-            <div className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-slate-500/30 transition-all duration-500">
+            <Link 
+              to="/author-matrix" 
+              className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10"
+            >
               <div className="flex items-center space-x-4 mb-4">
-                <div className="w-12 h-12 bg-slate-500/20 rounded-lg flex items-center justify-center group-hover:bg-slate-500/30 transition-colors">
-                  <Eye className="w-6 h-6 text-slate-400" />
+                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+                  <Eye className="w-6 h-6 text-blue-400" />
                 </div>
-                <h2 className="text-xl font-medium text-slate-200">Classification</h2>
+                <h2 className="text-xl font-medium text-slate-200">Author Matrix</h2>
               </div>
               <p className="text-slate-400 leading-relaxed text-sm">
-                Tag and categorize • Coming Soon
+                Explore author consciousness maps
               </p>
-            </div>
+            </Link>
 
-            <div className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-slate-500/30 transition-all duration-500">
+            <Link 
+              to="/thread-map" 
+              className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10"
+            >
               <div className="flex items-center space-x-4 mb-4">
-                <div className="w-12 h-12 bg-slate-500/20 rounded-lg flex items-center justify-center group-hover:bg-slate-500/30 transition-colors">
-                  <Map className="w-6 h-6 text-slate-400" />
+                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+                  <Map className="w-6 h-6 text-blue-400" />
                 </div>
                 <h2 className="text-xl font-medium text-slate-200">Chrono Thread</h2>
               </div>
               <p className="text-slate-400 leading-relaxed text-sm">
-                Timeline consciousness map • Coming Soon
+                Timeline consciousness map
               </p>
-            </div>
+            </Link>
           </div>
 
           <div ref={addFeatureBlockRef} className="feature-block text-center mt-16">

@@ -14,7 +14,9 @@ export const useDeepLinking = () => {
     const title = book.title || '';
     const author = book.author || '';
 
-    // Priority 1: Google Books Preview (if available)
+    console.log('Getting deep link for book:', { title, author, book });
+
+    // Priority 1: Google Books Preview Link (best for embedding)
     const previewLink = book.volumeInfo?.previewLink || book.previewLink;
     if (previewLink) {
       console.log('Found preview link:', previewLink);
@@ -36,10 +38,22 @@ export const useDeepLinking = () => {
       };
     }
 
+    // Priority 3: Use Google Books ID if available
+    const googleBooksId = book.volumeInfo?.id || book.id;
+    if (googleBooksId && googleBooksId !== title) {
+      const bookUrl = `https://books.google.com/books?id=${googleBooksId}&output=embed`;
+      console.log('Generated ID-based URL:', bookUrl);
+      return {
+        type: 'google',
+        url: bookUrl,
+        icon: '📖'
+      };
+    }
+
     // Fallback: Generate Google Books search URL
     if (title && author) {
-      const query = encodeURIComponent(`${title} ${author}`);
-      const searchUrl = `https://books.google.com/books?q=${query}`;
+      const query = encodeURIComponent(`"${title}" "${author}"`);
+      const searchUrl = `https://books.google.com/books?q=${query}&output=embed`;
       console.log('Generated search URL:', searchUrl);
       return {
         type: 'google',

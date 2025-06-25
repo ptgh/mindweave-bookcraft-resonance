@@ -53,7 +53,8 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Grid matching Transmissions design */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {books.map((book, index) => {
           const isVisible = visibleBooks.has(index);
           const deepLink = getDeepLink(book);
@@ -67,35 +68,38 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                   : 'opacity-0 translate-y-4'
               }`}
             >
-              <div className="bg-slate-800/40 border border-slate-700/50 rounded-lg p-6 hover:bg-slate-800/60 hover:border-slate-600/50 transition-all duration-300 h-full flex flex-col hover:shadow-lg hover:shadow-blue-500/5">
+              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors h-full flex flex-col">
                 <div className="flex items-start space-x-4 flex-1 mb-4">
                   <EnhancedBookCover
                     title={book.title}
                     coverUrl={book.coverUrl || book.thumbnailUrl || book.smallThumbnailUrl}
-                    className="w-20 h-28 rounded flex-shrink-0 shadow-lg"
+                    className="w-12 h-16 flex-shrink-0"
                     lazy={true}
                   />
                   
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-slate-200 font-medium text-base leading-tight line-clamp-2 mb-2">
-                      {book.title}
-                    </h3>
-                    <p className="text-slate-400 text-sm line-clamp-1 mb-3">
-                      {book.author || 'Unknown Author'}
-                    </p>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="text-slate-200 font-medium text-sm leading-tight line-clamp-2 mb-1">
+                          {book.title}
+                        </h3>
+                        <p className="text-slate-400 text-xs mb-1">{book.author || 'Unknown Author'}</p>
+                      </div>
+                      <div className="w-3 h-3 rounded-full border-2 border-slate-500 bg-slate-500/10 flex-shrink-0" />
+                    </div>
                     
                     {book.categories && book.categories.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-1 mt-2">
                         {book.categories.slice(0, 2).map((category, idx) => (
                           <span
                             key={idx}
-                            className="px-2 py-1 bg-slate-700/40 text-slate-300 text-xs rounded-full border border-slate-600/30"
+                            className="px-2 py-1 bg-slate-700/50 text-slate-300 text-xs rounded-full"
                           >
                             {category}
                           </span>
                         ))}
                         {book.categories.length > 2 && (
-                          <span className="text-slate-500 text-xs px-2 py-1">
+                          <span className="text-slate-400 text-xs px-2 py-1">
                             +{book.categories.length - 2}
                           </span>
                         )}
@@ -107,10 +111,10 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                 <div className="flex flex-col space-y-3">
                   <Button
                     onClick={() => onAddToTransmissions(book)}
-                    className="bg-slate-700/40 hover:bg-blue-600/60 text-slate-200 border border-slate-600/40 hover:border-blue-500/40 transition-all duration-300 text-sm h-9 w-full hover:shadow-md hover:shadow-blue-400/20"
+                    className="bg-slate-700/80 hover:bg-slate-600 text-slate-300 hover:text-blue-400 transition-colors text-sm h-8 w-full"
                     variant="outline"
                   >
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="w-3 h-3 mr-2" />
                     Add to Signals
                   </Button>
                   
@@ -122,10 +126,10 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                           e.stopPropagation();
                           handleGoogleBooksClick(book);
                         }}
-                        className="w-8 h-8 bg-blue-500/20 hover:bg-blue-500/40 rounded-full flex items-center justify-center transition-all duration-300 hover:shadow-md hover:shadow-blue-400/30 group"
+                        className="text-xs text-slate-400 hover:text-blue-400 transition-colors underline"
                         title="Preview in Google Books"
                       >
-                        <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse group-hover:animate-none group-hover:bg-blue-300 transition-colors" />
+                        Preview Book
                       </button>
                     </div>
                   )}
