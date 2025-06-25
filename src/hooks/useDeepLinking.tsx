@@ -10,11 +10,6 @@ export interface DeepLinkInfo {
 export const useDeepLinking = () => {
   const [loadingIds, setLoadingIds] = useState<Set<number>>(new Set());
 
-  const generateGoogleSearchLink = useCallback((title: string, author: string) => {
-    const query = encodeURIComponent(`${title} ${author}`);
-    return `https://www.google.com/search?q=${query}+book`;
-  }, []);
-
   const getDeepLink = useCallback((book: any): DeepLinkInfo | null => {
     const title = book.title || '';
     const author = book.author || '';
@@ -22,6 +17,7 @@ export const useDeepLinking = () => {
     // Priority 1: Google Books Preview (if available)
     const previewLink = book.volumeInfo?.previewLink || book.previewLink;
     if (previewLink) {
+      console.log('Found preview link:', previewLink);
       return {
         type: 'google',
         url: previewLink,
@@ -29,17 +25,32 @@ export const useDeepLinking = () => {
       };
     }
 
-    // Fallback: Google Search for the book
-    if (title && author) {
+    // Priority 2: Google Books Info Link
+    const infoLink = book.volumeInfo?.infoLink || book.infoLink;
+    if (infoLink) {
+      console.log('Found info link:', infoLink);
       return {
         type: 'google',
-        url: generateGoogleSearchLink(title, author),
+        url: infoLink,
         icon: '📖'
       };
     }
 
+    // Fallback: Generate Google Books search URL
+    if (title && author) {
+      const query = encodeURIComponent(`${title} ${author}`);
+      const searchUrl = `https://books.google.com/books?q=${query}`;
+      console.log('Generated search URL:', searchUrl);
+      return {
+        type: 'google',
+        url: searchUrl,
+        icon: '📖'
+      };
+    }
+
+    console.log('No deep link available for book:', title);
     return null;
-  }, [generateGoogleSearchLink]);
+  }, []);
 
   const handleDeepLinkClick = useCallback(async (bookId: number, url: string) => {
     if (loadingIds.has(bookId)) return;
@@ -47,7 +58,6 @@ export const useDeepLinking = () => {
     setLoadingIds(prev => new Set(prev).add(bookId));
 
     try {
-      // Simplified - just open the URL without database updates for book browser
       window.open(url, '_blank', 'noopener,noreferrer');
     } catch (error) {
       console.error('Error opening book link:', error);

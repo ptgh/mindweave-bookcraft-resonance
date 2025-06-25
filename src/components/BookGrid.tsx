@@ -14,7 +14,7 @@ interface BookGridProps {
 }
 
 const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridProps) => {
-  const { getDeepLink, handleDeepLinkClick, isLoading } = useDeepLinking();
+  const { getDeepLink } = useDeepLinking();
   const [popupData, setPopupData] = useState<{
     isOpen: boolean;
     bookTitle: string;
@@ -27,26 +27,18 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
     previewUrl: ""
   });
 
-  const generateAppleLink = (title: string, author: string) => {
-    // More targeted Apple Books search
-    const cleanTitle = title.replace(/[^\w\s]/g, '').trim();
-    const cleanAuthor = author.replace(/[^\w\s]/g, '').trim();
-    const searchQuery = `${cleanTitle} ${cleanAuthor}`.trim();
-    const encodedQuery = encodeURIComponent(searchQuery);
-    
-    // Use the more direct Apple Books search that should work better
-    return `https://books.apple.com/search?term=${encodedQuery}&entity=ebook`;
-  };
-
   const handleGoogleBooksClick = (book: EnhancedBookSuggestion) => {
     const deepLink = getDeepLink(book);
-    if (deepLink) {
+    if (deepLink && deepLink.url) {
+      console.log('Opening Google Books popup with URL:', deepLink.url);
       setPopupData({
         isOpen: true,
         bookTitle: book.title,
         bookAuthor: book.author || 'Unknown Author',
         previewUrl: deepLink.url
       });
+    } else {
+      console.log('No deep link available for book:', book.title);
     }
   };
 
@@ -61,12 +53,10 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {books.map((book, index) => {
           const isVisible = visibleBooks.has(index);
           const deepLink = getDeepLink(book);
-          const appleLink = generateAppleLink(book.title, book.author || '');
-          const bookId = parseInt(book.id) || index;
           
           return (
             <div
@@ -124,10 +114,9 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                         Add to Signals
                       </Button>
                       
-                      {/* External links under the button */}
-                      <div className="flex items-center justify-center space-x-3">
-                        {/* Google Books Link */}
-                        {deepLink && (
+                      {/* Google Books link under the button */}
+                      {deepLink && (
+                        <div className="flex items-center justify-center">
                           <button
                             onClick={(e) => {
                               e.preventDefault();
@@ -139,21 +128,8 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                           >
                             <div className="w-4 h-4 bg-blue-400 rounded-full animate-pulse" />
                           </button>
-                        )}
-
-                        {/* Apple Books Link */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            window.open(appleLink, '_blank', 'noopener,noreferrer');
-                          }}
-                          className="w-8 h-8 bg-red-500/20 hover:bg-red-500/40 rounded-full flex items-center justify-center transition-all duration-200 hover:shadow-md hover:shadow-red-400/20"
-                          title="Search in Apple Books"
-                        >
-                          <div className="w-4 h-4 bg-red-400 rounded-full animate-pulse" />
-                        </button>
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
