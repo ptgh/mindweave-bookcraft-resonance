@@ -25,35 +25,36 @@ export const useGSAPAnimations = () => {
     if (typeof window === 'undefined' || !gsap) return;
 
     const ctx = gsap.context(() => {
-      // 1. Page load animation - Fade in main container softly over 1.2 seconds
+      // 1. Page load animation - Fade in main container with elegant easing
       if (mainContainerRef.current) {
         gsap.from(mainContainerRef.current, {
           opacity: 0,
-          duration: 1.2,
-          ease: "power2.out"
+          y: 20,
+          duration: 1.4,
+          ease: "power3.out"
         });
       }
 
-      // 2. Hero title - Slide in from top with slight easing
+      // 2. Hero title - Scale and fade in with sophisticated timing
       if (heroTitleRef.current) {
         gsap.from(heroTitleRef.current, {
-          y: -50,
+          scale: 0.9,
           opacity: 0,
-          duration: 0.8,
-          delay: 0.3,
-          ease: "power2.out"
+          duration: 1.2,
+          delay: 0.2,
+          ease: "power3.out"
         });
       }
 
-      // 3. Feature sections - Animate into view with ScrollTrigger
+      // 3. Feature sections - Staggered reveal with smooth easing
       featureBlocksRef.current.forEach((block, index) => {
         if (block) {
           gsap.from(block, {
-            y: 30,
+            y: 40,
             opacity: 0,
-            duration: 0.6,
-            delay: index * 0.1, // Stagger animation
-            ease: "power2.out",
+            duration: 0.8,
+            delay: index * 0.15,
+            ease: "power3.out",
             scrollTrigger: {
               trigger: block,
               start: "top 85%",
@@ -63,26 +64,26 @@ export const useGSAPAnimations = () => {
         }
       });
 
-      // 4. Button hover effects - Scale up and soft glow
+      // 4. Enhanced button hover effects with smoother transitions
       const buttons = document.querySelectorAll('.cta-button, button, [role="button"]');
       buttons.forEach((button) => {
         const buttonEl = button as HTMLElement;
         
-        // Mouse enter - scale up with glow
+        // Mouse enter - elegant scale with glow
         const handleMouseEnter = () => {
           gsap.to(buttonEl, {
             scale: 1.05,
-            duration: 0.3,
+            duration: 0.4,
             ease: "power2.out",
-            boxShadow: "0 8px 25px rgba(59, 130, 246, 0.3)"
+            boxShadow: "0 12px 30px rgba(59, 130, 246, 0.25)"
           });
         };
 
-        // Mouse leave - return to normal
+        // Mouse leave - smooth return
         const handleMouseLeave = () => {
           gsap.to(buttonEl, {
             scale: 1,
-            duration: 0.3,
+            duration: 0.4,
             ease: "power2.out",
             boxShadow: "0 0 0 rgba(59, 130, 246, 0)"
           });
@@ -90,6 +91,31 @@ export const useGSAPAnimations = () => {
 
         buttonEl.addEventListener('mouseenter', handleMouseEnter);
         buttonEl.addEventListener('mouseleave', handleMouseLeave);
+      });
+
+      // 5. Card hover animations for enhanced interactivity
+      const cards = document.querySelectorAll('[class*="hover:bg-slate-800"]');
+      cards.forEach((card) => {
+        const cardEl = card as HTMLElement;
+        
+        const handleCardEnter = () => {
+          gsap.to(cardEl, {
+            y: -4,
+            duration: 0.4,
+            ease: "power2.out"
+          });
+        };
+
+        const handleCardLeave = () => {
+          gsap.to(cardEl, {
+            y: 0,
+            duration: 0.4,
+            ease: "power2.out"
+          });
+        };
+
+        cardEl.addEventListener('mouseenter', handleCardEnter);
+        cardEl.addEventListener('mouseleave', handleCardLeave);
       });
 
     });
