@@ -16,7 +16,7 @@ const TestBrain = () => {
 
   useEffect(() => {
     // auto zooming
-    graphRef.current.cameraPosition(
+    graphRef.current?.cameraPosition(
       { x: 0, y: 0, z: 3 }, // new position
       2000  // ms transition duration
     );
@@ -45,7 +45,7 @@ const TestBrain = () => {
     setHighlightNodes(newHighlightNodes);
     setHighlightLinks(newHighlightLinks);
 
-    if (autoZoom) {
+    if (autoZoom && graphRef.current) {
       // auto zooming
       const distance = 40;
       const distRatio = 1 + distance/Math.hypot(node.x, node.y, node.z);
@@ -106,48 +106,51 @@ const TestBrain = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <Header />
       
-      <main className="container mx-auto px-6 py-8">
-        <div className="feature-block">
-          <h1 className="text-3xl font-semibold text-slate-200 mb-4">
+      <div className="relative w-full" style={{ height: 'calc(100vh - 80px)' }}>
+        <div className="absolute inset-0">
+          <ForceGraph3D
+            ref={graphRef}
+            graphData={gData}
+            nodeLabel={nodeLabel}
+            nodeAutoColorBy="group"
+            nodeColor={nodeColor}
+            linkColor={linkColor}
+            linkDirectionalParticles={2}
+            linkDirectionalParticleWidth={link => highlightLinks.has(link.id) ? 1 : 0}
+            onNodeClick={handleNodeClick}
+            onNodeHover={handleNodeHover}
+            onLinkHover={handleLinkHover}
+            onBackgroundClick={handleBgClick}
+            width={window.innerWidth}
+            height={window.innerHeight - 80}
+          />
+        </div>
+
+        {/* Title overlay */}
+        <div className="absolute top-8 left-8 z-10">
+          <h1 className="text-3xl font-semibold text-slate-200 mb-2">
             Neural Network Visualization
           </h1>
-          <p className="text-slate-400 mb-8">
+          <p className="text-slate-400 max-w-md">
             Explore the interconnectedness of concepts and ideas in a dynamic 3D graph. Hover over nodes to highlight connections.
           </p>
-
-          <div className="relative">
-            <ForceGraph3D
-              ref={graphRef}
-              graphData={gData}
-              nodeLabel={nodeLabel}
-              nodeAutoColorBy="group"
-              nodeColor={nodeColor}
-              linkColor={linkColor}
-              linkDirectionalParticles={2}
-              linkDirectionalParticleWidth={link => highlightLinks.has(link.id) ? 1 : 0}
-              onNodeClick={handleNodeClick}
-              onNodeHover={handleNodeHover}
-              onLinkHover={handleLinkHover}
-              onBackgroundClick={handleBgClick}
-            />
-          </div>
-
-          {hoverNode && (
-            <div className="absolute top-4 left-4 bg-slate-800/80 border border-slate-700/50 rounded-lg p-4 text-slate-300 text-sm max-w-md">
-              <h3 className="font-medium text-slate-200 mb-2">{hoverNode.name}</h3>
-              <p>{hoverNode.description}</p>
-              <ul className="mt-2">
-                <li className="mb-1">
-                  <span className="font-semibold">Group:</span> {hoverNode.group}
-                </li>
-                <li>
-                  <span className="font-semibold">Degree:</span> {hoverNode.links.length}
-                </li>
-              </ul>
-            </div>
-          )}
         </div>
-      </main>
+
+        {hoverNode && (
+          <div className="absolute top-8 right-8 bg-slate-800/90 border border-slate-700/50 rounded-lg p-4 text-slate-300 text-sm max-w-md z-10">
+            <h3 className="font-medium text-slate-200 mb-2">{hoverNode.name}</h3>
+            <p className="mb-2">{hoverNode.description}</p>
+            <div className="space-y-1 text-xs">
+              <div>
+                <span className="font-semibold text-slate-300">Group:</span> <span className="text-slate-400">{hoverNode.group}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-slate-300">Connections:</span> <span className="text-slate-400">{hoverNode.links.length}</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
