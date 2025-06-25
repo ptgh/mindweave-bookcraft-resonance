@@ -186,11 +186,14 @@ export type Database = {
       }
       transmissions: {
         Row: {
+          apple_link: string | null
           author: string | null
           cover_url: string | null
           created_at: string
           id: number
+          isbn: string | null
           notes: string | null
+          open_count: number | null
           publisher_series_id: string | null
           resonance_labels: string | null
           tags: string | null
@@ -198,11 +201,14 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          apple_link?: string | null
           author?: string | null
           cover_url?: string | null
           created_at?: string
           id?: number
+          isbn?: string | null
           notes?: string | null
+          open_count?: number | null
           publisher_series_id?: string | null
           resonance_labels?: string | null
           tags?: string | null
@@ -210,11 +216,14 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          apple_link?: string | null
           author?: string | null
           cover_url?: string | null
           created_at?: string
           id?: number
+          isbn?: string | null
           notes?: string | null
+          open_count?: number | null
           publisher_series_id?: string | null
           resonance_labels?: string | null
           tags?: string | null

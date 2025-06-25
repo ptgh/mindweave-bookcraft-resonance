@@ -1,8 +1,10 @@
 
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import EnhancedBookCover from "@/components/EnhancedBookCover";
+import { memo } from "react";
 import { EnhancedBookSuggestion } from "@/services/googleBooksApi";
+import EnhancedBookCover from "./EnhancedBookCover";
+import { Button } from "./ui/button";
+import { Plus } from "lucide-react";
+import { useDeepLinking } from "@/hooks/useDeepLinking";
 
 interface BookGridProps {
   books: EnhancedBookSuggestion[];
@@ -10,57 +12,94 @@ interface BookGridProps {
   onAddToTransmissions: (book: EnhancedBookSuggestion) => void;
 }
 
-const BookGrid = ({ books, visibleBooks, onAddToTransmissions }: BookGridProps) => {
+const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridProps) => {
+  const { getDeepLink, handleDeepLinkClick, isLoading } = useDeepLinking();
+
   return (
-    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-8 gap-4">
-      {books.map((book, index) => (
-        <Card
-          key={`${book.id}-${index}`}
-          className={`group relative overflow-hidden bg-slate-800/50 border-slate-700 hover:border-blue-400/50 transition-all duration-300 ${
-            visibleBooks.has(index) 
-              ? 'opacity-100 translate-y-0' 
-              : 'opacity-0 translate-y-4'
-          }`}
-        >
-          <div className="aspect-[3/4] relative overflow-hidden rounded-t-lg">
-            <EnhancedBookCover
-              title={book.title}
-              coverUrl={book.coverUrl}
-              thumbnailUrl={book.thumbnailUrl}
-              smallThumbnailUrl={book.smallThumbnailUrl}
-              className="w-full h-full"
-              lazy={true}
-            />
-            
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      {books.map((book, index) => {
+        const isVisible = visibleBooks.has(index);
+        const deepLink = getDeepLink(book);
+        const bookId = parseInt(book.id) || index; // Fallback to index if no proper ID
+        
+        return (
+          <div
+            key={book.id}
+            className={`group transition-all duration-500 ${
+              isVisible 
+                ? 'opacity-100 translate-y-0' 
+                : 'opacity-0 translate-y-4'
+            }`}
+          >
+            <div className="relative bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-lg p-3 hover:bg-slate-800/50 transition-all duration-300 hover:border-slate-600/50 hover:shadow-lg hover:shadow-blue-500/10">
+              <div className="relative">
+                <EnhancedBookCover
+                  title={book.title}
+                  coverUrl={book.coverUrl || book.thumbnailUrl || book.smallThumbnailUrl}
+                  className="w-full h-32 mb-3 rounded"
+                  lazy={true}
+                />
+                
+                {/* Deep Link Icon */}
+                {deepLink && (
+                  <button
+                    onClick={() => {
+                      const isbn = book.volumeInfo?.industryIdentifiers?.find(
+                        (id: any) => id.type === 'ISBN_13' || id.type === 'ISBN_10'
+                      )?.identifier;
+                      handleDeepLinkClick(bookId, deepLink.url, isbn);
+                    }}
+                    disabled={isLoading(bookId)}
+                    className="absolute top-1 right-1 w-6 h-6 bg-slate-900/80 backdrop-blur-sm rounded-full flex items-center justify-center text-xs hover:bg-slate-800/90 hover:shadow-md hover:shadow-blue-400/20 transition-all duration-200 opacity-0 group-hover:opacity-100"
+                    title={`Open in ${deepLink.type === 'apple' ? 'Apple Books' : deepLink.type === 'google' ? 'Google Books' : 'Open Library'}`}
+                  >
+                    {isLoading(bookId) ? (
+                      <div className="w-3 h-3 border border-slate-400 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <span className="text-slate-300">{deepLink.icon}</span>
+                    )}
+                  </button>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="text-slate-200 text-sm font-medium leading-tight line-clamp-2 min-h-[2.5rem]">
+                  {book.title}
+                </h3>
+                <p className="text-slate-400 text-xs line-clamp-1">
+                  {book.author || 'Unknown Author'}
+                </p>
+                
+                {book.categories && book.categories.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {book.categories.slice(0, 2).map((category, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-1 bg-slate-700/30 text-slate-400 text-xs rounded-full"
+                      >
+                        {category}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
               <Button
-                size="sm"
                 onClick={() => onAddToTransmissions(book)}
-                className="cta-button bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 touch-manipulation active:scale-95"
+                className="w-full mt-3 bg-slate-700/50 hover:bg-blue-600/80 text-slate-200 border-slate-600/50 hover:border-blue-500/50 transition-all duration-200 text-xs h-8"
+                variant="outline"
               >
-                +Log Signal
+                <Plus className="w-3 h-3 mr-1" />
+                Add to Signals
               </Button>
             </div>
           </div>
-          
-          <div className="p-2">
-            <h3 className="font-medium text-slate-200 text-xs line-clamp-2 mb-1">
-              {book.title}
-            </h3>
-            <p className="text-xs text-slate-400 line-clamp-1">
-              {book.author}
-            </p>
-            {book.rating && (
-              <div className="flex items-center mt-1">
-                <span className="text-xs text-yellow-400">★</span>
-                <span className="text-xs text-slate-400 ml-1">{book.rating.toFixed(1)}</span>
-              </div>
-            )}
-          </div>
-        </Card>
-      ))}
+        );
+      })}
     </div>
   );
-};
+});
+
+BookGrid.displayName = 'BookGrid';
 
 export default BookGrid;

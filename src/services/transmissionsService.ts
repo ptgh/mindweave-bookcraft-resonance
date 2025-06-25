@@ -24,6 +24,9 @@ export interface Transmission {
     publisher: string;
     badge_emoji: string;
   };
+  isbn?: string;
+  apple_link?: string;
+  open_count?: number;
 }
 
 export const saveTransmission = async (transmission: Omit<Transmission, 'id' | 'user_id' | 'created_at'>) => {
@@ -43,6 +46,9 @@ export const saveTransmission = async (transmission: Omit<Transmission, 'id' | '
       resonance_labels: JSON.stringify(transmission.rating),
       notes: transmission.notes,
       publisher_series_id: transmission.publisher_series_id,
+      isbn: transmission.isbn,
+      apple_link: transmission.apple_link,
+      open_count: transmission.open_count || 0,
       user_id: user.id
     }])
     .select()
@@ -62,6 +68,19 @@ export const updateTransmission = async (id: number, transmission: Partial<Omit<
   if (transmission.rating !== undefined) updateData.resonance_labels = JSON.stringify(transmission.rating);
   if (transmission.notes !== undefined) updateData.notes = transmission.notes;
   if (transmission.publisher_series_id !== undefined) updateData.publisher_series_id = transmission.publisher_series_id;
+  if (transmission.isbn !== undefined) updateData.isbn = transmission.isbn;
+  if (transmission.apple_link !== undefined) updateData.apple_link = transmission.apple_link;
+  
+  // Special handling for open_count increment
+  if (transmission.open_count !== undefined) {
+    const { data: currentData } = await supabase
+      .from('transmissions')
+      .select('open_count')
+      .eq('id', id)
+      .single();
+    
+    updateData.open_count = (currentData?.open_count || 0) + 1;
+  }
 
   const { data, error } = await supabase
     .from('transmissions')

@@ -99,6 +99,14 @@ export const useBookBrowser = () => {
 
   const addToTransmissions = useCallback(async (book: EnhancedBookSuggestion) => {
     try {
+      // Extract ISBN from book data
+      const isbn = book.volumeInfo?.industryIdentifiers?.find(
+        (id: any) => id.type === 'ISBN_13' || id.type === 'ISBN_10'
+      )?.identifier;
+
+      // Generate Apple link if ISBN is available
+      const apple_link = isbn ? `https://books.apple.com/book/isbn${isbn}` : undefined;
+
       await saveTransmission({
         title: book.title,
         author: book.author || 'Unknown',
@@ -106,7 +114,10 @@ export const useBookBrowser = () => {
         tags: book.categories || [],
         rating: {},
         notes: book.description || '',
-        status: 'want-to-read'
+        status: 'want-to-read',
+        isbn: isbn,
+        apple_link: apple_link,
+        open_count: 0
       });
       
       toast({
