@@ -22,7 +22,7 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        const redirectUrl = `https://www.leafnode.co.uk/`;
+        const redirectUrl = `${window.location.origin}/`;
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -99,7 +99,7 @@ const Auth = () => {
         type: 'signup',
         email,
         options: {
-          emailRedirectTo: `https://www.leafnode.co.uk/`
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
 
@@ -186,13 +186,10 @@ const Auth = () => {
           <div className="inline-flex items-center space-x-4 text-slate-500 text-xs">
             <StatusIndicator status="active" label="Secure authentication" />
             <div className="w-1 h-1 bg-slate-600 rounded-full" />
-            <StatusIndicator status="active" label="Professional domain" />
+            <StatusIndicator status="active" label="Apple Passwords compatible" />
             <div className="w-1 h-1 bg-slate-600 rounded-full" />
             <StatusIndicator status="active" label="Email confirmation enabled" />
           </div>
-          <p className="text-slate-600 text-xs mt-2">
-            Powered by <span className="text-cyan-400">www.leafnode.co.uk</span>
-          </p>
         </div>
       </div>
     </div>

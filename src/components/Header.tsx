@@ -1,135 +1,136 @@
 
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X, LogOut, User } from "lucide-react";
+import { BookOpen, LogOut } from "lucide-react";
+import { useLocation, Link } from "react-router-dom";
+import { StandardButton } from "./ui/standard-button";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { StandardButton } from "@/components/ui/standard-button";
 
 const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
-
-  const navigation = [
-    { name: "Home", href: "/" },
-    { name: "Transmissions", href: "/transmissions" },
-    { name: "Signal Archive", href: "/book-browser" },
-    { name: "Author Matrix", href: "/author-matrix" },
-    { name: "Chrono Thread", href: "/thread-map" },
-    { name: "Publisher Resonance", href: "/publisher-resonance" },
-    { name: "Neural Map", href: "/test-brain" },
-  ];
-
-  const handleSignOut = async () => {
-    await signOut();
-    setIsMenuOpen(false);
-  };
-
+  
   return (
-    <header className="bg-slate-900/50 backdrop-blur-sm border-b border-slate-800 sticky top-0 z-40">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group">
-            <div className="w-8 h-8 rounded-full border-2 border-dashed border-cyan-400 flex items-center justify-center group-hover:border-cyan-300 transition-colors">
-              <div className="w-3 h-3 rounded-full border-2 border-cyan-400 group-hover:border-cyan-300 animate-pulse" />
-            </div>
-            <span className="text-slate-200 font-light tracking-wider text-lg hidden sm:block">
-              LEAFNODE
-            </span>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-2">
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link key={item.name} to={item.href}>
-                  <StandardButton
-                    variant={isActive ? "primary" : "standard"}
-                    size="sm"
-                    className="transition-all duration-200"
-                  >
-                    {item.name}
-                  </StandardButton>
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Desktop User Menu */}
-          <div className="hidden lg:flex items-center space-x-4">
-            {user && (
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2 text-slate-400 text-sm">
-                  <User className="w-4 h-4" />
-                  <span className="truncate max-w-32">{user.email}</span>
-                </div>
-                <Button
-                  onClick={handleSignOut}
-                  variant="ghost"
-                  size="sm"
-                  className="text-slate-400 hover:text-slate-200"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* Mobile menu button */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
-            aria-label="Toggle menu"
+    <header className="bg-slate-900 border-b border-slate-700">
+      <div className="container mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
+          <Link 
+            to="/" 
+            className="flex items-center space-x-3 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-lg p-1"
+            aria-label="Leafnode - Home"
           >
-            {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
-
-        {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-slate-800">
-            <nav className="space-y-2">
-              {navigation.map((item) => {
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block w-full"
-                  >
-                    <StandardButton
-                      variant={isActive ? "primary" : "standard"}
-                      size="sm"
-                      className="w-full justify-start"
-                    >
-                      {item.name}
-                    </StandardButton>
-                  </Link>
-                );
-              })}
-              
-              {user && (
-                <>
-                  <div className="px-4 py-2 text-slate-500 text-xs border-t border-slate-800 mt-4 pt-4">
-                    Signed in as: <span className="text-slate-400">{user.email}</span>
-                  </div>
-                  <button
-                    onClick={handleSignOut}
-                    className="flex items-center w-full px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-colors"
-                  >
-                    <LogOut className="w-4 h-4 mr-3" />
-                    Sign Out
-                  </button>
-                </>
-              )}
+            <div className="w-8 h-8 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" className="w-6 h-6 text-blue-400" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M12 2C10.5 2 9.2 2.8 8.5 4C7.8 2.8 6.5 2 5 2C2.8 2 1 3.8 1 6C1 8.2 2.8 10 5 10C6.5 10 7.8 9.2 8.5 8C9.2 9.2 10.5 10 12 10C14.2 10 16 8.2 16 6C16 3.8 14.2 2 12 2M12 22C17.5 22 22 17.5 22 12C22 11.3 21.9 10.7 21.8 10.1C21.2 10.7 20.4 11 19.5 11C17.6 11 16 9.4 16 7.5C16 6.6 16.3 5.8 16.9 5.2C16.3 5.1 15.7 5 15 5C9.5 5 5 9.5 5 15C5 20.5 9.5 25 15 25C20.5 25 25 20.5 25 15C25 10.8 22.4 7.2 18.7 5.8C18.9 6.5 19 7.2 19 8C19 13.5 14.5 18 9 18C8.3 18 7.7 17.9 7.1 17.8C7.7 18.4 8.5 18.7 9.4 18.7C11.3 18.7 12.9 17.1 12.9 15.2C12.9 14.3 12.6 13.5 12 12.9C12.6 12.3 13 11.5 13 10.6C13 8.7 11.4 7.1 9.5 7.1C8.6 7.1 7.8 7.4 7.2 8C7.1 7.4 7 6.8 7 6.2C7 0.7 11.5 -3.8 17 -3.8"
+                />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-xl font-light text-slate-200 tracking-wider">
+                LEAFNODE
+              </h1>
+              <p className="text-xs text-slate-400 -mt-1">for the future-literate</p>
+            </div>
+          </Link>
+          
+          <div className="flex items-center space-x-6">
+            <nav className="hidden md:flex items-center space-x-6" role="navigation" aria-label="Main navigation">
+              <Link
+                to="/"
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                  location.pathname === '/' 
+                    ? 'text-blue-400' 
+                    : 'text-slate-300 hover:text-blue-400'
+                }`}
+              >
+                Home
+              </Link>
+              <Link
+                to="/library"
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                  location.pathname === '/library' 
+                    ? 'text-blue-400' 
+                    : 'text-slate-300 hover:text-blue-400'
+                }`}
+              >
+                Transmissions
+              </Link>
+              <Link
+                to="/book-browser"
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                  location.pathname === '/book-browser' 
+                    ? 'text-blue-400' 
+                    : 'text-slate-300 hover:text-blue-400'
+                }`}
+              >
+                Signal Archive
+              </Link>
+              <Link
+                to="/author-matrix"
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                  location.pathname === '/author-matrix' 
+                    ? 'text-blue-400' 
+                    : 'text-slate-300 hover:text-blue-400'
+                }`}
+              >
+                Author Matrix
+              </Link>
+              <Link
+                to="/thread-map"
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                  location.pathname === '/thread-map' 
+                    ? 'text-blue-400' 
+                    : 'text-slate-300 hover:text-blue-400'
+                }`}
+              >
+                Chrono Thread
+              </Link>
+              <Link
+                to="/publisher-resonance"
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                  location.pathname === '/publisher-resonance' 
+                    ? 'text-purple-400' 
+                    : 'text-slate-300 hover:text-purple-400'
+                }`}
+              >
+                Publisher Resonance
+              </Link>
+              <Link
+                to="/test-brain"
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                  location.pathname === '/test-brain' 
+                    ? 'text-blue-400' 
+                    : 'text-slate-300 hover:text-blue-400'
+                }`}
+              >
+                Neural Map
+              </Link>
             </nav>
+
+            {user && (
+              <StandardButton
+                onClick={signOut}
+                variant="standard"
+                size="sm"
+                className="flex items-center space-x-1"
+              >
+                <LogOut className="w-3 h-3" />
+                <span>Logout</span>
+              </StandardButton>
+            )}
+
+            {/* Mobile Navigation Toggle - for future mobile menu implementation */}
+            <button 
+              className="md:hidden text-slate-300 hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded p-1"
+              aria-label="Open navigation menu"
+              aria-expanded="false"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
           </div>
-        )}
+        </div>
       </div>
     </header>
   );

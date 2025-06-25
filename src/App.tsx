@@ -1,17 +1,17 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import Home from "./pages/Home";
 import Index from "./pages/Index";
+import Discovery from "./pages/Discovery";
 import ThreadMap from "./pages/ThreadMap";
 import AuthorMatrix from "./pages/AuthorMatrix";
 import Search from "./pages/Search";
 import BookBrowser from "./pages/BookBrowser";
 import PublisherResonance from "./pages/PublisherResonance";
-import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
 import TestBrain from "./pages/TestBrain";
 import NotFound from "./pages/NotFound";
@@ -34,29 +34,27 @@ const AppRoutes = () => {
     );
   }
 
-  // If user is not authenticated, show auth page, contact page (public), and test-brain (for demo)
+  // If user is not authenticated, show auth page and test-brain (for demo)
   if (!user) {
     return (
       <Routes>
         <Route path="/auth" element={<Auth />} />
-        <Route path="/contact" element={<Contact />} />
         <Route path="/test-brain" element={<TestBrain />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes>
     );
   }
 
-  // If user is authenticated, show all routes
+  // If user is authenticated, show all routes including test-brain
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/transmissions" element={<Index />} />
+      <Route path="/" element={<Discovery />} />
+      <Route path="/library" element={<Index />} />
       <Route path="/thread-map" element={<ThreadMap />} />
       <Route path="/author-matrix" element={<AuthorMatrix />} />
       <Route path="/search" element={<Search />} />
       <Route path="/book-browser" element={<BookBrowser />} />
       <Route path="/publisher-resonance" element={<PublisherResonance />} />
-      <Route path="/contact" element={<Contact />} />
       <Route path="/test-brain" element={<TestBrain />} />
       <Route path="/auth" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
