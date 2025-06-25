@@ -10,10 +10,12 @@ export interface DeepLinkInfo {
 export const useDeepLinking = () => {
   const [loadingIds, setLoadingIds] = useState<Set<number>>(new Set());
   
-  // Memoize URL cache to avoid recalculating
+  // Simple cache without complex memoization that might cause issues
   const urlCache = useMemo(() => new Map<string, DeepLinkInfo | null>(), []);
 
   const getDeepLink = useCallback((book: any): DeepLinkInfo | null => {
+    if (!book) return null;
+    
     const title = book.title || '';
     const author = book.author || '';
     const cacheKey = `${title}-${author}`;
@@ -23,47 +25,58 @@ export const useDeepLinking = () => {
       return urlCache.get(cacheKey);
     }
 
-    console.log('Getting deep link for book:', { title, author });
+    console.log('Getting deep link for book:', { title, author, book });
 
     let result: DeepLinkInfo | null = null;
 
-    // Priority 1: Google Books Preview Link (best for embedding)
-    const previewLink = book.volumeInfo?.previewLink || book.previewLink;
-    if (previewLink) {
-      console.log('Found preview link:', previewLink);
+    // Priority 1: Use previewLink if available
+    if (book.previewLink) {
+      console.log('Found previewLink:', book.previewLink);
       result = {
         type: 'google',
-        url: previewLink,
+        url: book.previewLink,
         icon: '📖'
       };
     }
-    // Priority 2: Google Books Info Link
-    else if (book.volumeInfo?.infoLink || book.infoLink) {
-      const infoLink = book.volumeInfo?.infoLink || book.infoLink;
-      console.log('Found info link:', infoLink);
+    // Priority 2: Use infoLink
+    else if (book.infoLink) {
+      console.log('Found infoLink:', book.infoLink);
       result = {
         type: 'google',
-        url: infoLink,
+        url: book.infoLink,
         icon: '📖'
       };
     }
-    // Priority 3: Use Google Books ID if available
-    else if (book.volumeInfo?.id || book.id) {
-      const googleBooksId = book.volumeInfo?.id || book.id;
-      if (googleBooksId && googleBooksId !== title) {
-        const bookUrl = `https://books.google.com/books?id=${googleBooksId}&output=embed`;
-        console.log('Generated ID-based URL:', bookUrl);
-        result = {
-          type: 'google',
-          url: bookUrl,
-          icon: '📖'
-        };
-      }
+    // Priority 3: Use volumeInfo links if available
+    else if (book.volumeInfo?.previewLink) {
+      console.log('Found volumeInfo.previewLink:', book.volumeInfo.previewLink);
+      result = {
+        type: 'google',
+        url: book.volumeInfo.previewLink,
+        icon: '📖'
+      };
     }
-    // Fallback: Generate Google Books search URL (only if we have both title and author)
+    else if (book.volumeInfo?.infoLink) {
+      console.log('Found volumeInfo.infoLink:', book.volumeInfo.infoLink);
+      result = {
+        type: 'google',
+        url: book.volumeInfo.infoLink,
+        icon: '📖'
+      };
+    }
+    // Priority 4: Use Google Books ID to construct URL
+    else if (book.id) {
+      console.log('Using book ID to construct URL:', book.id);
+      result = {
+        type: 'google',
+        url: `https://books.google.com/books?id=${book.id}`,
+        icon: '📖'
+      };
+    }
+    // Fallback: Generate search URL if we have title and author
     else if (title && author && title.length > 2 && author.length > 2) {
       const query = encodeURIComponent(`"${title}" "${author}"`);
-      const searchUrl = `https://books.google.com/books?q=${query}&output=embed`;
+      const searchUrl = `https://books.google.com/books?q=${query}`;
       console.log('Generated search URL:', searchUrl);
       result = {
         type: 'google',
@@ -88,22 +101,18 @@ export const useDeepLinking = () => {
     setLoadingIds(prev => new Set(prev).add(bookId));
 
     try {
-      // Use a more reliable window opening approach
       const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
       if (!newWindow) {
-        // Fallback if popup blocked
         window.location.href = url;
       }
     } catch (error) {
       console.error('Error opening book link:', error);
-      // Final fallback
       try {
         window.location.href = url;
       } catch (finalError) {
         console.error('Final fallback failed:', finalError);
       }
     } finally {
-      // Clear loading state after a short delay
       setTimeout(() => {
         setLoadingIds(prev => {
           const newSet = new Set(prev);
