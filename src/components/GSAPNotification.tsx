@@ -85,21 +85,21 @@ const GSAPNotification = ({ isVisible, title, message, onClose }: GSAPNotificati
     >
       <div
         ref={notificationRef}
-        className="bg-slate-800/90 backdrop-blur-sm border border-slate-600/40 rounded-md px-3 py-2 text-xs text-slate-300 hover:bg-slate-700/50 transition-all duration-200 pointer-events-auto flex items-center space-x-2 shadow-lg"
+        className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-1.5 px-3 rounded-md transition-all duration-200 pointer-events-auto flex items-center space-x-2 shadow-lg"
         style={{ 
-          minWidth: "200px",
+          minWidth: "fit-content",
           maxWidth: "280px"
         }}
       >
-        <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse flex-shrink-0" />
+        <div className="w-1.5 h-1.5 bg-blue-200 rounded-full animate-pulse flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <span className="font-medium text-slate-200">{title}</span>
-          <span className="text-slate-400 ml-1">{message}</span>
+          <span className="font-medium">{title}</span>
+          <span className="ml-1 opacity-90">{message}</span>
         </div>
         
         <button
           onClick={onClose}
-          className="w-4 h-4 rounded flex items-center justify-center text-slate-400 hover:text-slate-200 hover:bg-slate-600/50 transition-all duration-200 flex-shrink-0"
+          className="w-4 h-4 rounded flex items-center justify-center text-blue-200 hover:text-white hover:bg-blue-800/50 transition-all duration-200 flex-shrink-0"
         >
           <X className="w-2.5 h-2.5" />
         </button>
