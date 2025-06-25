@@ -36,17 +36,14 @@ const EnhancedBookCover = ({
       setIsLoading(true);
       setHasError(false);
 
-      // Create comprehensive fallback list with multiple image sizes and alternative URLs
       const fallbacks = [
         coverUrl,
         thumbnailUrl,
         smallThumbnailUrl,
-        // Try alternative Google Books image URLs with different parameters
         coverUrl?.replace('&edge=curl', ''),
         thumbnailUrl?.replace('&edge=curl', ''),
         coverUrl?.replace('zoom=1', 'zoom=0'),
         thumbnailUrl?.replace('zoom=1', 'zoom=0'),
-        // Try without query parameters
         coverUrl?.split('?')[0],
         thumbnailUrl?.split('?')[0],
         smallThumbnailUrl?.split('?')[0]
@@ -56,12 +53,11 @@ const EnhancedBookCover = ({
         const src = await imageService.loadImage({
           src: fallbacks[0] || '',
           fallbacks: fallbacks.slice(1),
-          timeout: 3000
+          timeout: 2000 // Reduced timeout for better performance
         });
         setCurrentSrc(src);
         setIsLoading(false);
       } catch (error) {
-        console.warn('All image sources failed for:', title);
         setIsLoading(false);
         setHasError(true);
       }
@@ -81,7 +77,7 @@ const EnhancedBookCover = ({
 
   if (lazy) {
     return (
-      <div className={`${className} flex-shrink-0 rounded overflow-hidden relative`}>
+      <div className={`${className} flex-shrink-0 rounded overflow-hidden relative bg-slate-700`}>
         <img
           ref={imgRef}
           alt={title}
@@ -100,7 +96,7 @@ const EnhancedBookCover = ({
 
   if (isLoading) {
     return (
-      <div className={`${className} flex-shrink-0 rounded overflow-hidden`}>
+      <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-slate-700`}>
         <div className="w-full h-full bg-slate-700 animate-pulse flex items-center justify-center">
           <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
         </div>
@@ -113,7 +109,7 @@ const EnhancedBookCover = ({
   }
 
   return (
-    <div className={`${className} flex-shrink-0 rounded overflow-hidden`}>
+    <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-slate-700`}>
       <img
         src={currentSrc}
         alt={title}
@@ -127,24 +123,22 @@ const EnhancedBookCover = ({
 
 const PlaceholderCover = ({ title, className = "w-12 h-16" }: { title: string; className?: string }) => {
   return (
-    <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-gradient-to-br from-black via-gray-900 to-black flex flex-col items-center justify-center relative`}>
-      {/* Glossy overlay effect */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-40" />
-      <div className="absolute top-2 left-2 right-8 h-px bg-white/10" />
+    <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-gradient-to-br from-slate-800 via-slate-700 to-slate-800 flex flex-col items-center justify-center relative border border-slate-600/30`}>
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/3 to-transparent opacity-40" />
+      <div className="absolute top-2 left-2 right-8 h-px bg-white/5" />
       
-      <div className="relative z-10 flex flex-col items-center justify-center h-full p-1">
-        <div className="w-6 h-6 mb-1 rounded-sm bg-white/5 flex items-center justify-center backdrop-blur-sm flex-shrink-0">
-          <BookOpen className="w-3 h-3 text-white/60" />
+      <div className="relative z-10 flex flex-col items-center justify-center h-full p-2">
+        <div className="w-6 h-6 mb-2 rounded-sm bg-slate-600/30 flex items-center justify-center backdrop-blur-sm flex-shrink-0">
+          <BookOpen className="w-3 h-3 text-slate-400" />
         </div>
-        <div className="text-[9px] text-white/40 text-center px-1 leading-tight flex-1 flex items-center">
-          <span className="break-words hyphens-auto" style={{ wordBreak: 'break-word' }}>
+        <div className="text-[8px] text-slate-400 text-center px-1 leading-tight flex-1 flex items-center">
+          <span className="break-words hyphens-auto line-clamp-3" style={{ wordBreak: 'break-word' }}>
             {title}
           </span>
         </div>
       </div>
       
-      {/* Bottom shine effect */}
-      <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-white/3 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-white/2 to-transparent" />
     </div>
   );
 };

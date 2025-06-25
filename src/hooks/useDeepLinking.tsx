@@ -30,7 +30,6 @@ export const useDeepLinking = () => {
   }, []);
 
   const getDeepLink = useCallback((book: any): DeepLinkInfo | null => {
-    // Try to extract ISBN from various possible sources
     const isbn = book.isbn || 
                  book.volumeInfo?.industryIdentifiers?.find(
                    (id: any) => id.type === 'ISBN_13' || id.type === 'ISBN_10'
@@ -43,16 +42,7 @@ export const useDeepLinking = () => {
     const title = book.title || '';
     const author = book.author || '';
 
-    // Priority 1: Apple Books (prioritized on Apple devices, but only if we have ISBN)
-    if (isbn && isApple) {
-      return {
-        type: 'apple',
-        url: generateAppleLink(isbn),
-        icon: '🍎'
-      };
-    }
-
-    // Priority 2: Google Books Preview (if available)
+    // Priority 1: Google Books Preview (if available)
     const previewLink = book.volumeInfo?.previewLink || book.previewLink;
     if (previewLink) {
       return {
@@ -62,8 +52,8 @@ export const useDeepLinking = () => {
       };
     }
 
-    // Priority 3: Apple Books (even on non-Apple devices if we have ISBN)
-    if (isbn) {
+    // Priority 2: Apple Books (prioritized on Apple devices)
+    if (isbn && isApple) {
       return {
         type: 'apple',
         url: generateAppleLink(isbn),
@@ -71,7 +61,7 @@ export const useDeepLinking = () => {
       };
     }
 
-    // Priority 4: Open Library (if we have ISBN)
+    // Priority 3: Open Library (if we have ISBN)
     if (isbn) {
       return {
         type: 'openlibrary',
@@ -80,7 +70,7 @@ export const useDeepLinking = () => {
       };
     }
 
-    // Fallback: Google Search for the book (always available)
+    // Fallback: Google Search for the book
     if (title && author) {
       return {
         type: 'google',
@@ -89,7 +79,6 @@ export const useDeepLinking = () => {
       };
     }
 
-    // No valid link found
     return null;
   }, [isAppleDevice, generateAppleLink, generateOpenLibraryLink, generateGoogleSearchLink]);
 
@@ -99,9 +88,8 @@ export const useDeepLinking = () => {
     setLoadingIds(prev => new Set(prev).add(bookId));
 
     try {
-      // Update open_count and apple_link if needed
       const updates: any = {
-        open_count: 1 // This will be incremented in the service
+        open_count: 1
       };
 
       if (isbn && url.includes('books.apple.com')) {
@@ -110,12 +98,9 @@ export const useDeepLinking = () => {
       }
 
       await updateTransmission(bookId, updates);
-      
-      // Open the link
       window.open(url, '_blank', 'noopener,noreferrer');
     } catch (error) {
       console.error('Error updating book open count:', error);
-      // Still open the link even if the update fails
       window.open(url, '_blank', 'noopener,noreferrer');
     } finally {
       setLoadingIds(prev => {
