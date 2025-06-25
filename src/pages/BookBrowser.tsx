@@ -6,10 +6,8 @@ import BookBrowserHeader from "@/components/BookBrowserHeader";
 import BookGrid from "@/components/BookGrid";
 import BookBrowserEmpty from "@/components/BookBrowserEmpty";
 import BookBrowserStatus from "@/components/BookBrowserStatus";
-import GSAPNotification from "@/components/GSAPNotification";
 import { useBookBrowser } from "@/hooks/useBookBrowser";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
-import { useState, useEffect } from "react";
 
 const BookBrowser = () => {
   const {
@@ -22,14 +20,6 @@ const BookBrowser = () => {
   } = useBookBrowser();
 
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
-  const [showNotification, setShowNotification] = useState(false);
-
-  // Show notification when books are loaded
-  useEffect(() => {
-    if (books.length > 0 && !loading) {
-      setShowNotification(true);
-    }
-  }, [books.length, loading]);
 
   return (
     <AuthWrapper fallback={<Auth />}>
@@ -72,13 +62,6 @@ const BookBrowser = () => {
             />
           </div>
         </main>
-
-        <GSAPNotification
-          isVisible={showNotification}
-          title="Books Loaded"
-          message={`Found ${books.length} new sci-fi books for you to explore.`}
-          onClose={() => setShowNotification(false)}
-        />
       </div>
     </AuthWrapper>
   );

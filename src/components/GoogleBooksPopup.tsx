@@ -163,10 +163,11 @@ const GoogleBooksPopup = ({ isOpen, onClose, bookTitle, bookAuthor, previewUrl }
           <div className="flex items-center space-x-2">
             <button
               onClick={handleOpenInNewTab}
-              className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+              className="cta-button bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-1.5 px-3 rounded-md transition-all duration-200 flex items-center space-x-1"
               title="Open in Google Books"
             >
-              Open in Google Books
+              <span>📖</span>
+              <span>Open in Google Books</span>
             </button>
             <button
               onClick={onClose}
@@ -201,9 +202,10 @@ const GoogleBooksPopup = ({ isOpen, onClose, bookTitle, bookAuthor, previewUrl }
                 </p>
                 <button
                   onClick={handleOpenInNewTab}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors"
+                  className="cta-button bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-1.5 px-3 rounded-md transition-all duration-200 flex items-center space-x-1 mx-auto"
                 >
-                  Open in Google Books
+                  <span>📖</span>
+                  <span>Open in Google Books</span>
                 </button>
               </div>
             </div>
