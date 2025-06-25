@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -32,7 +33,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
   activeFilters,
   onHighlight
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true); // Changed from false to true to start open
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -246,7 +247,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-16 z-30 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 backdrop-blur-sm text-cyan-400 rounded-full p-4 transition-all duration-300 hover:scale-110"
+        className="fixed bottom-6 right-12 z-30 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 backdrop-blur-sm text-cyan-400 rounded-full p-4 transition-all duration-300 hover:scale-110"
         size="icon"
       >
         <MessageCircle className="w-6 h-6" />
@@ -255,7 +256,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
   }
 
   return (
-    <div className="fixed bottom-6 right-16 z-30 w-96 h-[600px] flex flex-col">
+    <div className="fixed bottom-6 right-12 z-30 w-96 h-[600px] flex flex-col">
       
       <Card className="bg-slate-900/95 border-cyan-400/30 backdrop-blur-sm h-full flex flex-col">
         {/* Header */}
