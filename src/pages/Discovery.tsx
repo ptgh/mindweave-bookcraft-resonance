@@ -1,3 +1,4 @@
+
 import Header from "@/components/Header";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
@@ -35,7 +36,7 @@ const Discovery = () => {
             </p>
           </div>
 
-          <div ref={addFeatureBlockRef} className="feature-block grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div ref={addFeatureBlockRef} className="feature-block grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <Link 
               to="/library" 
               className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10"
@@ -63,21 +64,6 @@ const Discovery = () => {
               </div>
               <p className="text-slate-400 leading-relaxed text-sm">
                 Discover new sci-fi signals
-              </p>
-            </Link>
-
-            <Link 
-              to="/test-brain" 
-              className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10"
-            >
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
-                  <Brain className="w-6 h-6 text-blue-400" />
-                </div>
-                <h2 className="text-xl font-medium text-slate-200">Neural Map</h2>
-              </div>
-              <p className="text-slate-400 leading-relaxed text-sm">
-                AI consciousness mapping
               </p>
             </Link>
 
@@ -110,18 +96,6 @@ const Discovery = () => {
                 Timeline consciousness map
               </p>
             </Link>
-
-            <div className="group bg-slate-800/20 border border-slate-600/30 rounded-lg p-8 opacity-50 cursor-not-allowed">
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="w-12 h-12 bg-slate-600/20 rounded-lg flex items-center justify-center">
-                  <Users className="w-6 h-6 text-slate-500" />
-                </div>
-                <h2 className="text-xl font-medium text-slate-400">Publisher Resonance</h2>
-              </div>
-              <p className="text-slate-500 leading-relaxed text-sm">
-                Neural pathways: Initializing...
-              </p>
-            </div>
           </div>
 
           <div ref={addFeatureBlockRef} className="feature-block text-center mt-16">

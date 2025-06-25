@@ -1,4 +1,5 @@
-import { BrainNode, BookLink } from '@/data/test-brain';
+
+import { BrainNode, BookLink } from '@/pages/TestBrain';
 
 export interface BrainAnalysis {
   totalNodes: number;

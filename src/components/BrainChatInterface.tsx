@@ -1,10 +1,9 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MessageCircle, Send, X, Sparkles, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { BrainNode, BookLink } from '@/data/test-brain';
+import { BrainNode, BookLink } from '@/pages/TestBrain';
 import { BrainContextService } from '@/services/brainContextService';
 
 interface Message {
