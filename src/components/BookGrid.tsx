@@ -44,9 +44,9 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                 {deepLink && (
                   <button
                     onClick={() => {
-                      const isbn = book.volumeInfo?.industryIdentifiers?.find(
-                        (id: any) => id.type === 'ISBN_13' || id.type === 'ISBN_10'
-                      )?.identifier;
+                      // Extract ISBN from book - since EnhancedBookSuggestion doesn't have volumeInfo,
+                      // we'll need to pass undefined for now and let the service handle it
+                      const isbn = undefined; // Will be handled by the deep linking service
                       handleDeepLinkClick(bookId, deepLink.url, isbn);
                     }}
                     disabled={isLoading(bookId)}

@@ -25,16 +25,19 @@ export const useDeepLinking = () => {
   }, []);
 
   const getDeepLink = useCallback((book: any): DeepLinkInfo | null => {
-    const isbn = book.isbn || book.volumeInfo?.industryIdentifiers?.find(
-      (id: any) => id.type === 'ISBN_13' || id.type === 'ISBN_10'
-    )?.identifier;
-
-    if (!isbn) return null;
+    // Try to extract ISBN from various possible sources
+    const isbn = book.isbn || 
+                 book.volumeInfo?.industryIdentifiers?.find(
+                   (id: any) => id.type === 'ISBN_13' || id.type === 'ISBN_10'
+                 )?.identifier ||
+                 book.industryIdentifiers?.find(
+                   (id: any) => id.type === 'ISBN_13' || id.type === 'ISBN_10'
+                 )?.identifier;
 
     const isApple = isAppleDevice();
 
-    // Priority 1: Apple Books (prioritized on Apple devices)
-    if (isApple || !book.volumeInfo?.previewLink) {
+    // Priority 1: Apple Books (prioritized on Apple devices, but only if we have ISBN)
+    if (isbn && (isApple || (!book.volumeInfo?.previewLink && !book.previewLink))) {
       return {
         type: 'apple',
         url: generateAppleLink(isbn),
@@ -42,21 +45,27 @@ export const useDeepLinking = () => {
       };
     }
 
-    // Priority 2: Google Books Preview
-    if (book.volumeInfo?.previewLink) {
+    // Priority 2: Google Books Preview (if available)
+    const previewLink = book.volumeInfo?.previewLink || book.previewLink;
+    if (previewLink) {
       return {
         type: 'google',
-        url: book.volumeInfo.previewLink,
+        url: previewLink,
         icon: '📖'
       };
     }
 
-    // Priority 3: Open Library
-    return {
-      type: 'openlibrary',
-      url: generateOpenLibraryLink(isbn),
-      icon: '📚'
-    };
+    // Priority 3: Open Library (if we have ISBN)
+    if (isbn) {
+      return {
+        type: 'openlibrary',
+        url: generateOpenLibraryLink(isbn),
+        icon: '📚'
+      };
+    }
+
+    // No valid link found
+    return null;
   }, [isAppleDevice, generateAppleLink, generateOpenLibraryLink]);
 
   const handleDeepLinkClick = useCallback(async (bookId: number, url: string, isbn?: string) => {

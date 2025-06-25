@@ -99,10 +99,10 @@ export const useBookBrowser = () => {
 
   const addToTransmissions = useCallback(async (book: EnhancedBookSuggestion) => {
     try {
-      // Extract ISBN from book data
-      const isbn = book.volumeInfo?.industryIdentifiers?.find(
-        (id: any) => id.type === 'ISBN_13' || id.type === 'ISBN_10'
-      )?.identifier;
+      // Since EnhancedBookSuggestion doesn't have volumeInfo, we'll extract ISBN from the ID if possible
+      // or leave it undefined for now - the Google Books API integration will need to be updated
+      // to include ISBN data in the EnhancedBookSuggestion interface
+      const isbn = undefined; // TODO: Update EnhancedBookSuggestion to include ISBN data
 
       // Generate Apple link if ISBN is available
       const apple_link = isbn ? `https://books.apple.com/book/isbn${isbn}` : undefined;
