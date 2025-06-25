@@ -59,7 +59,7 @@ const Header = () => {
                   : 'text-slate-300 hover:text-blue-400'
               }`}
             >
-              Book Browser
+              Signal Archive
             </Link>
             <Link
               to="/author-matrix"
