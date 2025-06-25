@@ -1,7 +1,7 @@
 
 import LoadingSkeleton from "@/components/LoadingSkeleton";
 import AuthorCard from "@/components/AuthorCard";
-import PulseCirclePagination from "@/components/PulseCirclePagination";
+import GSAPPagination from "@/components/GSAPPagination";
 import { ScifiAuthor } from "@/services/scifiAuthorsService";
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
@@ -117,7 +117,7 @@ const AuthorsList = ({
       </div>
       
       {totalPages > 1 && (
-        <PulseCirclePagination
+        <GSAPPagination
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={onPageChange}

@@ -147,12 +147,12 @@ const AuthorSearchInput = ({
       )}
       
       {showSuggestions && suggestions.length > 0 && !justSelected && (
-        <div className="absolute z-[9999] w-full mt-2 bg-slate-700 border border-slate-600 rounded-md shadow-xl max-h-60 overflow-y-auto">
+        <div className="absolute z-[99999] w-full mt-2 bg-slate-800 border border-slate-600 rounded-md shadow-2xl max-h-60 overflow-y-auto backdrop-blur-sm">
           {suggestions.map((author) => (
             <button
               key={author.id}
               onClick={() => handleSuggestionClick(author)}
-              className="w-full px-3 py-2 text-left hover:bg-slate-600 text-sm"
+              className="w-full px-3 py-2 text-left hover:bg-slate-600 text-sm transition-colors"
             >
               <div className="flex-1 min-w-0">
                 <div className="text-slate-200 font-medium truncate">{author.name}</div>
