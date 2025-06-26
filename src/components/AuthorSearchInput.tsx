@@ -24,6 +24,7 @@ const AuthorSearchInput = ({
   const [isLoading, setIsLoading] = useState(false);
   const [allAuthors, setAllAuthors] = useState<ScifiAuthor[]>([]);
   const [justSelected, setJustSelected] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Load all authors on component mount
   useEffect(() => {
@@ -91,10 +92,15 @@ const AuthorSearchInput = ({
     const currentSearchKey = `author-search-${value}`;
     searchDebouncer.cancel(currentSearchKey);
     
-    // Clear all search state immediately
+    // Immediately hide all suggestions and loading state
     setIsLoading(false);
     setSuggestions([]);
     setShowSuggestions(false);
+    
+    // Remove focus from input to prevent blur event issues
+    if (inputRef.current) {
+      inputRef.current.blur();
+    }
     
     // Notify parent component of selection
     onAuthorSelect(author);
@@ -112,8 +118,11 @@ const AuthorSearchInput = ({
   };
 
   const handleInputBlur = () => {
-    // Delay hiding suggestions to allow click events
-    setTimeout(() => setShowSuggestions(false), 200);
+    // Only hide suggestions if we haven't just selected an author
+    if (!justSelected) {
+      // Delay hiding suggestions to allow click events
+      setTimeout(() => setShowSuggestions(false), 200);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,6 +137,7 @@ const AuthorSearchInput = ({
   return (
     <div className="relative">
       <Input
+        ref={inputRef}
         placeholder={placeholder}
         value={value}
         onChange={handleInputChange}
