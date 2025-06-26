@@ -30,6 +30,16 @@ const Discovery = () => {
               <div className="w-2 h-2 bg-blue-300 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
               <div className="w-2 h-2 bg-blue-200 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
             </div>
+
+            <StandardButton
+              onClick={() => setShowContactModal(true)}
+              variant="standard"
+              size="default"
+              className="flex items-center space-x-2 mb-8"
+            >
+              <Mail className="w-4 h-4" />
+              <span>Contact</span>
+            </StandardButton>
             
             <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed mb-4">
               Mapping the narrative threads of consciousness
@@ -37,18 +47,9 @@ const Discovery = () => {
             <p className="text-sm text-slate-500 mb-6">
               Signal strength: Rising • Frequency: 432 Hz
             </p>
-
-            <StandardButton
-              onClick={() => setShowContactModal(true)}
-              variant="standard"
-              size="default"
-              className="flex items-center space-x-2"
-            >
-              <Mail className="w-4 h-4" />
-              <span>Contact</span>
-            </StandardButton>
           </div>
 
+          
           <div className="flex flex-col space-y-8 max-w-4xl mx-auto">
             <div ref={addFeatureBlockRef} className="feature-block">
               <Link 

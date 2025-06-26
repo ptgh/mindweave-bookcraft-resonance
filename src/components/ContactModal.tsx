@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { StandardButton } from "@/components/ui/standard-button";
-import { useToast } from "@/hooks/use-toast";
+import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ContactModalProps {
@@ -19,7 +19,7 @@ const ContactModal = ({ isOpen, onClose }: ContactModalProps) => {
     message: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
+  const { toast } = useEnhancedToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +34,7 @@ const ContactModal = ({ isOpen, onClose }: ContactModalProps) => {
       if (error) throw error;
 
       toast({
+        variant: "success",
         title: "Signal transmitted",
         description: "Your message has been received. We'll respond to your transmission soon.",
       });
