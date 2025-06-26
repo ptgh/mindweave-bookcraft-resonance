@@ -1,20 +1,19 @@
 import * as React from "react"
-import { gsap } from "gsap"
 
 import type {
-  ToastActionElement,
-  ToastProps,
-} from "@/components/ui/toast"
+  EnhancedToastActionElement,
+  EnhancedToastProps,
+} from "@/components/ui/enhanced-toast"
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 5000
+const ENHANCED_TOAST_LIMIT = 1
+const ENHANCED_TOAST_REMOVE_DELAY = 1000000
 
-type EnhancedToasterToast = ToastProps & {
+type EnhancedToasterToast = EnhancedToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
-  action?: ToastActionElement
-  variant?: "default" | "success" | "destructive"
+  action?: EnhancedToastActionElement
+  variant?: "default" | "destructive" | "success"
 }
 
 const actionTypes = {
@@ -68,7 +67,7 @@ const addToRemoveQueue = (toastId: string) => {
       type: "REMOVE_TOAST",
       toastId: toastId,
     })
-  }, TOAST_REMOVE_DELAY)
+  }, ENHANCED_TOAST_REMOVE_DELAY)
 
   toastTimeouts.set(toastId, timeout)
 }
@@ -78,7 +77,7 @@ export const reducer = (state: State, action: Action): State => {
     case "ADD_TOAST":
       return {
         ...state,
-        toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
+        toasts: [action.toast, ...state.toasts].slice(0, ENHANCED_TOAST_LIMIT),
       }
 
     case "UPDATE_TOAST":
@@ -92,6 +91,8 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
+      // ! Side effects ! - This could be extracted into a dismissToast() action,
+      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -137,9 +138,9 @@ function dispatch(action: Action) {
   })
 }
 
-type EnhancedToast = Omit<EnhancedToasterToast, "id">
+type Toast = Omit<EnhancedToasterToast, "id">
 
-function enhancedToast({ ...props }: EnhancedToast) {
+function toast({ ...props }: Toast) {
   const id = genId()
 
   const update = (props: EnhancedToasterToast) =>
@@ -183,9 +184,9 @@ function useEnhancedToast() {
 
   return {
     ...state,
-    toast: enhancedToast,
+    toast,
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
   }
 }
 
-export { useEnhancedToast, enhancedToast }
+export { useEnhancedToast, toast }

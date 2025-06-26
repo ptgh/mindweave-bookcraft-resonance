@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as ToastPrimitive from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -136,7 +137,13 @@ const SuccessToast = ({ title, description }: { title: string; description: stri
   )
 }
 
+type EnhancedToastProps = React.ComponentPropsWithoutRef<typeof EnhancedToast>
+
+type EnhancedToastActionElement = React.ReactElement<typeof ToastPrimitive.Action>
+
 export {
+  type EnhancedToastProps,
+  type EnhancedToastActionElement,
   EnhancedToastProvider,
   EnhancedToastViewport,
   EnhancedToast,
