@@ -1,14 +1,17 @@
-
 import Header from "@/components/Header";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Brain, BookOpen, Users, Search, Map, Eye, Building } from "lucide-react";
+import { StandardButton } from "@/components/ui/standard-button";
+import { Brain, BookOpen, Users, Search, Map, Eye, Building, Mail } from "lucide-react";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
+import { useState } from "react";
+import ContactModal from "@/components/ContactModal";
 
 const Discovery = () => {
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
+  const [showContactModal, setShowContactModal] = useState(false);
 
   return (
     <AuthWrapper fallback={<Auth />}>
@@ -31,9 +34,19 @@ const Discovery = () => {
             <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed mb-4">
               Mapping the narrative threads of consciousness
             </p>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-500 mb-6">
               Signal strength: Rising • Frequency: 432 Hz
             </p>
+
+            <StandardButton
+              onClick={() => setShowContactModal(true)}
+              variant="standard"
+              size="default"
+              className="flex items-center space-x-2"
+            >
+              <Mail className="w-4 h-4" />
+              <span>Contact</span>
+            </StandardButton>
           </div>
 
           <div className="flex flex-col space-y-8 max-w-4xl mx-auto">
@@ -149,6 +162,11 @@ const Discovery = () => {
             </div>
           </div>
         </main>
+
+        <ContactModal 
+          isOpen={showContactModal} 
+          onClose={() => setShowContactModal(false)} 
+        />
       </div>
     </AuthWrapper>
   );
