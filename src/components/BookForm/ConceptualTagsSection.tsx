@@ -25,11 +25,11 @@ const conceptualTags = [
   "Archive-Based",
   "Memory Distortion",
   
-  // Philosophy
-  "Sebi-friendly",
-  "Aurelius-aligned",
-  "McLuhan-esque",
-  "Metis-driven"
+  // Sci-Fi Elements
+  "Cybernetic Enhancement",
+  "Quantum Consciousness",
+  "Neural Interface",
+  "Posthuman Evolution"
 ];
 
 const ConceptualTagsSection = ({ selectedTags, onTagToggle }: ConceptualTagsSectionProps) => {
