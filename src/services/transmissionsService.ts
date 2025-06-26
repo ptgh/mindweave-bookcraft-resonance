@@ -36,6 +36,8 @@ export const saveTransmission = async (transmission: Omit<Transmission, 'id' | '
     throw new Error('User not authenticated');
   }
 
+  console.log('Saving transmission for user:', user.email);
+
   const { data, error } = await supabase
     .from('transmissions')
     .insert([{
@@ -54,7 +56,12 @@ export const saveTransmission = async (transmission: Omit<Transmission, 'id' | '
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error saving transmission:', error);
+    throw error;
+  }
+  
+  console.log('Transmission saved successfully:', data);
   return data;
 };
 
@@ -82,6 +89,8 @@ export const updateTransmission = async (id: number, transmission: Partial<Omit<
     updateData.open_count = (currentData?.open_count || 0) + 1;
   }
 
+  console.log('Updating transmission:', id, updateData);
+
   const { data, error } = await supabase
     .from('transmissions')
     .update(updateData)
@@ -89,12 +98,26 @@ export const updateTransmission = async (id: number, transmission: Partial<Omit<
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error updating transmission:', error);
+    throw error;
+  }
+  
+  console.log('Transmission updated successfully:', data);
   return data;
 };
 
 // Use optimized version for better performance
 export const getTransmissions = async (): Promise<Transmission[]> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    console.log('No authenticated user found');
+    throw new Error('User not authenticated');
+  }
+
+  console.log('Fetching transmissions for user:', user.email);
+
   const { data, error } = await supabase
     .from('transmissions')
     .select(`
@@ -106,10 +129,16 @@ export const getTransmissions = async (): Promise<Transmission[]> => {
         badge_emoji
       )
     `)
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(50); // Limit for better performance
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error fetching transmissions:', error);
+    throw error;
+  }
+  
+  console.log('Fetched transmissions:', data?.length || 0);
   
   return (data || []).map(item => ({
     id: item.id,
@@ -128,10 +157,17 @@ export const getTransmissions = async (): Promise<Transmission[]> => {
 };
 
 export const deleteTransmission = async (id: number) => {
+  console.log('Deleting transmission:', id);
+  
   const { error } = await supabase
     .from('transmissions')
     .delete()
     .eq('id', id);
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error deleting transmission:', error);
+    throw error;
+  }
+  
+  console.log('Transmission deleted successfully');
 };

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import Header from "@/components/Header";
 import SignalInFocus from "@/components/SignalInFocus";
@@ -22,15 +23,21 @@ const Index = () => {
   });
 
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
 
   const loadTransmissions = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('No user found, skipping transmission load');
+      setLoading(false);
+      return;
+    }
     
     try {
+      console.log('Loading transmissions for user:', user.email);
       setLoading(true);
       const transmissions = await getTransmissions();
+      console.log('Loaded transmissions:', transmissions.length);
       setBooks(transmissions);
     } catch (error: any) {
       console.error('Failed to load transmissions:', error);
@@ -45,12 +52,18 @@ const Index = () => {
   }, [toast, user]);
 
   useEffect(() => {
-    if (user) {
-      loadTransmissions();
-    } else {
-      setLoading(false);
+    console.log('Auth state changed - User:', user?.email, 'Auth loading:', authLoading);
+    
+    // Only proceed if auth is not loading
+    if (!authLoading) {
+      if (user) {
+        loadTransmissions();
+      } else {
+        console.log('No authenticated user, setting loading to false');
+        setLoading(false);
+      }
     }
-  }, [user, loadTransmissions]);
+  }, [user, authLoading, loadTransmissions]);
 
   const addBook = useCallback(async (newBook: any) => {
     try {
@@ -113,6 +126,20 @@ const Index = () => {
     setIsAddModalOpen(false);
     setEditingBook(null);
   }, []);
+
+  // Show loading state while auth is being determined
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-full border-2 border-blue-400 animate-pulse" />
+          </div>
+          <p className="text-slate-400">Establishing connection...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AuthWrapper fallback={<Auth />}>
