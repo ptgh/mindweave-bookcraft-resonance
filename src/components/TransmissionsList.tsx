@@ -1,8 +1,9 @@
-import React, { memo, useState } from "react";
+import React, { memo, useState, useMemo } from "react";
 import BookCard from "./BookCard";
 import EmptyState from "./EmptyState";
 import { StandardButton } from "./ui/standard-button";
 import { Transmission } from "@/services/transmissionsService";
+import { getOptimizedSettings } from "@/utils/performance";
 
 interface TransmissionsListProps {
   transmissions: Transmission[];
@@ -23,6 +24,9 @@ const TransmissionsList = memo(({
 }: TransmissionsListProps) => {
   const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
   const [optimisticTransmissions, setOptimisticTransmissions] = useState<Transmission[]>([]);
+
+  // Get device-specific optimizations
+  const optimizedSettings = useMemo(() => getOptimizedSettings(), []);
 
   // Keep optimistic list in sync with props
   React.useEffect(() => {
@@ -53,11 +57,20 @@ const TransmissionsList = memo(({
     }
   };
 
+  // Memoize grid classes for better performance
+  const gridClasses = useMemo(() => {
+    // Adjust grid based on device type for better performance
+    if (optimizedSettings.reduceAnimations) {
+      return "grid gap-4 md:grid-cols-2"; // Simpler grid on mobile
+    }
+    return "grid gap-4 md:grid-cols-2 lg:grid-cols-3";
+  }, [optimizedSettings.reduceAnimations]);
+
   if (loading && optimisticTransmissions.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center">
-          <div className="w-6 h-6 rounded-full border-2 border-blue-400 animate-pulse" />
+          <div className={`w-6 h-6 rounded-full border-2 border-blue-400 ${optimizedSettings.reduceAnimations ? '' : 'animate-pulse'}`} />
         </div>
         <p className="text-slate-400">Loading transmissions...</p>
       </div>
@@ -83,11 +96,11 @@ const TransmissionsList = memo(({
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className={gridClasses}>
       {optimisticTransmissions.map(book => (
         <div 
           key={book.id}
-          className={`transition-all duration-300 ${
+          className={`transition-all ${optimizedSettings.reduceAnimations ? 'duration-150' : 'duration-300'} ${
             deletingIds.has(book.id) ? 'opacity-0 scale-95 pointer-events-none' : ''
           }`}
         >

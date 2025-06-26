@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Header from "@/components/Header";
 import SignalInFocus from "@/components/SignalInFocus";
 import AddBookModal from "@/components/AddBookModal";
@@ -17,10 +17,13 @@ const Index = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<Transmission | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentSignal] = useState({
+  const [error, setError] = useState<string | null>(null);
+
+  // Memoize static data to prevent unnecessary re-renders
+  const currentSignal = useMemo(() => ({
     title: "Signal Detected",
     author: "Awaiting Transmission"
-  });
+  }), []);
 
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -30,22 +33,30 @@ const Index = () => {
     if (!user) {
       console.log('No user found, skipping transmission load');
       setLoading(false);
+      setError(null);
       return;
     }
     
     try {
       console.log('Loading transmissions for user:', user.email);
       setLoading(true);
+      setError(null);
+      
       const transmissions = await getTransmissions();
       console.log('Loaded transmissions:', transmissions.length);
       setBooks(transmissions);
     } catch (error: any) {
       console.error('Failed to load transmissions:', error);
-      toast({
-        title: "Signal Error",
-        description: "Failed to load transmissions. Please try again.",
-        variant: "destructive",
-      });
+      setError('Failed to load transmissions. Please check your connection and try again.');
+      
+      // Don't show toast if user is not authenticated
+      if (user) {
+        toast({
+          title: "Connection Issue",
+          description: "Unable to load your transmissions. Please refresh the page.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -61,12 +72,14 @@ const Index = () => {
       } else {
         console.log('No authenticated user, setting loading to false');
         setLoading(false);
+        setError(null);
       }
     }
   }, [user, authLoading, loadTransmissions]);
 
   const addBook = useCallback(async (newBook: any) => {
     try {
+      setError(null);
       if (editingBook) {
         await updateTransmission(editingBook.id, newBook);
         toast({
@@ -106,6 +119,7 @@ const Index = () => {
 
   const handleDiscardBook = useCallback(async (book: Transmission) => {
     try {
+      setError(null);
       await deleteTransmission(book.id);
       await loadTransmissions();
       toast({
@@ -127,6 +141,11 @@ const Index = () => {
     setEditingBook(null);
   }, []);
 
+  const handleRetry = useCallback(() => {
+    setError(null);
+    loadTransmissions();
+  }, [loadTransmissions]);
+
   // Show loading state while auth is being determined
   if (authLoading) {
     return (
@@ -146,13 +165,13 @@ const Index = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <Header />
         
-        <main ref={mainContainerRef} className="container mx-auto px-6 py-8">
+        <main ref={mainContainerRef} className="container mx-auto px-4 sm:px-6 py-8">
           <div ref={addFeatureBlockRef} className="feature-block">
             <SignalInFocus book={currentSignal} />
           </div>
           
-          <div ref={addFeatureBlockRef} className="feature-block flex items-center justify-between mb-6">
-            <div>
+          <div ref={addFeatureBlockRef} className="feature-block flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+            <div className="flex-1">
               <h2 ref={heroTitleRef} className="text-slate-200 text-xl font-medium mb-1">Transmissions</h2>
               <p className="text-slate-400 text-sm">Your reading frequency across time and space</p>
             </div>
@@ -160,21 +179,34 @@ const Index = () => {
             <StandardButton
               onClick={() => setIsAddModalOpen(true)}
               variant="standard"
-              className="touch-manipulation active:scale-95"
+              className="touch-manipulation active:scale-95 whitespace-nowrap"
             >
               + Log Signal
             </StandardButton>
           </div>
           
           <div ref={addFeatureBlockRef} className="feature-block">
-            <TransmissionsList
-              transmissions={books}
-              loading={loading}
-              onEdit={handleEditBook}
-              onKeep={handleKeepBook}
-              onDiscard={handleDiscardBook}
-              onAddNew={() => setIsAddModalOpen(true)}
-            />
+            {error ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-red-600 flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-full bg-red-500" />
+                </div>
+                <h3 className="text-red-400 text-lg mb-2">Signal Error</h3>
+                <p className="text-slate-400 mb-4">{error}</p>
+                <StandardButton onClick={handleRetry} variant="standard">
+                  Try Again
+                </StandardButton>
+              </div>
+            ) : (
+              <TransmissionsList
+                transmissions={books}
+                loading={loading}
+                onEdit={handleEditBook}
+                onKeep={handleKeepBook}
+                onDiscard={handleDiscardBook}
+                onAddNew={() => setIsAddModalOpen(true)}
+              />
+            )}
           </div>
           
           <div className="mt-12 text-center">

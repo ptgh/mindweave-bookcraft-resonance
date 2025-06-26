@@ -107,53 +107,64 @@ export const updateTransmission = async (id: number, transmission: Partial<Omit<
   return data;
 };
 
-// Use optimized version for better performance
+// Improved version with better error handling and fallbacks
 export const getTransmissions = async (): Promise<Transmission[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    console.log('No authenticated user found');
-    throw new Error('User not authenticated');
+  try {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error('Error getting user:', userError);
+      throw new Error('Authentication error');
+    }
+    
+    if (!user) {
+      console.log('No authenticated user found');
+      return []; // Return empty array instead of throwing error
+    }
+
+    console.log('Fetching transmissions for user:', user.email);
+
+    const { data, error } = await supabase
+      .from('transmissions')
+      .select(`
+        *,
+        publisher_series (
+          id,
+          name,
+          publisher,
+          badge_emoji
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error('Error fetching transmissions:', error);
+      // Return empty array on error instead of throwing
+      return [];
+    }
+    
+    console.log('Fetched transmissions:', data?.length || 0);
+    
+    return (data || []).map(item => ({
+      id: item.id,
+      title: item.title || '',
+      author: item.author || '',
+      status: 'read' as const,
+      tags: item.tags ? JSON.parse(item.tags) : [],
+      notes: item.notes || '',
+      cover_url: item.cover_url || '',
+      rating: item.resonance_labels ? JSON.parse(item.resonance_labels) : {},
+      user_id: item.user_id || '',
+      created_at: item.created_at,
+      publisher_series_id: item.publisher_series_id,
+      publisher_series: item.publisher_series
+    }));
+  } catch (error) {
+    console.error('Unexpected error in getTransmissions:', error);
+    return []; // Always return array to prevent UI crashes
   }
-
-  console.log('Fetching transmissions for user:', user.email);
-
-  const { data, error } = await supabase
-    .from('transmissions')
-    .select(`
-      *,
-      publisher_series (
-        id,
-        name,
-        publisher,
-        badge_emoji
-      )
-    `)
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(50); // Limit for better performance
-
-  if (error) {
-    console.error('Error fetching transmissions:', error);
-    throw error;
-  }
-  
-  console.log('Fetched transmissions:', data?.length || 0);
-  
-  return (data || []).map(item => ({
-    id: item.id,
-    title: item.title || '',
-    author: item.author || '',
-    status: 'read' as const,
-    tags: item.tags ? JSON.parse(item.tags) : [],
-    notes: item.notes || '',
-    cover_url: item.cover_url || '',
-    rating: item.resonance_labels ? JSON.parse(item.resonance_labels) : {},
-    user_id: item.user_id || '',
-    created_at: item.created_at,
-    publisher_series_id: item.publisher_series_id,
-    publisher_series: item.publisher_series
-  }));
 };
 
 export const deleteTransmission = async (id: number) => {
