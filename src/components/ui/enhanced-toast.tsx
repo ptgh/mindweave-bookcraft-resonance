@@ -8,12 +8,12 @@ import { gsap } from "gsap"
 const EnhancedToastProvider = ToastPrimitive.Provider
 
 const enhancedToastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-lg border-2 px-4 py-3 shadow-lg transition-all",
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-lg border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none",
   {
     variants: {
       variant: {
         default: "border-slate-700 bg-slate-800 text-slate-200",
-        success: "border-green-500/30 bg-green-900/20 text-green-200 shadow-green-500/20",
+        success: "border-blue-500/30 bg-slate-800 text-slate-200 shadow-blue-500/20",
         destructive: "destructive group border-destructive bg-destructive text-destructive-foreground",
       },
     },
@@ -52,10 +52,14 @@ const EnhancedToast = React.forwardRef<
 
   return (
     <ToastPrimitive.Root
-      ref={toastRef}
+      ref={ref}
       className={cn(enhancedToastVariants({ variant }), className)}
       {...props}
-    />
+    >
+      <div ref={toastRef} className="w-full">
+        {props.children}
+      </div>
+    </ToastPrimitive.Root>
   )
 })
 EnhancedToast.displayName = ToastPrimitive.Root.displayName
@@ -121,8 +125,8 @@ EnhancedToastDescription.displayName = ToastPrimitive.Description.displayName
 const SuccessToast = ({ title, description }: { title: string; description: string }) => {
   return (
     <div className="flex items-center space-x-4">
-      <div className="w-10 h-10 rounded-full border-2 border-green-400 flex items-center justify-center bg-green-500/20">
-        <div className="w-4 h-4 rounded-full bg-green-400 animate-pulse" />
+      <div className="w-10 h-10 rounded-full border-2 border-blue-400 flex items-center justify-center bg-blue-500/20">
+        <div className="w-4 h-4 rounded-full bg-blue-400 animate-pulse" />
       </div>
       <div className="flex-1">
         <EnhancedToastTitle>{title}</EnhancedToastTitle>
