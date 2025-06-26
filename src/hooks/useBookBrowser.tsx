@@ -13,24 +13,33 @@ export const useBookBrowser = () => {
   const [previouslyShownBooks, setPreviouslyShownBooks] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
-  // Optimized search terms for better performance
+  // More specific sci-fi search terms
   const searchTerms = useMemo(() => [
-    'science fiction', 'cyberpunk', 'space opera', 'dystopian fiction',
-    'time travel', 'artificial intelligence', 'space exploration',
-    'hard science fiction', 'biopunk', 'steampunk', 'alternate history'
+    'cyberpunk science fiction',
+    'space opera sci-fi',
+    'dystopian science fiction',
+    'time travel sci-fi',
+    'artificial intelligence fiction',
+    'hard science fiction',
+    'biopunk sci-fi',
+    'steampunk science fiction',
+    'alternate history sci-fi',
+    'post-apocalyptic science fiction',
+    'interstellar science fiction',
+    'genetic engineering sci-fi'
   ], []);
 
-  // Optimized loading function
+  // Optimized loading function with better sci-fi filtering
   const debouncedLoadBooks = useMemo(
     () => debounce(async () => {
-      console.log('Loading books...');
+      console.log('Loading sci-fi books...');
       setLoading(true);
       setVisibleBooks(new Set());
       
       try {
         let allBooks: EnhancedBookSuggestion[] = [];
         let attempts = 0;
-        const maxAttempts = 6; // Reduced for better performance
+        const maxAttempts = 8; // Increased to get more results after filtering
         
         while (allBooks.length < 18 && attempts < maxAttempts) {
           const termIndex = attempts % searchTerms.length;
@@ -38,7 +47,8 @@ export const useBookBrowser = () => {
           const startIndex = Math.floor(attempts / searchTerms.length) * 10;
           
           try {
-            const results = await searchBooksEnhanced(term, 10, startIndex);
+            console.log(`Searching for: "${term}" (attempt ${attempts + 1})`);
+            const results = await searchBooksEnhanced(term, 15, startIndex); // Increased count
             
             if (results.length > 0) {
               const newBooks = results.filter(book => 
@@ -47,6 +57,7 @@ export const useBookBrowser = () => {
                 !previouslyShownBooks.has(book.id)
               );
               
+              console.log(`Found ${newBooks.length} new sci-fi books for "${term}"`);
               allBooks.push(...newBooks);
             }
           } catch (searchError) {
@@ -55,7 +66,7 @@ export const useBookBrowser = () => {
           
           attempts++;
           // Reduced delay for better performance
-          await new Promise(resolve => setTimeout(resolve, 30));
+          await new Promise(resolve => setTimeout(resolve, 50));
         }
         
         if (allBooks.length > 0) {
@@ -68,27 +79,26 @@ export const useBookBrowser = () => {
           const newBookIds = new Set(shuffled.map(book => book.id));
           setPreviouslyShownBooks(prev => new Set([...prev, ...newBookIds]));
           
-          // Removed the toast notification
-          console.log(`Loaded ${shuffled.length} new sci-fi books`);
+          console.log(`Loaded ${shuffled.length} sci-fi books`);
         } else {
           if (previouslyShownBooks.size > 0) {
             setPreviouslyShownBooks(new Set());
             toast({
               title: "Refreshing Library",
-              description: "Cleared viewing history to show fresh recommendations.",
+              description: "Cleared viewing history to show fresh sci-fi recommendations.",
             });
             setBooks([]);
           } else {
             setBooks([]);
             toast({
-              title: "No Books Found",
+              title: "No Sci-Fi Books Found",
               description: "Unable to load sci-fi books. Please try again.",
               variant: "destructive",
             });
           }
         }
       } catch (error) {
-        console.error('Error loading books:', error);
+        console.error('Error loading sci-fi books:', error);
         setBooks([]);
         toast({
           title: "Loading Error",

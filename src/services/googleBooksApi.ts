@@ -39,16 +39,81 @@ export interface EnhancedBookSuggestion {
 // Memoized search function for better performance
 const memoizedSearchBooks = memoize(searchGoogleBooks);
 
+// Enhanced sci-fi filtering function
+const isSciFiBook = (book: any): boolean => {
+  const sciFiKeywords = [
+    'science fiction', 'sci-fi', 'cyberpunk', 'dystopian', 'utopian',
+    'space opera', 'time travel', 'artificial intelligence', 'robot',
+    'android', 'cyborg', 'alien', 'extraterrestrial', 'space',
+    'future', 'futuristic', 'dystopia', 'utopia', 'post-apocalyptic',
+    'steampunk', 'biopunk', 'nanopunk', 'alternate history',
+    'virtual reality', 'genetic engineering', 'bioengineering',
+    'terraforming', 'interstellar', 'galactic', 'quantum',
+    'dimensional', 'parallel universe', 'multiverse'
+  ];
+
+  const antiKeywords = [
+    'climate policy', 'economics', 'politics', 'business',
+    'self-help', 'biography', 'memoir', 'history',
+    'religion', 'philosophy', 'psychology', 'sociology',
+    'anthropology', 'education', 'health', 'medical',
+    'cookbook', 'travel', 'romance', 'mystery',
+    'thriller', 'horror', 'western', 'historical fiction',
+    'literary fiction', 'young adult', 'children',
+    'textbook', 'academic', 'reference'
+  ];
+
+  // Check categories first (most reliable)
+  if (book.categories && Array.isArray(book.categories)) {
+    const categoryText = book.categories.join(' ').toLowerCase();
+    
+    // Reject if contains anti-keywords in categories
+    if (antiKeywords.some(keyword => categoryText.includes(keyword))) {
+      return false;
+    }
+    
+    // Accept if contains sci-fi keywords in categories
+    if (sciFiKeywords.some(keyword => categoryText.includes(keyword))) {
+      return true;
+    }
+  }
+
+  // Check title and description
+  const searchText = [
+    book.title || '',
+    book.subtitle || '',
+    book.description || ''
+  ].join(' ').toLowerCase();
+
+  // Reject if contains strong anti-indicators
+  const strongAntiKeywords = [
+    'climate policy', 'economic analysis', 'political economy',
+    'business strategy', 'policy making', 'government policy'
+  ];
+  
+  if (strongAntiKeywords.some(keyword => searchText.includes(keyword))) {
+    return false;
+  }
+
+  // Accept if contains sci-fi indicators
+  return sciFiKeywords.some(keyword => searchText.includes(keyword));
+};
+
 export const searchBooks = async (query: string): Promise<Book[]> => {
   try {
-    const books = await memoizedSearchBooks(query, 10);
-    return books.map(book => ({
-      id: book.id,
-      title: book.title,
-      author: book.author,
-      coverUrl: book.coverUrl,
-      subtitle: book.subtitle
-    }));
+    // Add sci-fi specific terms to the query
+    const sciFiQuery = `${query} science fiction OR sci-fi OR cyberpunk OR dystopian OR space opera`;
+    const books = await memoizedSearchBooks(sciFiQuery, 10);
+    
+    return books
+      .filter(book => isSciFiBook(book))
+      .map(book => ({
+        id: book.id,
+        title: book.title,
+        author: book.author,
+        coverUrl: book.coverUrl,
+        subtitle: book.subtitle
+      }));
   } catch (error) {
     console.error('Error searching books:', error);
     return [];
@@ -57,12 +122,12 @@ export const searchBooks = async (query: string): Promise<Book[]> => {
 
 export const searchBooksEnhanced = async (query: string, maxResults = 10, startIndex = 0): Promise<EnhancedBookSuggestion[]> => {
   try {
-    // Use cache key that includes startIndex for better caching
-    const cacheKey = `${query}-${maxResults}-${startIndex}`;
-    const books = await searchGoogleBooks(query, maxResults);
+    // Enhanced sci-fi specific query
+    const sciFiQuery = `${query} science fiction OR sci-fi OR cyberpunk OR dystopian OR space opera OR futuristic`;
+    const books = await searchGoogleBooks(sciFiQuery, maxResults);
     
     return books
-      .filter(book => book.title && book.author) // Filter out incomplete books
+      .filter(book => book.title && book.author && isSciFiBook(book))
       .map(book => ({
         id: book.id,
         title: book.title,
