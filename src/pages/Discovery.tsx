@@ -27,9 +27,9 @@ const Discovery = () => {
             <p className="text-sm text-slate-400 mb-2">for the future-literate</p>
             
             <div className="flex items-center justify-center space-x-2 mb-8">
-              <div className="hero-dot w-2 h-2 bg-blue-400 rounded-full" />
-              <div className="hero-dot w-2 h-2 bg-blue-300 rounded-full" />
-              <div className="hero-dot w-2 h-2 bg-blue-200 rounded-full" />
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+              <div className="w-2 h-2 bg-blue-300 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
+              <div className="w-2 h-2 bg-blue-200 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
             </div>
             
             <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed mb-4">
@@ -45,9 +45,9 @@ const Discovery = () => {
             <div ref={addFeatureBlockRef} className="feature-block">
               <Link 
                 to="/library" 
-                className="feature-link group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10 flex items-center space-x-6 w-full"
+                className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10 flex items-center space-x-6 w-full"
               >
-                <div className="feature-icon w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
                   <BookOpen className="w-6 h-6 text-blue-400" />
                 </div>
                 <div>
@@ -62,9 +62,9 @@ const Discovery = () => {
             <div ref={addFeatureBlockRef} className="feature-block">
               <Link 
                 to="/book-browser" 
-                className="feature-link group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10 flex items-center space-x-6 w-full"
+                className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10 flex items-center space-x-6 w-full"
               >
-                <div className="feature-icon w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
                   <Search className="w-6 h-6 text-blue-400" />
                 </div>
                 <div>
@@ -79,9 +79,9 @@ const Discovery = () => {
             <div ref={addFeatureBlockRef} className="feature-block">
               <Link 
                 to="/author-matrix" 
-                className="feature-link group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10 flex items-center space-x-6 w-full"
+                className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10 flex items-center space-x-6 w-full"
               >
-                <div className="feature-icon w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
                   <Eye className="w-6 h-6 text-blue-400" />
                 </div>
                 <div>
@@ -96,9 +96,9 @@ const Discovery = () => {
             <div ref={addFeatureBlockRef} className="feature-block">
               <Link 
                 to="/thread-map" 
-                className="feature-link group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10 flex items-center space-x-6 w-full"
+                className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10 flex items-center space-x-6 w-full"
               >
-                <div className="feature-icon w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
                   <Map className="w-6 h-6 text-blue-400" />
                 </div>
                 <div>
@@ -113,9 +113,9 @@ const Discovery = () => {
             <div ref={addFeatureBlockRef} className="feature-block">
               <Link 
                 to="/publisher-resonance" 
-                className="feature-link group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-purple-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-purple-500/10 flex items-center space-x-6 w-full"
+                className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-purple-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-purple-500/10 flex items-center space-x-6 w-full"
               >
-                <div className="feature-icon w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
+                <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
                   <Building className="w-6 h-6 text-purple-400" />
                 </div>
                 <div>
@@ -130,9 +130,9 @@ const Discovery = () => {
             <div ref={addFeatureBlockRef} className="feature-block">
               <Link 
                 to="/test-brain" 
-                className="feature-link group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-cyan-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-cyan-500/10 flex items-center space-x-6 w-full"
+                className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-cyan-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-cyan-500/10 flex items-center space-x-6 w-full"
               >
-                <div className="feature-icon w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center group-hover:bg-cyan-500/30 transition-colors">
+                <div className="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center group-hover:bg-cyan-500/30 transition-colors">
                   <Brain className="w-6 h-6 text-cyan-400" />
                 </div>
                 <div>
@@ -147,7 +147,7 @@ const Discovery = () => {
 
           <div ref={addFeatureBlockRef} className="feature-block text-center mt-16">
             <div className="flex items-center justify-center space-x-4 text-slate-500 text-xs">
-              <div className="status-dot w-2 h-2 bg-blue-400 rounded-full" />
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
               <span>Neural pathways: Initializing</span>
               <div className="w-1 h-1 bg-slate-600 rounded-full" />
               <span>Consciousness Record: Standby</span>
