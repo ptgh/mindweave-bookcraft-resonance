@@ -75,16 +75,16 @@ const MindMap: React.FC<MindMapProps> = ({ transmissions }) => {
         )}
       </svg>
 
-      {/* Central consciousness node */}
+      {/* Central consciousness node - centered with consistent border */}
       <div 
-        className="absolute transform -translate-x-1/2 -translate-y-1/2 bg-blue-500 rounded-full w-8 h-8 shadow-lg border border-blue-300 animate-pulse"
+        className="absolute bg-blue-500 rounded-full w-8 h-8 shadow-lg border-2 border-blue-300 animate-pulse flex items-center justify-center"
         style={{ 
-          left: centerX, 
-          top: centerY,
+          left: centerX - 16, 
+          top: centerY - 16,
           animationDuration: '2s'
         }}
       >
-        <div className="w-full h-full bg-blue-400 rounded-full animate-ping opacity-30"></div>
+        <div className="w-4 h-4 bg-blue-400 rounded-full animate-ping opacity-30"></div>
       </div>
 
       {/* Tag cluster nodes */}
@@ -92,15 +92,15 @@ const MindMap: React.FC<MindMapProps> = ({ transmissions }) => {
         <div key={tag}>
           {/* Tag cluster center */}
           <div 
-            className="absolute transform -translate-x-1/2 -translate-y-1/2 bg-purple-600 rounded-full w-6 h-6 shadow-md border border-purple-400 animate-pulse"
+            className="absolute bg-purple-600 rounded-full w-6 h-6 shadow-md border-2 border-purple-400 animate-pulse flex items-center justify-center"
             style={{ 
-              left: x, 
-              top: y,
+              left: x - 12, 
+              top: y - 12,
               animationDelay: `${index * 0.3}s`,
               animationDuration: `${2.5 + Math.random()}s`
             }}
           >
-            <div className="w-full h-full bg-purple-400 rounded-full animate-ping opacity-20"></div>
+            <div className="w-3 h-3 bg-purple-400 rounded-full animate-ping opacity-20"></div>
           </div>
           
           {/* Individual book nodes around each tag cluster */}
@@ -112,15 +112,15 @@ const MindMap: React.FC<MindMapProps> = ({ transmissions }) => {
             return (
               <div
                 key={book.id}
-                className="absolute transform -translate-x-1/2 -translate-y-1/2 bg-slate-700 rounded-full w-3 h-3 shadow-sm border border-slate-600 animate-pulse"
+                className="absolute bg-slate-700 rounded-full w-3 h-3 shadow-sm border border-slate-600 animate-pulse flex items-center justify-center"
                 style={{ 
-                  left: bookX, 
-                  top: bookY,
+                  left: bookX - 6, 
+                  top: bookY - 6,
                   animationDelay: `${bookIndex * 0.2 + Math.random()}s`,
                   animationDuration: `${3 + Math.random() * 2}s`
                 }}
               >
-                <div className="w-2 h-2 bg-green-400 rounded-full mx-auto mt-0.5 animate-ping opacity-40"></div>
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-ping opacity-40"></div>
               </div>
             );
           })}
