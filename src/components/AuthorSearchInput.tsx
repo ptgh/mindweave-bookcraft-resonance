@@ -96,9 +96,6 @@ const AuthorSearchInput = ({
     setSuggestions([]);
     setShowSuggestions(false);
     
-    // Clear the input value to hide suggestions completely
-    onValueChange('');
-    
     // Notify parent component of selection
     onAuthorSelect(author);
     
