@@ -97,6 +97,7 @@ const ContactModal = ({ isOpen, onClose }: ContactModalProps) => {
               name="email"
               type="email"
               required
+              autoComplete="off"
               value={formData.email}
               onChange={handleChange}
               className="bg-slate-700 border-slate-600 text-slate-200 focus:border-blue-400"
