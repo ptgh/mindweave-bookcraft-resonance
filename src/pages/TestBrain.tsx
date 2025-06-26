@@ -933,9 +933,6 @@ const TestBrain = () => {
               </Badge>
             ))}
           </div>
-          <div className="text-cyan-400/70 text-xs">
-            Click tags to remap connections • {activeFilters.length > 0 ? 'Filtered view' : 'All connections'}
-          </div>
         </div>
 
         <div className="absolute top-4 right-4 z-20 text-cyan-400 text-sm">
