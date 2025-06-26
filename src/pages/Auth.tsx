@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import AuthForm from "@/components/AuthForm";
 import EmailConfirmationView from "@/components/EmailConfirmationView";
 import StatusIndicator from "@/components/StatusIndicator";
+import AnimatedLeafnodeLogo from "@/components/AnimatedLeafnodeLogo";
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -143,9 +143,7 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-cyan-400 flex items-center justify-center">
-            <div className="w-6 h-6 rounded-full border-2 border-cyan-400 animate-pulse" />
-          </div>
+          <AnimatedLeafnodeLogo />
           <h1 className="text-2xl sm:text-3xl font-light text-slate-200 mb-2 tracking-wider">
             LEAFNODE
           </h1>
