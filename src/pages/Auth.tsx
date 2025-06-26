@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -143,7 +144,9 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <AnimatedLeafnodeLogo />
+          <div className="flex justify-center mb-4">
+            <AnimatedLeafnodeLogo />
+          </div>
           <h1 className="text-2xl sm:text-3xl font-light text-slate-200 mb-2 tracking-wider">
             LEAFNODE
           </h1>
