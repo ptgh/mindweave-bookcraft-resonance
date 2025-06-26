@@ -1,3 +1,4 @@
+
 import Header from "@/components/Header";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
@@ -30,16 +31,6 @@ const Discovery = () => {
               <div className="w-2 h-2 bg-blue-300 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
               <div className="w-2 h-2 bg-blue-200 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
             </div>
-
-            <StandardButton
-              onClick={() => setShowContactModal(true)}
-              variant="standard"
-              size="default"
-              className="flex items-center space-x-2 mb-8"
-            >
-              <Mail className="w-4 h-4" />
-              <span>Contact</span>
-            </StandardButton>
             
             <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed mb-4">
               Mapping the narrative threads of consciousness
@@ -160,6 +151,16 @@ const Discovery = () => {
               <span>Neural pathways: Initializing</span>
               <div className="w-1 h-1 bg-slate-600 rounded-full" />
               <span>Consciousness Record: Standby</span>
+              <div className="w-1 h-1 bg-slate-600 rounded-full" />
+              <StandardButton
+                onClick={() => setShowContactModal(true)}
+                variant="standard"
+                size="sm"
+                className="flex items-center space-x-1 ml-2"
+              >
+                <Mail className="w-3 h-3" />
+                <span>Make Contact</span>
+              </StandardButton>
             </div>
           </div>
         </main>
