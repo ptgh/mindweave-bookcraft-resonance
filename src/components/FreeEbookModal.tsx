@@ -35,61 +35,49 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
         ref={contentRef}
-        className="max-w-md bg-slate-900/95 border-slate-700 text-slate-200"
+        className="max-w-md bg-slate-900/95 border-slate-700 text-slate-200 p-0"
       >
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-green-400" />
-            Free Download Available
-          </DialogTitle>
-          <DialogDescription className="text-slate-400">
-            "{title}" by {author} is available in the public domain
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-3">
-          {/* Only show Internet Archive with simplified styling */}
-          {ebookData.archive && (
-            <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover:bg-slate-800/70 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full border-2 border-blue-400 bg-blue-400/10" />
-                <div>
-                  <h4 className="font-medium text-slate-200">Internet Archive</h4>
-                  <p className="text-xs text-slate-400">Public domain digital library</p>
-                </div>
+        {/* Only show Internet Archive with simplified styling */}
+        {ebookData.archive && (
+          <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover:bg-slate-800/70 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full border-2 border-blue-400 bg-blue-400/10" />
+              <div>
+                <h4 className="font-medium text-slate-200">Internet Archive</h4>
+                <p className="text-xs text-slate-400">Public domain digital library</p>
               </div>
-              <button
-                onClick={() => openInNewTab(ebookData.archive.url)}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm text-slate-300 hover:text-slate-200 transition-colors"
-                title="View on Internet Archive"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span>View Book</span>
-              </button>
             </div>
-          )}
+            <button
+              onClick={() => openInNewTab(ebookData.archive.url)}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm text-slate-300 hover:text-slate-200 transition-colors"
+              title="View on Internet Archive"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span>View Book</span>
+            </button>
+          </div>
+        )}
 
-          {/* Show Project Gutenberg if Archive not available */}
-          {ebookData.gutenberg && !ebookData.archive && (
-            <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover:bg-slate-800/70 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full border-2 border-green-400 bg-green-400/10" />
-                <div>
-                  <h4 className="font-medium text-slate-200">Project Gutenberg</h4>
-                  <p className="text-xs text-slate-400">World's oldest digital library</p>
-                </div>
+        {/* Show Project Gutenberg if Archive not available */}
+        {ebookData.gutenberg && !ebookData.archive && (
+          <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover:bg-slate-800/70 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full border-2 border-green-400 bg-green-400/10" />
+              <div>
+                <h4 className="font-medium text-slate-200">Project Gutenberg</h4>
+                <p className="text-xs text-slate-400">World's oldest digital library</p>
               </div>
-              <button
-                onClick={() => openInNewTab(ebookData.gutenberg.url)}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm text-slate-300 hover:text-slate-200 transition-colors"
-                title="View on Project Gutenberg"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span>View Book</span>
-              </button>
             </div>
-          )}
-        </div>
+            <button
+              onClick={() => openInNewTab(ebookData.gutenberg.url)}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm text-slate-300 hover:text-slate-200 transition-colors"
+              title="View on Project Gutenberg"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span>View Book</span>
+            </button>
+          </div>
+        )}
 
         <button
           onClick={onClose}

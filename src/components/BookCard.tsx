@@ -78,16 +78,12 @@ const BookCard = ({
   const resonanceLabels = getResonanceLabels();
 
   return (
-    <div 
-      className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors relative group"
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
-    >
-      <div className="flex items-start space-x-4">
+    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors h-full flex flex-col">
+      <div className="flex items-start space-x-4 flex-1 mb-4">
         <EnhancedBookCover
           title={title}
           coverUrl={coverUrl}
-          className="w-12 h-16"
+          className="w-12 h-16 flex-shrink-0"
           lazy={true}
         />
         
@@ -96,12 +92,12 @@ const BookCard = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-start gap-2">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-slate-200 font-medium text-sm leading-tight">
+                  <h3 className="text-slate-200 font-medium text-sm leading-tight line-clamp-2 mb-1">
                     {title}
                   </h3>
-                  <p className="text-slate-400 text-xs mt-1">{author}</p>
+                  <p className="text-slate-400 text-xs mb-1">{author}</p>
                   {open_count && open_count > 0 && (
-                    <p className="text-slate-500 text-xs mt-1">Opened {open_count} time{open_count !== 1 ? 's' : ''}</p>
+                    <p className="text-slate-500 text-xs">Opened {open_count} time{open_count !== 1 ? 's' : ''}</p>
                   )}
                 </div>
                 <FreeEbookDownloadIcon 
@@ -112,7 +108,7 @@ const BookCard = ({
                 />
               </div>
             </div>
-            <div className={`w-3 h-3 rounded-full border-2 ${getStatusColor(status)} flex-shrink-0 ml-2`}>
+            <div className={`w-3 h-3 rounded-full border-2 ${getStatusColor(status)} flex-shrink-0`}>
               {status === "reading" && (
                 <div className="w-full h-full rounded-full bg-blue-400 animate-pulse" />
               )}
@@ -128,7 +124,7 @@ const BookCard = ({
           
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
-              {tags.slice(0, 3).map((tag, index) => (
+              {tags.slice(0, 2).map((tag, index) => (
                 <span
                   key={index}
                   className="px-2 py-1 bg-slate-700/50 text-slate-300 text-xs rounded-full"
@@ -136,9 +132,9 @@ const BookCard = ({
                   {tag}
                 </span>
               ))}
-              {tags.length > 3 && (
+              {tags.length > 2 && (
                 <span className="text-slate-400 text-xs px-2 py-1">
-                  +{tags.length - 3}
+                  +{tags.length - 2}
                 </span>
               )}
             </div>
@@ -158,39 +154,43 @@ const BookCard = ({
           )}
         </div>
       </div>
-
-      {/* Action buttons */}
-      {showActions && (
-        <div className="absolute bottom-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {onEdit && (
-            <button
-              onClick={onEdit}
-              className="p-1.5 bg-slate-700/80 hover:bg-slate-600 rounded text-slate-300 hover:text-blue-400 transition-colors"
-              title="Edit"
-            >
-              <Edit className="w-3 h-3" />
-            </button>
-          )}
-          {onKeep && (
-            <button
-              onClick={onKeep}
-              className="p-1.5 bg-slate-700/80 hover:bg-slate-600 rounded text-slate-300 hover:text-green-400 transition-colors"
-              title="Keep"
-            >
-              <Archive className="w-3 h-3" />
-            </button>
-          )}
-          {onDiscard && (
-            <button
-              onClick={onDiscard}
-              className="p-1.5 bg-slate-700/80 hover:bg-slate-600 rounded text-slate-300 hover:text-red-400 transition-colors"
-              title="Discard"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          )}
-        </div>
-      )}
+      
+      {/* Action buttons - moved to bottom horizontal layout */}
+      <div className="flex flex-row space-x-2">
+        {onEdit && (
+          <button
+            onClick={onEdit}
+            className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+            style={{ boxShadow: "0 0 0px transparent" }}
+            title="Edit"
+          >
+            <Edit className="w-3 h-3 mr-2 inline" />
+            Edit
+          </button>
+        )}
+        {onKeep && (
+          <button
+            onClick={onKeep}
+            className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+            style={{ boxShadow: "0 0 0px transparent" }}
+            title="Keep"
+          >
+            <Archive className="w-3 h-3 mr-2 inline" />
+            Keep
+          </button>
+        )}
+        {onDiscard && (
+          <button
+            onClick={onDiscard}
+            className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+            style={{ boxShadow: "0 0 0px transparent" }}
+            title="Discard"
+          >
+            <X className="w-3 h-3 mr-2 inline" />
+            Discard
+          </button>
+        )}
+      </div>
     </div>
   );
 };
