@@ -65,11 +65,11 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
 
   const getTooltipText = () => {
     if (ebookData.gutenberg && ebookData.archive) {
-      return "Download from Public Domain";
+      return "Public Domain";
     } else if (ebookData.gutenberg) {
-      return "Download from Project Gutenberg";
+      return "Project Gutenberg";
     } else {
-      return "Download from Internet Archive";
+      return "Internet Archive";
     }
   };
 
