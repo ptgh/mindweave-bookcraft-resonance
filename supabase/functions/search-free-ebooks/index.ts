@@ -73,10 +73,18 @@ serve(async (req) => {
         })
         
         if (bestMatch) {
+          // Clean and validate formats
+          const cleanFormats: Record<string, string> = {}
+          for (const [format, url] of Object.entries(bestMatch.formats)) {
+            if (typeof url === 'string' && url.startsWith('http')) {
+              cleanFormats[format.replace('application/', '').replace('text/', '')] = url
+            }
+          }
+          
           gutenbergResult = {
             url: `https://www.gutenberg.org/ebooks/${bestMatch.id}`,
             id: bestMatch.id.toString(),
-            formats: bestMatch.formats
+            formats: cleanFormats
           }
           console.log(`Found Gutenberg match: ${bestMatch.title}`)
         }
@@ -103,13 +111,23 @@ serve(async (req) => {
         })
         
         if (bestMatch) {
+          // Validate download URLs
+          const formats: Record<string, string> = {}
+          const baseUrl = `https://archive.org/download/${bestMatch.identifier}`
+          
+          // Check which formats are actually available
+          const availableFormats = Array.isArray(bestMatch.format) ? bestMatch.format : []
+          if (availableFormats.some(f => f.toLowerCase().includes('pdf'))) {
+            formats.pdf = `${baseUrl}/${bestMatch.identifier}.pdf`
+          }
+          if (availableFormats.some(f => f.toLowerCase().includes('epub'))) {
+            formats.epub = `${baseUrl}/${bestMatch.identifier}.epub`
+          }
+          
           archiveResult = {
             url: `https://archive.org/details/${bestMatch.identifier}`,
             id: bestMatch.identifier,
-            formats: {
-              pdf: `https://archive.org/download/${bestMatch.identifier}/${bestMatch.identifier}.pdf`,
-              epub: `https://archive.org/download/${bestMatch.identifier}/${bestMatch.identifier}.epub`
-            }
+            formats
           }
           console.log(`Found Archive match: ${bestMatch.title}`)
         }
@@ -136,9 +154,6 @@ serve(async (req) => {
               ...archiveResult?.formats
             },
             last_checked: new Date().toISOString()
-          }, {
-            onConflict: 'book_title,book_author',
-            ignoreDuplicates: false
           })
       } catch (dbError) {
         console.error('Database cache error:', dbError)

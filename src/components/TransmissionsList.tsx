@@ -57,14 +57,8 @@ const TransmissionsList = memo(({
     }
   };
 
-  // Memoize grid classes for better performance
-  const gridClasses = useMemo(() => {
-    // Adjust grid based on device type for better performance
-    if (optimizedSettings.reduceAnimations) {
-      return "grid gap-4 md:grid-cols-2"; // Simpler grid on mobile
-    }
-    return "grid gap-4 md:grid-cols-2 lg:grid-cols-3";
-  }, [optimizedSettings.reduceAnimations]);
+  // Use consistent grid layout without device optimizations
+  const gridClasses = "grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
 
   if (loading && optimisticTransmissions.length === 0) {
     return (

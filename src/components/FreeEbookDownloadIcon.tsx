@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Download, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { searchFreeEbooks, downloadFreeEbook, getPreferredDownloadUrl, EbookSearchResult } from "@/services/freeEbookService";
+import { searchFreeEbooks, EbookSearchResult } from "@/services/freeEbookService";
+import FreeEbookModal from "./FreeEbookModal";
 
 interface FreeEbookDownloadIconProps {
   title: string;
@@ -12,15 +12,13 @@ interface FreeEbookDownloadIconProps {
 
 const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEbookDownloadIconProps) => {
   const [ebookData, setEbookData] = useState<EbookSearchResult | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
     const searchForFreeEbooks = async () => {
-      setIsLoading(true);
       try {
         const result = await searchFreeEbooks(title, author, isbn);
         if (isMounted) {
@@ -45,50 +43,23 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
     };
   }, [title, author, isbn]);
 
-  const handleDownload = async () => {
-    if (!ebookData?.hasLinks) return;
-
-    setIsDownloading(true);
-    
-    try {
-      // Prefer Gutenberg over Archive
-      const source = ebookData.gutenberg || ebookData.archive;
-      if (!source) {
-        throw new Error('No download source available');
-      }
-
-      const downloadInfo = getPreferredDownloadUrl(source.formats);
-      if (!downloadInfo) {
-        throw new Error('No compatible format available');
-      }
-
-      const sourceType = ebookData.gutenberg ? 'gutenberg' : 'archive';
-      const filename = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.${downloadInfo.format}`;
-      
-      const success = await downloadFreeEbook(downloadInfo.url, filename, sourceType);
-      
-      if (success) {
-        toast({
-          title: "Download initiated",
-          description: `Free copy of "${title}" is being downloaded from ${sourceType === 'gutenberg' ? 'Project Gutenberg' : 'Internet Archive'}.`,
-        });
-      } else {
-        throw new Error('Download failed');
-      }
-    } catch (error) {
-      console.error('Download error:', error);
-      toast({
-        title: "Transmission link failed",
-        description: "Unable to access free copy. Try again later.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDownloading(false);
+  const handleClick = () => {
+    if (ebookData?.hasLinks) {
+      setIsModalOpen(true);
     }
   };
 
-  // Don't render if no links found or still loading
-  if (isLoading || !ebookData?.hasLinks) {
+  // Show loading state briefly, then hide if no links found
+  if (isLoading) {
+    return (
+      <div className={`p-1.5 ${className}`}>
+        <Loader2 className="w-4 h-4 animate-spin text-slate-500" />
+      </div>
+    );
+  }
+
+  // Don't render if no links found
+  if (!ebookData?.hasLinks) {
     return null;
   }
 
@@ -103,25 +74,30 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
   };
 
   return (
-    <button
-      onClick={handleDownload}
-      disabled={isDownloading}
-      className={`group relative p-1.5 text-slate-400 hover:text-green-400 transition-all duration-200 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
-      title={getTooltipText()}
-      aria-label={`Download free ebook: ${title}`}
-    >
-      {isDownloading ? (
-        <Loader2 className="w-4 h-4 animate-spin" />
-      ) : (
+    <>
+      <button
+        onClick={handleClick}
+        className={`group relative p-1.5 text-slate-400 hover:text-green-400 transition-all duration-200 hover:scale-110 ${className}`}
+        title={getTooltipText()}
+        aria-label={`Download free ebook: ${title}`}
+      >
         <Download className="w-4 h-4 group-hover:drop-shadow-[0_0_6px_rgba(34,197,94,0.4)] transition-all duration-200" />
-      )}
+        
+        {/* Tooltip */}
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-700 text-slate-200 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+          {getTooltipText()}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-slate-700"></div>
+        </div>
+      </button>
       
-      {/* Tooltip */}
-      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-700 text-slate-200 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-        {getTooltipText()}
-        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-slate-700"></div>
-      </div>
-    </button>
+      <FreeEbookModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={title}
+        author={author}
+        ebookData={ebookData}
+      />
+    </>
   );
 };
 
