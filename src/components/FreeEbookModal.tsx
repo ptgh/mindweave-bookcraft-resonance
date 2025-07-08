@@ -15,6 +15,7 @@ interface FreeEbookModalProps {
 
 const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbookModalProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadingFormat, setDownloadingFormat] = useState<string | null>(null);
   const { toast } = useToast();
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -27,30 +28,24 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
     }
   }, [isOpen]);
 
-  const handleDownload = async (source: 'gutenberg' | 'archive') => {
+  const handleDownload = async (source: 'gutenberg' | 'archive', format: string, url: string) => {
     if (!ebookData) return;
     
     setIsDownloading(true);
+    setDownloadingFormat(format);
+    
     try {
-      const sourceData = source === 'gutenberg' ? ebookData.gutenberg : ebookData.archive;
-      if (!sourceData) return;
-
-      const downloadInfo = getPreferredDownloadUrl(sourceData.formats);
-      if (!downloadInfo) {
-        throw new Error('No compatible format available');
-      }
-
       // Sanitize filename and ensure proper extension
       const cleanTitle = title.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
-      const filename = `${cleanTitle}.${downloadInfo.format}`;
+      const filename = `${cleanTitle}.${format}`;
       
-      console.log(`Attempting download: ${downloadInfo.url}`);
-      const success = await downloadFreeEbook(downloadInfo.url, filename, source);
+      console.log(`Attempting download: ${url} as ${format}`);
+      const success = await downloadFreeEbook(url, filename, source);
       
       if (success) {
         toast({
           title: "Download initiated",
-          description: `${downloadInfo.format.toUpperCase()} copy of "${title}" from ${source === 'gutenberg' ? 'Project Gutenberg' : 'Internet Archive'}.`,
+          description: `${format.toUpperCase()} copy of "${title}" from ${source === 'gutenberg' ? 'Project Gutenberg' : 'Internet Archive'}.`,
         });
         onClose();
       } else {
@@ -65,7 +60,45 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
       });
     } finally {
       setIsDownloading(false);
+      setDownloadingFormat(null);
     }
+  };
+
+  // Get available formats for a source
+  const getAvailableFormats = (formats: Record<string, string>) => {
+    const formatOrder = ['epub', 'pdf', 'txt'];
+    const availableFormats: Array<{format: string, url: string, label: string}> = [];
+    
+    formatOrder.forEach(format => {
+      const matchingKey = Object.keys(formats).find(key => 
+        key.toLowerCase().includes(format)
+      );
+      if (matchingKey && formats[matchingKey]) {
+        availableFormats.push({
+          format: format,
+          url: formats[matchingKey],
+          label: format.toUpperCase()
+        });
+      }
+    });
+    
+    // Add any other formats not in our priority list
+    Object.entries(formats).forEach(([key, url]) => {
+      if (!formatOrder.some(f => key.toLowerCase().includes(f))) {
+        const format = key.toLowerCase().includes('epub') ? 'epub' : 
+                     key.toLowerCase().includes('pdf') ? 'pdf' : 
+                     key.toLowerCase().includes('txt') ? 'txt' : key;
+        if (!availableFormats.some(f => f.format === format)) {
+          availableFormats.push({
+            format: format,
+            url: url,
+            label: format.toUpperCase()
+          });
+        }
+      }
+    });
+    
+    return availableFormats;
   };
 
   const openInNewTab = (url: string) => {
@@ -102,21 +135,27 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
               <p className="text-sm text-slate-400 mb-3">
                 High-quality digital editions from the world's oldest digital library
               </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleDownload('gutenberg')}
-                  disabled={isDownloading}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded text-sm font-medium transition-colors"
-                >
-                  <Download className="w-4 h-4" />
-                  Download
-                </button>
-                <button
-                  onClick={() => openInNewTab(ebookData.gutenberg!.url)}
-                  className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm transition-colors"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </button>
+              {/* Available formats */}
+              <div className="space-y-2">
+                {getAvailableFormats(ebookData.gutenberg.formats).map(({ format, url, label }) => (
+                  <div key={format} className="flex gap-2">
+                    <button
+                      onClick={() => handleDownload('gutenberg', format, url)}
+                      disabled={isDownloading}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded text-sm font-medium transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      {downloadingFormat === format ? 'Downloading...' : `Download ${label}`}
+                    </button>
+                    <button
+                      onClick={() => openInNewTab(ebookData.gutenberg!.url)}
+                      className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm transition-colors"
+                      title="View on Project Gutenberg"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -132,21 +171,27 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
               <p className="text-sm text-slate-400 mb-3">
                 Digitized books from libraries around the world
               </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleDownload('archive')}
-                  disabled={isDownloading}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded text-sm font-medium transition-colors"
-                >
-                  <Download className="w-4 h-4" />
-                  Download
-                </button>
-                <button
-                  onClick={() => openInNewTab(ebookData.archive!.url)}
-                  className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm transition-colors"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </button>
+              {/* Available formats */}
+              <div className="space-y-2">
+                {getAvailableFormats(ebookData.archive.formats).map(({ format, url, label }) => (
+                  <div key={format} className="flex gap-2">
+                    <button
+                      onClick={() => handleDownload('archive', format, url)}
+                      disabled={isDownloading}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded text-sm font-medium transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      {downloadingFormat === format ? 'Downloading...' : `Download ${label}`}
+                    </button>
+                    <button
+                      onClick={() => openInNewTab(ebookData.archive!.url)}
+                      className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm transition-colors"
+                      title="View on Internet Archive"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           )}

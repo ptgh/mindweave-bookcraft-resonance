@@ -134,7 +134,7 @@ export const searchFreeEbooks = async (
 };
 
 /**
- * Download a free ebook
+ * Download a free ebook using fetch to handle cross-origin issues
  */
 export const downloadFreeEbook = async (
   url: string,
@@ -142,24 +142,60 @@ export const downloadFreeEbook = async (
   source: 'gutenberg' | 'archive'
 ): Promise<boolean> => {
   try {
-    // Create a temporary anchor element to trigger download
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.target = '_blank';
+    console.log(`Attempting to download: ${url}`);
     
-    // Add to DOM temporarily
+    // Try to fetch the file and create a blob for download
+    const response = await fetch(url, {
+      mode: 'cors',
+      headers: {
+        'Accept': '*/*'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    link.style.display = 'none';
+    
+    // Add to DOM, click, and cleanup
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
-    // Track download for analytics
-    console.log(`Free ebook download initiated: ${filename} from ${source}`);
     
+    // Cleanup blob URL
+    window.URL.revokeObjectURL(blobUrl);
+    
+    console.log(`Free ebook download completed: ${filename} from ${source}`);
     return true;
   } catch (error) {
-    console.error('Error downloading free ebook:', error);
-    return false;
+    console.error('Blob download failed, trying direct link:', error);
+    
+    // Fallback to direct link if fetch fails
+    try {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      console.log(`Direct link download initiated: ${filename} from ${source}`);
+      return true;
+    } catch (fallbackError) {
+      console.error('Error downloading free ebook:', fallbackError);
+      return false;
+    }
   }
 };
 
