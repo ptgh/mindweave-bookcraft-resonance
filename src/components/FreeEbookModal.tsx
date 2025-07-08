@@ -40,22 +40,27 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
         throw new Error('No compatible format available');
       }
 
-      const filename = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.${downloadInfo.format}`;
+      // Sanitize filename and ensure proper extension
+      const cleanTitle = title.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
+      const filename = `${cleanTitle}.${downloadInfo.format}`;
+      
+      console.log(`Attempting download: ${downloadInfo.url}`);
       const success = await downloadFreeEbook(downloadInfo.url, filename, source);
       
       if (success) {
         toast({
           title: "Download initiated",
-          description: `Free copy of "${title}" is being downloaded from ${source === 'gutenberg' ? 'Project Gutenberg' : 'Internet Archive'}.`,
+          description: `${downloadInfo.format.toUpperCase()} copy of "${title}" from ${source === 'gutenberg' ? 'Project Gutenberg' : 'Internet Archive'}.`,
         });
         onClose();
       } else {
         throw new Error('Download failed');
       }
     } catch (error) {
+      console.error('Download error:', error);
       toast({
         title: "Transmission link failed",
-        description: "Unable to access free copy. Try again later.",
+        description: "Unable to access free copy. Try the external link instead.",
         variant: "destructive",
       });
     } finally {

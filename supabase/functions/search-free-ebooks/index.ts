@@ -73,11 +73,15 @@ serve(async (req) => {
         })
         
         if (bestMatch) {
-          // Clean and validate formats
+          // Clean and validate formats, prioritize direct download links
           const cleanFormats: Record<string, string> = {}
           for (const [format, url] of Object.entries(bestMatch.formats)) {
             if (typeof url === 'string' && url.startsWith('http')) {
-              cleanFormats[format.replace('application/', '').replace('text/', '')] = url
+              const cleanFormat = format.replace('application/', '').replace('text/', '')
+              // Only include downloadable formats
+              if (cleanFormat.includes('epub') || cleanFormat.includes('pdf') || cleanFormat.includes('txt')) {
+                cleanFormats[cleanFormat] = url
+              }
             }
           }
           
@@ -111,17 +115,22 @@ serve(async (req) => {
         })
         
         if (bestMatch) {
-          // Validate download URLs
+          // Build direct download URLs for Internet Archive
           const formats: Record<string, string> = {}
           const baseUrl = `https://archive.org/download/${bestMatch.identifier}`
           
-          // Check which formats are actually available
+          // Check which formats are actually available and build direct download URLs
           const availableFormats = Array.isArray(bestMatch.format) ? bestMatch.format : []
+          
+          // Prioritize ePub, then PDF, then TXT
+          if (availableFormats.some(f => f.toLowerCase().includes('epub'))) {
+            formats.epub = `${baseUrl}/${bestMatch.identifier}.epub`
+          }
           if (availableFormats.some(f => f.toLowerCase().includes('pdf'))) {
             formats.pdf = `${baseUrl}/${bestMatch.identifier}.pdf`
           }
-          if (availableFormats.some(f => f.toLowerCase().includes('epub'))) {
-            formats.epub = `${baseUrl}/${bestMatch.identifier}.epub`
+          if (availableFormats.some(f => f.toLowerCase().includes('txt'))) {
+            formats.txt = `${baseUrl}/${bestMatch.identifier}.txt`
           }
           
           archiveResult = {

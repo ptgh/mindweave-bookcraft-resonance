@@ -167,19 +167,27 @@ export const downloadFreeEbook = async (
  * Get preferred download format and URL
  */
 export const getPreferredDownloadUrl = (formats: Record<string, string>): { url: string; format: string } | null => {
-  // Preference order: EPUB > PDF > TXT > HTML
-  const preferenceOrder = ['epub', 'pdf', 'txt', 'html'];
+  // Preference order: EPUB > PDF > TXT for better compatibility
+  const preferenceOrder = ['epub', 'pdf', 'txt'];
   
   for (const format of preferenceOrder) {
-    if (formats[format]) {
-      return { url: formats[format], format };
+    // Check for exact match or partial match (e.g., 'epub.noimages', 'pdf.compressed')
+    const matchingFormat = Object.keys(formats).find(key => 
+      key.toLowerCase().includes(format.toLowerCase())
+    );
+    
+    if (matchingFormat && formats[matchingFormat]) {
+      return { url: formats[matchingFormat], format: format };
     }
   }
   
   // If no preferred format, return first available
   const firstFormat = Object.keys(formats)[0];
   if (firstFormat) {
-    return { url: formats[firstFormat], format: firstFormat };
+    const cleanFormat = firstFormat.toLowerCase().includes('epub') ? 'epub' : 
+                       firstFormat.toLowerCase().includes('pdf') ? 'pdf' : 
+                       firstFormat.toLowerCase().includes('txt') ? 'txt' : firstFormat;
+    return { url: formats[firstFormat], format: cleanFormat };
   }
   
   return null;

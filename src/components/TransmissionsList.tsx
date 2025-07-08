@@ -57,8 +57,8 @@ const TransmissionsList = memo(({
     }
   };
 
-  // Use consistent grid layout without device optimizations
-  const gridClasses = "grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+  // Match Signal Archive layout: 3 columns max for proper breathing room
+  const gridClasses = "grid gap-4 md:grid-cols-2 lg:grid-cols-3";
 
   if (loading && optimisticTransmissions.length === 0) {
     return (
