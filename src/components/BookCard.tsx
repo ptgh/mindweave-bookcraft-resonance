@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Edit, Archive, X } from "lucide-react";
 import PublisherResonanceBadge from "./PublisherResonanceBadge";
 import EnhancedBookCover from "./EnhancedBookCover";
+import FreeEbookDownloadIcon from "./FreeEbookDownloadIcon";
 
 interface BookCardProps {
   id: number;
@@ -92,16 +93,26 @@ const BookCard = ({
         
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between">
-            <div>
-              <h3 className="text-slate-200 font-medium text-sm leading-tight">
-                {title}
-              </h3>
-              <p className="text-slate-400 text-xs mt-1">{author}</p>
-              {open_count && open_count > 0 && (
-                <p className="text-slate-500 text-xs mt-1">Opened {open_count} time{open_count !== 1 ? 's' : ''}</p>
-              )}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start gap-2">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-slate-200 font-medium text-sm leading-tight">
+                    {title}
+                  </h3>
+                  <p className="text-slate-400 text-xs mt-1">{author}</p>
+                  {open_count && open_count > 0 && (
+                    <p className="text-slate-500 text-xs mt-1">Opened {open_count} time{open_count !== 1 ? 's' : ''}</p>
+                  )}
+                </div>
+                <FreeEbookDownloadIcon 
+                  title={title} 
+                  author={author} 
+                  isbn={isbn}
+                  className="flex-shrink-0 mt-0.5"
+                />
+              </div>
             </div>
-            <div className={`w-3 h-3 rounded-full border-2 ${getStatusColor(status)} flex-shrink-0`}>
+            <div className={`w-3 h-3 rounded-full border-2 ${getStatusColor(status)} flex-shrink-0 ml-2`}>
               {status === "reading" && (
                 <div className="w-full h-full rounded-full bg-blue-400 animate-pulse" />
               )}

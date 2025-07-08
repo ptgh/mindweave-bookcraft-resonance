@@ -113,6 +113,7 @@ const TransmissionsList = memo(({
             rating={book.rating}
             coverUrl={book.cover_url}
             publisher_series={book.publisher_series}
+            isbn={book.isbn}
             onEdit={() => onEdit(book)}
             onKeep={() => onKeep(book)}
             onDiscard={() => handleDiscard(book)}
