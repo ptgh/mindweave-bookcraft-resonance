@@ -2,7 +2,7 @@
 import { memo, useState, useEffect, useRef } from "react";
 import { EnhancedBookSuggestion } from "@/services/googleBooksApi";
 import EnhancedBookCover from "./EnhancedBookCover";
-import GoogleBooksPopup from "./GoogleBooksPopup";
+import EnhancedBookPreviewModal from "./EnhancedBookPreviewModal";
 import { Button } from "./ui/button";
 import { Plus } from "lucide-react";
 import { useDeepLinking } from "@/hooks/useDeepLinking";
@@ -18,17 +18,7 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
   const { getDeepLink } = useDeepLinking();
   const previewButtonsRef = useRef<HTMLButtonElement[]>([]);
   const addButtonsRef = useRef<HTMLButtonElement[]>([]);
-  const [popupData, setPopupData] = useState<{
-    isOpen: boolean;
-    bookTitle: string;
-    bookAuthor: string;
-    previewUrl: string;
-  }>({
-    isOpen: false,
-    bookTitle: "",
-    bookAuthor: "",
-    previewUrl: ""
-  });
+  const [selectedBookForPreview, setSelectedBookForPreview] = useState<any>(null);
 
   // Add buttons to refs array
   const addToRefs = (el: HTMLButtonElement | null) => {
@@ -110,28 +100,23 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
     };
   }, [books]);
 
-  const handleGoogleBooksClick = (book: EnhancedBookSuggestion) => {
-    const deepLink = getDeepLink(book);
-    if (deepLink && deepLink.url) {
-      console.log('Opening Google Books popup with URL:', deepLink.url);
-      setPopupData({
-        isOpen: true,
-        bookTitle: book.title,
-        bookAuthor: book.author || 'Unknown Author',
-        previewUrl: deepLink.url
-      });
-    } else {
-      console.log('No deep link available for book:', book.title);
-    }
+  const handleBookPreview = (book: EnhancedBookSuggestion) => {
+    // Convert EnhancedBookSuggestion to EnrichedPublisherBook format
+    const enrichedBook = {
+      id: book.id,
+      title: book.title,
+      author: book.author,
+      cover_url: book.coverUrl,
+      editorial_note: book.description,
+      isbn: null, // EnhancedBookSuggestion doesn't have ISBN
+      series_id: '',
+      created_at: ''
+    };
+    setSelectedBookForPreview(enrichedBook);
   };
 
-  const closePopup = () => {
-    setPopupData({
-      isOpen: false,
-      bookTitle: "",
-      bookAuthor: "",
-      previewUrl: ""
-    });
+  const closePreview = () => {
+    setSelectedBookForPreview(null);
   };
 
   return (
@@ -210,7 +195,7 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        handleGoogleBooksClick(book);
+                        handleBookPreview(book);
                       }}
                       className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
                       title="Preview book"
@@ -228,13 +213,33 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
         })}
       </div>
 
-      <GoogleBooksPopup
-        isOpen={popupData.isOpen}
-        onClose={closePopup}
-        bookTitle={popupData.bookTitle}
-        bookAuthor={popupData.bookAuthor}
-        previewUrl={popupData.previewUrl}
-      />
+      {selectedBookForPreview && (
+        <EnhancedBookPreviewModal
+          book={selectedBookForPreview}
+          onClose={closePreview}
+          onAddBook={(book) => {
+            // Convert back to EnhancedBookSuggestion format
+            const enhancedBook: EnhancedBookSuggestion = {
+              id: book.id,
+              title: book.title,
+              author: book.author,
+              coverUrl: book.cover_url,
+              thumbnailUrl: book.cover_url,
+              smallThumbnailUrl: book.cover_url,
+              categories: [],
+              description: book.editorial_note,
+              subtitle: '',
+              publishedDate: '',
+              pageCount: 0,
+              rating: 0,
+              ratingsCount: 0,
+              previewLink: '',
+              infoLink: ''
+            };
+            onAddToTransmissions(enhancedBook);
+          }}
+        />
+      )}
     </>
   );
 });

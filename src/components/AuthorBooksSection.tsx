@@ -8,7 +8,7 @@ import { memo, useState, useEffect, useRef } from "react";
 import { Plus } from "lucide-react";
 import { useDeepLinking } from "@/hooks/useDeepLinking";
 import { gsap } from "gsap";
-import GoogleBooksPopup from "./GoogleBooksPopup";
+import EnhancedBookPreviewModal from "./EnhancedBookPreviewModal";
 import EnhancedBookCover from "./EnhancedBookCover";
 
 interface AuthorBooksSectionProps {
@@ -27,17 +27,7 @@ const AuthorBooksSection = memo(({
   const { getDeepLink } = useDeepLinking();
   const previewButtonsRef = useRef<HTMLButtonElement[]>([]);
   const addButtonsRef = useRef<HTMLButtonElement[]>([]);
-  const [popupData, setPopupData] = useState<{
-    isOpen: boolean;
-    bookTitle: string;
-    bookAuthor: string;
-    previewUrl: string;
-  }>({
-    isOpen: false,
-    bookTitle: "",
-    bookAuthor: "",
-    previewUrl: ""
-  });
+  const [selectedBookForPreview, setSelectedBookForPreview] = useState<any>(null);
 
   // Add buttons to refs array
   const addToRefs = (el: HTMLButtonElement | null) => {
@@ -119,47 +109,23 @@ const AuthorBooksSection = memo(({
     };
   }, [authorBooks]);
 
-  const handleGoogleBooksClick = (book: AuthorBook) => {
-    // Convert AuthorBook to the format expected by getDeepLink
-    const bookForDeepLink = {
-      id: book.google_books_id,
+  const handleBookPreview = (book: AuthorBook) => {
+    // Convert AuthorBook to EnrichedPublisherBook format
+    const enrichedBook = {
+      id: book.id,
       title: book.title,
       author: selectedAuthor?.name || 'Unknown Author',
-      coverUrl: book.cover_url,
-      thumbnailUrl: book.cover_url,
-      smallThumbnailUrl: book.cover_url,
-      categories: book.categories,
-      description: book.description,
-      subtitle: book.subtitle,
-      publishedDate: book.published_date,
-      pageCount: book.page_count,
-      rating: book.rating,
-      ratingsCount: book.ratings_count,
-      previewLink: book.preview_link,
-      infoLink: book.info_link
+      cover_url: book.cover_url,
+      editorial_note: book.description,
+      isbn: null, // AuthorBook doesn't have ISBN
+      series_id: '',
+      created_at: ''
     };
-
-    const deepLink = getDeepLink(bookForDeepLink);
-    if (deepLink && deepLink.url) {
-      console.log('Opening Google Books popup with URL:', deepLink.url);
-      setPopupData({
-        isOpen: true,
-        bookTitle: book.title,
-        bookAuthor: selectedAuthor?.name || 'Unknown Author',
-        previewUrl: deepLink.url
-      });
-    } else {
-      console.log('No deep link available for book:', book.title);
-    }
+    setSelectedBookForPreview(enrichedBook);
   };
 
-  const closePopup = () => {
-    setPopupData({
-      isOpen: false,
-      bookTitle: "",
-      bookAuthor: "",
-      previewUrl: ""
-    });
+  const closePreview = () => {
+    setSelectedBookForPreview(null);
   };
 
   if (!selectedAuthor) {
@@ -274,7 +240,7 @@ const AuthorBooksSection = memo(({
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              handleGoogleBooksClick(book);
+                              handleBookPreview(book);
                             }}
                             className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
                             title="Preview book"
@@ -301,13 +267,34 @@ const AuthorBooksSection = memo(({
         </div>
       </div>
 
-      <GoogleBooksPopup
-        isOpen={popupData.isOpen}
-        onClose={closePopup}
-        bookTitle={popupData.bookTitle}
-        bookAuthor={popupData.bookAuthor}
-        previewUrl={popupData.previewUrl}
-      />
+      {selectedBookForPreview && (
+        <EnhancedBookPreviewModal
+          book={selectedBookForPreview}
+          onClose={closePreview}
+          onAddBook={(book) => {
+            // Convert back to AuthorBook format
+            const authorBook: AuthorBook = {
+              id: book.id,
+              title: book.title,
+              author_id: '', // Not used in this context
+              google_books_id: '',
+              cover_url: book.cover_url,
+              description: book.editorial_note,
+              subtitle: null,
+              published_date: null,
+              page_count: null,
+              rating: null,
+              ratings_count: null,
+              categories: null,
+              preview_link: null,
+              info_link: null,
+              created_at: '',
+              updated_at: ''
+            };
+            onAddToTransmissions(authorBook);
+          }}
+        />
+      )}
     </>
   );
 });
