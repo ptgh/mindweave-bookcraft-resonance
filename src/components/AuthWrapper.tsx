@@ -1,4 +1,5 @@
 
+import { Suspense } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 interface AuthWrapperProps {
@@ -6,27 +7,27 @@ interface AuthWrapperProps {
   fallback: React.ReactNode;
 }
 
+const LoadingSpinner = () => (
+  <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+    <div className="text-center">
+      <div className="w-12 h-12 mx-auto mb-3 rounded-full border-2 border-blue-400/30 border-t-blue-400 animate-spin" />
+      <p className="text-slate-400 text-sm">Initializing...</p>
+    </div>
+  </div>
+);
+
 const AuthWrapper = ({ children, fallback }: AuthWrapperProps) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center">
-            <div className="w-6 h-6 rounded-full border-2 border-blue-400 animate-pulse" />
-          </div>
-          <p className="text-slate-400">Establishing connection...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!user) {
-    return <>{fallback}</>;
+    return <Suspense fallback={<LoadingSpinner />}>{fallback}</Suspense>;
   }
 
-  return <>{children}</>;
+  return <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>;
 };
 
 export default AuthWrapper;

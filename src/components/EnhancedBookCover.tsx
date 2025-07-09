@@ -36,24 +36,22 @@ const EnhancedBookCover = ({
       setIsLoading(true);
       setHasError(false);
 
+      // Prioritize smaller images for faster loading
       const fallbacks = [
-        coverUrl,
-        thumbnailUrl,
         smallThumbnailUrl,
+        thumbnailUrl,
+        coverUrl,
         coverUrl?.replace('&edge=curl', ''),
         thumbnailUrl?.replace('&edge=curl', ''),
         coverUrl?.replace('zoom=1', 'zoom=0'),
-        thumbnailUrl?.replace('zoom=1', 'zoom=0'),
-        coverUrl?.split('?')[0],
-        thumbnailUrl?.split('?')[0],
-        smallThumbnailUrl?.split('?')[0]
+        thumbnailUrl?.replace('zoom=1', 'zoom=0')
       ].filter(Boolean) as string[];
       
       try {
         const src = await imageService.loadImage({
           src: fallbacks[0] || '',
           fallbacks: fallbacks.slice(1),
-          timeout: 2000
+          timeout: 1500
         });
         setCurrentSrc(src);
         setIsLoading(false);
@@ -64,7 +62,7 @@ const EnhancedBookCover = ({
     };
 
     if (lazy && imgRef.current) {
-      const primaryUrl = coverUrl || thumbnailUrl || smallThumbnailUrl;
+      const primaryUrl = smallThumbnailUrl || thumbnailUrl || coverUrl;
       if (primaryUrl) {
         imageService.setupLazyLoading(imgRef.current, primaryUrl);
         setIsLoading(false);
@@ -72,7 +70,9 @@ const EnhancedBookCover = ({
       }
     }
 
-    loadImage();
+    // Defer image loading to not block initial render
+    const timeoutId = setTimeout(loadImage, 10);
+    return () => clearTimeout(timeoutId);
   }, [coverUrl, thumbnailUrl, smallThumbnailUrl, title, lazy]);
 
   if (lazy) {

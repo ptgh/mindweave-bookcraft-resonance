@@ -45,7 +45,7 @@ class ImageService {
     }
   }
 
-  async loadImage({ src, fallbacks = [], timeout = 10000 }: ImageLoadOptions): Promise<string> {
+  async loadImage({ src, fallbacks = [], timeout = 5000 }: ImageLoadOptions): Promise<string> {
     const allUrls = [src, ...fallbacks].filter(Boolean);
     
     // Check cache first

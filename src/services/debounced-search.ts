@@ -12,9 +12,9 @@ class DebouncedSearch {
 
   constructor(options: DebouncedSearchOptions = {}) {
     this.options = {
-      delay: 300,
-      maxCalls: 10,
-      timeWindow: 60000, // 1 minute
+      delay: 150,
+      maxCalls: 15,
+      timeWindow: 30000, // 30 seconds
       ...options
     };
   }
