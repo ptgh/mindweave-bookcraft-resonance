@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
-import { X, ExternalLink, Smartphone, Globe, Plus } from "lucide-react";
+import { X, ExternalLink, Smartphone, Globe, Plus, Download, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EnrichedPublisherBook } from "@/services/publisherService";
 import { AppleBook, searchAppleBooks, generateAppleBooksWebUrl, generateAppleBooksDeepLink, canOpenAppleBooksApp } from "@/services/appleBooks";
 import { searchGoogleBooks } from "@/services/googleBooks";
+import { searchZLibrary, ZLibraryBook } from "@/services/zLibrary";
+import { useIsWebOnly } from "@/hooks/use-is-web-only";
 import { useToast } from "@/hooks/use-toast";
 
 interface EnhancedBookPreviewModalProps {
@@ -16,8 +18,11 @@ interface EnhancedBookPreviewModalProps {
 const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPreviewModalProps) => {
   const [appleBook, setAppleBook] = useState<AppleBook | null>(null);
   const [googleFallback, setGoogleFallback] = useState<any>(null);
+  const [zLibraryBooks, setZLibraryBooks] = useState<ZLibraryBook[]>([]);
   const [loading, setLoading] = useState(true);
+  const [zLibraryLoading, setZLibraryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isWebOnly = useIsWebOnly();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -46,6 +51,21 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
           if (googleBooks.length > 0) {
             console.log('📚 Google Books fallback result:', googleBooks[0]);
             setGoogleFallback(googleBooks[0]);
+          }
+        }
+
+        // Search Z-Library if on web
+        if (isWebOnly) {
+          console.log('🌐 Searching Z-Library (web only)...');
+          setZLibraryLoading(true);
+          try {
+            const zLibResult = await searchZLibrary(book.title, book.author, book.isbn);
+            console.log('📖 Z-Library results:', zLibResult);
+            setZLibraryBooks(zLibResult.books);
+          } catch (zLibError) {
+            console.error('Z-Library search failed:', zLibError);
+          } finally {
+            setZLibraryLoading(false);
           }
         }
       } catch (err) {
@@ -103,62 +123,56 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   const coverUrl = appleBook?.coverUrl || googleFallback?.coverUrl || book.cover_url;
   const description = appleBook?.description || googleFallback?.description || book.editorial_note;
 
+  const handleZLibraryDownload = (zBook: ZLibraryBook) => {
+    const confirmed = window.confirm(
+      `Download "${zBook.title}" (${zBook.extension.toUpperCase()}, ${zBook.filesize})?\n\nNote: Please ensure you have the right to download this content in your jurisdiction.`
+    );
+    
+    if (confirmed) {
+      toast({
+        title: "Download Starting",
+        description: `Downloading ${zBook.extension.toUpperCase()} format...`,
+      });
+      // In production, this would handle actual download
+      console.log('📥 Z-Library download:', zBook);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-900/95 border border-cyan-400/30 rounded-lg w-full max-w-2xl shadow-2xl shadow-cyan-500/10 overflow-hidden max-h-[90vh] overflow-y-auto">
+      <div className="bg-slate-800/95 border border-slate-600/30 rounded-lg w-full max-w-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="relative p-4 border-b border-cyan-400/20">
-          <div 
-            className="absolute inset-0 opacity-20"
-            style={{
-              backgroundImage: `
-                linear-gradient(rgba(34, 211, 238, 0.3) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(34, 211, 238, 0.3) 1px, transparent 1px)
-              `,
-              backgroundSize: '20px 20px'
-            }}
-          />
-          <div className="relative flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
-              <span className="text-cyan-300 text-sm font-medium tracking-wider">
-                {hasAppleData ? 'APPLE BOOKS PREVIEW' : 'BOOK PREVIEW'}
-              </span>
-              {hasAppleData && (
-                <Badge variant="outline" className="border-green-400/50 text-green-400 bg-green-400/10">
-                  Apple Data
-                </Badge>
-              )}
-            </div>
-            <button
-              onClick={onClose}
-              className="text-slate-400 hover:text-cyan-300 transition-colors p-1 rounded hover:bg-slate-700/50"
-            >
-              <X className="w-4 h-4" />
-            </button>
+        <div className="flex items-center justify-between p-4 border-b border-slate-700/30">
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-slate-400 rounded-full" />
+            <span className="text-slate-200 text-sm font-medium">Signal Preview</span>
           </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-200 transition-colors p-1 rounded hover:bg-slate-700/50"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
         
         {/* Content */}
-        <div className="p-6">
+        <div className="p-4 space-y-4">
           {loading ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-cyan-400/50 flex items-center justify-center">
-                <div className="w-6 h-6 rounded-full border-2 border-cyan-400 animate-spin border-t-transparent" />
-              </div>
-              <p className="text-slate-400">Loading book preview...</p>
+            <div className="text-center py-8">
+              <div className="w-5 h-5 mx-auto mb-3 border-2 border-slate-400 animate-spin border-t-transparent rounded-full" />
+              <p className="text-slate-400 text-sm">Loading signal data...</p>
             </div>
           ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-red-400 mb-4">{error}</p>
-              <Button variant="outline" onClick={onClose}>Close</Button>
+            <div className="text-center py-8">
+              <p className="text-red-400 text-sm mb-4">{error}</p>
+              <Button variant="outline" onClick={onClose} size="sm">Close</Button>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Book details */}
-              <div className="flex space-x-6">
+              <div className="flex space-x-4">
                 {/* Book cover */}
-                <div className="flex-shrink-0 w-32 h-48 bg-slate-800/50 border border-cyan-400/30 rounded overflow-hidden relative">
+                <div className="flex-shrink-0 w-24 h-36 bg-slate-700/30 border border-slate-600/40 rounded overflow-hidden">
                   {coverUrl ? (
                     <img 
                       src={coverUrl} 
@@ -172,46 +186,29 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                       }}
                     />
                   ) : null}
-                  <div className={`absolute inset-0 flex items-center justify-center text-cyan-400 text-2xl ${coverUrl ? 'hidden' : ''}`}>
-                    <div className="w-16 h-20 border-2 border-cyan-400/50 rounded animate-pulse flex items-center justify-center">
-                      <div className="w-8 h-10 border border-cyan-400/30 rounded" />
-                    </div>
+                  <div className={`w-full h-full flex items-center justify-center text-slate-400 text-lg ${coverUrl ? 'hidden' : ''}`}>
+                    📚
                   </div>
-                  
-                  {/* Cover glow effect */}
-                  <div className="absolute inset-0 bg-gradient-radial from-cyan-400/10 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500" />
                 </div>
                 
                 {/* Book info */}
-                <div className="flex-1 space-y-4">
+                <div className="flex-1 space-y-2">
                   <div>
-                    <h2 className="text-cyan-200 font-semibold text-xl leading-tight mb-2">
+                    <h2 className="text-slate-200 font-medium text-lg leading-tight mb-1">
                       {displayData.title}
                     </h2>
-                    <p className="text-slate-400 text-lg mb-2">{displayData.author}</p>
+                    <p className="text-slate-400 text-sm mb-2">{displayData.author}</p>
                     
                     {book.isbn && (
-                      <p className="text-slate-500 text-sm font-mono mb-2">ISBN: {book.isbn}</p>
-                    )}
-                    
-                    {/* Apple Books price */}
-                    {hasAppleData && appleBook && (
-                      <div className="flex items-center space-x-2 mb-2">
-                        <span className="text-slate-400 text-sm">Apple Books Price:</span>
-                        <Badge variant="outline" className="border-green-400/50 text-green-400">
-                          {appleBook.formattedPrice || 
-                           (appleBook.price === 0 ? 'Free' : 
-                            `${appleBook.currency || '£'}${appleBook.price || 'N/A'}`)}
-                        </Badge>
-                      </div>
+                      <p className="text-slate-500 text-xs font-mono">ISBN: {book.isbn}</p>
                     )}
                   </div>
                   
                   {/* Description/Synopsis */}
                   {description && (
                     <div className="space-y-2">
-                      <h3 className="text-slate-300 font-medium">Synopsis</h3>
-                      <div className="text-slate-400 text-sm leading-relaxed p-4 bg-slate-800/30 border-l-2 border-cyan-400/30 rounded max-h-40 overflow-y-auto">
+                      <h3 className="text-slate-300 text-sm font-medium">Synopsis</h3>
+                      <div className="text-slate-400 text-xs leading-relaxed p-3 bg-slate-700/20 border border-slate-600/30 rounded max-h-32 overflow-y-auto">
                         {description.split('\n').map((paragraph, index) => (
                           <p key={index} className={index > 0 ? 'mt-2' : ''}>
                             {paragraph}
@@ -222,36 +219,96 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                   )}
                 </div>
               </div>
-              
-              {/* Apple Books Call-to-Action */}
-              {hasAppleData && appleBook && (
-                <div className="border-t border-cyan-400/20 pt-4">
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-800/50 to-cyan-900/20 border border-cyan-400/30 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-cyan-400/20 rounded-full flex items-center justify-center">
-                        <ExternalLink className="w-4 h-4 text-cyan-400" />
-                      </div>
-                      <div>
-                        <p className="text-slate-200 font-medium">Available on Apple Books</p>
-                        <p className="text-slate-400 text-sm">Get this book from Apple's digital bookstore</p>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={handleBuyOnAppleBooks}
-                      className="bg-cyan-600/70 hover:bg-cyan-600/90 text-white border-0 hover:shadow-lg hover:shadow-cyan-400/20 transition-all duration-200"
-                    >
-                      {canOpenAppleBooksApp() ? (
-                        <>
-                          <Smartphone className="w-4 h-4 mr-2" />
-                          Buy on Apple Books
-                        </>
-                      ) : (
-                        <>
-                          <Globe className="w-4 h-4 mr-2" />
-                          Buy on Apple Books
-                        </>
+
+              {/* Z-Library Section - Web Only */}
+              {isWebOnly && (
+                <div className="border-t border-slate-700/30 pt-4">
+                  <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <Download className="w-4 h-4 text-slate-400" />
+                      <span className="text-slate-300 text-sm font-medium">Free Digital Copies</span>
+                      {zLibraryLoading && (
+                        <div className="w-3 h-3 border border-slate-400 animate-spin border-t-transparent rounded-full" />
                       )}
-                    </Button>
+                    </div>
+                    
+                    {zLibraryBooks.length > 0 ? (
+                      <div className="space-y-2">
+                        <p className="text-slate-400 text-xs mb-2">Available formats for download:</p>
+                        <div className="grid grid-cols-1 gap-2">
+                          {zLibraryBooks.slice(0, 3).map((zBook) => (
+                            <div 
+                              key={zBook.id} 
+                              className="flex items-center justify-between p-2 bg-slate-800/30 border border-slate-600/20 rounded hover:bg-slate-700/30 transition-colors"
+                            >
+                              <div className="flex items-center space-x-2 flex-1">
+                                <FileText className="w-3 h-3 text-slate-400" />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center space-x-2">
+                                    <Badge variant="outline" className="text-xs border-slate-600 text-slate-300 bg-slate-700/50">
+                                      {zBook.extension.toUpperCase()}
+                                    </Badge>
+                                    <span className="text-slate-400 text-xs">{zBook.filesize}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleZLibraryDownload(zBook)}
+                                className="h-6 px-2 text-xs border-slate-600 text-slate-300 hover:bg-slate-600/50"
+                              >
+                                <Download className="w-3 h-3 mr-1" />
+                                Get
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-slate-500 text-xs mt-2 italic">
+                          Note: Ensure you have rights to download in your jurisdiction
+                        </p>
+                      </div>
+                    ) : !zLibraryLoading ? (
+                      <p className="text-slate-400 text-xs">No free digital copies found</p>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+              
+              {/* Apple Books Section */}
+              {hasAppleData && appleBook && (
+                <div className="border-t border-slate-700/30 pt-4">
+                  <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <ExternalLink className="w-4 h-4 text-slate-400" />
+                        <div>
+                          <p className="text-slate-300 text-sm font-medium">Apple Books</p>
+                          <p className="text-slate-400 text-xs">
+                            {appleBook.formattedPrice || 
+                             (appleBook.price === 0 ? 'Free' : 
+                              `${appleBook.currency || '£'}${appleBook.price || 'N/A'}`)}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={handleBuyOnAppleBooks}
+                        className="h-6 px-2 text-xs bg-slate-600/70 hover:bg-slate-600/90 text-white border-0"
+                      >
+                        {canOpenAppleBooksApp() ? (
+                          <>
+                            <Smartphone className="w-3 h-3 mr-1" />
+                            Buy
+                          </>
+                        ) : (
+                          <>
+                            <Globe className="w-3 h-3 mr-1" />
+                            Buy
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -260,12 +317,12 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
         </div>
         
         {/* Actions */}
-        <div className="flex justify-end space-x-3 p-4 border-t border-cyan-400/20 bg-slate-900/50">
+        <div className="flex justify-end space-x-2 p-4 border-t border-slate-700/30">
           <Button
             variant="outline"
             size="sm"
             onClick={onClose}
-            className="border-slate-600 text-slate-300 hover:bg-slate-700 bg-transparent hover:border-cyan-400/50"
+            className="border-slate-600 text-slate-300 hover:bg-slate-700/50 bg-transparent"
           >
             Close
           </Button>
@@ -275,10 +332,10 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
               onAddBook(book);
               onClose();
             }}
-            className="bg-cyan-600/70 hover:bg-cyan-600/90 text-white border-0 hover:shadow-lg hover:shadow-cyan-400/20 transition-all duration-200"
+            className="bg-slate-600/70 hover:bg-slate-600/90 text-white border-0"
           >
-            <Plus className="w-3 h-3 mr-2" />
-            Add to Transmissions
+            <Plus className="w-3 h-3 mr-1" />
+            Add Signal
           </Button>
         </div>
       </div>
