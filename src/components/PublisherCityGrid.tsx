@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { PublisherSeries, EnrichedPublisherBook } from "@/services/publisherService";
-import BookPortalModal from "./BookPortalModal";
+import EnhancedBookPreviewModal from "./EnhancedBookPreviewModal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PublisherBuilding {
@@ -499,7 +499,7 @@ const PublisherCityGrid = ({
 
       {/* Book Detail Modal */}
       {selectedBook && (
-        <BookPortalModal
+        <EnhancedBookPreviewModal
           book={selectedBook}
           onClose={() => setSelectedBook(null)}
           onAddBook={onAddBook}

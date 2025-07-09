@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { PublisherSeries, EnrichedPublisherBook } from "@/services/publisherService";
 import PublisherGridFilters from "./PublisherGridFilters";
-import BookNodeModal from "./BookNodeModal";
+import EnhancedBookPreviewModal from "./EnhancedBookPreviewModal";
 
 interface GridNode {
   id: string;
@@ -253,7 +253,7 @@ const PublisherConsciousnessGrid = ({
 
       {/* Book detail modal */}
       {selectedBook && (
-        <BookNodeModal
+        <EnhancedBookPreviewModal
           book={selectedBook}
           onClose={() => setSelectedBook(null)}
           onAddBook={onAddBook}
