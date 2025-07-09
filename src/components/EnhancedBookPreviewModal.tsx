@@ -25,22 +25,32 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
       setLoading(true);
       setError(null);
 
+      console.log('🔍 Starting book preview fetch for:', {
+        title: book.title,
+        author: book.author,
+        isbn: book.isbn
+      });
+
       try {
         // Try Apple Books first
+        console.log('📱 Attempting Apple Books search...');
         const appleResult = await searchAppleBooks(book.title, book.author, book.isbn);
         
         if (appleResult) {
+          console.log('✅ Apple Books result found:', appleResult);
           setAppleBook(appleResult);
         } else {
+          console.log('❌ No Apple Books result, falling back to Google Books');
           // Fallback to Google Books for additional data
           const googleBooks = await searchGoogleBooks(`${book.title} ${book.author}`, 1);
           if (googleBooks.length > 0) {
+            console.log('📚 Google Books fallback result:', googleBooks[0]);
             setGoogleFallback(googleBooks[0]);
           }
         }
       } catch (err) {
+        console.error('💥 Error fetching book data:', err);
         setError('Failed to load book preview data');
-        console.error('Error fetching book data:', err);
       } finally {
         setLoading(false);
       }

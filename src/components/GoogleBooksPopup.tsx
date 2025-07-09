@@ -49,24 +49,21 @@ const GoogleBooksPopup = ({ isOpen, onClose, bookTitle, bookAuthor, previewUrl }
     try {
       console.log('Original URL:', url);
       
-      // If it's already an embed URL, use it
-      if (url.includes('output=embed')) {
-        return url;
-      }
-      
-      // If it's a Google Books URL, try different embed approaches
+      // For book information display, we want the info page, not the reader
       if (url.includes('books.google.com')) {
         // Extract book ID if present
         const idMatch = url.match(/[?&]id=([^&]+)/);
         if (idMatch) {
           const bookId = idMatch[1];
-          // Try the reader embed first as it's more likely to work
-          return `https://books.google.com/books?id=${bookId}&lpg=PP1&output=embed&pg=PP1`;
+          // Use the info page instead of reader/embed for book information
+          return `https://books.google.com/books?id=${bookId}&printsec=frontcover&source=gbs_ge_summary_r&cad=0`;
         }
         
-        // For search URLs or other formats, try to make embeddable
-        const separator = url.includes('?') ? '&' : '?';
-        return `${url}${separator}output=embed&lpg=PP1&pg=PP1`;
+        // For search URLs, ensure we get info pages
+        const searchMatch = url.match(/[?&]q=([^&]+)/);
+        if (searchMatch) {
+          return url; // Keep search URLs as-is since they show results
+        }
       }
       
       return url;

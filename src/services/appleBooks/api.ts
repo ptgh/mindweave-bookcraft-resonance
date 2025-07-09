@@ -46,7 +46,10 @@ export const searchAppleBooksByISBN = async (isbn: string): Promise<AppleBook | 
       entity: 'ebook'
     });
     
-    const response = await fetch(`${ITUNES_LOOKUP_BASE_URL}?${params}`, {
+    const url = `${ITUNES_LOOKUP_BASE_URL}?${params}`;
+    console.log('🌐 Making Apple Books ISBN request to:', url);
+    
+    const response = await fetch(url, {
       signal: controller.signal,
       headers: {
         'Accept': 'application/json',
@@ -111,7 +114,10 @@ export const searchAppleBooksByTitleAuthor = async (title: string, author: strin
       limit: '1' // We only want the top match
     });
     
-    const response = await fetch(`${ITUNES_SEARCH_BASE_URL}?${params}`, {
+    const url = `${ITUNES_SEARCH_BASE_URL}?${params}`;
+    console.log('🌐 Making Apple Books title/author request to:', url);
+    
+    const response = await fetch(url, {
       signal: controller.signal,
       headers: {
         'Accept': 'application/json',
@@ -152,12 +158,22 @@ export const searchAppleBooks = async (
   author: string, 
   isbn?: string
 ): Promise<AppleBook | null> => {
+  console.log('🍎 Apple Books search started:', { title, author, isbn });
+  
   // Try ISBN lookup first if available (more accurate and faster)
   if (isbn) {
+    console.log('📖 Trying ISBN lookup first:', isbn);
     const result = await searchAppleBooksByISBN(isbn);
-    if (result) return result;
+    if (result) {
+      console.log('✅ ISBN lookup success:', result);
+      return result;
+    }
+    console.log('❌ ISBN lookup failed, trying title/author');
   }
   
   // Fallback to title/author search
-  return await searchAppleBooksByTitleAuthor(title, author);
+  console.log('🔍 Trying title/author search:', title, author);
+  const result = await searchAppleBooksByTitleAuthor(title, author);
+  console.log('📱 Title/author search result:', result);
+  return result;
 };
