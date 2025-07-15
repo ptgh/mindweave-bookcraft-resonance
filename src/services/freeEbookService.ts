@@ -103,19 +103,26 @@ export const searchFreeEbooks = async (
       const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       
       if (lastChecked > weekAgo) {
-        return {
-          hasLinks: !!(cached.gutenberg_url || cached.archive_url),
-          gutenberg: cached.gutenberg_url ? {
-            url: cached.gutenberg_url,
-            id: cached.gutenberg_id || '',
-            formats: cached.formats || {}
-          } : undefined,
-          archive: cached.archive_url ? {
-            url: cached.archive_url,
-            id: cached.archive_id || '',
-            formats: cached.formats || {}
-          } : undefined
-        };
+        // Convert old format to new format for backwards compatibility
+        const result: EbookSearchResult = {};
+        
+        if (cached.gutenberg_url && cached.formats) {
+          result.gutenberg = [{
+            title: cached.book_title,
+            author: cached.book_author,
+            formats: Object.entries(cached.formats).map(([type, url]) => ({ type, url }))
+          }];
+        }
+        
+        if (cached.archive_url && cached.formats) {
+          result.internetArchive = [{
+            title: cached.book_title,
+            author: cached.book_author,
+            formats: Object.entries(cached.formats).map(([type, url]) => ({ type, url }))
+          }];
+        }
+        
+        return result;
       }
     }
 
@@ -126,13 +133,13 @@ export const searchFreeEbooks = async (
 
     if (error) {
       console.error('Error searching free ebooks:', error);
-      return { hasLinks: false };
+      return {};
     }
 
-    return data || { hasLinks: false };
+    return data || {};
   } catch (error) {
     console.error('Error in searchFreeEbooks:', error);
-    return { hasLinks: false };
+    return {};
   }
 };
 
