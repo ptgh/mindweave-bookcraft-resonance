@@ -27,7 +27,7 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
       } catch (error) {
         console.error('Error searching for free ebooks:', error);
         if (isMounted) {
-          setEbookData({ hasLinks: false });
+          setEbookData({});
         }
       } finally {
         if (isMounted) {
@@ -44,7 +44,12 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
   }, [title, author, isbn]);
 
   const handleClick = () => {
-    if (ebookData?.hasLinks) {
+    const hasAnyEbooks = !!(
+      ebookData?.annasArchive?.length || 
+      ebookData?.internetArchive?.length || 
+      ebookData?.gutenberg?.length
+    );
+    if (hasAnyEbooks) {
       setIsModalOpen(true);
     }
   };
@@ -59,14 +64,20 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
   }
 
   // Don't render if no links found
-  if (!ebookData?.hasLinks) {
+  const hasAnyEbooks = !!(
+    ebookData?.annasArchive?.length || 
+    ebookData?.internetArchive?.length || 
+    ebookData?.gutenberg?.length
+  );
+  
+  if (!hasAnyEbooks) {
     return null;
   }
 
   const getTooltipText = () => {
-    if (ebookData.gutenberg && ebookData.archive) {
+    if (ebookData?.gutenberg?.length && ebookData?.internetArchive?.length) {
       return "Public Domain";
-    } else if (ebookData.gutenberg) {
+    } else if (ebookData?.gutenberg?.length) {
       return "Project Gutenberg";
     } else {
       return "Internet Archive";

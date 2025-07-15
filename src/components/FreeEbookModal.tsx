@@ -29,7 +29,13 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
   };
 
 
-  if (!ebookData?.hasLinks) return null;
+  const hasAnyEbooks = !!(
+    ebookData?.annasArchive?.length || 
+    ebookData?.internetArchive?.length || 
+    ebookData?.gutenberg?.length
+  );
+
+  if (!hasAnyEbooks) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -38,7 +44,7 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
         className="max-w-md bg-slate-900/95 border-slate-700 text-slate-200 p-0"
       >
         {/* Only show Internet Archive with simplified styling */}
-        {ebookData.archive && (
+        {ebookData?.internetArchive && ebookData.internetArchive.length > 0 && (
           <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover:bg-slate-800/70 transition-colors">
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 rounded-full border-2 border-blue-400 bg-blue-400/10" />
@@ -48,7 +54,7 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
               </div>
             </div>
             <button
-              onClick={() => openInNewTab(ebookData.archive.url)}
+              onClick={() => openInNewTab(ebookData.internetArchive![0].formats[0]?.url || '')}
               className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm text-slate-300 hover:text-slate-200 transition-colors"
               title="View on Internet Archive"
             >
@@ -59,7 +65,7 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
         )}
 
         {/* Show Project Gutenberg if Archive not available */}
-        {ebookData.gutenberg && !ebookData.archive && (
+        {ebookData?.gutenberg && ebookData.gutenberg.length > 0 && !ebookData?.internetArchive?.length && (
           <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover:bg-slate-800/70 transition-colors">
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 rounded-full border-2 border-green-400 bg-green-400/10" />
@@ -69,7 +75,7 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
               </div>
             </div>
             <button
-              onClick={() => openInNewTab(ebookData.gutenberg.url)}
+              onClick={() => openInNewTab(ebookData.gutenberg![0].formats[0]?.url || '')}
               className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm text-slate-300 hover:text-slate-200 transition-colors"
               title="View on Project Gutenberg"
             >
