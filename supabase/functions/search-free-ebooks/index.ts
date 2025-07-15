@@ -286,20 +286,31 @@ serve(async (req) => {
     }
 
     // Convert results to the new format expected by frontend
-    const formatResult = (result: any) => {
+    const formatResult = (result: any, sourceName: string) => {
       if (!result) return [];
       
-      return Object.entries(result.formats).map(([type, url]) => ({
-        title: `${result.id} - ${type.toUpperCase()}`,
-        author: '',
-        formats: [{ type, url: url as string }]
-      }));
+      try {
+        if (result.formats && typeof result.formats === 'object') {
+          return [{
+            title: title,
+            author: author,
+            formats: Object.entries(result.formats).map(([type, url]) => ({
+              type: type.toUpperCase(),
+              url: url as string
+            }))
+          }];
+        }
+      } catch (error) {
+        console.error(`Error formatting ${sourceName} result:`, error);
+      }
+      
+      return [];
     };
 
     const response = {
-      annasArchive: formatResult(annasArchiveResult),
-      internetArchive: formatResult(archiveResult),
-      gutenberg: formatResult(gutenbergResult)
+      annasArchive: formatResult(annasArchiveResult, 'Anna\'s Archive'),
+      internetArchive: formatResult(archiveResult, 'Internet Archive'),
+      gutenberg: formatResult(gutenbergResult, 'Project Gutenberg')
     }
 
     return new Response(

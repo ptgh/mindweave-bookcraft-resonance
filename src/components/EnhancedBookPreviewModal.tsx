@@ -70,7 +70,15 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
             console.log('📖 Anna\'s Archive results:', freeEbookResult?.annasArchive);
             console.log('📖 Internet Archive results:', freeEbookResult?.internetArchive);
             console.log('📖 Gutenberg results:', freeEbookResult?.gutenberg);
-            setFreeEbooks(freeEbookResult);
+            
+            // Validate the results structure
+            if (freeEbookResult && typeof freeEbookResult === 'object') {
+              console.log('✅ Valid ebook results received');
+              setFreeEbooks(freeEbookResult);
+            } else {
+              console.warn('⚠️ Invalid ebook results format:', freeEbookResult);
+              setFreeEbooks({});
+            }
           } catch (freeEbookError) {
             console.error('❌ Free ebook search failed:', freeEbookError);
             setFreeEbooks(null);
@@ -238,7 +246,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                                     href={format.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-md font-medium text-sm transition-colors duration-200 flex items-center gap-1"
+                                    className="px-3 py-1 bg-slate-600/80 hover:bg-slate-500 text-slate-100 border border-slate-500/50 rounded-md font-medium text-sm transition-colors duration-200 flex items-center gap-1"
                                   >
                                     {format.type}
                                     <ExternalLink className="w-3 h-3" />
@@ -272,7 +280,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                                     href={format.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-md font-medium text-sm transition-colors duration-200 flex items-center gap-1"
+                                    className="px-3 py-1 bg-slate-600/80 hover:bg-slate-500 text-slate-100 border border-slate-500/50 rounded-md font-medium text-sm transition-colors duration-200 flex items-center gap-1"
                                   >
                                     {format.type}
                                     <ExternalLink className="w-3 h-3" />
@@ -306,7 +314,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                                     href={format.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-md font-medium text-sm transition-colors duration-200 flex items-center gap-1"
+                                    className="px-3 py-1 bg-slate-600/80 hover:bg-slate-500 text-slate-100 border border-slate-500/50 rounded-md font-medium text-sm transition-colors duration-200 flex items-center gap-1"
                                   >
                                     {format.type}
                                     <ExternalLink className="w-3 h-3" />
