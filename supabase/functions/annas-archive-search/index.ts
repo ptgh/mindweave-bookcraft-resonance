@@ -94,105 +94,86 @@ function parseAnnasArchiveSearchResults(html: string, domain: string): AnnasArch
   const books: AnnasArchiveBook[] = [];
   
   try {
-    // Anna's Archive uses a more structured format than Z-Library
-    // Look for search result items (typically in divs with specific classes)
+    // Anna's Archive 2024 structure - look for table rows with book data
+    // Each book is typically in a table row with specific data cells
+    const tableRowRegex = /<tr[^>]*>[\s\S]*?<\/tr>/gi;
+    const tableRows = html.match(tableRowRegex) || [];
     
-    // Extract search result blocks - Anna's Archive typically uses consistent structure
-    const resultBlockRegex = /<div[^>]*class="[^"]*h-\[125\][^"]*"[^>]*>.*?<\/div>/gs;
-    const resultBlocks = html.match(resultBlockRegex) || [];
+    console.log(`🔍 Found ${tableRows.length} table rows to parse`);
 
-    // Also try alternative patterns for different page layouts
-    const alternativeRegex = /<div[^>]*class="[^"]*border[^"]*rounded[^"]*"[^>]*>.*?(?=<div[^>]*class="[^"]*border[^"]*rounded|$)/gs;
-    const alternativeBlocks = html.match(alternativeRegex) || [];
-    
-    const allBlocks = [...resultBlocks, ...alternativeBlocks];
+    // Filter rows that contain MD5 links (actual book entries)
+    const bookRows = tableRows.filter(row => row.includes('/md5/'));
+    console.log(`📖 Found ${bookRows.length} book rows with MD5 links`);
 
-    console.log(`🔍 Found ${allBlocks.length} potential result blocks`);
-
-    allBlocks.forEach((block, index) => {
+    bookRows.forEach((row, index) => {
       try {
-        // Extract title - Anna's Archive usually has titles in links or headers
-        const titleMatches = [
-          /<h3[^>]*>.*?<a[^>]*>([^<]+)</gi,
-          /<a[^>]*class="[^"]*text-[^"]*"[^>]*>([^<]+)</gi,
-          /<div[^>]*class="[^"]*font-bold[^"]*"[^>]*>([^<]+)</gi
+        // Extract MD5 link first
+        const md5Match = row.match(/\/md5\/([a-f0-9]{32})/);
+        if (!md5Match) return;
+
+        const md5Hash = md5Match[1];
+        const downloadPath = `/md5/${md5Hash}`;
+
+        // Extract title - look for links or text in table cells
+        const titlePatterns = [
+          /<a[^>]*href="[^"]*"[^>]*>([^<]+)<\/a>/gi,
+          /<td[^>]*>([^<]+)<\/td>/gi,
+          />([^<]{10,})</gi // Any text longer than 10 chars
         ];
         
         let title = '';
-        for (const regex of titleMatches) {
-          const match = block.match(regex);
-          if (match && match[1]) {
-            title = match[1].trim();
-            break;
+        for (const pattern of titlePatterns) {
+          const matches = row.match(pattern);
+          if (matches) {
+            // Find the longest meaningful text that's not just numbers/symbols
+            const candidates = matches
+              .map(m => m.replace(/<[^>]*>/g, '').trim())
+              .filter(text => text.length > 5 && !/^\d+$/.test(text) && !/^[^\w]*$/.test(text));
+            
+            if (candidates.length > 0) {
+              title = candidates.reduce((longest, current) => 
+                current.length > longest.length ? current : longest
+              );
+              break;
+            }
           }
         }
 
-        // Extract author
-        const authorMatches = [
+        // Extract file format from extension or text
+        const formatMatch = row.match(/\.(pdf|epub|mobi|azw3|djvu|fb2|txt)/gi) ||
+                           row.match(/(pdf|epub|mobi|azw3|djvu|fb2|txt)/gi);
+        const extension = formatMatch ? formatMatch[0].replace('.', '').toLowerCase() : 'pdf';
+
+        // Extract file size
+        const sizeMatch = row.match(/(\d+(?:\.\d+)?\s*[KMGT]?B)/gi);
+        const filesize = sizeMatch ? sizeMatch[0] : '';
+
+        // Extract year if present
+        const yearMatch = row.match(/(19|20)\d{2}/g);
+        const year = yearMatch ? yearMatch[yearMatch.length - 1] : '';
+
+        // For author, look for common patterns or use search context
+        let author = 'Unknown Author';
+        const authorPatterns = [
+          /by\s+([^<>\n,]+)/gi,
           /author[^>]*>([^<]+)/gi,
-          /by\s+([^<\n,]+)/gi,
-          /<div[^>]*class="[^"]*text-gray[^"]*"[^>]*>([^<]+)</gi
+          /([A-Z][a-z]+\s+[A-Z][a-z]+)/g // Name pattern
         ];
         
-        let author = '';
-        for (const regex of authorMatches) {
-          const match = block.match(regex);
+        for (const pattern of authorPatterns) {
+          const match = row.match(pattern);
           if (match && match[1]) {
             author = match[1].trim();
             break;
           }
         }
 
-        // Extract download link (MD5 hash based)
-        const linkMatches = [
-          /href="\/md5\/([a-f0-9]{32})"/gi,
-          /\/md5\/([a-f0-9]{32})/gi,
-          /href="(\/download\/[^"]+)"/gi
-        ];
-        
-        let downloadPath = '';
-        for (const regex of linkMatches) {
-          const match = block.match(regex);
-          if (match && match[1]) {
-            downloadPath = match[1].includes('/md5/') ? `/md5/${match[1]}` : match[1];
-            break;
-          }
-        }
-
-        // Extract file format
-        const formatMatches = [
-          /\.(\w+)(?:\s*,|\s*\]|\s*$)/gi,
-          /format[^>]*>([^<]+)/gi,
-          /(pdf|epub|mobi|azw3|djvu|fb2)/gi
-        ];
-        
-        let extension = 'pdf'; // default
-        for (const regex of formatMatches) {
-          const match = block.match(regex);
-          if (match && match[1]) {
-            extension = match[1].toLowerCase();
-            break;
-          }
-        }
-
-        // Extract file size
-        const sizeMatch = block.match(/(\d+(?:\.\d+)?\s*[KMGT]?B)/gi);
-        const filesize = sizeMatch ? sizeMatch[0] : '';
-
-        // Extract year
-        const yearMatch = block.match(/(\d{4})/g);
-        const year = yearMatch ? yearMatch[yearMatch.length - 1] : ''; // Take the last year found
-
-        // Extract ISBN if present
-        const isbnMatch = block.match(/isbn[^>]*>([^<]+)/gi) || block.match(/(\d{13}|\d{10})/g);
-        const isbn = isbnMatch ? isbnMatch[0].replace(/\D/g, '') : '';
-
-        // Only add if we have essential information
-        if (title && downloadPath) {
+        // Create book entry if we have essential data
+        if (title && title.length > 3) {
           books.push({
-            id: `annas-${index + 1}`,
-            title: title || `Book ${index + 1}`,
-            author: author || 'Unknown Author',
+            id: `annas-${md5Hash.slice(0, 8)}`,
+            title: title,
+            author: author,
             year,
             language: 'English',
             filesize,
@@ -200,27 +181,44 @@ function parseAnnasArchiveSearchResults(html: string, domain: string): AnnasArch
             downloadUrl: `https://${domain}${downloadPath}`,
             coverUrl: `https://via.placeholder.com/120x180/1e293b/64748b?text=${extension.toUpperCase()}`,
             publisher: "Anna's Archive",
-            isbn,
+            isbn: '',
             description: `${title} by ${author} - Available on Anna's Archive`
           });
         }
       } catch (error) {
-        console.error(`Error parsing book entry ${index}:`, error);
+        console.error(`Error parsing book row ${index}:`, error);
       }
     });
 
-    // If we didn't find results with the primary method, try a simpler approach
+    // Enhanced fallback method if table parsing fails
     if (books.length === 0) {
-      console.log('🔄 Trying fallback parsing method...');
+      console.log('🔄 Trying enhanced fallback parsing method...');
       
-      // Look for any links containing MD5 hashes (Anna's Archive's primary format)
+      // Get all MD5 links
       const md5Links = html.match(/\/md5\/[a-f0-9]{32}/g) || [];
-      const titleElements = html.match(/<title[^>]*>([^<]+)</gi) || [];
+      console.log(`🔗 Found ${md5Links.length} MD5 links`);
       
+      // Try to extract titles from page context
+      const titleCandidates = html.match(/>([^<]{15,100})</g) || [];
+      const meaningfulTitles = titleCandidates
+        .map(t => t.replace(/^>/, '').trim())
+        .filter(t => 
+          t.length > 10 && 
+          t.length < 200 && 
+          !/^\d+$/.test(t) &&
+          !/^(search|results|archive)/i.test(t) &&
+          /[a-zA-Z]/.test(t)
+        )
+        .slice(0, md5Links.length);
+
+      // Pair MD5 links with titles
       md5Links.slice(0, 5).forEach((link, index) => {
+        const title = meaningfulTitles[index] || `Document ${index + 1}`;
+        const md5Hash = link.match(/([a-f0-9]{32})/)[1];
+        
         books.push({
-          id: `annas-fallback-${index + 1}`,
-          title: `Book ${index + 1}`,
+          id: `annas-fallback-${md5Hash.slice(0, 8)}`,
+          title: title,
           author: 'Unknown Author',
           year: '',
           language: 'English',
@@ -229,7 +227,7 @@ function parseAnnasArchiveSearchResults(html: string, domain: string): AnnasArch
           downloadUrl: `https://${domain}${link}`,
           coverUrl: 'https://via.placeholder.com/120x180/1e293b/64748b?text=PDF',
           publisher: "Anna's Archive",
-          description: `Book available on Anna's Archive`
+          description: `${title} - Available on Anna's Archive`
         });
       });
     }
