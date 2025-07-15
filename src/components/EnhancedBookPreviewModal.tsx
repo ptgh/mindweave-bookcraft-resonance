@@ -6,6 +6,7 @@ import { EnrichedPublisherBook } from "@/services/publisherService";
 import { AppleBook, searchAppleBooks, generateAppleBooksWebUrl, generateAppleBooksDeepLink, canOpenAppleBooksApp } from "@/services/appleBooks";
 import { searchGoogleBooks } from "@/services/googleBooks";
 import { searchFreeEbooks } from "@/services/freeEbookService";
+import { supabase } from "@/integrations/supabase/client";
 import { useIsWebOnly } from "@/hooks/use-is-web-only";
 import { useToast } from "@/hooks/use-toast";
 
@@ -18,14 +19,29 @@ interface EnhancedBookPreviewModalProps {
 const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPreviewModalProps) => {
   const [appleBook, setAppleBook] = useState<AppleBook | null>(null);
   const [googleFallback, setGoogleFallback] = useState<any>(null);
-  const [freeEbooks, setFreeEbooks] = useState<Array<{
+  const [annasArchive, setAnnasArchive] = useState<Array<{
     id: string;
     title: string;
     author: string;
     extension: string;
     filesize: string;
     downloadUrl: string;
-    source: string;
+  }>>([]);
+  const [internetArchive, setInternetArchive] = useState<Array<{
+    id: string;
+    title: string;
+    author: string;
+    extension: string;
+    filesize: string;
+    downloadUrl: string;
+  }>>([]);
+  const [gutenberg, setGutenberg] = useState<Array<{
+    id: string;
+    title: string;
+    author: string;
+    extension: string;
+    filesize: string;
+    downloadUrl: string;
   }>>([]);
   const [loading, setLoading] = useState(true);
   const [freeEbooksLoading, setFreeEbooksLoading] = useState(false);
@@ -75,47 +91,78 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
             
             console.log('📖 Free ebook results:', freeEbookResult);
             
-            // Convert free ebook results to display format, filtering for PDF, EPUB, MOBI only
-            const freeBooks = [];
+            // Separate sources into different state arrays
+            const annasArchiveBooks = [];
+            const internetArchiveBooks = [];
+            const gutenbergBooks = [];
             
             if (freeEbookResult.hasLinks) {
-              if (freeEbookResult.gutenberg) {
-                Object.entries(freeEbookResult.gutenberg.formats || {}).forEach(([format, url]) => {
-                  if (['pdf', 'epub', 'mobi'].includes(format.toLowerCase())) {
-                    freeBooks.push({
-                      id: `gutenberg-${format}`,
-                      title: book.title,
-                      author: book.author,
-                      extension: format.toLowerCase(),
-                      filesize: 'Unknown',
-                      downloadUrl: url,
-                      source: 'Project Gutenberg'
-                    });
-                  }
+              // Process Anna's Archive from the edge function response
+              // Since Anna's Archive returns MD5 links, we'll fetch them via edge function
+              try {
+                const annasResult = await supabase.functions.invoke('annas-archive-search', {
+                  body: { title: book.title, author: book.author }
                 });
+                
+                if (annasResult.data && Array.isArray(annasResult.data)) {
+                  annasResult.data.forEach((item: any) => {
+                    if (['pdf', 'epub', 'mobi'].includes(item.format?.toLowerCase())) {
+                      annasArchiveBooks.push({
+                        id: `annas-${item.format}`,
+                        title: item.title || book.title,
+                        author: item.author || book.author,
+                        extension: item.format?.toLowerCase() || 'unknown',
+                        filesize: item.filesize || 'Unknown',
+                        downloadUrl: item.downloadUrl
+                      });
+                    }
+                  });
+                }
+              } catch (annasError) {
+                console.error('Anna\'s Archive search failed:', annasError);
               }
               
+              // Process Internet Archive
               if (freeEbookResult.archive) {
                 Object.entries(freeEbookResult.archive.formats || {}).forEach(([format, url]) => {
                   if (['pdf', 'epub', 'mobi'].includes(format.toLowerCase())) {
-                    freeBooks.push({
+                    internetArchiveBooks.push({
                       id: `archive-${format}`,
                       title: book.title,
                       author: book.author,
                       extension: format.toLowerCase(),
                       filesize: 'Unknown',
-                      downloadUrl: url,
-                      source: 'Internet Archive'
+                      downloadUrl: url
+                    });
+                  }
+                });
+              }
+              
+              // Process Project Gutenberg
+              if (freeEbookResult.gutenberg) {
+                Object.entries(freeEbookResult.gutenberg.formats || {}).forEach(([format, url]) => {
+                  if (['pdf', 'epub', 'mobi'].includes(format.toLowerCase())) {
+                    gutenbergBooks.push({
+                      id: `gutenberg-${format}`,
+                      title: book.title,
+                      author: book.author,
+                      extension: format.toLowerCase(),
+                      filesize: 'Unknown',
+                      downloadUrl: url
                     });
                   }
                 });
               }
             }
             
-            setFreeEbooks(freeBooks);
+            setAnnasArchive(annasArchiveBooks);
+            setInternetArchive(internetArchiveBooks);
+            setGutenberg(gutenbergBooks);
           } catch (freeEbookError) {
             console.error('Free ebook search failed:', freeEbookError);
-            setFreeEbooks([]);
+            setAnnasArchive([]);
+            setInternetArchive([]);
+            setGutenberg([]);
           } finally {
             setFreeEbooksLoading(false);
           }
@@ -258,62 +305,146 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                 </div>
               </div>
 
-              {/* Free Legal Sources Section - Web Only */}
+              {/* Anna's Archive Section - Web Only */}
               {isWebOnly && (
                 <div className="border-t border-slate-700/30 pt-4">
                   <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
                     <div className="flex items-center space-x-2 mb-3">
                       <Download className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-300 text-sm font-medium">Free Legal Sources</span>
-                      <Badge variant="outline" className="text-xs border-slate-600 text-slate-300 bg-slate-700/50">
-                        Project Gutenberg & Internet Archive
-                      </Badge>
-                       {freeEbooksLoading && (
-                         <div className="w-3 h-3 border border-slate-400 animate-spin border-t-transparent rounded-full" />
-                       )}
-                     </div>
-                     
-                      {freeEbooks.length > 0 ? (
-                        <div className="space-y-2">
-                          <p className="text-slate-400 text-xs mb-2">Available formats (PDF, EPUB, MOBI only):</p>
-                          <div className="grid grid-cols-1 gap-2">
-                             {freeEbooks.map((freeBook) => (
-                               <div 
-                                 key={freeBook.id} 
-                                 className="flex items-center justify-between p-2 bg-slate-800/30 border border-slate-600/20 rounded hover:bg-slate-700/30 transition-colors"
-                               >
-                                 <div className="flex items-center space-x-2 flex-1">
-                                   <FileText className="w-3 h-3 text-slate-400" />
-                                   <div className="flex-1 min-w-0">
-                                     <div className="flex items-center space-x-2 mb-1">
-                                       <Badge variant="outline" className="text-xs border-slate-600 text-slate-300 bg-slate-700/50">
-                                         {freeBook.extension.toUpperCase()}
-                                       </Badge>
-                                       <Badge variant="outline" className="text-xs border-slate-600 text-slate-300 bg-slate-700/50">
-                                         {freeBook.source}
-                                       </Badge>
-                                     </div>
-                                   </div>
-                                 </div>
-                                 <Button
-                                   size="sm"
-                                   variant="outline"
-                                   onClick={() => window.open(freeBook.downloadUrl, '_blank')}
-                                   className="h-6 px-2 text-xs border-slate-500 text-slate-200 hover:bg-slate-500/60 hover:border-slate-400 bg-slate-700/40 hover:text-white"
-                                 >
-                                   <ExternalLink className="w-3 h-3 mr-1" />
-                                   Open
-                                 </Button>
-                               </div>
-                             ))}
-                          </div>
-                          <p className="text-slate-500 text-xs mt-2 italic">
-                            Free legal downloads from public domain and digital lending sources
-                          </p>
+                      <span className="text-slate-300 text-sm font-medium">Anna's Archive</span>
+                      {freeEbooksLoading && (
+                        <div className="w-3 h-3 border border-slate-400 animate-spin border-t-transparent rounded-full" />
+                      )}
+                    </div>
+                    
+                    {annasArchive.length > 0 ? (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-1 gap-2">
+                          {annasArchive.map((item) => (
+                            <div 
+                              key={item.id} 
+                              className="flex items-center justify-between p-2 bg-slate-800/30 border border-slate-600/20 rounded hover:bg-slate-700/30 transition-colors"
+                            >
+                              <div className="flex items-center space-x-2 flex-1">
+                                <FileText className="w-3 h-3 text-slate-400" />
+                                <div className="flex-1 min-w-0">
+                                  <Badge variant="outline" className="text-xs border-slate-600 text-slate-300 bg-slate-700/50">
+                                    {item.extension.toUpperCase()}
+                                  </Badge>
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => window.open(item.downloadUrl, '_blank')}
+                                className="h-6 px-2 text-xs border-slate-500 text-slate-200 hover:bg-slate-500/60 hover:border-slate-400 bg-slate-700/40 hover:text-white"
+                              >
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                Open
+                              </Button>
+                            </div>
+                          ))}
                         </div>
-                      ) : !freeEbooksLoading ? (
-                        <p className="text-slate-400 text-xs">No free legal copies found</p>
-                      ) : null}
+                      </div>
+                    ) : !freeEbooksLoading ? (
+                      <p className="text-slate-400 text-xs">No copies found</p>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+
+              {/* Internet Archive Section - Web Only */}
+              {isWebOnly && (
+                <div className="border-t border-slate-700/30 pt-4">
+                  <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <Download className="w-4 h-4 text-slate-400" />
+                      <span className="text-slate-300 text-sm font-medium">Internet Archive</span>
+                      {freeEbooksLoading && (
+                        <div className="w-3 h-3 border border-slate-400 animate-spin border-t-transparent rounded-full" />
+                      )}
+                    </div>
+                    
+                    {internetArchive.length > 0 ? (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-1 gap-2">
+                          {internetArchive.map((item) => (
+                            <div 
+                              key={item.id} 
+                              className="flex items-center justify-between p-2 bg-slate-800/30 border border-slate-600/20 rounded hover:bg-slate-700/30 transition-colors"
+                            >
+                              <div className="flex items-center space-x-2 flex-1">
+                                <FileText className="w-3 h-3 text-slate-400" />
+                                <div className="flex-1 min-w-0">
+                                  <Badge variant="outline" className="text-xs border-slate-600 text-slate-300 bg-slate-700/50">
+                                    {item.extension.toUpperCase()}
+                                  </Badge>
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => window.open(item.downloadUrl, '_blank')}
+                                className="h-6 px-2 text-xs border-slate-500 text-slate-200 hover:bg-slate-500/60 hover:border-slate-400 bg-slate-700/40 hover:text-white"
+                              >
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                Open
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : !freeEbooksLoading ? (
+                      <p className="text-slate-400 text-xs">No copies found</p>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+
+              {/* Project Gutenberg Section - Web Only */}
+              {isWebOnly && (
+                <div className="border-t border-slate-700/30 pt-4">
+                  <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <Download className="w-4 h-4 text-slate-400" />
+                      <span className="text-slate-300 text-sm font-medium">Project Gutenberg</span>
+                      {freeEbooksLoading && (
+                        <div className="w-3 h-3 border border-slate-400 animate-spin border-t-transparent rounded-full" />
+                      )}
+                    </div>
+                    
+                    {gutenberg.length > 0 ? (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-1 gap-2">
+                          {gutenberg.map((item) => (
+                            <div 
+                              key={item.id} 
+                              className="flex items-center justify-between p-2 bg-slate-800/30 border border-slate-600/20 rounded hover:bg-slate-700/30 transition-colors"
+                            >
+                              <div className="flex items-center space-x-2 flex-1">
+                                <FileText className="w-3 h-3 text-slate-400" />
+                                <div className="flex-1 min-w-0">
+                                  <Badge variant="outline" className="text-xs border-slate-600 text-slate-300 bg-slate-700/50">
+                                    {item.extension.toUpperCase()}
+                                  </Badge>
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => window.open(item.downloadUrl, '_blank')}
+                                className="h-6 px-2 text-xs border-slate-500 text-slate-200 hover:bg-slate-500/60 hover:border-slate-400 bg-slate-700/40 hover:text-white"
+                              >
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                Open
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : !freeEbooksLoading ? (
+                      <p className="text-slate-400 text-xs">No copies found</p>
+                    ) : null}
                   </div>
                 </div>
               )}
