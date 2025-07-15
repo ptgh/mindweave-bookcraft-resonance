@@ -66,10 +66,13 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
               book.isbn || undefined
             );
             
-            console.log('📖 Free ebook results:', freeEbookResult);
+            console.log('📖 Free ebook results structure:', freeEbookResult);
+            console.log('📖 Anna\'s Archive results:', freeEbookResult?.annasArchive);
+            console.log('📖 Internet Archive results:', freeEbookResult?.internetArchive);
+            console.log('📖 Gutenberg results:', freeEbookResult?.gutenberg);
             setFreeEbooks(freeEbookResult);
           } catch (freeEbookError) {
-            console.error('Free ebook search failed:', freeEbookError);
+            console.error('❌ Free ebook search failed:', freeEbookError);
             setFreeEbooks(null);
           } finally {
             setFreeEbooksLoading(false);
