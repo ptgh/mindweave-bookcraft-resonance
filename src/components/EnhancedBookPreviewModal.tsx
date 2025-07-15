@@ -240,18 +240,18 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                             <div className="flex items-center gap-4">
                               <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
                               <div className="flex gap-3 flex-wrap">
-                                {book.formats?.map((format) => (
-                                  <a
-                                    key={format.type}
-                                    href={format.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-3 py-1 bg-slate-600/80 hover:bg-slate-500 text-slate-100 border border-slate-500/50 rounded-md font-medium text-sm transition-colors duration-200 flex items-center gap-1"
-                                  >
-                                    {format.type}
-                                    <ExternalLink className="w-3 h-3" />
-                                  </a>
-                                ))}
+                                 {book.formats?.map((format) => (
+                                   <a
+                                     key={format.type}
+                                     href={format.url}
+                                     target="_blank"
+                                     rel="noopener noreferrer"
+                                     className="px-3 py-1 bg-slate-600/80 hover:bg-slate-500 text-slate-100 border border-slate-500/50 rounded-md font-medium text-sm transition-colors duration-200 flex items-center gap-1"
+                                   >
+                                     View on Anna's Archive
+                                     <ExternalLink className="w-3 h-3" />
+                                   </a>
+                                 ))}
                               </div>
                             </div>
                           </div>
@@ -274,18 +274,18 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                             <div className="flex items-center gap-4">
                               <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
                               <div className="flex gap-3 flex-wrap">
-                                {book.formats?.map((format) => (
-                                  <a
-                                    key={format.type}
-                                    href={format.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-3 py-1 bg-slate-600/80 hover:bg-slate-500 text-slate-100 border border-slate-500/50 rounded-md font-medium text-sm transition-colors duration-200 flex items-center gap-1"
-                                  >
-                                    {format.type}
-                                    <ExternalLink className="w-3 h-3" />
-                                  </a>
-                                ))}
+                                 {book.formats?.map((format) => (
+                                   <a
+                                     key={format.type}
+                                     href={format.url}
+                                     target="_blank"
+                                     rel="noopener noreferrer"
+                                     className="px-3 py-1 bg-slate-600/80 hover:bg-slate-500 text-slate-100 border border-slate-500/50 rounded-md font-medium text-sm transition-colors duration-200 flex items-center gap-1"
+                                   >
+                                     View on Internet Archive
+                                     <ExternalLink className="w-3 h-3" />
+                                   </a>
+                                 ))}
                               </div>
                             </div>
                           </div>
@@ -308,18 +308,18 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                             <div className="flex items-center gap-4">
                               <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
                               <div className="flex gap-3 flex-wrap">
-                                {book.formats?.map((format) => (
-                                  <a
-                                    key={format.type}
-                                    href={format.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-3 py-1 bg-slate-600/80 hover:bg-slate-500 text-slate-100 border border-slate-500/50 rounded-md font-medium text-sm transition-colors duration-200 flex items-center gap-1"
-                                  >
-                                    {format.type}
-                                    <ExternalLink className="w-3 h-3" />
-                                  </a>
-                                ))}
+                                 {book.formats?.map((format) => (
+                                   <a
+                                     key={format.type}
+                                     href={format.url}
+                                     target="_blank"
+                                     rel="noopener noreferrer"
+                                     className="px-3 py-1 bg-slate-600/80 hover:bg-slate-500 text-slate-100 border border-slate-500/50 rounded-md font-medium text-sm transition-colors duration-200 flex items-center gap-1"
+                                   >
+                                     View on Project Gutenberg
+                                     <ExternalLink className="w-3 h-3" />
+                                   </a>
+                                 ))}
                               </div>
                             </div>
                           </div>

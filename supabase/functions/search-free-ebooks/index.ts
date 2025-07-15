@@ -67,42 +67,33 @@ async function searchAnnasArchive(title: string, author: string): Promise<{ url:
 
     const html = await searchResponse.text();
     
-    // Parse the first MD5 link and extract format info
-    const md5Match = html.match(/\/md5\/([a-f0-9]{32})/);
-    if (!md5Match) return null;
-
-    const md5Hash = md5Match[1];
-    const baseUrl = `https://${domain}/md5/${md5Hash}`;
+    // Look for book matches in search results
+    const titleRegex = /<h3[^>]*>([^<]*)<\/h3>/g;
+    let titleMatch;
     
-    // Extract available formats from the search results
-    const formats: Record<string, string> = {};
+    while ((titleMatch = titleRegex.exec(html))) {
+      const bookTitle = titleMatch[1].toLowerCase();
+      const searchTitle = title.toLowerCase();
+      
+      if (bookTitle.includes(searchTitle.substring(0, Math.min(searchTitle.length, 20)))) {
+        console.log('Found Archive match:', titleMatch[1]);
+        
+        // Return the search page URL itself since it's always valid
+        const formats: Record<string, string> = {
+          view: searchUrl
+        };
+        
+        console.log(`Found Anna's Archive match with search page URL`);
+        
+        return {
+          url: searchUrl,
+          id: title.replace(/\s+/g, '_'),
+          formats
+        };
+      }
+    }
     
-    // Look for PDF, EPUB, MOBI mentions in the surrounding text
-    if (html.includes('.pdf') || html.toLowerCase().includes('pdf')) {
-      formats.pdf = baseUrl;
-    }
-    if (html.includes('.epub') || html.toLowerCase().includes('epub')) {
-      formats.epub = baseUrl;
-    }
-    if (html.includes('.mobi') || html.toLowerCase().includes('mobi')) {
-      formats.mobi = baseUrl;
-    }
-    
-    // If no specific formats found, default to the page itself
-    if (Object.keys(formats).length === 0) {
-      formats.pdf = baseUrl;
-      formats.epub = baseUrl;
-      formats.mobi = baseUrl;
-    }
-
-    console.log(`Found Anna's Archive match with formats:`, Object.keys(formats));
-    
-    return {
-      url: baseUrl,
-      id: md5Hash.slice(0, 8),
-      formats
-    };
-
+    return null;
   } catch (error) {
     console.error('Anna\'s Archive search error:', error);
     return null;
@@ -170,7 +161,7 @@ serve(async (req) => {
           gutenbergResult = {
             url: `https://www.gutenberg.org/ebooks/${bestMatch.id}`,
             id: bestMatch.id.toString(),
-            formats: cleanFormats
+            formats: { view: `https://www.gutenberg.org/ebooks/${bestMatch.id}` }
           }
           console.log(`Found Gutenberg match: ${bestMatch.title}`)
         }
@@ -197,22 +188,9 @@ serve(async (req) => {
         })
         
         if (bestMatch) {
-          // Build direct download URLs for Internet Archive
-          const formats: Record<string, string> = {}
-          const baseUrl = `https://archive.org/download/${bestMatch.identifier}`
-          
-          // Check which formats are actually available and build direct download URLs
-          const availableFormats = Array.isArray(bestMatch.format) ? bestMatch.format : []
-          
-          // Prioritize ePub, then PDF, then TXT
-          if (availableFormats.some(f => f.toLowerCase().includes('epub'))) {
-            formats.epub = `${baseUrl}/${bestMatch.identifier}.epub`
-          }
-          if (availableFormats.some(f => f.toLowerCase().includes('pdf'))) {
-            formats.pdf = `${baseUrl}/${bestMatch.identifier}.pdf`
-          }
-          if (availableFormats.some(f => f.toLowerCase().includes('txt'))) {
-            formats.txt = `${baseUrl}/${bestMatch.identifier}.txt`
+          // Use the main details page URL which always works
+          const formats: Record<string, string> = {
+            view: `https://archive.org/details/${bestMatch.identifier}`
           }
           
           archiveResult = {
