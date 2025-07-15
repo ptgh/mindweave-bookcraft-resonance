@@ -13,23 +13,21 @@ export interface FreeEbookLink {
   last_checked: string;
 }
 
+export interface EbookFormat {
+  type: string;
+  url: string;
+}
+
+export interface EbookSource {
+  title: string;
+  author: string;
+  formats: EbookFormat[];
+}
+
 export interface EbookSearchResult {
-  hasLinks: boolean;
-  gutenberg?: {
-    url: string;
-    id: string;
-    formats: Record<string, string>;
-  };
-  archive?: {
-    url: string;
-    id: string;
-    formats: Record<string, string>;
-  };
-  annasArchive?: {
-    url: string;
-    id: string;
-    formats: Record<string, string>;
-  };
+  annasArchive?: EbookSource[];
+  internetArchive?: EbookSource[];
+  gutenberg?: EbookSource[];
 }
 
 /**

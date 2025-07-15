@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { EnrichedPublisherBook } from "@/services/publisherService";
 import { AppleBook, searchAppleBooks, generateAppleBooksWebUrl, generateAppleBooksDeepLink, canOpenAppleBooksApp } from "@/services/appleBooks";
 import { searchGoogleBooks } from "@/services/googleBooks";
-import { searchFreeEbooks } from "@/services/freeEbookService";
+import { searchFreeEbooks, EbookSearchResult } from "@/services/freeEbookService";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsWebOnly } from "@/hooks/use-is-web-only";
 import { useToast } from "@/hooks/use-toast";
@@ -19,30 +19,7 @@ interface EnhancedBookPreviewModalProps {
 const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPreviewModalProps) => {
   const [appleBook, setAppleBook] = useState<AppleBook | null>(null);
   const [googleFallback, setGoogleFallback] = useState<any>(null);
-  const [annasArchive, setAnnasArchive] = useState<Array<{
-    id: string;
-    title: string;
-    author: string;
-    extension: string;
-    filesize: string;
-    downloadUrl: string;
-  }>>([]);
-  const [internetArchive, setInternetArchive] = useState<Array<{
-    id: string;
-    title: string;
-    author: string;
-    extension: string;
-    filesize: string;
-    downloadUrl: string;
-  }>>([]);
-  const [gutenberg, setGutenberg] = useState<Array<{
-    id: string;
-    title: string;
-    author: string;
-    extension: string;
-    filesize: string;
-    downloadUrl: string;
-  }>>([]);
+  const [freeEbooks, setFreeEbooks] = useState<EbookSearchResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [freeEbooksLoading, setFreeEbooksLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,70 +67,10 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
             );
             
             console.log('📖 Free ebook results:', freeEbookResult);
-            
-            // Separate sources into different state arrays
-            const annasArchiveBooks = [];
-            const internetArchiveBooks = [];
-            const gutenbergBooks = [];
-            
-            if (freeEbookResult.hasLinks) {
-              // Process Anna's Archive
-              if (freeEbookResult.annasArchive) {
-                Object.entries(freeEbookResult.annasArchive.formats || {}).forEach(([format, url]) => {
-                  if (['pdf', 'epub', 'mobi'].includes(format.toLowerCase())) {
-                    annasArchiveBooks.push({
-                      id: `annas-${format}`,
-                      title: book.title,
-                      author: book.author,
-                      extension: format.toLowerCase(),
-                      filesize: 'Unknown',
-                      downloadUrl: url
-                    });
-                  }
-                });
-              }
-              
-              // Process Internet Archive
-              if (freeEbookResult.archive) {
-                Object.entries(freeEbookResult.archive.formats || {}).forEach(([format, url]) => {
-                  if (['pdf', 'epub', 'mobi'].includes(format.toLowerCase())) {
-                    internetArchiveBooks.push({
-                      id: `archive-${format}`,
-                      title: book.title,
-                      author: book.author,
-                      extension: format.toLowerCase(),
-                      filesize: 'Unknown',
-                      downloadUrl: url
-                    });
-                  }
-                });
-              }
-              
-              // Process Project Gutenberg
-              if (freeEbookResult.gutenberg) {
-                Object.entries(freeEbookResult.gutenberg.formats || {}).forEach(([format, url]) => {
-                  if (['pdf', 'epub', 'mobi'].includes(format.toLowerCase())) {
-                    gutenbergBooks.push({
-                      id: `gutenberg-${format}`,
-                      title: book.title,
-                      author: book.author,
-                      extension: format.toLowerCase(),
-                      filesize: 'Unknown',
-                      downloadUrl: url
-                    });
-                  }
-                });
-              }
-            }
-            
-            setAnnasArchive(annasArchiveBooks);
-            setInternetArchive(internetArchiveBooks);
-            setGutenberg(gutenbergBooks);
+            setFreeEbooks(freeEbookResult);
           } catch (freeEbookError) {
             console.error('Free ebook search failed:', freeEbookError);
-            setAnnasArchive([]);
-            setInternetArchive([]);
-            setGutenberg([]);
+            setFreeEbooks(null);
           } finally {
             setFreeEbooksLoading(false);
           }
@@ -212,7 +129,6 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   const hasAppleData = !!appleBook;
   const coverUrl = appleBook?.coverUrl || googleFallback?.coverUrl || book.cover_url;
   const description = appleBook?.description || googleFallback?.description || book.editorial_note;
-
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -296,226 +212,174 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                 </div>
               </div>
 
-              {/* Anna's Archive Section - Web Only */}
+              {/* Free Ebooks Sections - Web Only */}
               {isWebOnly && (
-                <div className="border-t border-slate-700/30 pt-4">
-                  <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <Download className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-300 text-sm font-medium">Anna's Archive</span>
-                      {freeEbooksLoading && (
-                        <div className="w-3 h-3 border border-slate-400 animate-spin border-t-transparent rounded-full" />
-                      )}
-                    </div>
-                    
-                    {annasArchive.length > 0 ? (
-                      <div className="space-y-2">
-                        <div className="grid grid-cols-1 gap-2">
-                          {annasArchive.map((item) => (
-                            <div 
-                              key={item.id} 
-                              className="flex items-center justify-between p-2 bg-slate-800/30 border border-slate-600/20 rounded hover:bg-slate-700/30 transition-colors"
-                            >
-                              <div className="flex items-center space-x-2 flex-1">
-                                <FileText className="w-3 h-3 text-slate-400" />
-                                <div className="flex-1 min-w-0">
-                                  <Badge variant="outline" className="text-xs border-slate-600 text-slate-300 bg-slate-700/50">
-                                    {item.extension.toUpperCase()}
-                                  </Badge>
-                                </div>
-                              </div>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => window.open(item.downloadUrl, '_blank')}
-                                className="h-6 px-2 text-xs border-slate-500 text-slate-200 hover:bg-slate-500/60 hover:border-slate-400 bg-slate-700/40 hover:text-white"
-                              >
-                                <ExternalLink className="w-3 h-3 mr-1" />
-                                Open
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
+                <div className="border-t border-slate-700/30 pt-4 space-y-4">
+                  {/* Anna's Archive */}
+                  {freeEbooks?.annasArchive && freeEbooks.annasArchive.length > 0 && (
+                    <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <Download className="w-4 h-4 text-slate-400" />
+                        <span className="text-slate-300 text-sm font-medium">Anna's Archive</span>
                       </div>
-                    ) : !freeEbooksLoading ? (
-                      <p className="text-slate-400 text-xs">No copies found</p>
-                    ) : null}
-                  </div>
-                </div>
-              )}
+                      
+                      <div className="space-y-2">
+                        {freeEbooks.annasArchive.map((book, index) => (
+                          <div key={index} className="p-2 bg-slate-800/30 border border-slate-600/20 rounded">
+                            <div className="flex items-center gap-4">
+                              <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                              <div className="flex gap-3 flex-wrap">
+                                {book.formats?.map((format) => (
+                                  <a
+                                    key={format.type}
+                                    href={format.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-md font-medium text-sm transition-colors duration-200 flex items-center gap-1"
+                                  >
+                                    {format.type}
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-              {/* Internet Archive Section - Web Only */}
-              {isWebOnly && (
-                <div className="border-t border-slate-700/30 pt-4">
-                  <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <Download className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-300 text-sm font-medium">Internet Archive</span>
-                      {freeEbooksLoading && (
-                        <div className="w-3 h-3 border border-slate-400 animate-spin border-t-transparent rounded-full" />
-                      )}
-                    </div>
-                    
-                    {internetArchive.length > 0 ? (
-                      <div className="space-y-2">
-                        <div className="grid grid-cols-1 gap-2">
-                          {internetArchive.map((item) => (
-                            <div 
-                              key={item.id} 
-                              className="flex items-center justify-between p-2 bg-slate-800/30 border border-slate-600/20 rounded hover:bg-slate-700/30 transition-colors"
-                            >
-                              <div className="flex items-center space-x-2 flex-1">
-                                <FileText className="w-3 h-3 text-slate-400" />
-                                <div className="flex-1 min-w-0">
-                                  <Badge variant="outline" className="text-xs border-slate-600 text-slate-300 bg-slate-700/50">
-                                    {item.extension.toUpperCase()}
-                                  </Badge>
-                                </div>
-                              </div>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => window.open(item.downloadUrl, '_blank')}
-                                className="h-6 px-2 text-xs border-slate-500 text-slate-200 hover:bg-slate-500/60 hover:border-slate-400 bg-slate-700/40 hover:text-white"
-                              >
-                                <ExternalLink className="w-3 h-3 mr-1" />
-                                Open
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
+                  {/* Internet Archive */}
+                  {freeEbooks?.internetArchive && freeEbooks.internetArchive.length > 0 && (
+                    <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <Download className="w-4 h-4 text-slate-400" />
+                        <span className="text-slate-300 text-sm font-medium">Internet Archive</span>
                       </div>
-                    ) : !freeEbooksLoading ? (
-                      <p className="text-slate-400 text-xs">No copies found</p>
-                    ) : null}
-                  </div>
-                </div>
-              )}
+                      
+                      <div className="space-y-2">
+                        {freeEbooks.internetArchive.map((book, index) => (
+                          <div key={index} className="p-2 bg-slate-800/30 border border-slate-600/20 rounded">
+                            <div className="flex items-center gap-4">
+                              <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                              <div className="flex gap-3 flex-wrap">
+                                {book.formats?.map((format) => (
+                                  <a
+                                    key={format.type}
+                                    href={format.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-md font-medium text-sm transition-colors duration-200 flex items-center gap-1"
+                                  >
+                                    {format.type}
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-              {/* Project Gutenberg Section - Web Only */}
-              {isWebOnly && (
-                <div className="border-t border-slate-700/30 pt-4">
-                  <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <Download className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-300 text-sm font-medium">Project Gutenberg</span>
-                      {freeEbooksLoading && (
-                        <div className="w-3 h-3 border border-slate-400 animate-spin border-t-transparent rounded-full" />
-                      )}
-                    </div>
-                    
-                    {gutenberg.length > 0 ? (
-                      <div className="space-y-2">
-                        <div className="grid grid-cols-1 gap-2">
-                          {gutenberg.map((item) => (
-                            <div 
-                              key={item.id} 
-                              className="flex items-center justify-between p-2 bg-slate-800/30 border border-slate-600/20 rounded hover:bg-slate-700/30 transition-colors"
-                            >
-                              <div className="flex items-center space-x-2 flex-1">
-                                <FileText className="w-3 h-3 text-slate-400" />
-                                <div className="flex-1 min-w-0">
-                                  <Badge variant="outline" className="text-xs border-slate-600 text-slate-300 bg-slate-700/50">
-                                    {item.extension.toUpperCase()}
-                                  </Badge>
-                                </div>
-                              </div>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => window.open(item.downloadUrl, '_blank')}
-                                className="h-6 px-2 text-xs border-slate-500 text-slate-200 hover:bg-slate-500/60 hover:border-slate-400 bg-slate-700/40 hover:text-white"
-                              >
-                                <ExternalLink className="w-3 h-3 mr-1" />
-                                Open
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
+                  {/* Project Gutenberg */}
+                  {freeEbooks?.gutenberg && freeEbooks.gutenberg.length > 0 && (
+                    <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <Download className="w-4 h-4 text-slate-400" />
+                        <span className="text-slate-300 text-sm font-medium">Project Gutenberg</span>
                       </div>
-                    ) : !freeEbooksLoading ? (
-                      <p className="text-slate-400 text-xs">No copies found</p>
-                    ) : null}
-                  </div>
-                </div>
-              )}
-              
-              {/* Apple Books Section - Always shown */}
-              {(
-                <div className="border-t border-slate-700/30 pt-4">
-                  <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
-                    <div className="flex items-center justify-between">
+                      
+                      <div className="space-y-2">
+                        {freeEbooks.gutenberg.map((book, index) => (
+                          <div key={index} className="p-2 bg-slate-800/30 border border-slate-600/20 rounded">
+                            <div className="flex items-center gap-4">
+                              <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                              <div className="flex gap-3 flex-wrap">
+                                {book.formats?.map((format) => (
+                                  <a
+                                    key={format.type}
+                                    href={format.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-md font-medium text-sm transition-colors duration-200 flex items-center gap-1"
+                                  >
+                                    {format.type}
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No Free Copies Message */}
+                  {freeEbooksLoading && (
+                    <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
                       <div className="flex items-center space-x-2">
-                        <ExternalLink className="w-4 h-4 text-slate-400" />
-                        <div>
-                          <p className="text-slate-300 text-sm font-medium">Apple Books</p>
-                          <p className="text-slate-400 text-xs">
-                            {hasAppleData && appleBook ? (
-                              appleBook.formattedPrice || 
-                              (appleBook.price === 0 ? 'Free' : 
-                               `${appleBook.currency || '£'}${appleBook.price || 'N/A'}`)
-                            ) : (
-                              'Search available'
-                            )}
-                          </p>
-                        </div>
+                        <div className="w-3 h-3 border border-slate-400 animate-spin border-t-transparent rounded-full" />
+                        <span className="text-slate-400 text-sm">Searching free sources...</span>
                       </div>
-                      <Button
-                        size="sm"
-                        onClick={hasAppleData && appleBook ? handleBuyOnAppleBooks : () => {
-                          const searchUrl = `https://books.apple.com/search?term=${encodeURIComponent(`${book.title} ${book.author}`)}`;
-                          window.open(searchUrl, '_blank');
-                        }}
-                        className="h-6 px-2 text-xs bg-slate-600/70 hover:bg-slate-600/90 text-white border-0"
-                      >
-                        {hasAppleData && appleBook ? (
-                          canOpenAppleBooksApp() ? (
-                            <>
-                              <Smartphone className="w-3 h-3 mr-1" />
-                              Buy
-                            </>
-                          ) : (
-                            <>
-                              <Globe className="w-3 h-3 mr-1" />
-                              Buy
-                            </>
-                          )
-                        ) : (
-                          <>
-                            <ExternalLink className="w-3 h-3 mr-1" />
-                            Search
-                          </>
-                        )}
-                      </Button>
+                    </div>
+                  )}
+
+                  {!freeEbooksLoading && (!freeEbooks?.annasArchive?.length && !freeEbooks?.internetArchive?.length && !freeEbooks?.gutenberg?.length) && (
+                    <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
+                      <p className="text-slate-400 text-sm">No free copies found in public archives</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Apple Books Section - All Platforms */}
+              {hasAppleData && (
+                <div className="border-t border-slate-700/30 pt-4">
+                  <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <Smartphone className="w-4 h-4 text-slate-400" />
+                      <span className="text-slate-300 text-sm font-medium">Apple Books</span>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <p className="text-slate-400 text-xs">Available for purchase on Apple Books</p>
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          onClick={handleBuyOnAppleBooks}
+                          className="h-7 px-3 text-xs bg-slate-600 hover:bg-slate-500 text-slate-100 border-slate-400"
+                        >
+                          <Smartphone className="w-3 h-3 mr-1" />
+                          Buy on Apple Books
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
+
+              {/* Action buttons */}
+              <div className="border-t border-slate-700/30 pt-4 flex space-x-2">
+                <Button
+                  onClick={() => onAddBook(book)}
+                  className="flex-1 h-8 text-xs bg-slate-600 hover:bg-slate-500 text-slate-100"
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Add to Library
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={onClose}
+                  className="h-8 px-4 text-xs border-slate-500 text-slate-200 hover:bg-slate-700/50"
+                >
+                  Close
+                </Button>
+              </div>
             </div>
           )}
-        </div>
-        
-        {/* Actions */}
-        <div className="flex justify-end space-x-2 p-4 border-t border-slate-700/30">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onClose}
-            className="border-slate-600 text-slate-300 hover:bg-slate-700/50 bg-transparent"
-          >
-            Close
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => {
-              onAddBook(book);
-              onClose();
-            }}
-            className="bg-slate-600/70 hover:bg-slate-600/90 text-white border-0"
-          >
-            <Plus className="w-3 h-3 mr-1" />
-            Add Signal
-          </Button>
         </div>
       </div>
     </div>
