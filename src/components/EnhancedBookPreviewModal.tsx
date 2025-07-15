@@ -97,29 +97,20 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
             const gutenbergBooks = [];
             
             if (freeEbookResult.hasLinks) {
-              // Process Anna's Archive from the edge function response
-              // Since Anna's Archive returns MD5 links, we'll fetch them via edge function
-              try {
-                const annasResult = await supabase.functions.invoke('annas-archive-search', {
-                  body: { title: book.title, author: book.author }
+              // Process Anna's Archive
+              if (freeEbookResult.annasArchive) {
+                Object.entries(freeEbookResult.annasArchive.formats || {}).forEach(([format, url]) => {
+                  if (['pdf', 'epub', 'mobi'].includes(format.toLowerCase())) {
+                    annasArchiveBooks.push({
+                      id: `annas-${format}`,
+                      title: book.title,
+                      author: book.author,
+                      extension: format.toLowerCase(),
+                      filesize: 'Unknown',
+                      downloadUrl: url
+                    });
+                  }
                 });
-                
-                if (annasResult.data && Array.isArray(annasResult.data)) {
-                  annasResult.data.forEach((item: any) => {
-                    if (['pdf', 'epub', 'mobi'].includes(item.format?.toLowerCase())) {
-                      annasArchiveBooks.push({
-                        id: `annas-${item.format}`,
-                        title: item.title || book.title,
-                        author: item.author || book.author,
-                        extension: item.format?.toLowerCase() || 'unknown',
-                        filesize: item.filesize || 'Unknown',
-                        downloadUrl: item.downloadUrl
-                      });
-                    }
-                  });
-                }
-              } catch (annasError) {
-                console.error('Anna\'s Archive search failed:', annasError);
               }
               
               // Process Internet Archive

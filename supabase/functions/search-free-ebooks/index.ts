@@ -28,6 +28,87 @@ interface ArchiveItem {
   downloads?: number;
 }
 
+interface AnnasArchiveBook {
+  id: string;
+  title: string;
+  author: string;
+  extension: string;
+  downloadUrl: string;
+}
+
+// Anna's Archive search function
+async function searchAnnasArchive(title: string, author: string): Promise<{ url: string; id: string; formats: Record<string, string> } | null> {
+  try {
+    const domain = 'annas-archive.org';
+    const searchQuery = `author:"${author}" title:"${title}"`;
+    
+    const searchParams = new URLSearchParams({
+      q: searchQuery,
+      ext: 'pdf,epub,mobi',
+      sort: 'newest',
+      lang: 'en'
+    });
+
+    const searchUrl = `https://${domain}/search?${searchParams.toString()}`;
+    console.log('🔍 Searching Anna\'s Archive:', searchUrl);
+
+    const searchResponse = await fetch(searchUrl, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      },
+    });
+
+    if (!searchResponse.ok) {
+      console.error('Anna\'s Archive search failed:', searchResponse.status);
+      return null;
+    }
+
+    const html = await searchResponse.text();
+    
+    // Parse the first MD5 link and extract format info
+    const md5Match = html.match(/\/md5\/([a-f0-9]{32})/);
+    if (!md5Match) return null;
+
+    const md5Hash = md5Match[1];
+    const baseUrl = `https://${domain}/md5/${md5Hash}`;
+    
+    // Extract available formats from the search results
+    const formats: Record<string, string> = {};
+    
+    // Look for PDF, EPUB, MOBI mentions in the surrounding text
+    if (html.includes('.pdf') || html.toLowerCase().includes('pdf')) {
+      formats.pdf = baseUrl;
+    }
+    if (html.includes('.epub') || html.toLowerCase().includes('epub')) {
+      formats.epub = baseUrl;
+    }
+    if (html.includes('.mobi') || html.toLowerCase().includes('mobi')) {
+      formats.mobi = baseUrl;
+    }
+    
+    // If no specific formats found, default to the page itself
+    if (Object.keys(formats).length === 0) {
+      formats.pdf = baseUrl;
+      formats.epub = baseUrl;
+      formats.mobi = baseUrl;
+    }
+
+    console.log(`Found Anna's Archive match with formats:`, Object.keys(formats));
+    
+    return {
+      url: baseUrl,
+      id: md5Hash.slice(0, 8),
+      formats
+    };
+
+  } catch (error) {
+    console.error('Anna\'s Archive search error:', error);
+    return null;
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -51,6 +132,7 @@ serve(async (req) => {
 
     let gutenbergResult = null
     let archiveResult = null
+    let annasArchiveResult = null
 
     // Search Project Gutenberg via Gutendex API
     try {
@@ -145,8 +227,44 @@ serve(async (req) => {
       console.error('Archive search error:', error)
     }
 
+    // Search Anna's Archive
+    try {
+      annasArchiveResult = await searchAnnasArchive(title, author)
+      if (annasArchiveResult) {
+        console.log(`Found Anna's Archive match`)
+      }
+    } catch (error) {
+      console.error('Anna\'s Archive search error:', error)
+    }
+
+    // Filter formats to only include PDF, EPUB, and MOBI
+    const filterFormats = (formats: Record<string, string>) => {
+      const filtered: Record<string, string> = {}
+      for (const [format, url] of Object.entries(formats)) {
+        if (format.toLowerCase().includes('pdf')) {
+          filtered.pdf = url
+        } else if (format.toLowerCase().includes('epub')) {
+          filtered.epub = url
+        } else if (format.toLowerCase().includes('mobi')) {
+          filtered.mobi = url
+        }
+      }
+      return filtered
+    }
+
+    // Filter formats for each source
+    if (gutenbergResult) {
+      gutenbergResult.formats = filterFormats(gutenbergResult.formats)
+    }
+    if (archiveResult) {
+      archiveResult.formats = filterFormats(archiveResult.formats)
+    }
+    if (annasArchiveResult) {
+      annasArchiveResult.formats = filterFormats(annasArchiveResult.formats)
+    }
+
     // Cache the results in database
-    if (gutenbergResult || archiveResult) {
+    if (gutenbergResult || archiveResult || annasArchiveResult) {
       try {
         await supabase
           .from('free_ebook_links')
@@ -160,7 +278,8 @@ serve(async (req) => {
             archive_id: archiveResult?.id || null,
             formats: {
               ...gutenbergResult?.formats,
-              ...archiveResult?.formats
+              ...archiveResult?.formats,
+              ...annasArchiveResult?.formats
             },
             last_checked: new Date().toISOString()
           })
@@ -171,9 +290,10 @@ serve(async (req) => {
     }
 
     const result = {
-      hasLinks: !!(gutenbergResult || archiveResult),
+      hasLinks: !!(gutenbergResult || archiveResult || annasArchiveResult),
       gutenberg: gutenbergResult,
-      archive: archiveResult
+      archive: archiveResult,
+      annasArchive: annasArchiveResult
     }
 
     return new Response(

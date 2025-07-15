@@ -25,6 +25,11 @@ export interface EbookSearchResult {
     id: string;
     formats: Record<string, string>;
   };
+  annasArchive?: {
+    url: string;
+    id: string;
+    formats: Record<string, string>;
+  };
 }
 
 /**
