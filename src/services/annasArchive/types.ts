@@ -1,4 +1,4 @@
-export interface ZLibraryBook {
+export interface AnnasArchiveBook {
   id: string;
   title: string;
   author: string;
@@ -13,7 +13,7 @@ export interface ZLibraryBook {
   description?: string;
 }
 
-export interface ZLibrarySearchParams {
+export interface AnnasArchiveSearchParams {
   title?: string;
   author?: string;
   isbn?: string;
@@ -21,13 +21,13 @@ export interface ZLibrarySearchParams {
   limit?: number;
 }
 
-export interface ZLibrarySearchResponse {
-  books: ZLibraryBook[];
+export interface AnnasArchiveSearchResponse {
+  books: AnnasArchiveBook[];
   total: number;
   page: number;
 }
 
-export interface ZLibraryError {
+export interface AnnasArchiveError {
   message: string;
   code?: string;
 }

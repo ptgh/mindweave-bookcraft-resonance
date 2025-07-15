@@ -19,3 +19,6 @@ enable_anonymous_sign_ins = false
 
 [functions.brain-chat]
 verify_jwt = false
+
+[functions.annas-archive-search]
+verify_jwt = false
