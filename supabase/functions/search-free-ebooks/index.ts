@@ -263,25 +263,21 @@ serve(async (req) => {
       annasArchiveResult.formats = filterFormats(annasArchiveResult.formats)
     }
 
-    // Cache the results in database
+    // Cache the results in database using new ebook_search_cache table
     if (gutenbergResult || archiveResult || annasArchiveResult) {
       try {
+        const searchKey = `${title.toLowerCase()}_${author.toLowerCase()}`.replace(/[^a-z0-9_]/g, '_');
+        
         await supabase
-          .from('free_ebook_links')
+          .from('ebook_search_cache')
           .upsert({
-            book_title: title,
-            book_author: author,
-            isbn: isbn || null,
-            gutenberg_url: gutenbergResult?.url || null,
-            gutenberg_id: gutenbergResult?.id || null,
-            archive_url: archiveResult?.url || null,
-            archive_id: archiveResult?.id || null,
-            formats: {
-              ...gutenbergResult?.formats,
-              ...archiveResult?.formats,
-              ...annasArchiveResult?.formats
-            },
-            last_checked: new Date().toISOString()
+            search_key: searchKey,
+            title,
+            author,
+            gutenberg_results: gutenbergResult ? [gutenbergResult] : null,
+            internet_archive_results: archiveResult ? [archiveResult] : null,
+            annas_archive_results: annasArchiveResult ? [annasArchiveResult] : null,
+            last_searched: new Date().toISOString()
           })
       } catch (dbError) {
         console.error('Database cache error:', dbError)
@@ -289,15 +285,25 @@ serve(async (req) => {
       }
     }
 
-    const result = {
-      hasLinks: !!(gutenbergResult || archiveResult || annasArchiveResult),
-      gutenberg: gutenbergResult,
-      archive: archiveResult,
-      annasArchive: annasArchiveResult
+    // Convert results to the new format expected by frontend
+    const formatResult = (result: any) => {
+      if (!result) return [];
+      
+      return Object.entries(result.formats).map(([type, url]) => ({
+        title: `${result.id} - ${type.toUpperCase()}`,
+        author: '',
+        formats: [{ type, url: url as string }]
+      }));
+    };
+
+    const response = {
+      annasArchive: formatResult(annasArchiveResult),
+      internetArchive: formatResult(archiveResult),
+      gutenberg: formatResult(gutenbergResult)
     }
 
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify(response),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       },
@@ -305,7 +311,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Search error:', error)
     return new Response(
-      JSON.stringify({ error: error.message, hasLinks: false }),
+      JSON.stringify({ error: error.message, annasArchive: [], internetArchive: [], gutenberg: [] }),
       {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
