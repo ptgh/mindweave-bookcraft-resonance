@@ -5,8 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { EnrichedPublisherBook } from "@/services/publisherService";
 import { AppleBook, searchAppleBooks, generateAppleBooksWebUrl, generateAppleBooksDeepLink, canOpenAppleBooksApp } from "@/services/appleBooks";
 import { searchGoogleBooks } from "@/services/googleBooks";
-import { searchAnnasArchive } from "@/services/annasArchive";
-import type { AnnasArchiveBook } from "@/services/annasArchive";
+import { searchFreeEbooks } from "@/services/freeEbookService";
 import { useIsWebOnly } from "@/hooks/use-is-web-only";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,12 +18,18 @@ interface EnhancedBookPreviewModalProps {
 const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPreviewModalProps) => {
   const [appleBook, setAppleBook] = useState<AppleBook | null>(null);
   const [googleFallback, setGoogleFallback] = useState<any>(null);
-  const [annasArchiveBooks, setAnnasArchiveBooks] = useState<AnnasArchiveBook[]>([]);
+  const [freeEbooks, setFreeEbooks] = useState<Array<{
+    id: string;
+    title: string;
+    author: string;
+    extension: string;
+    filesize: string;
+    downloadUrl: string;
+    source: string;
+  }>>([]);
   const [loading, setLoading] = useState(true);
-  const [annasArchiveLoading, setAnnasArchiveLoading] = useState(false);
+  const [freeEbooksLoading, setFreeEbooksLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [downloadingBooks, setDownloadingBooks] = useState<Set<string>>(new Set());
-  const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
   const isWebOnly = useIsWebOnly();
   const { toast } = useToast();
 
@@ -57,18 +62,62 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
           }
         }
 
-        // Search Anna's Archive if on web
+        // Search free legal sources if on web
         if (isWebOnly) {
-          console.log('🌐 Searching Anna\'s Archive (web only)...');
-          setAnnasArchiveLoading(true);
+          console.log('🌐 Searching free legal sources (web only)...');
+          setFreeEbooksLoading(true);
           try {
-            const aaResult = await searchAnnasArchive(book.title, book.author, book.isbn);
-            console.log('📖 Anna\'s Archive results:', aaResult);
-            setAnnasArchiveBooks(aaResult.books);
-          } catch (aaError) {
-            console.error('Anna\'s Archive search failed:', aaError);
+            const freeEbookResult = await searchFreeEbooks(
+              book.title,
+              book.author,
+              book.isbn || undefined
+            );
+            
+            console.log('📖 Free ebook results:', freeEbookResult);
+            
+            // Convert free ebook results to display format, filtering for PDF, EPUB, MOBI only
+            const freeBooks = [];
+            
+            if (freeEbookResult.hasLinks) {
+              if (freeEbookResult.gutenberg) {
+                Object.entries(freeEbookResult.gutenberg.formats || {}).forEach(([format, url]) => {
+                  if (['pdf', 'epub', 'mobi'].includes(format.toLowerCase())) {
+                    freeBooks.push({
+                      id: `gutenberg-${format}`,
+                      title: book.title,
+                      author: book.author,
+                      extension: format.toLowerCase(),
+                      filesize: 'Unknown',
+                      downloadUrl: url,
+                      source: 'Project Gutenberg'
+                    });
+                  }
+                });
+              }
+              
+              if (freeEbookResult.archive) {
+                Object.entries(freeEbookResult.archive.formats || {}).forEach(([format, url]) => {
+                  if (['pdf', 'epub', 'mobi'].includes(format.toLowerCase())) {
+                    freeBooks.push({
+                      id: `archive-${format}`,
+                      title: book.title,
+                      author: book.author,
+                      extension: format.toLowerCase(),
+                      filesize: 'Unknown',
+                      downloadUrl: url,
+                      source: 'Internet Archive'
+                    });
+                  }
+                });
+              }
+            }
+            
+            setFreeEbooks(freeBooks);
+          } catch (freeEbookError) {
+            console.error('Free ebook search failed:', freeEbookError);
+            setFreeEbooks([]);
           } finally {
-            setAnnasArchiveLoading(false);
+            setFreeEbooksLoading(false);
           }
         }
       } catch (err) {
@@ -126,77 +175,6 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   const coverUrl = appleBook?.coverUrl || googleFallback?.coverUrl || book.cover_url;
   const description = appleBook?.description || googleFallback?.description || book.editorial_note;
 
-  const handleAnnasArchiveDownload = async (aaBook: AnnasArchiveBook) => {
-    const confirmed = window.confirm(
-      `Download "${aaBook.title}" (${aaBook.extension.toUpperCase()}, ${aaBook.filesize})?\n\nNote: Please ensure you have the right to download this content in your jurisdiction.`
-    );
-    
-    if (confirmed) {
-      // Start download process
-      setDownloadingBooks(prev => new Set([...prev, aaBook.id]));
-      setDownloadProgress(prev => ({ ...prev, [aaBook.id]: 0 }));
-
-      try {
-        // Simulate download progress
-        const progressInterval = setInterval(() => {
-          setDownloadProgress(prev => {
-            const currentProgress = prev[aaBook.id] || 0;
-            if (currentProgress >= 100) {
-              clearInterval(progressInterval);
-              return prev;
-            }
-            return { ...prev, [aaBook.id]: Math.min(currentProgress + 10, 100) };
-          });
-        }, 200);
-
-        // Create download link
-        const link = document.createElement('a');
-        link.href = aaBook.downloadUrl;
-        link.download = `${aaBook.title.replace(/[^a-z0-9]/gi, '_')}.${aaBook.extension}`;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        // Complete download
-        setTimeout(() => {
-          setDownloadProgress(prev => ({ ...prev, [aaBook.id]: 100 }));
-          setTimeout(() => {
-            setDownloadingBooks(prev => {
-              const newSet = new Set(prev);
-              newSet.delete(aaBook.id);
-              return newSet;
-            });
-            setDownloadProgress(prev => {
-              const { [aaBook.id]: _, ...rest } = prev;
-              return rest;
-            });
-          }, 1000);
-        }, 2000);
-
-        toast({
-          title: "Download Complete",
-          description: `${aaBook.extension.toUpperCase()} file downloaded successfully`,
-        });
-      } catch (error) {
-        setDownloadingBooks(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(aaBook.id);
-          return newSet;
-        });
-        setDownloadProgress(prev => {
-          const { [aaBook.id]: _, ...rest } = prev;
-          return rest;
-        });
-        
-        toast({
-          title: "Download Failed",
-          description: "Unable to download file. Please try again.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -280,32 +258,28 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                 </div>
               </div>
 
-              {/* Anna's Archive Section - Web Only */}
+              {/* Free Legal Sources Section - Web Only */}
               {isWebOnly && (
                 <div className="border-t border-slate-700/30 pt-4">
                   <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
                     <div className="flex items-center space-x-2 mb-3">
                       <Download className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-300 text-sm font-medium">Free Digital Copies</span>
+                      <span className="text-slate-300 text-sm font-medium">Free Legal Sources</span>
                       <Badge variant="outline" className="text-xs border-slate-600 text-slate-300 bg-slate-700/50">
-                        Anna's Archive
+                        Project Gutenberg & Internet Archive
                       </Badge>
-                      {annasArchiveLoading && (
-                        <div className="w-3 h-3 border border-slate-400 animate-spin border-t-transparent rounded-full" />
-                      )}
-                    </div>
-                    
-                    {annasArchiveBooks.length > 0 ? (
-                      <div className="space-y-2">
-                        <p className="text-slate-400 text-xs mb-2">Available formats for download:</p>
-                        <div className="grid grid-cols-1 gap-2">
-                           {annasArchiveBooks.slice(0, 3).map((aaBook) => {
-                             const isDownloading = downloadingBooks.has(aaBook.id);
-                             const progress = downloadProgress[aaBook.id] || 0;
-                             
-                             return (
+                       {freeEbooksLoading && (
+                         <div className="w-3 h-3 border border-slate-400 animate-spin border-t-transparent rounded-full" />
+                       )}
+                     </div>
+                     
+                      {freeEbooks.length > 0 ? (
+                        <div className="space-y-2">
+                          <p className="text-slate-400 text-xs mb-2">Available formats (PDF, EPUB, MOBI only):</p>
+                          <div className="grid grid-cols-1 gap-2">
+                             {freeEbooks.map((freeBook) => (
                                <div 
-                                 key={aaBook.id} 
+                                 key={freeBook.id} 
                                  className="flex items-center justify-between p-2 bg-slate-800/30 border border-slate-600/20 rounded hover:bg-slate-700/30 transition-colors"
                                >
                                  <div className="flex items-center space-x-2 flex-1">
@@ -313,47 +287,39 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                                    <div className="flex-1 min-w-0">
                                      <div className="flex items-center space-x-2 mb-1">
                                        <Badge variant="outline" className="text-xs border-slate-600 text-slate-300 bg-slate-700/50">
-                                         {aaBook.extension.toUpperCase()}
+                                         {freeBook.extension.toUpperCase()}
                                        </Badge>
-                                       <span className="text-slate-400 text-xs">{aaBook.filesize}</span>
+                                       <Badge variant="outline" className="text-xs border-slate-600 text-slate-300 bg-slate-700/50">
+                                         {freeBook.source}
+                                       </Badge>
                                      </div>
-                                     {isDownloading && (
-                                       <div className="w-full bg-slate-700/50 rounded-full h-1.5 overflow-hidden">
-                                         <div 
-                                           className="h-full bg-gradient-to-r from-slate-400 to-slate-300 rounded-full transition-all duration-300 ease-out"
-                                           style={{ width: `${progress}%` }}
-                                         />
-                                       </div>
-                                     )}
                                    </div>
                                  </div>
                                  <Button
                                    size="sm"
                                    variant="outline"
-                                   onClick={() => handleAnnasArchiveDownload(aaBook)}
-                                   disabled={isDownloading}
-                                   className="h-6 px-2 text-xs border-slate-500 text-slate-200 hover:bg-slate-500/60 hover:border-slate-400 bg-slate-700/40 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                   onClick={() => window.open(freeBook.downloadUrl, '_blank')}
+                                   className="h-6 px-2 text-xs border-slate-500 text-slate-200 hover:bg-slate-500/60 hover:border-slate-400 bg-slate-700/40 hover:text-white"
                                  >
-                                   <Download className="w-3 h-3 mr-1" />
-                                   {isDownloading ? 'Getting...' : 'Get'}
+                                   <ExternalLink className="w-3 h-3 mr-1" />
+                                   Open
                                  </Button>
                                </div>
-                             );
-                           })}
+                             ))}
+                          </div>
+                          <p className="text-slate-500 text-xs mt-2 italic">
+                            Free legal downloads from public domain and digital lending sources
+                          </p>
                         </div>
-                        <p className="text-slate-500 text-xs mt-2 italic">
-                          Note: Ensure you have rights to download in your jurisdiction
-                        </p>
-                      </div>
-                    ) : !annasArchiveLoading ? (
-                      <p className="text-slate-400 text-xs">No free digital copies found</p>
-                    ) : null}
+                      ) : !freeEbooksLoading ? (
+                        <p className="text-slate-400 text-xs">No free legal copies found</p>
+                      ) : null}
                   </div>
                 </div>
               )}
               
-              {/* Apple Books Section */}
-              {hasAppleData && appleBook && (
+              {/* Apple Books Section - Always shown */}
+              {(
                 <div className="border-t border-slate-700/30 pt-4">
                   <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
                     <div className="flex items-center justify-between">
@@ -362,26 +328,40 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                         <div>
                           <p className="text-slate-300 text-sm font-medium">Apple Books</p>
                           <p className="text-slate-400 text-xs">
-                            {appleBook.formattedPrice || 
-                             (appleBook.price === 0 ? 'Free' : 
-                              `${appleBook.currency || '£'}${appleBook.price || 'N/A'}`)}
+                            {hasAppleData && appleBook ? (
+                              appleBook.formattedPrice || 
+                              (appleBook.price === 0 ? 'Free' : 
+                               `${appleBook.currency || '£'}${appleBook.price || 'N/A'}`)
+                            ) : (
+                              'Search available'
+                            )}
                           </p>
                         </div>
                       </div>
                       <Button
                         size="sm"
-                        onClick={handleBuyOnAppleBooks}
+                        onClick={hasAppleData && appleBook ? handleBuyOnAppleBooks : () => {
+                          const searchUrl = `https://books.apple.com/search?term=${encodeURIComponent(`${book.title} ${book.author}`)}`;
+                          window.open(searchUrl, '_blank');
+                        }}
                         className="h-6 px-2 text-xs bg-slate-600/70 hover:bg-slate-600/90 text-white border-0"
                       >
-                        {canOpenAppleBooksApp() ? (
-                          <>
-                            <Smartphone className="w-3 h-3 mr-1" />
-                            Buy
-                          </>
+                        {hasAppleData && appleBook ? (
+                          canOpenAppleBooksApp() ? (
+                            <>
+                              <Smartphone className="w-3 h-3 mr-1" />
+                              Buy
+                            </>
+                          ) : (
+                            <>
+                              <Globe className="w-3 h-3 mr-1" />
+                              Buy
+                            </>
+                          )
                         ) : (
                           <>
-                            <Globe className="w-3 h-3 mr-1" />
-                            Buy
+                            <ExternalLink className="w-3 h-3 mr-1" />
+                            Search
                           </>
                         )}
                       </Button>

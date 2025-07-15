@@ -5,6 +5,8 @@ import { searchBooksEnhanced, EnhancedBookSuggestion } from "@/services/googleBo
 import { saveTransmission } from "@/services/transmissionsService";
 import { imageService } from "@/services/image-service";
 import { debounce } from "@/utils/performance";
+import { searchAppleBooks } from "@/services/appleBooks";
+import { searchFreeEbooks } from "@/services/freeEbookService";
 
 export const useBookBrowser = () => {
   const [books, setBooks] = useState<EnhancedBookSuggestion[]>([]);
