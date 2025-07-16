@@ -82,13 +82,13 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
       <button
         ref={buttonRef}
         onClick={handleClick}
-        className={`flex-1 px-3 py-1.5 bg-transparent border border-[rgba(34,197,94,0.3)] text-green-400 text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-green-400 hover:bg-green-400/10 ${className}`}
+        className={`flex items-center justify-center px-3 py-1.5 bg-transparent border border-[rgba(34,197,94,0.3)] text-green-400 text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-green-400 hover:bg-green-400/10 ${className}`}
         style={{ boxShadow: "0 0 0px transparent" }}
         title="View in Internet Archive"
         aria-label={`View free ebook in Internet Archive: ${title}`}
       >
-        <Archive className="w-3 h-3 mr-2 inline" />
-        Archive
+        <Archive className="w-3 h-3 mr-2 flex-shrink-0" />
+        <span className="whitespace-nowrap">Archive</span>
       </button>
       
       <FreeEbookModal
