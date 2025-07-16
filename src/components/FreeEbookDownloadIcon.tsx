@@ -75,20 +75,22 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
 
   return (
     <>
-      <button
-        onClick={handleClick}
-        className={`group relative p-1.5 text-slate-400 hover:text-green-400 transition-all duration-200 hover:scale-110 ${className}`}
-        title={getTooltipText()}
-        aria-label={`Download free ebook: ${title}`}
-      >
-        <Download className="w-4 h-4 group-hover:drop-shadow-[0_0_6px_rgba(34,197,94,0.4)] transition-all duration-200" />
+      <div className="relative">
+        <button
+          onClick={handleClick}
+          className={`group relative p-1.5 text-slate-400 hover:text-green-400 transition-all duration-200 hover:scale-110 ml-2 ${className}`}
+          title={getTooltipText()}
+          aria-label={`Download free ebook: ${title}`}
+        >
+          <Download className="w-4 h-4 group-hover:drop-shadow-[0_0_6px_rgba(34,197,94,0.4)] transition-all duration-200" />
+        </button>
         
-        {/* Tooltip */}
-        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-700 text-slate-200 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-          {getTooltipText()}
-          <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-slate-700"></div>
+        {/* Permanent tooltip with GSAP styling */}
+        <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 px-2 py-1 bg-slate-700 text-slate-200 text-xs rounded opacity-100 pointer-events-none whitespace-nowrap z-10 animate-pulse">
+          Internet Archive
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-b-slate-700"></div>
         </div>
-      </button>
+      </div>
       
       <FreeEbookModal
         isOpen={isModalOpen}
