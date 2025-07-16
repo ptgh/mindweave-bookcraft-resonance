@@ -105,19 +105,19 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-card border border-border rounded-xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto scrollbar-hide">
+      <div className="bg-background border border-border rounded-xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto scrollbar-hide">
         {/* Header */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-primary rounded-full"></div>
-              <span className="text-card-foreground text-base font-medium">
+              <span className="text-foreground text-base font-medium">
                 Signal Preview
               </span>
             </div>
             <button
               onClick={onClose}
-              className="text-muted-foreground hover:text-card-foreground transition-colors p-1 rounded hover:bg-muted"
+              className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded hover:bg-muted"
             >
               <X className="w-5 h-5" />
             </button>
@@ -165,7 +165,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                 {/* Book info */}
                 <div className="flex-1 space-y-2">
                   <div>
-                    <h2 className="text-card-foreground font-bold text-xl leading-tight">
+                    <h2 className="text-foreground font-bold text-xl leading-tight">
                       {displayData.title}
                     </h2>
                     <p className="text-muted-foreground text-base font-medium">{displayData.author}</p>
@@ -176,7 +176,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
               {/* Synopsis */}
               {description && (
                 <div className="space-y-2">
-                  <h3 className="text-card-foreground font-semibold text-base">Synopsis</h3>
+                  <h3 className="text-foreground font-semibold text-base">Synopsis</h3>
                   <div className="text-muted-foreground text-sm leading-relaxed max-h-32 overflow-y-auto scrollbar-hide">
                     {description.split('\n').map((paragraph, index) => (
                       <p key={index} className={index > 0 ? 'mt-2' : ''}>
@@ -194,7 +194,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                     <div className="flex items-center space-x-2">
                       <ExternalLink className="w-4 h-4 text-muted-foreground" />
                       <div>
-                        <span className="text-card-foreground text-sm font-medium">Apple Books</span>
+                        <span className="text-foreground text-sm font-medium">Apple Books</span>
                         <div className="text-muted-foreground text-sm">
                           {appleBook.formattedPrice || 
                            (appleBook.price === 0 ? 'Free' : 
