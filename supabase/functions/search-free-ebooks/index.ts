@@ -36,69 +36,7 @@ interface AnnasArchiveBook {
   downloadUrl: string;
 }
 
-// Anna's Archive search function
-async function searchAnnasArchive(title: string, author: string): Promise<{ url: string; id: string; formats: Record<string, string> } | null> {
-  try {
-    const domain = 'annas-archive.org';
-    const searchQuery = `author:"${author}" title:"${title}"`;
-    
-    const searchParams = new URLSearchParams({
-      q: searchQuery,
-      ext: 'pdf,epub,mobi',
-      sort: 'newest',
-      lang: 'en'
-    });
-
-    const searchUrl = `https://${domain}/search?${searchParams.toString()}`;
-    console.log('🔍 Searching Anna\'s Archive:', searchUrl);
-
-    const searchResponse = await fetch(searchUrl, {
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-      },
-    });
-
-    if (!searchResponse.ok) {
-      console.error('Anna\'s Archive search failed:', searchResponse.status);
-      return null;
-    }
-
-    const html = await searchResponse.text();
-    
-    // Look for book matches in search results
-    const titleRegex = /<h3[^>]*>([^<]*)<\/h3>/g;
-    let titleMatch;
-    
-    while ((titleMatch = titleRegex.exec(html))) {
-      const bookTitle = titleMatch[1].toLowerCase();
-      const searchTitle = title.toLowerCase();
-      
-      if (bookTitle.includes(searchTitle.substring(0, Math.min(searchTitle.length, 20)))) {
-        console.log('Found Archive match:', titleMatch[1]);
-        
-        // Return the search page URL itself since it's always valid
-        const formats: Record<string, string> = {
-          view: searchUrl
-        };
-        
-        console.log(`Found Anna's Archive match with search page URL`);
-        
-        return {
-          url: searchUrl,
-          id: title.replace(/\s+/g, '_'),
-          formats
-        };
-      }
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Anna\'s Archive search error:', error);
-    return null;
-  }
-}
+// Removed Anna's Archive functionality as requested
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -123,7 +61,6 @@ serve(async (req) => {
 
     let gutenbergResult = null
     let archiveResult = null
-    let annasArchiveResult = null
 
     // Search Project Gutenberg via Gutendex API
     try {
@@ -205,15 +142,7 @@ serve(async (req) => {
       console.error('Archive search error:', error)
     }
 
-    // Search Anna's Archive
-    try {
-      annasArchiveResult = await searchAnnasArchive(title, author)
-      if (annasArchiveResult) {
-        console.log(`Found Anna's Archive match`)
-      }
-    } catch (error) {
-      console.error('Anna\'s Archive search error:', error)
-    }
+    // Anna's Archive removed as requested
 
     // Filter formats to only include PDF, EPUB, and MOBI
     const filterFormats = (formats: Record<string, string>) => {
@@ -237,12 +166,9 @@ serve(async (req) => {
     if (archiveResult) {
       archiveResult.formats = filterFormats(archiveResult.formats)
     }
-    if (annasArchiveResult) {
-      annasArchiveResult.formats = filterFormats(annasArchiveResult.formats)
-    }
 
     // Cache the results in database using new ebook_search_cache table
-    if (gutenbergResult || archiveResult || annasArchiveResult) {
+    if (gutenbergResult || archiveResult) {
       try {
         const searchKey = `${title.toLowerCase()}_${author.toLowerCase()}`.replace(/[^a-z0-9_]/g, '_');
         
@@ -254,7 +180,7 @@ serve(async (req) => {
             author,
             gutenberg_results: gutenbergResult ? [gutenbergResult] : null,
             internet_archive_results: archiveResult ? [archiveResult] : null,
-            annas_archive_results: annasArchiveResult ? [annasArchiveResult] : null,
+            annas_archive_results: null,
             last_searched: new Date().toISOString()
           })
       } catch (dbError) {
@@ -286,7 +212,6 @@ serve(async (req) => {
     };
 
     const response = {
-      annasArchive: formatResult(annasArchiveResult, 'Anna\'s Archive'),
       internetArchive: formatResult(archiveResult, 'Internet Archive'),
       gutenberg: formatResult(gutenbergResult, 'Project Gutenberg')
     }
@@ -300,7 +225,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Search error:', error)
     return new Response(
-      JSON.stringify({ error: error.message, annasArchive: [], internetArchive: [], gutenberg: [] }),
+      JSON.stringify({ error: error.message, internetArchive: [], gutenberg: [] }),
       {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -168,7 +168,16 @@ const BookCard = ({
             Edit
           </button>
         )}
-        {onKeep && (
+        {apple_link ? (
+          <button
+            onClick={() => window.open(apple_link, '_blank', 'noopener,noreferrer')}
+            className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+            style={{ boxShadow: "0 0 0px transparent" }}
+            title="Apple Books"
+          >
+            📱 Apple Books
+          </button>
+        ) : onKeep && (
           <button
             onClick={onKeep}
             className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"

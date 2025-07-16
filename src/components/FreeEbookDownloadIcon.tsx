@@ -45,7 +45,6 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
 
   const handleClick = () => {
     const hasAnyEbooks = !!(
-      ebookData?.annasArchive?.length || 
       ebookData?.internetArchive?.length || 
       ebookData?.gutenberg?.length
     );
@@ -65,7 +64,6 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
 
   // Don't render if no links found
   const hasAnyEbooks = !!(
-    ebookData?.annasArchive?.length || 
     ebookData?.internetArchive?.length || 
     ebookData?.gutenberg?.length
   );
@@ -76,7 +74,7 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
 
   const getTooltipText = () => {
     if (ebookData?.gutenberg?.length && ebookData?.internetArchive?.length) {
-      return "Public Domain";
+      return "Digital Libraries";
     } else if (ebookData?.gutenberg?.length) {
       return "Project Gutenberg";
     } else {

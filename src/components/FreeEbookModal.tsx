@@ -30,7 +30,6 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
 
 
   const hasAnyEbooks = !!(
-    ebookData?.annasArchive?.length || 
     ebookData?.internetArchive?.length || 
     ebookData?.gutenberg?.length
   );
@@ -43,27 +42,6 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
         ref={contentRef}
         className="max-w-md bg-slate-900/95 border-slate-700 text-slate-200 p-0"
       >
-        {/* Show Anna's Archive first */}
-        {ebookData?.annasArchive && ebookData.annasArchive.length > 0 && (
-          <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover:bg-slate-800/70 transition-colors">
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full border-2 border-purple-400 bg-purple-400/10" />
-              <div>
-                <h4 className="font-medium text-slate-200">Anna's Archive</h4>
-                <p className="text-xs text-slate-400">Shadow library collection</p>
-              </div>
-            </div>
-            <button
-              onClick={() => openInNewTab(ebookData.annasArchive![0].formats[0]?.url || '')}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm text-slate-300 hover:text-slate-200 transition-colors"
-              title="View on Anna's Archive"
-            >
-              <ExternalLink className="w-4 h-4" />
-              <span>View on Anna's Archive</span>
-            </button>
-          </div>
-        )}
-
         {/* Show Internet Archive */}
         {ebookData?.internetArchive && ebookData.internetArchive.length > 0 && (
           <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover:bg-slate-800/70 transition-colors">
@@ -86,7 +64,7 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
         )}
 
         {/* Show Project Gutenberg */}
-        {ebookData?.gutenberg && ebookData.gutenberg.length > 0 && (
+        {ebookData?.gutenberg && ebookData.gutenberg.length > 0 ? (
           <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover:bg-slate-800/70 transition-colors">
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 rounded-full border-2 border-green-400 bg-green-400/10" />
@@ -103,6 +81,16 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
               <ExternalLink className="w-4 h-4" />
               <span>View on Project Gutenberg</span>
             </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full border-2 border-slate-500 bg-slate-500/10" />
+              <div>
+                <h4 className="font-medium text-slate-400">Project Gutenberg</h4>
+                <p className="text-xs text-slate-500">Gutenberg unavailable</p>
+              </div>
+            </div>
           </div>
         )}
 

@@ -66,8 +66,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
               book.isbn || undefined
             );
             
-            console.log('📖 Free ebook results structure:', freeEbookResult);
-            console.log('📖 Anna\'s Archive results:', freeEbookResult?.annasArchive);
+            console.log('📖 Digital library results structure:', freeEbookResult);
             console.log('📖 Internet Archive results:', freeEbookResult?.internetArchive);
             console.log('📖 Gutenberg results:', freeEbookResult?.gutenberg);
             
@@ -223,43 +222,9 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                 </div>
               </div>
 
-              {/* Free Ebooks Sections - Web Only */}
+              {/* Digital Libraries Sections - Web Only */}
               {isWebOnly && (
                 <div className="border-t border-slate-700/30 pt-4 space-y-4">
-                  {/* Anna's Archive */}
-                  {freeEbooks?.annasArchive && freeEbooks.annasArchive.length > 0 && (
-                    <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
-                      <div className="flex items-center space-x-2 mb-3">
-                        <Download className="w-4 h-4 text-slate-400" />
-                        <span className="text-slate-300 text-sm font-medium">Anna's Archive</span>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        {freeEbooks.annasArchive.map((book, index) => (
-                          <div key={index} className="p-2 bg-slate-800/30 border border-slate-600/20 rounded">
-                            <div className="flex items-center gap-4">
-                              <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                              <div className="flex gap-3 flex-wrap">
-                                 {book.formats?.map((format) => (
-                                   <a
-                                     key={format.type}
-                                     href={format.url}
-                                     target="_blank"
-                                     rel="noopener noreferrer"
-                                     className="px-3 py-1 bg-slate-600/80 hover:bg-slate-500 text-slate-100 border border-slate-500/50 rounded-md font-medium text-sm transition-colors duration-200 flex items-center gap-1"
-                                   >
-                                     View on Anna's Archive
-                                     <ExternalLink className="w-3 h-3" />
-                                   </a>
-                                 ))}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                   {/* Internet Archive */}
                   {freeEbooks?.internetArchive && freeEbooks.internetArchive.length > 0 && (
                     <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
@@ -333,14 +298,14 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                     <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 border border-slate-400 animate-spin border-t-transparent rounded-full" />
-                        <span className="text-slate-400 text-sm">Searching free sources...</span>
+                        <span className="text-slate-400 text-sm">Searching digital libraries...</span>
                       </div>
                     </div>
                   )}
 
-                  {!freeEbooksLoading && (!freeEbooks?.annasArchive?.length && !freeEbooks?.internetArchive?.length && !freeEbooks?.gutenberg?.length) && (
+                  {!freeEbooksLoading && (!freeEbooks?.internetArchive?.length && !freeEbooks?.gutenberg?.length) && (
                     <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
-                      <p className="text-slate-400 text-sm">No free copies found in public archives</p>
+                      <p className="text-slate-400 text-sm">No copies found in digital libraries</p>
                     </div>
                   )}
                 </div>
