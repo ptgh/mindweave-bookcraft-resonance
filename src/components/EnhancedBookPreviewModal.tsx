@@ -141,7 +141,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-slate-800/50 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto scrollbar-hide">
         {/* Header */}
-        <div className="p-4 border-b border-slate-700">
+        <div className="p-3 border-b border-slate-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
@@ -159,7 +159,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
         </div>
         
         {/* Content */}
-        <div className="p-6">
+        <div className="pt-4 px-6 pb-6">
           {loading ? (
             <div className="text-center py-12">
               <div className="w-12 h-12 mx-auto mb-4 border-2 border-slate-600/30 border-t-blue-400 rounded-full animate-spin" />
@@ -223,7 +223,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
               
               {/* Apple Books Section */}
               {hasAppleData && appleBook && (
-                <div className="border border-slate-700 rounded-lg p-3 bg-slate-700/20">
+                <div className="border border-slate-700 rounded-lg p-2 bg-slate-700/20">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <ExternalLink className="w-4 h-4 text-slate-400" />
