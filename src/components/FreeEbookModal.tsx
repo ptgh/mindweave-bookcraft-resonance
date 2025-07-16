@@ -49,10 +49,10 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
             </div>
             <button
               onClick={() => openInNewTab(ebookData.archive.url)}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm text-slate-300 hover:text-slate-200 transition-colors"
+              className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(34,197,94,0.3)] text-green-400 text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-green-400 hover:bg-green-400/10"
               title="View on Internet Archive"
             >
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-3 h-3 mr-2 inline" />
               <span>View Book</span>
             </button>
           </div>
@@ -70,22 +70,15 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
             </div>
             <button
               onClick={() => openInNewTab(ebookData.gutenberg.url)}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm text-slate-300 hover:text-slate-200 transition-colors"
+              className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(34,197,94,0.3)] text-green-400 text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-green-400 hover:bg-green-400/10"
               title="View on Project Gutenberg"
             >
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-3 h-3 mr-2 inline" />
               <span>View Book</span>
             </button>
           </div>
         )}
 
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 transition-opacity"
-        >
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </button>
       </DialogContent>
     </Dialog>
   );
