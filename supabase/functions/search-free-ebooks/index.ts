@@ -98,7 +98,7 @@ serve(async (req) => {
           gutenbergResult = {
             url: `https://www.gutenberg.org/ebooks/${bestMatch.id}`,
             id: bestMatch.id.toString(),
-            formats: { view: `https://www.gutenberg.org/ebooks/${bestMatch.id}` }
+            formats: cleanFormats
           }
           console.log(`Found Gutenberg match: ${bestMatch.title}`)
         }
@@ -126,14 +126,12 @@ serve(async (req) => {
         
         if (bestMatch) {
           // Use the main details page URL which always works
-          const formats: Record<string, string> = {
-            view: `https://archive.org/details/${bestMatch.identifier}`
-          }
+          const detailsUrl = `https://archive.org/details/${bestMatch.identifier}`
           
           archiveResult = {
-            url: `https://archive.org/details/${bestMatch.identifier}`,
+            url: detailsUrl,
             id: bestMatch.identifier,
-            formats
+            formats: { view: detailsUrl }
           }
           console.log(`Found Archive match: ${bestMatch.title}`)
         }
@@ -144,27 +142,25 @@ serve(async (req) => {
 
     // Anna's Archive removed as requested
 
-    // Filter formats to only include PDF, EPUB, and MOBI
-    const filterFormats = (formats: Record<string, string>) => {
-      const filtered: Record<string, string> = {}
-      for (const [format, url] of Object.entries(formats)) {
-        if (format.toLowerCase().includes('pdf')) {
-          filtered.pdf = url
-        } else if (format.toLowerCase().includes('epub')) {
-          filtered.epub = url
-        } else if (format.toLowerCase().includes('mobi')) {
-          filtered.mobi = url
-        }
+    // URL validation function
+    const validateUrl = (url: string): boolean => {
+      try {
+        new URL(url);
+        return url.startsWith('https://');
+      } catch {
+        return false;
       }
-      return filtered
-    }
+    };
 
-    // Filter formats for each source
-    if (gutenbergResult) {
-      gutenbergResult.formats = filterFormats(gutenbergResult.formats)
+    // Validate and clean results
+    if (gutenbergResult && (!validateUrl(gutenbergResult.url) || Object.keys(gutenbergResult.formats).length === 0)) {
+      console.log('Invalid Gutenberg result, removing');
+      gutenbergResult = null;
     }
-    if (archiveResult) {
-      archiveResult.formats = filterFormats(archiveResult.formats)
+    
+    if (archiveResult && (!validateUrl(archiveResult.url) || Object.keys(archiveResult.formats).length === 0)) {
+      console.log('Invalid Archive result, removing');
+      archiveResult = null;
     }
 
     // Cache the results in database using new ebook_search_cache table
@@ -194,14 +190,14 @@ serve(async (req) => {
       if (!result) return [];
       
       try {
-        if (result.formats && typeof result.formats === 'object') {
+        // For viewing pages, use the main URL
+        const viewUrl = result.url || (result.formats && result.formats.view);
+        
+        if (viewUrl) {
           return [{
             title: title,
             author: author,
-            formats: Object.entries(result.formats).map(([type, url]) => ({
-              type: type.toUpperCase(),
-              url: url as string
-            }))
+            formats: [{ type: 'VIEW', url: viewUrl }]
           }];
         }
       } catch (error) {
