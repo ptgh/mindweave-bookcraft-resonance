@@ -105,19 +105,15 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-card border border-border rounded-xl w-full max-w-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto scrollbar-hide">
+      <div className="bg-card border border-border rounded-xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto scrollbar-hide">
         {/* Header */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <span className="text-card-foreground text-sm font-medium">
-                {hasAppleData ? 'Apple Books Preview' : 'Book Preview'}
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-primary rounded-full"></div>
+              <span className="text-card-foreground text-base font-medium">
+                Signal Preview
               </span>
-              {hasAppleData && (
-                <Badge variant="secondary" className="text-muted-foreground bg-muted">
-                  Apple Data
-                </Badge>
-              )}
             </div>
             <button
               onClick={onClose}
@@ -141,16 +137,16 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
               <Button variant="outline" onClick={onClose}>Close</Button>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4 p-4">
               {/* Book details */}
-              <div className="flex space-x-6">
+              <div className="flex space-x-4">
                 {/* Book cover */}
-                <div className="flex-shrink-0 w-36 h-54 bg-muted border border-border rounded-lg overflow-hidden relative shadow-lg">
+                <div className="flex-shrink-0 w-24 h-36 bg-muted border border-border rounded-lg overflow-hidden relative shadow-lg">
                   {coverUrl ? (
                     <img 
                       src={coverUrl} 
                       alt={displayData.title} 
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
@@ -160,78 +156,59 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                     />
                   ) : null}
                   <div className={`absolute inset-0 flex items-center justify-center text-muted-foreground ${coverUrl ? 'hidden' : ''}`}>
-                    <div className="w-16 h-20 border-2 border-border rounded flex items-center justify-center">
-                      <div className="w-8 h-10 border border-border rounded" />
+                    <div className="w-12 h-16 border-2 border-border rounded flex items-center justify-center">
+                      <div className="w-6 h-8 border border-border rounded" />
                     </div>
                   </div>
                 </div>
                 
                 {/* Book info */}
-                <div className="flex-1 space-y-4">
+                <div className="flex-1 space-y-2">
                   <div>
-                    <h2 className="text-card-foreground font-bold text-2xl leading-tight mb-3">
+                    <h2 className="text-card-foreground font-bold text-xl leading-tight">
                       {displayData.title}
                     </h2>
-                    <p className="text-muted-foreground text-lg mb-3 font-medium">{displayData.author}</p>
-                    
-                    {book.isbn && (
-                      <p className="text-muted-foreground text-sm font-mono mb-2">ISBN: {book.isbn}</p>
-                    )}
-                    
-                    {/* Apple Books price - subtle */}
-                    {hasAppleData && appleBook && (
-                      <div className="flex items-center space-x-2 mb-3">
-                        <span className="text-muted-foreground text-xs">Price:</span>
-                        <Badge variant="outline" className="text-muted-foreground border-muted text-xs">
+                    <p className="text-muted-foreground text-base font-medium">{displayData.author}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Synopsis */}
+              {description && (
+                <div className="space-y-2">
+                  <h3 className="text-card-foreground font-semibold text-base">Synopsis</h3>
+                  <div className="text-muted-foreground text-sm leading-relaxed max-h-32 overflow-y-auto scrollbar-hide">
+                    {description.split('\n').map((paragraph, index) => (
+                      <p key={index} className={index > 0 ? 'mt-2' : ''}>
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Apple Books Section */}
+              {hasAppleData && appleBook && (
+                <div className="border border-border rounded-lg p-3 bg-muted/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <ExternalLink className="w-4 h-4 text-muted-foreground" />
+                      <div>
+                        <span className="text-card-foreground text-sm font-medium">Apple Books</span>
+                        <div className="text-muted-foreground text-sm">
                           {appleBook.formattedPrice || 
                            (appleBook.price === 0 ? 'Free' : 
                             `${appleBook.currency || '£'}${appleBook.price || 'N/A'}`)}
-                        </Badge>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                  
-                  {/* Description/Synopsis */}
-                  {description && (
-                    <div className="space-y-3">
-                      <h3 className="text-card-foreground font-semibold text-lg">Synopsis</h3>
-                      <div className="text-muted-foreground text-sm leading-relaxed p-4 bg-muted/30 border border-border rounded-lg max-h-40 overflow-y-auto scrollbar-hide">
-                        {description.split('\n').map((paragraph, index) => (
-                          <p key={index} className={index > 0 ? 'mt-3' : ''}>
-                            {paragraph}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              {/* Apple Books Call-to-Action - subtle */}
-              {hasAppleData && appleBook && (
-                <div className="border-t border-border pt-4">
-                  <div className="flex items-center justify-between p-3 bg-muted/20 border border-muted rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <ExternalLink className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-muted-foreground text-xs">Available on Apple Books</span>
                     </div>
                     <Button
                       onClick={handleBuyOnAppleBooks}
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
-                      className="text-muted-foreground border-muted hover:bg-muted/50 text-xs"
+                      className="bg-muted hover:bg-muted/80"
                     >
-                      {canOpenAppleBooksApp() ? (
-                        <>
-                          <Smartphone className="w-3 h-3 mr-1" />
-                          View
-                        </>
-                      ) : (
-                        <>
-                          <Globe className="w-3 h-3 mr-1" />
-                          View
-                        </>
-                      )}
+                      Buy
                     </Button>
                   </div>
                 </div>
@@ -241,11 +218,12 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
         </div>
         
         {/* Actions */}
-        <div className="flex justify-end space-x-3 p-4 border-t border-border bg-muted/10">
+        <div className="flex justify-between space-x-3 p-4 border-t border-border">
           <Button
             variant="outline"
             size="sm"
             onClick={onClose}
+            className="flex-1"
           >
             Close
           </Button>
@@ -255,10 +233,10 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
               onAddBook(book);
               onClose();
             }}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1"
           >
             <Plus className="w-3 h-3 mr-2" />
-            Add to Transmissions
+            Add Signal
           </Button>
         </div>
       </div>
