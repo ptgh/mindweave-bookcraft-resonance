@@ -104,6 +104,7 @@ const BookCard = ({
                   title={title} 
                   author={author} 
                   isbn={isbn}
+                  apple_link={apple_link}
                   className="flex-shrink-0 mt-0.5"
                 />
               </div>
