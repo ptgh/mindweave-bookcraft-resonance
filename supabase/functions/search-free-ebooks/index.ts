@@ -28,16 +28,6 @@ interface ArchiveItem {
   downloads?: number;
 }
 
-interface AnnasArchiveBook {
-  id: string;
-  title: string;
-  author: string;
-  extension: string;
-  downloadUrl: string;
-}
-
-// Removed Anna's Archive functionality as requested
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -125,13 +115,28 @@ serve(async (req) => {
         })
         
         if (bestMatch) {
-          // Use the main details page URL which always works
-          const detailsUrl = `https://archive.org/details/${bestMatch.identifier}`
+          // Build direct download URLs for Internet Archive
+          const formats: Record<string, string> = {}
+          const baseUrl = `https://archive.org/download/${bestMatch.identifier}`
+          
+          // Check which formats are actually available and build direct download URLs
+          const availableFormats = Array.isArray(bestMatch.format) ? bestMatch.format : []
+          
+          // Prioritize ePub, then PDF, then TXT
+          if (availableFormats.some(f => f.toLowerCase().includes('epub'))) {
+            formats.epub = `${baseUrl}/${bestMatch.identifier}.epub`
+          }
+          if (availableFormats.some(f => f.toLowerCase().includes('pdf'))) {
+            formats.pdf = `${baseUrl}/${bestMatch.identifier}.pdf`
+          }
+          if (availableFormats.some(f => f.toLowerCase().includes('txt'))) {
+            formats.txt = `${baseUrl}/${bestMatch.identifier}.txt`
+          }
           
           archiveResult = {
-            url: detailsUrl,
+            url: `https://archive.org/details/${bestMatch.identifier}`,
             id: bestMatch.identifier,
-            formats: { view: detailsUrl }
+            formats
           }
           console.log(`Found Archive match: ${bestMatch.title}`)
         }
@@ -140,44 +145,24 @@ serve(async (req) => {
       console.error('Archive search error:', error)
     }
 
-    // Anna's Archive removed as requested
-
-    // URL validation function
-    const validateUrl = (url: string): boolean => {
-      try {
-        new URL(url);
-        return url.startsWith('https://');
-      } catch {
-        return false;
-      }
-    };
-
-    // Validate and clean results
-    if (gutenbergResult && (!validateUrl(gutenbergResult.url) || Object.keys(gutenbergResult.formats).length === 0)) {
-      console.log('Invalid Gutenberg result, removing');
-      gutenbergResult = null;
-    }
-    
-    if (archiveResult && (!validateUrl(archiveResult.url) || Object.keys(archiveResult.formats).length === 0)) {
-      console.log('Invalid Archive result, removing');
-      archiveResult = null;
-    }
-
-    // Cache the results in database using new ebook_search_cache table
+    // Cache the results in database
     if (gutenbergResult || archiveResult) {
       try {
-        const searchKey = `${title.toLowerCase()}_${author.toLowerCase()}`.replace(/[^a-z0-9_]/g, '_');
-        
         await supabase
-          .from('ebook_search_cache')
+          .from('free_ebook_links')
           .upsert({
-            search_key: searchKey,
-            title,
-            author,
-            gutenberg_results: gutenbergResult ? [gutenbergResult] : null,
-            internet_archive_results: archiveResult ? [archiveResult] : null,
-            annas_archive_results: null,
-            last_searched: new Date().toISOString()
+            book_title: title,
+            book_author: author,
+            isbn: isbn || null,
+            gutenberg_url: gutenbergResult?.url || null,
+            gutenberg_id: gutenbergResult?.id || null,
+            archive_url: archiveResult?.url || null,
+            archive_id: archiveResult?.id || null,
+            formats: {
+              ...gutenbergResult?.formats,
+              ...archiveResult?.formats
+            },
+            last_checked: new Date().toISOString()
           })
       } catch (dbError) {
         console.error('Database cache error:', dbError)
@@ -185,35 +170,14 @@ serve(async (req) => {
       }
     }
 
-    // Convert results to the new format expected by frontend
-    const formatResult = (result: any, sourceName: string) => {
-      if (!result) return [];
-      
-      try {
-        // For viewing pages, use the main URL
-        const viewUrl = result.url || (result.formats && result.formats.view);
-        
-        if (viewUrl) {
-          return [{
-            title: title,
-            author: author,
-            formats: [{ type: 'VIEW', url: viewUrl }]
-          }];
-        }
-      } catch (error) {
-        console.error(`Error formatting ${sourceName} result:`, error);
-      }
-      
-      return [];
-    };
-
-    const response = {
-      internetArchive: formatResult(archiveResult, 'Internet Archive'),
-      gutenberg: formatResult(gutenbergResult, 'Project Gutenberg')
+    const result = {
+      hasLinks: !!(gutenbergResult || archiveResult),
+      gutenberg: gutenbergResult,
+      archive: archiveResult
     }
 
     return new Response(
-      JSON.stringify(response),
+      JSON.stringify(result),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       },
@@ -221,7 +185,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Search error:', error)
     return new Response(
-      JSON.stringify({ error: error.message, internetArchive: [], gutenberg: [] }),
+      JSON.stringify({ error: error.message, hasLinks: false }),
       {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -108,7 +108,6 @@ const TransmissionsList = memo(({
             coverUrl={book.cover_url}
             publisher_series={book.publisher_series}
             isbn={book.isbn}
-            apple_link={book.apple_link}
             onEdit={() => onEdit(book)}
             onKeep={() => onKeep(book)}
             onDiscard={() => handleDiscard(book)}

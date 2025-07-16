@@ -1,15 +1,15 @@
 
 import Header from "@/components/Header";
+import AuthWrapper from "@/components/AuthWrapper";
+import Auth from "./Auth";
 import BookBrowserHeader from "@/components/BookBrowserHeader";
 import BookGrid from "@/components/BookGrid";
 import BookBrowserEmpty from "@/components/BookBrowserEmpty";
 import BookBrowserStatus from "@/components/BookBrowserStatus";
 import { useBookBrowser } from "@/hooks/useBookBrowser";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
-import { useAuth } from "@/hooks/useAuth";
 
 const BookBrowser = () => {
-  const { user } = useAuth();
   const {
     books,
     loading,
@@ -22,10 +22,11 @@ const BookBrowser = () => {
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <Header />
-      
-      <main ref={mainContainerRef} className="container mx-auto px-6 py-8">
+    <AuthWrapper fallback={<Auth />}>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <Header />
+        
+        <main ref={mainContainerRef} className="container mx-auto px-6 py-8">
           <div ref={addFeatureBlockRef} className="feature-block">
             <BookBrowserHeader 
               loading={loading}
@@ -45,7 +46,7 @@ const BookBrowser = () => {
               <BookGrid
                 books={books}
                 visibleBooks={visibleBooks}
-                onAddToTransmissions={user ? addToTransmissions : undefined}
+                onAddToTransmissions={addToTransmissions}
               />
             </div>
           ) : (
@@ -62,6 +63,7 @@ const BookBrowser = () => {
           </div>
         </main>
       </div>
+    </AuthWrapper>
   );
 };
 

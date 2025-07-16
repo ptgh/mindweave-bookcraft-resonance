@@ -106,45 +106,6 @@ export type Database = {
         }
         Relationships: []
       }
-      ebook_search_cache: {
-        Row: {
-          annas_archive_results: Json | null
-          author: string
-          created_at: string
-          gutenberg_results: Json | null
-          id: string
-          internet_archive_results: Json | null
-          last_searched: string
-          search_key: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          annas_archive_results?: Json | null
-          author: string
-          created_at?: string
-          gutenberg_results?: Json | null
-          id?: string
-          internet_archive_results?: Json | null
-          last_searched?: string
-          search_key: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          annas_archive_results?: Json | null
-          author?: string
-          created_at?: string
-          gutenberg_results?: Json | null
-          id?: string
-          internet_archive_results?: Json | null
-          last_searched?: string
-          search_key?: string
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       free_ebook_links: {
         Row: {
           archive_id: string | null

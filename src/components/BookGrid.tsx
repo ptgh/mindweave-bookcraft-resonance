@@ -11,7 +11,7 @@ import { gsap } from "gsap";
 interface BookGridProps {
   books: EnhancedBookSuggestion[];
   visibleBooks: Set<number>;
-  onAddToTransmissions?: (book: EnhancedBookSuggestion) => void;
+  onAddToTransmissions: (book: EnhancedBookSuggestion) => void;
 }
 
 const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridProps) => {
@@ -177,23 +177,17 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                 </div>
                 
                 <div className="flex flex-row space-x-2">
-                  {onAddToTransmissions ? (
-                    <button
-                      ref={addToAddRefs}
-                      onClick={() => onAddToTransmissions(book)}
-                      className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
-                      style={{
-                        boxShadow: "0 0 0px transparent"
-                      }}
-                    >
-                      <Plus className="w-3 h-3 mr-2 inline" />
-                      Log Signal
-                    </button>
-                  ) : (
-                    <div className="flex-1 px-3 py-1.5 bg-slate-700/30 border border-slate-600/50 text-slate-500 text-xs rounded-lg text-center">
-                      Sign in to save
-                    </div>
-                  )}
+                  <button
+                    ref={addToAddRefs}
+                    onClick={() => onAddToTransmissions(book)}
+                    className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+                    style={{
+                      boxShadow: "0 0 0px transparent"
+                    }}
+                  >
+                    <Plus className="w-3 h-3 mr-2 inline" />
+                    Log Signal
+                  </button>
                   
                   {deepLink && (
                     <button
@@ -223,7 +217,7 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
         <EnhancedBookPreviewModal
           book={selectedBookForPreview}
           onClose={closePreview}
-          onAddBook={onAddToTransmissions ? (book) => {
+          onAddBook={(book) => {
             // Convert back to EnhancedBookSuggestion format
             const enhancedBook: EnhancedBookSuggestion = {
               id: book.id,
@@ -243,7 +237,7 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
               infoLink: ''
             };
             onAddToTransmissions(enhancedBook);
-          } : undefined}
+          }}
         />
       )}
     </>

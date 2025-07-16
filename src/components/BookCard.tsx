@@ -104,7 +104,6 @@ const BookCard = ({
                   title={title} 
                   author={author} 
                   isbn={isbn}
-                  apple_link={apple_link}
                   className="flex-shrink-0 mt-0.5"
                 />
               </div>
@@ -156,16 +155,39 @@ const BookCard = ({
         </div>
       </div>
       
-      {/* Action buttons - only Apple Books */}
+      {/* Action buttons - moved to bottom horizontal layout */}
       <div className="flex flex-row space-x-2">
-        {apple_link && (
+        {onEdit && (
           <button
-            onClick={() => window.open(apple_link, '_blank', 'noopener,noreferrer')}
+            onClick={onEdit}
             className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
             style={{ boxShadow: "0 0 0px transparent" }}
-            title="Apple Books"
+            title="Edit"
           >
-            📱 Apple Books
+            <Edit className="w-3 h-3 mr-2 inline" />
+            Edit
+          </button>
+        )}
+        {onKeep && (
+          <button
+            onClick={onKeep}
+            className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+            style={{ boxShadow: "0 0 0px transparent" }}
+            title="Keep"
+          >
+            <Archive className="w-3 h-3 mr-2 inline" />
+            Keep
+          </button>
+        )}
+        {onDiscard && (
+          <button
+            onClick={onDiscard}
+            className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+            style={{ boxShadow: "0 0 0px transparent" }}
+            title="Discard"
+          >
+            <X className="w-3 h-3 mr-2 inline" />
+            Discard
           </button>
         )}
       </div>
