@@ -13,8 +13,8 @@ const enhancedToastVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-slate-700 bg-slate-800 text-slate-200",
-        success: "border-blue-500/30 bg-slate-800 text-slate-200 shadow-blue-500/20",
+        default: "border-border bg-card text-card-foreground",
+        success: "border-primary/30 bg-card text-card-foreground shadow-primary/20",
         destructive: "destructive group border-destructive bg-destructive text-destructive-foreground",
       },
     },
@@ -33,21 +33,19 @@ const EnhancedToast = React.forwardRef<
 
   React.useEffect(() => {
     if (toastRef.current && props.open) {
-      // Enhanced GSAP entrance animation with subtle bounce
+      // GSAP entrance animation
       gsap.fromTo(toastRef.current, 
         { 
           opacity: 0, 
-          scale: 0.8, 
-          y: -30,
-          x: 50
+          scale: 0.9, 
+          y: -20 
         },
         { 
           opacity: 1, 
           scale: 1, 
-          y: 0,
-          x: 0, 
-          duration: 0.5, 
-          ease: "back.out(1.2)" 
+          y: 0, 
+          duration: 0.4, 
+          ease: "power2.out" 
         }
       )
     }
@@ -89,7 +87,7 @@ const EnhancedToastClose = React.forwardRef<
   <ToastPrimitive.Close
     ref={ref}
     className={cn(
-      "absolute right-2 top-2 rounded-md p-1 text-slate-400 opacity-0 transition-opacity hover:text-slate-200 focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100",
+      "absolute right-2 top-2 rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100",
       className
     )}
     toast-close=""
@@ -106,7 +104,7 @@ const EnhancedToastTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitive.Title
     ref={ref}
-    className={cn("text-sm font-semibold text-slate-200", className)}
+    className={cn("text-sm font-semibold text-card-foreground", className)}
     {...props}
   />
 ))
@@ -118,7 +116,7 @@ const EnhancedToastDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitive.Description
     ref={ref}
-    className={cn("text-sm opacity-90 text-slate-300", className)}
+    className={cn("text-sm opacity-90 text-muted-foreground", className)}
     {...props}
   />
 ))
@@ -128,8 +126,8 @@ EnhancedToastDescription.displayName = ToastPrimitive.Description.displayName
 const SuccessToast = ({ title, description }: { title: string; description: string }) => {
   return (
     <div className="flex items-center space-x-4">
-      <div className="w-10 h-10 rounded-full border-2 border-blue-400 flex items-center justify-center bg-blue-500/20">
-        <div className="w-4 h-4 rounded-full bg-blue-400 animate-pulse" />
+      <div className="w-10 h-10 rounded-full border-2 border-primary flex items-center justify-center bg-primary/20">
+        <div className="w-4 h-4 rounded-full bg-primary animate-pulse" />
       </div>
       <div className="flex-1">
         <EnhancedToastTitle>{title}</EnhancedToastTitle>

@@ -221,9 +221,47 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
         'publisher_resonance'
       );
 
-      const confirmed = window.confirm(
-        "You are about to leave the app to purchase this book on Apple Books. Continue?"
-      );
+      // Custom styled confirmation dialog
+      const confirmed = await new Promise<boolean>((resolve) => {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm';
+        
+        modal.innerHTML = `
+          <div class="w-full max-w-md mx-4 bg-card border border-border rounded-lg shadow-lg animate-in fade-in-0 zoom-in-95">
+            <div class="p-6">
+              <h3 class="text-lg font-semibold text-card-foreground mb-2">Apple Books Purchase</h3>
+              <p class="text-sm text-muted-foreground mb-6">You are about to leave the app to purchase this book on Apple Books. Continue?</p>
+              <div class="flex justify-end space-x-2">
+                <button id="cancel-btn" class="px-4 py-2 text-sm font-medium text-muted-foreground bg-muted hover:bg-muted/80 rounded-md transition-colors">
+                  Cancel
+                </button>
+                <button id="ok-btn" class="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors">
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        modal.querySelector('#cancel-btn')?.addEventListener('click', () => {
+          document.body.removeChild(modal);
+          resolve(false);
+        });
+        
+        modal.querySelector('#ok-btn')?.addEventListener('click', () => {
+          document.body.removeChild(modal);
+          resolve(true);
+        });
+        
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            document.body.removeChild(modal);
+            resolve(false);
+          }
+        });
+      });
 
       if (!confirmed) return;
 
@@ -473,10 +511,6 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                 'publisher_resonance'
               );
               onAddBook(book);
-              toast({
-                title: "Signal Logged",
-                description: `"${book.title}" added to your collection`,
-              });
               onClose();
             }}
             className="flex-1 h-9 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa] flex items-center justify-center"
