@@ -51,19 +51,13 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "", apple_link
 
   const handleClick = () => {
     if (isTransmissionsPage && apple_link) {
-      // On transmissions page with Apple link, open Apple Books
+      // On transmissions page with Apple link, open Apple Books directly
       window.open(apple_link, '_blank', 'noopener,noreferrer');
       return;
     }
     
-    // Default behavior for other pages
-    const hasAnyEbooks = !!(
-      ebookData?.internetArchive?.length || 
-      ebookData?.gutenberg?.length
-    );
-    if (hasAnyEbooks) {
-      setIsModalOpen(true);
-    }
+    // Default behavior for other pages - open modal
+    setIsModalOpen(true);
   };
 
   // Show loading state briefly, then hide if no links found
@@ -75,21 +69,14 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "", apple_link
     );
   }
 
-  // For transmissions page, show if Apple link exists
+  // For transmissions page, only show if Apple link exists
   if (isTransmissionsPage) {
     if (!apple_link) {
       return null;
     }
   } else {
-    // For other pages, show if free ebooks found
-    const hasAnyEbooks = !!(
-      ebookData?.internetArchive?.length || 
-      ebookData?.gutenberg?.length
-    );
-    
-    if (!hasAnyEbooks) {
-      return null;
-    }
+    // For other pages, always show the icon to open modal
+    // Modal will handle showing what's available
   }
 
   const getTooltipText = () => {
@@ -133,6 +120,7 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "", apple_link
         title={title}
         author={author}
         ebookData={ebookData}
+        appleBookLink={apple_link}
       />
     </>
   );
