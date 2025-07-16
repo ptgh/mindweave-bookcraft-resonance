@@ -35,7 +35,7 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
         ref={contentRef}
-        className="max-w-md bg-slate-900/95 border-slate-700 text-slate-200 p-0"
+        className="max-w-xs bg-slate-900/95 border-slate-700 text-slate-200 p-4"
       >
         {/* Only show Internet Archive with simplified styling */}
         {ebookData.archive && (
@@ -49,7 +49,7 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
             </div>
             <button
               onClick={() => openInNewTab(ebookData.archive.url)}
-              className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(34,197,94,0.3)] text-green-400 text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-green-400 hover:bg-green-400/10"
+              className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(34,197,94,0.3)] text-green-400 text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-green-400 hover:bg-green-400/10 max-w-24"
               title="View on Internet Archive"
             >
               <ExternalLink className="w-3 h-3 mr-2 inline" />
@@ -70,7 +70,7 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
             </div>
             <button
               onClick={() => openInNewTab(ebookData.gutenberg.url)}
-              className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(34,197,94,0.3)] text-green-400 text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-green-400 hover:bg-green-400/10"
+              className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(34,197,94,0.3)] text-green-400 text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-green-400 hover:bg-green-400/10 max-w-24"
               title="View on Project Gutenberg"
             >
               <ExternalLink className="w-3 h-3 mr-2 inline" />
