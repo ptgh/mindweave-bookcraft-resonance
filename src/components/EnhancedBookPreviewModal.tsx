@@ -224,26 +224,28 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
       // Directly open Apple Books without confirmation
 
       try {
-        // Try deep link first if on iOS
-        if (canOpenAppleBooksApp()) {
+        // Detect if we're on iOS/macOS to use deep link
+        const isAppleDevice = /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
+        
+        if (isAppleDevice) {
+          // Use the ibooks:// deep link on Apple devices
           const deepLink = generateAppleBooksDeepLink(appleBook.id);
           window.location.href = deepLink;
           
-          // Fallback to web if deep link fails (after a short delay)
-          setTimeout(() => {
-            const webUrl = generateAppleBooksWebUrl(appleBook.id);
-            window.open(webUrl, '_blank', 'noopener,noreferrer');
-          }, 1000);
+          toast({
+            title: "Opening Apple Books",
+            description: "Launching Apple Books app...",
+          });
         } else {
-          // Open web store directly
+          // Open web store directly on non-Apple devices
           const webUrl = generateAppleBooksWebUrl(appleBook.id);
           window.open(webUrl, '_blank', 'noopener,noreferrer');
+          
+          toast({
+            title: "Opening Apple Books",
+            description: "Opening in web browser...",
+          });
         }
-
-        toast({
-          title: "Opening Apple Books",
-          description: "Redirecting to Apple Books store...",
-        });
       } catch (error) {
         toast({
           title: "Error",
