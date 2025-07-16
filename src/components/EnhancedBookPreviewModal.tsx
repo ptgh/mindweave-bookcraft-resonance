@@ -255,25 +255,28 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
         
         {/* Actions */}
         <div className="flex justify-between space-x-3 p-4 border-t border-slate-700">
-          <Button
-            variant="outline"
-            size="sm"
+          <button
             onClick={onClose}
-            className="flex-1 h-9 border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:text-slate-200"
+            className="flex-1 h-9 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+            style={{
+              boxShadow: "0 0 0px transparent"
+            }}
           >
             Close
-          </Button>
-          <Button
-            size="sm"
+          </button>
+          <button
             onClick={() => {
               onAddBook(book);
               onClose();
             }}
-            className="bg-blue-600 text-white hover:bg-blue-700 flex-1 h-9"
+            className="flex-1 h-9 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa] flex items-center justify-center"
+            style={{
+              boxShadow: "0 0 0px transparent"
+            }}
           >
             <Plus className="w-3 h-3 mr-2" />
             Add Signal
-          </Button>
+          </button>
         </div>
       </div>
     </div>
