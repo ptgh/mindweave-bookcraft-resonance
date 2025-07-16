@@ -25,7 +25,12 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData }: FreeEbook
   }, [isOpen]);
 
   const openInNewTab = (url: string) => {
-    window.open(url, '_blank', 'noopener,noreferrer');
+    // Open in popup window instead of new tab for better UX
+    const popup = window.open(url, 'ebookViewer', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+    if (!popup) {
+      // Fallback to new tab if popup blocked
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
   };
 
 

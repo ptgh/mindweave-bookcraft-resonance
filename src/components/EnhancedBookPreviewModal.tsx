@@ -293,7 +293,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                     </div>
                   )}
 
-                  {/* No Free Copies Message */}
+                  {/* Loading state */}
                   {freeEbooksLoading && (
                     <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
                       <div className="flex items-center space-x-2">
@@ -303,36 +303,40 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                     </div>
                   )}
 
-                  {!freeEbooksLoading && (!freeEbooks?.internetArchive?.length && !freeEbooks?.gutenberg?.length) && (
-                    <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
-                      <p className="text-slate-400 text-sm">No copies found in digital libraries</p>
+                  {/* Unavailable messages */}
+                  {!freeEbooksLoading && (
+                    <div className="space-y-2">
+                      {!freeEbooks?.gutenberg?.length && (
+                        <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
+                          <p className="text-slate-400 text-sm">Gutenberg unavailable</p>
+                        </div>
+                      )}
+                      {!freeEbooks?.internetArchive?.length && (
+                        <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
+                          <p className="text-slate-400 text-sm">Internet Archive unavailable</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Apple Books Section - All Platforms */}
+              {/* Apple Books Section - Simplified */}
               {hasAppleData && (
                 <div className="border-t border-slate-700/30 pt-4">
-                  <div className="bg-slate-700/20 border border-slate-600/30 rounded-lg p-3">
-                    <div className="flex items-center space-x-2 mb-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-2">
                       <Smartphone className="w-4 h-4 text-slate-400" />
                       <span className="text-slate-300 text-sm font-medium">Apple Books</span>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <p className="text-slate-400 text-xs">Available for purchase on Apple Books</p>
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          onClick={handleBuyOnAppleBooks}
-                          className="h-7 px-3 text-xs bg-slate-600 hover:bg-slate-500 text-slate-100 border-slate-400"
-                        >
-                          <Smartphone className="w-3 h-3 mr-1" />
-                          Buy on Apple Books
-                        </Button>
-                      </div>
-                    </div>
+                    <Button
+                      size="sm"
+                      onClick={handleBuyOnAppleBooks}
+                      className="h-7 px-3 text-xs bg-slate-600 hover:bg-slate-500 text-slate-100 border-slate-400"
+                    >
+                      <Smartphone className="w-3 h-3 mr-1" />
+                      Buy on Apple Books
+                    </Button>
                   </div>
                 </div>
               )}
