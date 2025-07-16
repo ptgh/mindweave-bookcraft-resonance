@@ -86,8 +86,8 @@ export const getOptimizedSettings = () => {
     useSafariOptimizations: browserType === 'safari',
     // Chrome-specific optimizations
     useChromeOptimizations: browserType === 'chrome',
-    // Maximum concurrent requests
-    maxConcurrentRequests: deviceType === 'mobile' ? 2 : 4
+    // Maximum concurrent requests - optimized for book searches
+    maxConcurrentRequests: deviceType === 'mobile' ? 3 : 6
   };
 };
 

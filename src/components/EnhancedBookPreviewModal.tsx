@@ -201,7 +201,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
     return {
       service: 'Digital Libraries',
       hasPrice: false,
-      buttonText: 'Signal Not Found',
+      buttonText: 'No Signal Detected',
       disabled: true
     };
   };

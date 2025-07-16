@@ -1,8 +1,8 @@
 
 import { CacheEntry, GoogleBook } from "./types";
 
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-const MAX_CACHE_SIZE = 100;
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes for better performance
+const MAX_CACHE_SIZE = 300; // Increased for better performance
 
 class GoogleBooksCache {
   private cache = new Map<string, CacheEntry>();
