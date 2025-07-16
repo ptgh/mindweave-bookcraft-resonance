@@ -105,36 +105,25 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-900/95 border border-cyan-400/30 rounded-lg w-full max-w-2xl shadow-2xl shadow-cyan-500/10 overflow-hidden max-h-[90vh] overflow-y-auto">
+      <div className="bg-background border border-border rounded-xl w-full max-w-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="relative p-4 border-b border-cyan-400/20">
-          <div 
-            className="absolute inset-0 opacity-20"
-            style={{
-              backgroundImage: `
-                linear-gradient(rgba(34, 211, 238, 0.3) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(34, 211, 238, 0.3) 1px, transparent 1px)
-              `,
-              backgroundSize: '20px 20px'
-            }}
-          />
-          <div className="relative flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
-              <span className="text-cyan-300 text-sm font-medium tracking-wider">
-                {hasAppleData ? 'APPLE BOOKS PREVIEW' : 'BOOK PREVIEW'}
+        <div className="p-4 border-b border-border">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <span className="text-foreground text-sm font-medium">
+                {hasAppleData ? 'Apple Books Preview' : 'Book Preview'}
               </span>
               {hasAppleData && (
-                <Badge variant="outline" className="border-green-400/50 text-green-400 bg-green-400/10">
+                <Badge variant="secondary" className="text-green-600 bg-green-50 border-green-200">
                   Apple Data
                 </Badge>
               )}
             </div>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-cyan-300 transition-colors p-1 rounded hover:bg-slate-700/50"
+              className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded hover:bg-muted"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -143,14 +132,12 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
         <div className="p-6">
           {loading ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-cyan-400/50 flex items-center justify-center">
-                <div className="w-6 h-6 rounded-full border-2 border-cyan-400 animate-spin border-t-transparent" />
-              </div>
-              <p className="text-slate-400">Loading book preview...</p>
+              <div className="w-12 h-12 mx-auto mb-4 border-2 border-muted-foreground/30 border-t-primary rounded-full animate-spin" />
+              <p className="text-muted-foreground">Loading book preview...</p>
             </div>
           ) : error ? (
             <div className="text-center py-12">
-              <p className="text-red-400 mb-4">{error}</p>
+              <p className="text-destructive mb-4">{error}</p>
               <Button variant="outline" onClick={onClose}>Close</Button>
             </div>
           ) : (
@@ -158,7 +145,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
               {/* Book details */}
               <div className="flex space-x-6">
                 {/* Book cover */}
-                <div className="flex-shrink-0 w-32 h-48 bg-slate-800/50 border border-cyan-400/30 rounded overflow-hidden relative">
+                <div className="flex-shrink-0 w-32 h-48 bg-muted border border-border rounded-lg overflow-hidden relative shadow-sm">
                   {coverUrl ? (
                     <img 
                       src={coverUrl} 
@@ -172,33 +159,31 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                       }}
                     />
                   ) : null}
-                  <div className={`absolute inset-0 flex items-center justify-center text-cyan-400 text-2xl ${coverUrl ? 'hidden' : ''}`}>
-                    <div className="w-16 h-20 border-2 border-cyan-400/50 rounded animate-pulse flex items-center justify-center">
-                      <div className="w-8 h-10 border border-cyan-400/30 rounded" />
+                  <div className={`absolute inset-0 flex items-center justify-center text-muted-foreground ${coverUrl ? 'hidden' : ''}`}>
+                    <div className="w-16 h-20 border-2 border-border rounded flex items-center justify-center">
+                      <div className="w-8 h-10 border border-border rounded" />
                     </div>
                   </div>
-                  
-                  {/* Cover glow effect */}
-                  <div className="absolute inset-0 bg-gradient-radial from-cyan-400/10 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500" />
                 </div>
                 
                 {/* Book info */}
                 <div className="flex-1 space-y-4">
                   <div>
-                    <h2 className="text-cyan-200 font-semibold text-xl leading-tight mb-2">
+                    <h2 className="text-foreground font-semibold text-xl leading-tight mb-2">
                       {displayData.title}
                     </h2>
-                    <p className="text-slate-400 text-lg mb-2">{displayData.author}</p>
+                    <p className="text-muted-foreground text-lg mb-2">{displayData.author}</p>
                     
                     {book.isbn && (
-                      <p className="text-slate-500 text-sm font-mono mb-2">ISBN: {book.isbn}</p>
+                      <p className="text-muted-foreground text-sm font-mono mb-2">ISBN: {book.isbn}</p>
                     )}
                     
                     {/* Apple Books price */}
                     {hasAppleData && appleBook && (
-                      <div className="flex items-center space-x-2 mb-2">
-                        <span className="text-slate-400 text-sm">Apple Books Price:</span>
-                        <Badge variant="outline" className="border-green-400/50 text-green-400">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <span className="text-muted-foreground text-sm">Apple Books</span>
+                        <span className="text-sm font-medium">Price:</span>
+                        <Badge variant="outline" className="text-green-600 border-green-300 bg-green-50">
                           {appleBook.formattedPrice || 
                            (appleBook.price === 0 ? 'Free' : 
                             `${appleBook.currency || '£'}${appleBook.price || 'N/A'}`)}
@@ -209,11 +194,11 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                   
                   {/* Description/Synopsis */}
                   {description && (
-                    <div className="space-y-2">
-                      <h3 className="text-slate-300 font-medium">Synopsis</h3>
-                      <div className="text-slate-400 text-sm leading-relaxed p-4 bg-slate-800/30 border-l-2 border-cyan-400/30 rounded max-h-40 overflow-y-auto">
+                    <div className="space-y-3">
+                      <h3 className="text-foreground font-medium">Synopsis</h3>
+                      <div className="text-muted-foreground text-sm leading-relaxed p-4 bg-muted/50 border border-border rounded-lg max-h-40 overflow-y-auto">
                         {description.split('\n').map((paragraph, index) => (
-                          <p key={index} className={index > 0 ? 'mt-2' : ''}>
+                          <p key={index} className={index > 0 ? 'mt-3' : ''}>
                             {paragraph}
                           </p>
                         ))}
@@ -225,20 +210,20 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
               
               {/* Apple Books Call-to-Action */}
               {hasAppleData && appleBook && (
-                <div className="border-t border-cyan-400/20 pt-4">
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-800/50 to-cyan-900/20 border border-cyan-400/30 rounded-lg">
+                <div className="border-t border-border pt-6">
+                  <div className="flex items-center justify-between p-4 bg-muted/30 border border-border rounded-lg">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-cyan-400/20 rounded-full flex items-center justify-center">
-                        <ExternalLink className="w-4 h-4 text-cyan-400" />
+                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                        <ExternalLink className="w-4 h-4 text-primary" />
                       </div>
                       <div>
-                        <p className="text-slate-200 font-medium">Available on Apple Books</p>
-                        <p className="text-slate-400 text-sm">Get this book from Apple's digital bookstore</p>
+                        <p className="text-foreground font-medium">Available on Apple Books</p>
+                        <p className="text-muted-foreground text-sm">Get this book from Apple's digital bookstore</p>
                       </div>
                     </div>
                     <Button
                       onClick={handleBuyOnAppleBooks}
-                      className="bg-cyan-600/70 hover:bg-cyan-600/90 text-white border-0 hover:shadow-lg hover:shadow-cyan-400/20 transition-all duration-200"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       {canOpenAppleBooksApp() ? (
                         <>
@@ -260,12 +245,11 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
         </div>
         
         {/* Actions */}
-        <div className="flex justify-end space-x-3 p-4 border-t border-cyan-400/20 bg-slate-900/50">
+        <div className="flex justify-end space-x-3 p-4 border-t border-border bg-muted/20">
           <Button
             variant="outline"
             size="sm"
             onClick={onClose}
-            className="border-slate-600 text-slate-300 hover:bg-slate-700 bg-transparent hover:border-cyan-400/50"
           >
             Close
           </Button>
@@ -275,7 +259,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
               onAddBook(book);
               onClose();
             }}
-            className="bg-cyan-600/70 hover:bg-cyan-600/90 text-white border-0 hover:shadow-lg hover:shadow-cyan-400/20 transition-all duration-200"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             <Plus className="w-3 h-3 mr-2" />
             Add to Transmissions
