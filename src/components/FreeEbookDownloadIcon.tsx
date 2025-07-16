@@ -88,7 +88,7 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
         aria-label={`View free ebook in Internet Archive: ${title}`}
       >
         <Archive className="w-3 h-3 mr-2 inline" />
-        Internet Archive
+        Archive
       </button>
       
       <FreeEbookModal
