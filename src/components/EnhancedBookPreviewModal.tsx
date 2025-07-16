@@ -64,10 +64,11 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
       setLoading(true);
       setError(null);
 
-      console.log('🔍 Starting book preview fetch for:', {
+      console.log('🔍 [BookPreview] Starting fetch for:', {
         title: book.title,
         author: book.author,
-        isbn: book.isbn
+        isbn: book.isbn,
+        timestamp: new Date().toISOString()
       });
 
       // Log preview interaction
@@ -78,39 +79,112 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
 
       try {
         const settings = getOptimizedSettings();
+        const searchResults = { apple: false, freeEbooks: false, google: false };
         
-        // Try Apple Books first
-        console.log('📱 Attempting Apple Books search...');
+        // Try Apple Books first with detailed timing
+        console.log('📱 [BookPreview] Attempting Apple Books search...');
+        const appleStartTime = Date.now();
         const appleResult = await searchAppleBooks(book.title, book.author, book.isbn);
+        const appleResponseTime = Date.now() - appleStartTime;
         
         if (appleResult) {
-          console.log('✅ Apple Books result found:', appleResult);
+          console.log(`✅ [BookPreview] Apple Books result found in ${appleResponseTime}ms:`, {
+            title: appleResult.title,
+            price: appleResult.formattedPrice,
+            hasDescription: !!appleResult.description,
+            coverUrl: !!appleResult.coverUrl
+          });
           setAppleBook(appleResult);
+          searchResults.apple = true;
           
-          const responseTime = Date.now() - startTime;
-          await analyticsService.logApiResponse('apple_books', responseTime, true);
+          await analyticsService.logApiResponse('apple_books', appleResponseTime, true);
         } else {
-          console.log('❌ No Apple Books result, searching free ebooks...');
+          console.log(`❌ [BookPreview] No Apple Books result after ${appleResponseTime}ms, searching free ebooks...`);
+          await analyticsService.logApiResponse('apple_books', appleResponseTime, false);
           
-          // Search for free ebooks with timeout for better UX
+          // Search for free ebooks with enhanced timeout handling
+          const freeEbookStartTime = Date.now();
           const freeEbookPromise = searchFreeEbooks(book.title, book.author, book.isbn);
+          const timeoutDuration = Math.max(settings.maxConcurrentRequests * 1000, 15000); // Min 15s timeout
           const timeoutPromise = new Promise<EbookSearchResult | null>(resolve => 
-            setTimeout(() => resolve(null), settings.maxConcurrentRequests * 1000)
+            setTimeout(() => {
+              console.log(`⏰ [BookPreview] Free ebook search timed out after ${timeoutDuration}ms`);
+              resolve(null);
+            }, timeoutDuration)
           );
           
           const freeEbookResult = await Promise.race([freeEbookPromise, timeoutPromise]);
-          console.log('📚 Free ebook search result:', freeEbookResult);
+          const freeEbookResponseTime = Date.now() - freeEbookStartTime;
+          
+          console.log(`📚 [BookPreview] Free ebook search completed in ${freeEbookResponseTime}ms:`, {
+            hasLinks: !!freeEbookResult?.hasLinks,
+            hasGutenberg: !!freeEbookResult?.gutenberg,
+            hasArchive: !!freeEbookResult?.archive,
+            timedOut: freeEbookResult === null
+          });
+          
           setFreeEbooks(freeEbookResult);
+          searchResults.freeEbooks = !!freeEbookResult?.hasLinks;
           
-          // Fallback to Google Books for additional data (with caching)
-          const googleBooks = await searchGoogleBooks(`${book.title} ${book.author}`, 1);
-          if (googleBooks.length > 0) {
-            console.log('📚 Google Books fallback result:', googleBooks[0]);
-            setGoogleFallback(googleBooks[0]);
+          await analyticsService.logApiResponse('free_ebooks', freeEbookResponseTime, !!freeEbookResult);
+          
+          // Fallback to Google Books for additional data (with enhanced caching)
+          if (!freeEbookResult?.hasLinks) {
+            console.log('📖 [BookPreview] No free ebooks found, trying Google Books fallback...');
+            const googleStartTime = Date.now();
+            const googleBooks = await searchGoogleBooks(`${book.title} ${book.author}`, 1);
+            const googleResponseTime = Date.now() - googleStartTime;
+            
+            if (googleBooks.length > 0) {
+              console.log(`✅ [BookPreview] Google Books fallback result found in ${googleResponseTime}ms:`, {
+                title: googleBooks[0].title,
+                hasDescription: !!googleBooks[0].description,
+                coverUrl: !!googleBooks[0].coverUrl
+              });
+              setGoogleFallback(googleBooks[0]);
+              searchResults.google = true;
+            } else {
+              console.log(`❌ [BookPreview] No Google Books result after ${googleResponseTime}ms`);
+            }
+            
+            await analyticsService.logApiResponse('google_books', googleResponseTime, googleBooks.length > 0);
           }
-          
-          const responseTime = Date.now() - startTime;
-          await analyticsService.logApiResponse('free_ebooks', responseTime, freeEbookResult !== null);
+        }
+        
+        const totalResponseTime = Date.now() - startTime;
+        console.log(`🎯 [BookPreview] Search summary for "${book.title}" (${totalResponseTime}ms):`, searchResults);
+        
+        // Log search patterns for analytics
+        await analyticsService.logSearchPattern(
+          { title: book.title, author: book.author, isbn: book.isbn },
+          {
+            isNonEnglish: !/^[a-zA-Z0-9\s.,!?'-]+$/.test(book.title),
+            hasSpecialChars: /[^\w\s.,!?'-]/.test(book.title),
+            titleLength: book.title.length,
+            priority: searchResults.apple ? 'high' : searchResults.freeEbooks ? 'normal' : 'low'
+          },
+          'publisher_resonance'
+        );
+        
+        // Log digital library success/failure
+        await analyticsService.logDigitalLibrarySuccess(
+          { title: book.title, author: book.author, isbn: book.isbn },
+          {
+            apple: searchResults.apple,
+            gutenberg: !!freeEbooks?.gutenberg,
+            archive: !!freeEbooks?.archive,
+            google: searchResults.google
+          },
+          'publisher_resonance'
+        );
+        
+        // Log "No Signal Detected" cases for pattern analysis
+        if (!searchResults.apple && !searchResults.freeEbooks && !searchResults.google) {
+          await analyticsService.logNoSignalDetected(
+            { title: book.title, author: book.author, isbn: book.isbn },
+            { apple: true, freeEbooks: true, google: true }, // All attempts made
+            'publisher_resonance'
+          );
         }
       } catch (err) {
         console.error('💥 Error fetching book data:', err);

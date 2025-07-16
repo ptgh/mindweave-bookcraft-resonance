@@ -6,7 +6,7 @@ export interface BookInteraction {
   book_title: string;
   book_author: string;
   book_isbn?: string;
-  interaction_type: 'preview' | 'add' | 'digital_copy_click' | 'search' | 'view';
+  interaction_type: 'preview' | 'add' | 'digital_copy_click' | 'search' | 'view' | 'no_signal_detected' | 'search_pattern' | 'digital_library_success';
   digital_source?: 'apple_books' | 'internet_archive' | 'project_gutenberg' | 'none';
   source_context?: 'publisher_resonance' | 'author_matrix' | 'search' | 'discovery';
   search_query?: string;
@@ -172,6 +172,65 @@ class AnalyticsService {
       metric_type: 'cache_hit',
       metric_value: 1,
       context: context as any
+    });
+  }
+
+  // Enhanced search pattern tracking
+  async logNoSignalDetected(
+    book: { title: string; author: string; isbn?: string }, 
+    searchAttempts: { apple: boolean; freeEbooks: boolean; google: boolean }, 
+    context?: string
+  ): Promise<void> {
+    await this.logBookInteraction({
+      book_title: book.title,
+      book_author: book.author,
+      book_isbn: book.isbn,
+      interaction_type: 'no_signal_detected',
+      source_context: context as any,
+      metadata: searchAttempts,
+      success: false
+    });
+  }
+
+  async logSearchPattern(
+    book: { title: string; author: string; isbn?: string }, 
+    pattern: {
+      isNonEnglish: boolean;
+      hasSpecialChars: boolean;
+      titleLength: number;
+      priority: 'high' | 'normal' | 'low';
+    }, 
+    context?: string
+  ): Promise<void> {
+    await this.logBookInteraction({
+      book_title: book.title,
+      book_author: book.author,
+      book_isbn: book.isbn,
+      interaction_type: 'search_pattern',
+      source_context: context as any,
+      metadata: pattern
+    });
+  }
+
+  async logDigitalLibrarySuccess(
+    book: { title: string; author: string; isbn?: string }, 
+    sources: {
+      apple?: boolean;
+      gutenberg?: boolean;
+      archive?: boolean;
+      google?: boolean;
+    }, 
+    context?: string
+  ): Promise<void> {
+    const successCount = Object.values(sources).filter(Boolean).length;
+    await this.logBookInteraction({
+      book_title: book.title,
+      book_author: book.author,
+      book_isbn: book.isbn,
+      interaction_type: 'digital_library_success',
+      source_context: context as any,
+      metadata: { ...sources, successCount },
+      success: successCount > 0
     });
   }
 }
