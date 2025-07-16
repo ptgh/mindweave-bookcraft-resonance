@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
-import { Download, Loader2, Archive } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Loader2, Archive } from "lucide-react";
 import { searchFreeEbooks, EbookSearchResult } from "@/services/freeEbookService";
 import FreeEbookModal from "./FreeEbookModal";
+import gsap from "gsap";
 
 interface FreeEbookDownloadIconProps {
   title: string;
@@ -14,6 +15,7 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
   const [ebookData, setEbookData] = useState<EbookSearchResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -63,31 +65,39 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
     return null;
   }
 
-  const getTooltipText = () => {
-    if (ebookData.gutenberg && ebookData.archive) {
-      return "Public Domain";
-    } else if (ebookData.gutenberg) {
-      return "Project Gutenberg";
-    } else {
-      return "Internet Archive";
+  // Add GSAP animation on mount
+  useEffect(() => {
+    if (buttonRef.current && ebookData?.hasLinks) {
+      gsap.from(buttonRef.current, {
+        scale: 0.8,
+        opacity: 0,
+        duration: 0.5,
+        ease: "back.out(1.7)",
+      });
+      
+      // Continuous subtle pulse animation
+      gsap.to(buttonRef.current, {
+        scale: 1.05,
+        duration: 1.5,
+        repeat: -1,
+        yoyo: true,
+        ease: "power2.inOut",
+      });
     }
-  };
+  }, [ebookData?.hasLinks]);
 
   return (
     <>
-      <div className="relative flex items-center">
-        {/* Internet Archive Icon */}
-        <Archive className="w-4 h-4 text-slate-400 animate-pulse mr-1" />
-        
-        <button
-          onClick={handleClick}
-          className={`group relative p-1.5 text-slate-400 hover:text-green-400 transition-all duration-200 hover:scale-110 ${className}`}
-          title={getTooltipText()}
-          aria-label={`Download free ebook: ${title}`}
-        >
-          <Download className="w-4 h-4 group-hover:drop-shadow-[0_0_6px_rgba(34,197,94,0.4)] transition-all duration-200" />
-        </button>
-      </div>
+      <button
+        ref={buttonRef}
+        onClick={handleClick}
+        className={`px-3 py-1.5 bg-transparent border border-[rgba(34,197,94,0.3)] text-green-400 text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-green-400 hover:bg-green-400/10 ${className}`}
+        title="View in Internet Archive"
+        aria-label={`View free ebook in Internet Archive: ${title}`}
+      >
+        <Archive className="w-3 h-3 mr-2 inline" />
+        Internet Archive
+      </button>
       
       <FreeEbookModal
         isOpen={isModalOpen}
