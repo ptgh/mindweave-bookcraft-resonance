@@ -45,7 +45,7 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
     };
   }, [title, author, isbn]);
 
-  // Add GSAP animation on mount - MOVED BEFORE EARLY RETURNS
+  // Add GSAP animation on mount - REMOVED EXPANDING/CONTRACTING ANIMATION
   useEffect(() => {
     if (buttonRef.current && ebookData?.hasLinks) {
       gsap.from(buttonRef.current, {
@@ -53,15 +53,6 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
         opacity: 0,
         duration: 0.5,
         ease: "back.out(1.7)",
-      });
-      
-      // Continuous subtle pulse animation
-      gsap.to(buttonRef.current, {
-        scale: 1.05,
-        duration: 1.5,
-        repeat: -1,
-        yoyo: true,
-        ease: "power2.inOut",
       });
     }
   }, [ebookData?.hasLinks]);
@@ -91,7 +82,7 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
       <button
         ref={buttonRef}
         onClick={handleClick}
-        className={`px-3 py-1.5 bg-transparent border border-[rgba(34,197,94,0.3)] text-green-400 text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-green-400 hover:bg-green-400/10 ${className}`}
+        className={`flex-1 px-3 py-1.5 bg-green-400/10 border border-green-400 text-green-400 text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-green-300 hover:bg-green-400/20 hover:text-green-300 ${className}`}
         title="View in Internet Archive"
         aria-label={`View free ebook in Internet Archive: ${title}`}
       >
