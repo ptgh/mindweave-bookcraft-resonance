@@ -9,7 +9,7 @@ const BookBrowserStatus = ({ booksCount, previouslyShownCount }: BookBrowserStat
     <div className="mt-12 text-center">
       <div className="inline-flex items-center space-x-2 text-slate-500 text-xs">
         <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
-        <span>Archive status: {booksCount} sci-fi books discovered</span>
+        <span>Signal status: {booksCount} sci-fi books discovered</span>
         <div className="w-1 h-1 bg-slate-600 rounded-full" />
         <span>Previously viewed: {previouslyShownCount} books</span>
         <div className="w-1 h-1 bg-slate-600 rounded-full" />

@@ -79,6 +79,63 @@ export type Database = {
           },
         ]
       }
+      book_interactions: {
+        Row: {
+          book_author: string
+          book_isbn: string | null
+          book_title: string
+          browser_type: string | null
+          created_at: string | null
+          device_type: string | null
+          digital_source: string | null
+          error_details: string | null
+          id: string
+          interaction_type: string
+          metadata: Json | null
+          response_time_ms: number | null
+          search_query: string | null
+          source_context: string | null
+          success: boolean | null
+          user_id: string | null
+        }
+        Insert: {
+          book_author: string
+          book_isbn?: string | null
+          book_title: string
+          browser_type?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          digital_source?: string | null
+          error_details?: string | null
+          id?: string
+          interaction_type: string
+          metadata?: Json | null
+          response_time_ms?: number | null
+          search_query?: string | null
+          source_context?: string | null
+          success?: boolean | null
+          user_id?: string | null
+        }
+        Update: {
+          book_author?: string
+          book_isbn?: string | null
+          book_title?: string
+          browser_type?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          digital_source?: string | null
+          error_details?: string | null
+          id?: string
+          interaction_type?: string
+          metadata?: Json | null
+          response_time_ms?: number | null
+          search_query?: string | null
+          source_context?: string | null
+          success?: boolean | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           created_at: string
@@ -187,6 +244,39 @@ export type Database = {
           isbn?: string | null
           last_checked?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      performance_metrics: {
+        Row: {
+          context: string | null
+          device_type: string | null
+          id: string
+          metric_type: string
+          metric_value: number
+          network_type: string | null
+          timestamp: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          context?: string | null
+          device_type?: string | null
+          id?: string
+          metric_type: string
+          metric_value: number
+          network_type?: string | null
+          timestamp?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          context?: string | null
+          device_type?: string | null
+          id?: string
+          metric_type?: string
+          metric_value?: number
+          network_type?: string | null
+          timestamp?: string | null
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -361,7 +451,36 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      log_book_interaction: {
+        Args: {
+          p_user_id: string
+          p_book_title: string
+          p_book_author: string
+          p_book_isbn?: string
+          p_interaction_type?: string
+          p_digital_source?: string
+          p_source_context?: string
+          p_device_type?: string
+          p_browser_type?: string
+          p_search_query?: string
+          p_response_time_ms?: number
+          p_success?: boolean
+          p_error_details?: string
+          p_metadata?: Json
+        }
+        Returns: string
+      }
+      log_performance_metric: {
+        Args: {
+          p_metric_type: string
+          p_metric_value: number
+          p_context?: string
+          p_user_agent?: string
+          p_device_type?: string
+          p_network_type?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

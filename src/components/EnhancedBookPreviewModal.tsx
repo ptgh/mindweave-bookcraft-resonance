@@ -8,6 +8,8 @@ import { searchGoogleBooks } from "@/services/googleBooks";
 import { useToast } from "@/hooks/use-toast";
 import { searchFreeEbooks, EbookSearchResult } from "@/services/freeEbookService";
 import { gsap } from "gsap";
+import { analyticsService } from "@/services/analyticsService";
+import { getOptimizedSettings } from "@/utils/performance";
 
 interface EnhancedBookPreviewModalProps {
   book: EnrichedPublisherBook;
@@ -58,6 +60,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
 
   useEffect(() => {
     const fetchBookData = async () => {
+      const startTime = Date.now();
       setLoading(true);
       setError(null);
 
@@ -67,7 +70,15 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
         isbn: book.isbn
       });
 
+      // Log preview interaction
+      await analyticsService.logBookPreview(
+        { title: book.title, author: book.author, isbn: book.isbn },
+        'publisher_resonance'
+      );
+
       try {
+        const settings = getOptimizedSettings();
+        
         // Try Apple Books first
         console.log('📱 Attempting Apple Books search...');
         const appleResult = await searchAppleBooks(book.title, book.author, book.isbn);
@@ -75,24 +86,50 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
         if (appleResult) {
           console.log('✅ Apple Books result found:', appleResult);
           setAppleBook(appleResult);
+          
+          const responseTime = Date.now() - startTime;
+          await analyticsService.logApiResponse('apple_books', responseTime, true);
         } else {
           console.log('❌ No Apple Books result, searching free ebooks...');
           
-          // Search for free ebooks
-          const freeEbookResult = await searchFreeEbooks(book.title, book.author, book.isbn);
+          // Search for free ebooks with timeout for better UX
+          const freeEbookPromise = searchFreeEbooks(book.title, book.author, book.isbn);
+          const timeoutPromise = new Promise<EbookSearchResult | null>(resolve => 
+            setTimeout(() => resolve(null), settings.maxConcurrentRequests * 1000)
+          );
+          
+          const freeEbookResult = await Promise.race([freeEbookPromise, timeoutPromise]);
           console.log('📚 Free ebook search result:', freeEbookResult);
           setFreeEbooks(freeEbookResult);
           
-          // Fallback to Google Books for additional data
+          // Fallback to Google Books for additional data (with caching)
           const googleBooks = await searchGoogleBooks(`${book.title} ${book.author}`, 1);
           if (googleBooks.length > 0) {
             console.log('📚 Google Books fallback result:', googleBooks[0]);
             setGoogleFallback(googleBooks[0]);
           }
+          
+          const responseTime = Date.now() - startTime;
+          await analyticsService.logApiResponse('free_ebooks', responseTime, freeEbookResult !== null);
         }
       } catch (err) {
         console.error('💥 Error fetching book data:', err);
         setError('Failed to load book preview data');
+        
+        const responseTime = Date.now() - startTime;
+        await analyticsService.logApiResponse('book_preview', responseTime, false);
+        
+        // Log error interaction
+        await analyticsService.logBookInteraction({
+          book_title: book.title,
+          book_author: book.author,
+          book_isbn: book.isbn,
+          interaction_type: 'preview',
+          source_context: 'publisher_resonance',
+          success: false,
+          error_details: err instanceof Error ? err.message : 'Unknown error',
+          response_time_ms: responseTime
+        });
       } finally {
         setLoading(false);
       }
@@ -104,6 +141,12 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   const handleDigitalCopyAction = async () => {
     // Apple Books
     if (appleBook) {
+      await analyticsService.logDigitalCopyClick(
+        { title: book.title, author: book.author, isbn: book.isbn },
+        'apple_books',
+        'publisher_resonance'
+      );
+
       const confirmed = window.confirm(
         "You are about to leave the app to purchase this book on Apple Books. Continue?"
       );
@@ -143,20 +186,32 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
 
     // Internet Archive
     if (freeEbooks?.archive?.url) {
+      await analyticsService.logDigitalCopyClick(
+        { title: book.title, author: book.author, isbn: book.isbn },
+        'internet_archive',
+        'publisher_resonance'
+      );
+
       window.open(freeEbooks.archive.url, '_blank', 'noopener,noreferrer');
       toast({
-        title: "Opening Internet Archive",
-        description: "Redirecting to Internet Archive...",
+        title: "Opening Digital Library",
+        description: "Redirecting to digital library...",
       });
       return;
     }
 
     // Project Gutenberg
     if (freeEbooks?.gutenberg?.url) {
+      await analyticsService.logDigitalCopyClick(
+        { title: book.title, author: book.author, isbn: book.isbn },
+        'project_gutenberg',
+        'publisher_resonance'
+      );
+
       window.open(freeEbooks.gutenberg.url, '_blank', 'noopener,noreferrer');
       toast({
-        title: "Opening Project Gutenberg",
-        description: "Redirecting to Project Gutenberg...",
+        title: "Opening Digital Library",
+        description: "Redirecting to digital library...",
       });
       return;
     }
@@ -338,7 +393,11 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
             Close
           </button>
           <button
-            onClick={() => {
+            onClick={async () => {
+              await analyticsService.logBookAdd(
+                { title: book.title, author: book.author, isbn: book.isbn },
+                'publisher_resonance'
+              );
               onAddBook(book);
               onClose();
             }}

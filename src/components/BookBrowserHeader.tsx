@@ -10,7 +10,7 @@ const BookBrowserHeader = ({ loading, onDiscover }: BookBrowserHeaderProps) => {
   return (
     <div className="text-center mb-8">
       <h1 className="text-3xl font-light text-slate-200 mb-2 tracking-wider">
-        Signal Archive
+        Signal Collection
       </h1>
       <p className="text-slate-400 text-sm mb-6">
         Discover your next science fiction transmission through the quantum field of possibilities
@@ -22,7 +22,7 @@ const BookBrowserHeader = ({ loading, onDiscover }: BookBrowserHeaderProps) => {
           disabled={loading}
           className="flex items-center space-x-1"
         >
-          <span>{loading ? 'Scanning the Archive...' : 'Discover Scan Signal Archive'}</span>
+          <span>{loading ? 'Scanning Signals...' : 'Discover Scan Signal Collection'}</span>
         </StandardButton>
       </div>
     </div>

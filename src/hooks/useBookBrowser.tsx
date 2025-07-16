@@ -83,8 +83,8 @@ export const useBookBrowser = () => {
         } else {
           if (previouslyShownBooks.size > 0) {
             setPreviouslyShownBooks(new Set());
-            toast({
-              title: "Refreshing Library",
+        toast({
+          title: "Refreshing Collection",
               description: "Cleared viewing history to show fresh sci-fi recommendations.",
             });
             setBooks([]);
