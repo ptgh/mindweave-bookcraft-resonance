@@ -6,6 +6,7 @@ import { EnrichedPublisherBook } from "@/services/publisherService";
 import { AppleBook, searchAppleBooks, generateAppleBooksWebUrl, generateAppleBooksDeepLink, canOpenAppleBooksApp } from "@/services/appleBooks";
 import { searchGoogleBooks } from "@/services/googleBooks";
 import { useToast } from "@/hooks/use-toast";
+import { searchFreeEbooks, EbookSearchResult } from "@/services/freeEbookService";
 import { gsap } from "gsap";
 
 interface EnhancedBookPreviewModalProps {
@@ -17,14 +18,15 @@ interface EnhancedBookPreviewModalProps {
 const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPreviewModalProps) => {
   const [appleBook, setAppleBook] = useState<AppleBook | null>(null);
   const [googleFallback, setGoogleFallback] = useState<any>(null);
+  const [freeEbooks, setFreeEbooks] = useState<EbookSearchResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const appleBooksButtonRef = useRef<HTMLButtonElement>(null);
+  const digitalCopyButtonRef = useRef<HTMLButtonElement>(null);
 
-  // GSAP hover animations for Apple Books button
+  // GSAP hover animations for digital copy button
   useEffect(() => {
-    const button = appleBooksButtonRef.current;
+    const button = digitalCopyButtonRef.current;
     if (button) {
       const handleMouseEnter = () => {
         gsap.to(button, {
@@ -52,7 +54,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
         button.removeEventListener('mouseleave', handleMouseLeave);
       };
     }
-  }, [appleBook]);
+  }, [appleBook, freeEbooks]);
 
   useEffect(() => {
     const fetchBookData = async () => {
@@ -74,7 +76,13 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
           console.log('✅ Apple Books result found:', appleResult);
           setAppleBook(appleResult);
         } else {
-          console.log('❌ No Apple Books result, falling back to Google Books');
+          console.log('❌ No Apple Books result, searching free ebooks...');
+          
+          // Search for free ebooks
+          const freeEbookResult = await searchFreeEbooks(book.title, book.author, book.isbn);
+          console.log('📚 Free ebook search result:', freeEbookResult);
+          setFreeEbooks(freeEbookResult);
+          
           // Fallback to Google Books for additional data
           const googleBooks = await searchGoogleBooks(`${book.title} ${book.author}`, 1);
           if (googleBooks.length > 0) {
@@ -93,49 +101,113 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
     fetchBookData();
   }, [book.title, book.author, book.isbn]);
 
-  const handleBuyOnAppleBooks = async () => {
-    if (!appleBook) return;
+  const handleDigitalCopyAction = async () => {
+    // Apple Books
+    if (appleBook) {
+      const confirmed = window.confirm(
+        "You are about to leave the app to purchase this book on Apple Books. Continue?"
+      );
 
-    const confirmed = window.confirm(
-      "You are about to leave the app to purchase this book on Apple Books. Continue?"
-    );
+      if (!confirmed) return;
 
-    if (!confirmed) return;
-
-    try {
-      // Try deep link first if on iOS
-      if (canOpenAppleBooksApp()) {
-        const deepLink = generateAppleBooksDeepLink(appleBook.id);
-        window.location.href = deepLink;
-        
-        // Fallback to web if deep link fails (after a short delay)
-        setTimeout(() => {
+      try {
+        // Try deep link first if on iOS
+        if (canOpenAppleBooksApp()) {
+          const deepLink = generateAppleBooksDeepLink(appleBook.id);
+          window.location.href = deepLink;
+          
+          // Fallback to web if deep link fails (after a short delay)
+          setTimeout(() => {
+            const webUrl = generateAppleBooksWebUrl(appleBook.id);
+            window.open(webUrl, '_blank', 'noopener,noreferrer');
+          }, 1000);
+        } else {
+          // Open web store directly
           const webUrl = generateAppleBooksWebUrl(appleBook.id);
           window.open(webUrl, '_blank', 'noopener,noreferrer');
-        }, 1000);
-      } else {
-        // Open web store directly
-        const webUrl = generateAppleBooksWebUrl(appleBook.id);
-        window.open(webUrl, '_blank', 'noopener,noreferrer');
-      }
+        }
 
+        toast({
+          title: "Opening Apple Books",
+          description: "Redirecting to Apple Books store...",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to open Apple Books. Please try again.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
+    // Internet Archive
+    if (freeEbooks?.archive?.url) {
+      window.open(freeEbooks.archive.url, '_blank', 'noopener,noreferrer');
       toast({
-        title: "Opening Apple Books",
-        description: "Redirecting to Apple Books store...",
+        title: "Opening Internet Archive",
+        description: "Redirecting to Internet Archive...",
       });
-    } catch (error) {
+      return;
+    }
+
+    // Project Gutenberg
+    if (freeEbooks?.gutenberg?.url) {
+      window.open(freeEbooks.gutenberg.url, '_blank', 'noopener,noreferrer');
       toast({
-        title: "Error",
-        description: "Failed to open Apple Books. Please try again.",
-        variant: "destructive",
+        title: "Opening Project Gutenberg",
+        description: "Redirecting to Project Gutenberg...",
       });
+      return;
     }
   };
 
   const displayData = appleBook || googleFallback || book;
-  const hasAppleData = !!appleBook;
   const coverUrl = appleBook?.coverUrl || googleFallback?.coverUrl || book.cover_url;
   const description = appleBook?.description || googleFallback?.description || book.editorial_note;
+
+  // Determine which digital copy option to show
+  const getDigitalCopyInfo = () => {
+    if (appleBook) {
+      return {
+        service: 'Apple Books',
+        hasPrice: true,
+        price: appleBook.formattedPrice || 
+               (appleBook.price === 0 ? 'Free' : 
+                `${appleBook.currency || '£'}${appleBook.price || 'N/A'}`),
+        buttonText: 'Buy',
+        disabled: false
+      };
+    }
+    
+    if (freeEbooks?.archive?.url) {
+      return {
+        service: 'Internet Archive',
+        hasPrice: false,
+        buttonText: 'Read',
+        disabled: false
+      };
+    }
+    
+    if (freeEbooks?.gutenberg?.url) {
+      return {
+        service: 'Project Gutenberg',
+        hasPrice: false,
+        buttonText: 'Read',
+        disabled: false
+      };
+    }
+    
+    return {
+      service: 'Digital Libraries',
+      hasPrice: false,
+      buttonText: 'Signal Not Found',
+      disabled: true
+    };
+  };
+
+  const digitalCopyInfo = getDigitalCopyInfo();
+  const hasDigitalCopy = !!(appleBook || freeEbooks?.archive?.url || freeEbooks?.gutenberg?.url);
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -221,34 +293,35 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                 </div>
               )}
               
-              {/* Apple Books Section */}
-              {hasAppleData && appleBook && (
-                <div className="border border-slate-700 rounded-lg p-2 bg-slate-700/20">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <ExternalLink className="w-4 h-4 text-slate-400" />
-                      <div className="flex items-center space-x-2">
-                        <span className="text-slate-200 text-sm font-medium">Apple Books</span>
-                        <span className="text-slate-400 text-sm">
-                          {appleBook.formattedPrice || 
-                           (appleBook.price === 0 ? 'Free' : 
-                            `${appleBook.currency || '£'}${appleBook.price || 'N/A'}`)}
-                        </span>
-                      </div>
+              {/* Digital Copy Section */}
+              <div className="border border-slate-700 rounded-lg p-2 bg-slate-700/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <ExternalLink className="w-4 h-4 text-slate-400" />
+                    <div className="flex items-center space-x-2">
+                      <span className="text-slate-200 text-sm font-medium">{digitalCopyInfo.service}</span>
+                      {digitalCopyInfo.hasPrice && (
+                        <span className="text-slate-400 text-sm">{digitalCopyInfo.price}</span>
+                      )}
                     </div>
-                    <button
-                      ref={appleBooksButtonRef}
-                      onClick={handleBuyOnAppleBooks}
-                      className="h-9 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
-                      style={{
-                        boxShadow: "0 0 0px transparent"
-                      }}
-                    >
-                      Buy
-                    </button>
                   </div>
+                  <button
+                    ref={digitalCopyButtonRef}
+                    onClick={digitalCopyInfo.disabled ? undefined : handleDigitalCopyAction}
+                    disabled={digitalCopyInfo.disabled}
+                    className={`h-9 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-xs rounded-lg transition-all duration-300 ease-in-out ${
+                      digitalCopyInfo.disabled 
+                        ? 'text-slate-500 cursor-not-allowed' 
+                        : 'text-[#cdd6f4] hover:border-[#89b4fa]'
+                    }`}
+                    style={{
+                      boxShadow: "0 0 0px transparent"
+                    }}
+                  >
+                    {digitalCopyInfo.buttonText}
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
           )}
         </div>
