@@ -90,23 +90,13 @@ const BookCard = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <div className="flex items-start gap-2">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-slate-200 font-medium text-sm leading-tight line-clamp-2 mb-1">
-                    {title}
-                  </h3>
-                  <p className="text-slate-400 text-xs mb-1">{author}</p>
-                  {open_count && open_count > 0 && (
-                    <p className="text-slate-500 text-xs">Opened {open_count} time{open_count !== 1 ? 's' : ''}</p>
-                  )}
-                </div>
-                <FreeEbookDownloadIcon 
-                  title={title} 
-                  author={author} 
-                  isbn={isbn}
-                  className="flex-shrink-0 mt-0.5"
-                />
-              </div>
+              <h3 className="text-slate-200 font-medium text-sm leading-tight line-clamp-2 mb-1">
+                {title}
+              </h3>
+              <p className="text-slate-400 text-xs mb-1">{author}</p>
+              {open_count && open_count > 0 && (
+                <p className="text-slate-500 text-xs">Opened {open_count} time{open_count !== 1 ? 's' : ''}</p>
+              )}
             </div>
             <div className={`w-3 h-3 rounded-full border-2 ${getStatusColor(status)} flex-shrink-0`}>
               {status === "reading" && (
@@ -190,6 +180,11 @@ const BookCard = ({
             Discard
           </button>
         )}
+        <FreeEbookDownloadIcon 
+          title={title} 
+          author={author} 
+          isbn={isbn}
+        />
       </div>
     </div>
   );
