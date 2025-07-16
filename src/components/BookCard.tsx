@@ -157,7 +157,7 @@ const BookCard = ({
       
       {/* Action buttons - moved to bottom horizontal layout */}
       <div className="flex flex-row space-x-2">
-        {apple_link ? (
+        {apple_link && (
           <button
             onClick={() => window.open(apple_link, '_blank', 'noopener,noreferrer')}
             className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
@@ -166,8 +166,8 @@ const BookCard = ({
           >
             📱 Apple Books
           </button>
-        ) : null}
-        {!apple_link && onKeep && (
+        )}
+        {onKeep && (
           <button
             onClick={onKeep}
             className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
