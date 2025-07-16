@@ -45,27 +45,7 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
     };
   }, [title, author, isbn]);
 
-  const handleClick = () => {
-    if (ebookData?.hasLinks) {
-      setIsModalOpen(true);
-    }
-  };
-
-  // Show loading state briefly, then hide if no links found
-  if (isLoading) {
-    return (
-      <div className={`p-1.5 ${className}`}>
-        <Loader2 className="w-4 h-4 animate-spin text-slate-500" />
-      </div>
-    );
-  }
-
-  // Don't render if no links found
-  if (!ebookData?.hasLinks) {
-    return null;
-  }
-
-  // Add GSAP animation on mount
+  // Add GSAP animation on mount - MOVED BEFORE EARLY RETURNS
   useEffect(() => {
     if (buttonRef.current && ebookData?.hasLinks) {
       gsap.from(buttonRef.current, {
@@ -85,6 +65,26 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
       });
     }
   }, [ebookData?.hasLinks]);
+
+  const handleClick = () => {
+    if (ebookData?.hasLinks) {
+      setIsModalOpen(true);
+    }
+  };
+
+  // Show loading state briefly, then hide if no links found
+  if (isLoading) {
+    return (
+      <div className={`p-1.5 ${className}`}>
+        <Loader2 className="w-4 h-4 animate-spin text-slate-500" />
+      </div>
+    );
+  }
+
+  // Don't render if no links found
+  if (!ebookData?.hasLinks) {
+    return null;
+  }
 
   return (
     <>
