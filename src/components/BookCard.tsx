@@ -146,38 +146,38 @@ const BookCard = ({
       </div>
       
       {/* Action buttons - moved to bottom horizontal layout */}
-      <div className="flex flex-row space-x-2">
+      <div className="grid grid-cols-4 gap-2">
         {onEdit && (
           <button
             onClick={onEdit}
-            className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+            className="flex items-center justify-center px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
             style={{ boxShadow: "0 0 0px transparent" }}
             title="Edit"
           >
-            <Edit className="w-3 h-3 mr-2 inline" />
-            Edit
+            <Edit className="w-3 h-3 mr-2 flex-shrink-0" />
+            <span className="whitespace-nowrap">Edit</span>
           </button>
         )}
         {onKeep && (
           <button
             onClick={onKeep}
-            className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+            className="flex items-center justify-center px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
             style={{ boxShadow: "0 0 0px transparent" }}
             title="Keep"
           >
-            <Archive className="w-3 h-3 mr-2 inline" />
-            Keep
+            <Archive className="w-3 h-3 mr-2 flex-shrink-0" />
+            <span className="whitespace-nowrap">Keep</span>
           </button>
         )}
         {onDiscard && (
           <button
             onClick={onDiscard}
-            className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+            className="flex items-center justify-center px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
             style={{ boxShadow: "0 0 0px transparent" }}
             title="Discard"
           >
-            <X className="w-3 h-3 mr-2 inline" />
-            Discard
+            <X className="w-3 h-3 mr-2 flex-shrink-0" />
+            <span className="whitespace-nowrap">Discard</span>
           </button>
         )}
         <FreeEbookDownloadIcon 
