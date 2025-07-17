@@ -151,6 +151,24 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
         delay: 0.2
       });
 
+      // Animate "Temporal Significance" text with subtle emphasis
+      gsap.from(".temporal-significance", {
+        opacity: 0,
+        y: 10,
+        duration: 0.8,
+        ease: "power2.out",
+        delay: 0.5
+      });
+
+      // Subtle pulse effect for "Temporal Significance"
+      gsap.to(".temporal-significance", {
+        opacity: 0.7,
+        duration: 2,
+        ease: "power2.inOut",
+        yoyo: true,
+        repeat: -1
+      });
+
       // Animate book cards with scroll trigger
       cardsRef.current.forEach((card, index) => {
         if (card) {
@@ -454,11 +472,11 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                 style={{ left: `${node.position}%` }}
               />
               
-              {/* Card - styled like Signal Preview modal, centered and symmetrical */}
+              {/* Card - styled like Signal Preview modal, wider and more spread out */}
               <Card
                 ref={el => cardsRef.current[index] = el}
                 key={node.transmission.id}
-                className="relative overflow-hidden bg-slate-800/90 border-slate-600/50 shadow-xl backdrop-blur-sm hover:bg-slate-800 transition-all duration-300 w-full max-w-md mx-auto"
+                className="relative overflow-hidden bg-slate-800/90 border-slate-600/50 shadow-xl backdrop-blur-sm hover:bg-slate-800 transition-all duration-300 w-full max-w-2xl mx-auto"
               >
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between mb-3">
@@ -547,6 +565,21 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                               {tag}
                             </Badge>
                           ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Temporal Significance */}
+                    {node.transmission.historical_context_tags && node.transmission.historical_context_tags.length > 0 && (
+                      <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600/30">
+                        <h5 className="temporal-significance text-slate-300 font-medium mb-2 flex items-center gap-2">
+                          <Globe className="w-4 h-4 text-cyan-400" />
+                          Temporal Significance:
+                        </h5>
+                        <div className="mt-2">
+                          <p className="text-slate-400 text-sm leading-relaxed">
+                            {node.transmission.historical_context_tags.join('. ')}
+                          </p>
                         </div>
                       </div>
                     )}

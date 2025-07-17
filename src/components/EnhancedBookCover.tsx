@@ -2,6 +2,9 @@
 import { useState, useEffect, useRef } from "react";
 import { BookOpen } from "lucide-react";
 import { imageService } from "@/services/image-service";
+import scifiPlaceholder from "@/assets/book-placeholder-scifi.jpg";
+import classicPlaceholder from "@/assets/book-placeholder-classic.jpg";
+import generalPlaceholder from "@/assets/book-placeholder-general.jpg";
 
 interface EnhancedBookCoverProps {
   title: string;
@@ -129,23 +132,42 @@ const EnhancedBookCover = ({
 };
 
 const PlaceholderCover = ({ title, className = "w-12 h-16" }: { title: string; className?: string }) => {
+  // Determine which placeholder to use based on title/genre context
+  const getPlaceholderImage = (title: string) => {
+    const titleLower = title.toLowerCase();
+    if (titleLower.includes('sci-fi') || titleLower.includes('science fiction') || 
+        titleLower.includes('space') || titleLower.includes('robot') || 
+        titleLower.includes('alien') || titleLower.includes('future') ||
+        titleLower.includes('mars') || titleLower.includes('star') ||
+        titleLower.includes('cyber') || titleLower.includes('android')) {
+      return scifiPlaceholder;
+    }
+    if (titleLower.includes('classic') || titleLower.includes('vintage') ||
+        titleLower.includes('victorian') || titleLower.includes('19th') ||
+        titleLower.includes('18th') || titleLower.includes('century')) {
+      return classicPlaceholder;
+    }
+    return generalPlaceholder;
+  };
+
   return (
-    <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-gradient-to-br from-slate-800 via-slate-700 to-slate-800 flex flex-col items-center justify-center relative border border-slate-600/30`}>
-      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/3 to-transparent opacity-40" />
-      <div className="absolute top-2 left-2 right-8 h-px bg-white/5" />
-      
-      <div className="relative z-10 flex flex-col items-center justify-center h-full p-2">
-        <div className="w-6 h-6 mb-2 rounded-sm bg-slate-600/40 flex items-center justify-center backdrop-blur-sm flex-shrink-0">
-          <BookOpen className="w-3 h-3 text-slate-300" />
-        </div>
-        <div className="text-[8px] text-slate-300 text-center px-1 leading-tight flex-1 flex items-center">
-          <span className="break-words hyphens-auto line-clamp-3" style={{ wordBreak: 'break-word' }}>
-            {title}
-          </span>
+    <div className={`${className} flex-shrink-0 rounded overflow-hidden relative`}>
+      <img
+        src={getPlaceholderImage(title)}
+        alt={`Placeholder cover for ${title}`}
+        className="w-full h-full object-cover"
+        style={{ imageRendering: 'crisp-edges' }}
+      />
+      <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+        <div className="text-center p-2">
+          <BookOpen className="w-4 h-4 text-white/60 mx-auto mb-1" />
+          <div className="text-[8px] text-white/80 font-medium leading-tight">
+            <span className="break-words line-clamp-2" style={{ wordBreak: 'break-word' }}>
+              {title}
+            </span>
+          </div>
         </div>
       </div>
-      
-      <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-white/2 to-transparent" />
     </div>
   );
 };
