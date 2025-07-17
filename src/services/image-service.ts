@@ -46,10 +46,11 @@ class ImageService {
   }
 
   async loadImage({ src, fallbacks = [], timeout = 5000 }: ImageLoadOptions): Promise<string> {
-    const allUrls = [src, ...fallbacks].filter(Boolean);
+    // Prioritize higher quality images by adding quality parameters
+    const enhancedUrls = this.enhanceImageUrls([src, ...fallbacks].filter(Boolean));
     
     // Check cache first
-    for (const url of allUrls) {
+    for (const url of enhancedUrls) {
       const cached = this.cache.get(url);
       if (cached?.loaded && !cached.error) {
         return url;
@@ -57,12 +58,12 @@ class ImageService {
     }
 
     // Check if already loading
-    const loadingKey = allUrls[0];
+    const loadingKey = enhancedUrls[0];
     if (this.loadingPromises.has(loadingKey)) {
       return this.loadingPromises.get(loadingKey)!;
     }
 
-    const promise = this.tryLoadImages(allUrls, timeout);
+    const promise = this.tryLoadImages(enhancedUrls, timeout);
     this.loadingPromises.set(loadingKey, promise);
 
     try {
@@ -133,6 +134,30 @@ class ImageService {
   getCachedUrl(src: string): string | null {
     const cached = this.cache.get(src);
     return cached?.loaded && !cached.error ? src : null;
+  }
+
+  private enhanceImageUrls(urls: string[]): string[] {
+    return urls.map(url => {
+      if (!url) return url;
+      
+      // For Google Books images, prefer larger sizes
+      if (url.includes('books.google.com')) {
+        // Replace zoom=1 with zoom=0 for higher quality, or add zoom=0 if not present
+        if (url.includes('zoom=')) {
+          return url.replace(/zoom=\d+/, 'zoom=0');
+        } else {
+          const separator = url.includes('?') ? '&' : '?';
+          return `${url}${separator}zoom=0`;
+        }
+      }
+      
+      // For other image services, try to get higher quality versions
+      if (url.includes('thumbnail') && !url.includes('maxres')) {
+        return url.replace('thumbnail', 'maxresdefault');
+      }
+      
+      return url;
+    });
   }
 
   clearCache(): void {

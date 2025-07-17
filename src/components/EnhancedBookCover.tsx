@@ -36,15 +36,15 @@ const EnhancedBookCover = ({
       setIsLoading(true);
       setHasError(false);
 
-      // Prioritize smaller images for faster loading
+      // Prioritize higher quality images for better display
       const fallbacks = [
-        smallThumbnailUrl,
-        thumbnailUrl,
+        coverUrl?.replace('zoom=1', 'zoom=0'), // Higher quality version first
         coverUrl,
+        thumbnailUrl?.replace('zoom=1', 'zoom=0'),
+        thumbnailUrl,
+        smallThumbnailUrl,
         coverUrl?.replace('&edge=curl', ''),
-        thumbnailUrl?.replace('&edge=curl', ''),
-        coverUrl?.replace('zoom=1', 'zoom=0'),
-        thumbnailUrl?.replace('zoom=1', 'zoom=0')
+        thumbnailUrl?.replace('&edge=curl', '')
       ].filter(Boolean) as string[];
       
       try {
@@ -62,9 +62,11 @@ const EnhancedBookCover = ({
     };
 
     if (lazy && imgRef.current) {
-      const primaryUrl = smallThumbnailUrl || thumbnailUrl || coverUrl;
+      const primaryUrl = coverUrl || thumbnailUrl || smallThumbnailUrl;
       if (primaryUrl) {
-        imageService.setupLazyLoading(imgRef.current, primaryUrl);
+        // Use the highest quality URL for lazy loading
+        const enhancedUrl = primaryUrl.replace('zoom=1', 'zoom=0');
+        imageService.setupLazyLoading(imgRef.current, enhancedUrl || primaryUrl);
         setIsLoading(false);
         return;
       }
@@ -82,6 +84,7 @@ const EnhancedBookCover = ({
           ref={imgRef}
           alt={title}
           className="w-full h-full object-cover transition-opacity duration-300"
+          style={{ imageRendering: 'crisp-edges' }}
           onError={() => setHasError(true)}
           onLoad={() => setHasError(false)}
         />
@@ -97,8 +100,8 @@ const EnhancedBookCover = ({
   if (isLoading) {
     return (
       <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-slate-700`}>
-        <div className="w-full h-full bg-slate-700 animate-pulse flex items-center justify-center">
-          <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+      <div className="w-full h-full bg-slate-700 animate-pulse flex items-center justify-center">
+          <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
     );
@@ -114,6 +117,7 @@ const EnhancedBookCover = ({
         src={currentSrc}
         alt={title}
         className="w-full h-full object-cover transition-opacity duration-300"
+        style={{ imageRendering: 'crisp-edges' }}
         onError={() => setHasError(true)}
         loading="lazy"
       />
@@ -128,10 +132,10 @@ const PlaceholderCover = ({ title, className = "w-12 h-16" }: { title: string; c
       <div className="absolute top-2 left-2 right-8 h-px bg-white/5" />
       
       <div className="relative z-10 flex flex-col items-center justify-center h-full p-2">
-        <div className="w-6 h-6 mb-2 rounded-sm bg-slate-600/30 flex items-center justify-center backdrop-blur-sm flex-shrink-0">
-          <BookOpen className="w-3 h-3 text-slate-400" />
+        <div className="w-6 h-6 mb-2 rounded-sm bg-slate-600/40 flex items-center justify-center backdrop-blur-sm flex-shrink-0">
+          <BookOpen className="w-3 h-3 text-slate-300" />
         </div>
-        <div className="text-[8px] text-slate-400 text-center px-1 leading-tight flex-1 flex items-center">
+        <div className="text-[8px] text-slate-300 text-center px-1 leading-tight flex-1 flex items-center">
           <span className="break-words hyphens-auto line-clamp-3" style={{ wordBreak: 'break-word' }}>
             {title}
           </span>

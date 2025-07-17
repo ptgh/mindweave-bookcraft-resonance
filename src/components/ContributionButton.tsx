@@ -30,14 +30,14 @@ const ContributionButton = ({ walletAddress, className = "" }: ContributionButto
   };
 
   return (
-    <div className={`group inline-flex items-center space-x-2 text-slate-500 hover:text-slate-300 transition-all duration-300 cursor-pointer ${className}`}>
+    <div className={`group inline-flex items-center space-x-2 text-slate-400 hover:text-slate-200 transition-all duration-300 cursor-pointer ${className}`}>
       <div className="flex items-center space-x-2" onClick={copyToClipboard}>
-        <Heart className="w-3 h-3 text-red-400/60 group-hover:text-red-400 transition-colors" />
-        <span className="text-xs font-light">Support Development</span>
+        <Heart className="w-3 h-3 text-red-400/80 group-hover:text-red-400 transition-colors" />
+        <span className="text-xs font-normal">Support Development</span>
         {copied ? (
           <Check className="w-3 h-3 text-green-400" />
         ) : (
-          <Copy className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
+          <Copy className="w-3 h-3 opacity-80 group-hover:opacity-100 transition-opacity" />
         )}
       </div>
       
