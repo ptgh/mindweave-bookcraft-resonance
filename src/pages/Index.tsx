@@ -224,7 +224,7 @@ const Index = () => {
                     onClick={() => setShowContactModal(true)}
                     variant="standard"
                     size="sm"
-                    className="flex items-center space-x-1 ml-2"
+                    className="flex items-center space-x-1 ml-2 py-1.5 px-3"
                   >
                     <Mail className="w-3 h-3" />
                     <span>Make Contact</span>
