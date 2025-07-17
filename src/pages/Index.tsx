@@ -220,7 +220,7 @@ const Index = () => {
               <div className="relative">
                 <ContributionButton 
                   walletAddress="0xDd966928cC8EA2e61221170490D696BD224866bf"
-                  className="hover:scale-105 transition-transform"
+                  className="px-2 py-1.5 border border-slate-700 bg-slate-800/50 rounded-md hover:bg-slate-800 hover:scale-105 transition-all"
                 />
               </div>
             </div>

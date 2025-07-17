@@ -38,13 +38,14 @@ const EnhancedBookCover = ({
 
       // Prioritize higher quality images for better display
       const fallbacks = [
-        coverUrl?.replace('zoom=1', 'zoom=0'), // Higher quality version first
-        coverUrl,
-        thumbnailUrl?.replace('zoom=1', 'zoom=0'),
-        thumbnailUrl,
-        smallThumbnailUrl,
+        // Use zoom=0 for higher quality on Google Books images
+        coverUrl?.replace('zoom=1', 'zoom=0').replace('&edge=curl', ''),
         coverUrl?.replace('&edge=curl', ''),
-        thumbnailUrl?.replace('&edge=curl', '')
+        coverUrl,
+        thumbnailUrl?.replace('zoom=1', 'zoom=0').replace('&edge=curl', ''),
+        thumbnailUrl?.replace('&edge=curl', ''),
+        thumbnailUrl,
+        smallThumbnailUrl?.replace('zoom=1', 'zoom=0').replace('&edge=curl', '')
       ].filter(Boolean) as string[];
       
       try {
@@ -65,8 +66,10 @@ const EnhancedBookCover = ({
       const primaryUrl = coverUrl || thumbnailUrl || smallThumbnailUrl;
       if (primaryUrl) {
         // Use the highest quality URL for lazy loading
-        const enhancedUrl = primaryUrl.replace('zoom=1', 'zoom=0');
-        imageService.setupLazyLoading(imgRef.current, enhancedUrl || primaryUrl);
+        const enhancedUrl = primaryUrl
+          .replace('zoom=1', 'zoom=0')
+          .replace('&edge=curl', '');
+        imageService.setupLazyLoading(imgRef.current, enhancedUrl);
         setIsLoading(false);
         return;
       }

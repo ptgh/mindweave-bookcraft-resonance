@@ -83,6 +83,7 @@ class ImageService {
       } catch (error) {
         console.warn(`Failed to load image: ${url}`, error);
         this.cache.set(url, { url, loaded: false, error: true, timestamp: Date.now() });
+        continue; // Try next URL instead of stopping
       }
     }
     throw new Error('All image URLs failed to load');
