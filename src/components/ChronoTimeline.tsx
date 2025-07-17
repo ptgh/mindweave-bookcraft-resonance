@@ -321,56 +321,82 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
         <div className="flex flex-wrap gap-2">
           <Button
             onClick={() => setViewMode('publication')}
-            variant={viewMode === 'publication' ? 'default' : 'outline'}
+            variant={viewMode === 'publication' ? 'default' : 'ghost'}
             size="sm"
-            className={viewMode === 'publication' ? 'bg-blue-600 hover:bg-blue-700' : 'border-slate-600 text-slate-300'}
+            className="text-slate-300 hover:text-white hover:bg-slate-700"
           >
-            <BookOpen className="w-4 h-4 mr-2" />
             Publication
           </Button>
           <Button
             onClick={() => setViewMode('narrative')}
-            variant={viewMode === 'narrative' ? 'default' : 'outline'}
+            variant={viewMode === 'narrative' ? 'default' : 'ghost'}
             size="sm"
-            className={viewMode === 'narrative' ? 'bg-blue-600 hover:bg-blue-700' : 'border-slate-600 text-slate-300'}
+            className="text-slate-300 hover:text-white hover:bg-slate-700"
           >
-            <Globe className="w-4 h-4 mr-2" />
             Narrative
           </Button>
           <Button
             onClick={() => setViewMode('reading')}
-            variant={viewMode === 'reading' ? 'default' : 'outline'}
+            variant={viewMode === 'reading' ? 'default' : 'ghost'}
             size="sm"
-            className={viewMode === 'reading' ? 'bg-blue-600 hover:bg-blue-700' : 'border-slate-600 text-slate-300'}
+            className="text-slate-300 hover:text-white hover:bg-slate-700"
           >
-            <User className="w-4 h-4 mr-2" />
             Reading
           </Button>
-        </div>
-
-        <div className="flex items-center gap-4">
           <Button 
             onClick={enrichTimelineData}
             disabled={isEnriching}
             size="sm"
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            className="bg-amber-600 hover:bg-amber-700 text-white border-amber-600"
           >
-            {isEnriching ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Enhancing...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Enhance Data
-              </>
-            )}
+            {isEnriching ? 'Enhancing...' : 'Enhance Data'}
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-4 text-sm">
+          <span className="text-slate-400">Temporal Scope:</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-slate-300 hover:text-white px-2 py-1 h-auto"
+          >
+            Year
+          </Button>
+          <Button
+            variant="ghost" 
+            size="sm"
+            className="text-slate-300 hover:text-white px-2 py-1 h-auto"
+          >
+            All Time
           </Button>
         </div>
       </div>
+      
+      <div className="text-center text-slate-400 italic text-sm font-light">
+        "AI extracts publication years and narrative periods from book metadata"
+      </div>
 
-      {/* Era Distribution Stats */}
+      {/* Statistics Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-slate-800/30 p-4 rounded-lg border border-slate-600/30 text-center">
+          <div className="text-2xl font-bold text-slate-100">{stats.totalBooks}</div>
+          <div className="text-sm text-slate-400">Total Books</div>
+        </div>
+        <div className="bg-slate-800/30 p-4 rounded-lg border border-slate-600/30 text-center">
+          <div className="text-2xl font-bold text-slate-100">{stats.yearSpan.split(' - ').length > 1 ? Math.abs(parseInt(stats.yearSpan.split(' - ')[1]) - parseInt(stats.yearSpan.split(' - ')[0])) + 'y' : 'N/A'}</div>
+          <div className="text-sm text-slate-400">Year Span</div>
+        </div>
+        <div className="bg-slate-800/30 p-4 rounded-lg border border-slate-600/30 text-center">
+          <div className="text-2xl font-bold text-slate-100">{stats.yearSpan !== "No data" ? stats.yearSpan : 'N/A'}</div>
+          <div className="text-sm text-slate-400">Era Range</div>
+        </div>
+        <div className="bg-slate-800/30 p-4 rounded-lg border border-slate-600/30 text-center">
+          <div className="text-2xl font-bold text-slate-100">{displayedNodes.length > 1 ? displayedNodes.length - 1 : 0}</div>
+          <div className="text-sm text-slate-400">Time Jumps</div>
+        </div>
+      </div>
+
+      {/* Era Distribution */}
       {Object.keys(stats.eraDistribution).length > 0 && (
         <div className="bg-slate-800/30 p-4 rounded-lg border border-slate-600/30">
           <h4 className="text-sm font-medium text-slate-300 mb-3">Era Distribution</h4>
@@ -385,33 +411,54 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
         </div>
       )}
 
+      {/* Biggest Time Jumps */}
+      {displayedNodes.length > 1 && (
+        <div className="bg-slate-800/30 p-4 rounded-lg border border-slate-600/30">
+          <h4 className="text-sm font-medium text-slate-300 mb-3">Biggest Time Jumps</h4>
+          {(() => {
+            const jumps = [];
+            for (let i = 1; i < displayedNodes.length; i++) {
+              const jump = Math.abs(displayedNodes[i].year - displayedNodes[i-1].year);
+              jumps.push({
+                years: jump,
+                from: displayedNodes[i-1].transmission.title,
+                to: displayedNodes[i].transmission.title
+              });
+            }
+            return jumps
+              .sort((a, b) => b.years - a.years)
+              .slice(0, 2)
+              .map((jump, idx) => (
+                <div key={idx} className="text-sm text-slate-300 mb-1">
+                  <span className="font-semibold text-blue-400">{jump.years} years</span>
+                  <br />
+                  <span className="text-slate-400">{jump.from} → {jump.to}</span>
+                </div>
+              ));
+          })()}
+        </div>
+      )}
+
       {/* Timeline Visualization */}
       <div ref={timelineRef} className="relative">
         {/* Timeline line */}
         <div className="timeline-line absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 transform origin-left"></div>
         
         {/* Timeline markers and cards */}
-        <div className="relative pt-16">
+        <div className="relative pt-16 space-y-12">
           {displayedNodes.map((node, index) => (
-            <div key={node.transmission.id} className="relative mb-8">
+            <div key={node.transmission.id} className="relative flex justify-center">
               {/* Timeline marker */}
               <div 
-                className="absolute top-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-slate-800 shadow-lg transform -translate-x-1/2"
+                className="absolute top-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-slate-800 shadow-lg transform -translate-x-1/2 -translate-y-8"
                 style={{ left: `${node.position}%` }}
               />
               
-              {/* Card - styled like Signal Preview modal */}
+              {/* Card - styled like Signal Preview modal, centered and symmetrical */}
               <Card
                 ref={el => cardsRef.current[index] = el}
                 key={node.transmission.id}
-                className="relative overflow-hidden bg-slate-800/90 border-slate-600/50 shadow-xl backdrop-blur-sm hover:bg-slate-800 transition-all duration-300"
-                style={{
-                  left: `${node.position}%`,
-                  transform: 'translateX(-50%)',
-                  marginTop: '2rem',
-                  minWidth: '360px',
-                  maxWidth: '420px'
-                }}
+                className="relative overflow-hidden bg-slate-800/90 border-slate-600/50 shadow-xl backdrop-blur-sm hover:bg-slate-800 transition-all duration-300 w-full max-w-md mx-auto"
               >
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between mb-3">
@@ -504,26 +551,19 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                       </div>
                     )}
 
-                    {/* Quick Actions - matching Signal Preview modal */}
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 bg-slate-700/30 border-slate-600/50 text-slate-300 hover:bg-slate-600/50"
-                      >
-                        Close
-                      </Button>
-                      {node.transmission.apple_link && (
+                    {/* Apple Books Link */}
+                    {node.transmission.apple_link && (
+                      <div className="pt-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="bg-blue-500/20 border-blue-400/30 text-blue-300 hover:bg-blue-500/30"
+                          className="w-full bg-blue-500/20 border-blue-400/30 text-blue-300 hover:bg-blue-500/30"
                           onClick={() => window.open(node.transmission.apple_link, '_blank')}
                         >
-                          Buy
+                          Buy on Apple Books
                         </Button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </CardContent>
                 )}
               </Card>
