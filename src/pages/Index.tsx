@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { getTransmissions, saveTransmission, updateTransmission, deleteTransmission, Transmission } from "@/services/transmissionsService";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
+import ContributionButton from "@/components/ContributionButton";
 
 const Index = () => {
   const [books, setBooks] = useState<Transmission[]>([]);
@@ -210,11 +211,20 @@ const Index = () => {
           </div>
           
           <div className="mt-12 text-center">
-            <div className="inline-flex items-center space-x-2 text-slate-500 text-xs">
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-              <span>Tuning frequency: 432 Hz</span>
-              <div className="w-1 h-1 bg-slate-600 rounded-full" />
-              <span>Signal strength: Rising</span>
+            <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6">
+              <div className="inline-flex items-center space-x-2 text-slate-500 text-xs">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+                <span>Tuning frequency: 432 Hz</span>
+                <div className="w-1 h-1 bg-slate-600 rounded-full" />
+                <span>Signal strength: Rising</span>
+              </div>
+              
+              <div className="relative">
+                <ContributionButton 
+                  walletAddress="0x742d35Cc6634C0532925a3b8D598C4e1073b1c0f"
+                  className="hover:scale-105 transition-transform"
+                />
+              </div>
             </div>
           </div>
         </main>
