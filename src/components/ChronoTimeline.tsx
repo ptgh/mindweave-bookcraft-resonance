@@ -77,7 +77,9 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
   function getYearForMode(transmission: Transmission, mode: string): number | null {
     switch (mode) {
       case 'publication':
-        return transmission.publication_year || null;
+        // Use publication_year or fallback to created_at year
+        return transmission.publication_year || 
+               (transmission.created_at ? new Date(transmission.created_at).getFullYear() : null);
       case 'narrative':
         return transmission.narrative_time_period ? parseInt(transmission.narrative_time_period) : null;
       case 'reading':
@@ -113,52 +115,64 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
       {/* Timeline Controls */}
       <div className="flex flex-wrap gap-4 items-center justify-between">
         <div className="flex gap-2">
-          <Button
-            variant={viewMode === 'publication' ? 'default' : 'outline'}
-            size="sm"
+          <button
             onClick={() => setViewMode('publication')}
-            className="flex items-center gap-2"
+            className={`bg-transparent border text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-200 flex items-center space-x-1 ${
+              viewMode === 'publication'
+                ? "border-blue-400 text-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.3)]" 
+                : "border-slate-600 text-slate-300 hover:border-blue-400 hover:text-blue-400"
+            }`}
           >
-            <BookOpen className="w-4 h-4" />
-            Publication
-          </Button>
-          <Button
-            variant={viewMode === 'narrative' ? 'default' : 'outline'}
-            size="sm"
+            <BookOpen className="w-3 h-3" />
+            <span>Publication</span>
+          </button>
+          <button
             onClick={() => setViewMode('narrative')}
-            className="flex items-center gap-2"
+            className={`bg-transparent border text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-200 flex items-center space-x-1 ${
+              viewMode === 'narrative'
+                ? "border-purple-400 text-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.3)]" 
+                : "border-slate-600 text-slate-300 hover:border-purple-400 hover:text-purple-400"
+            }`}
           >
-            <Calendar className="w-4 h-4" />
-            Narrative
-          </Button>
-          <Button
-            variant={viewMode === 'reading' ? 'default' : 'outline'}
-            size="sm"
+            <Calendar className="w-3 h-3" />
+            <span>Narrative</span>
+          </button>
+          <button
             onClick={() => setViewMode('reading')}
-            className="flex items-center gap-2"
+            className={`bg-transparent border text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-200 flex items-center space-x-1 ${
+              viewMode === 'reading'
+                ? "border-green-400 text-green-400 shadow-[0_0_10px_rgba(34,197,94,0.3)]" 
+                : "border-slate-600 text-slate-300 hover:border-green-400 hover:text-green-400"
+            }`}
           >
-            <Clock className="w-4 h-4" />
-            Reading
-          </Button>
+            <Clock className="w-3 h-3" />
+            <span>Reading</span>
+          </button>
         </div>
 
         <div className="flex gap-2 flex-wrap">
-          <Button
-            variant={selectedDecade === null ? 'default' : 'outline'}
-            size="sm"
+          <button
             onClick={() => setSelectedDecade(null)}
+            className={`bg-transparent border text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-200 ${
+              selectedDecade === null
+                ? "border-cyan-400 text-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)]" 
+                : "border-slate-600 text-slate-300 hover:border-cyan-400 hover:text-cyan-400"
+            }`}
           >
             All Eras
-          </Button>
+          </button>
           {decades.map(decade => (
-            <Button
+            <button
               key={decade}
-              variant={selectedDecade === decade ? 'default' : 'outline'}
-              size="sm"
               onClick={() => setSelectedDecade(decade)}
+              className={`bg-transparent border text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-200 ${
+                selectedDecade === decade
+                  ? "border-cyan-400 text-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)]" 
+                  : "border-slate-600 text-slate-300 hover:border-cyan-400 hover:text-cyan-400"
+              }`}
             >
               {decade}
-            </Button>
+            </button>
           ))}
         </div>
       </div>
@@ -166,30 +180,30 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
       {/* Timeline Visualization */}
       <div className="relative">
         {/* Era Sections */}
-        <div className="space-y-8">
+        <div className="space-y-6">
           {eras.map(({ era, nodes, startYear, endYear, count }) => (
-            <Card key={era} className="overflow-hidden">
-              <CardHeader className={`${getEraColor(era)} text-white`}>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <Zap className="w-5 h-5" />
-                    {era}
-                  </span>
-                  <div className="flex items-center gap-4 text-sm">
-                    <span>{startYear} - {endYear}</span>
-                    <Badge variant="secondary" className="bg-white/20 text-white">
-                      {count} book{count !== 1 ? 's' : ''}
-                    </Badge>
+            <div key={era} className="bg-slate-800/50 rounded-lg border border-slate-700 overflow-hidden">
+              <div className="bg-slate-700/50 p-4 border-b border-slate-600">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-blue-400" />
+                    <h3 className="text-lg font-medium text-slate-200">{era}</h3>
                   </div>
-                </CardTitle>
-              </CardHeader>
+                  <div className="flex items-center gap-4 text-sm">
+                    <span className="text-slate-400">{startYear} - {endYear}</span>
+                    <div className="bg-slate-600/50 text-slate-300 px-2 py-1 rounded text-xs">
+                      {count} book{count !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+                </div>
+              </div>
               
-              <CardContent className="p-6">
+              <div className="p-6">
                 {/* Timeline for this era */}
                 <div className="relative">
-                  <div className="absolute inset-x-0 top-8 h-0.5 bg-gradient-to-r from-muted via-primary to-muted"></div>
+                  <div className="absolute inset-x-0 top-8 h-0.5 bg-gradient-to-r from-slate-700 via-blue-500 to-slate-700"></div>
                   
-                  <div className="relative grid grid-cols-1 gap-6 min-h-[160px] overflow-visible">
+                  <div className="relative space-y-4">
                     {nodes.map((node, index) => (
                       <div
                         key={node.transmission.id}
@@ -198,21 +212,21 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                         onMouseLeave={() => setHoveredTransmission(null)}
                       >
                         {/* Timeline connector line */}
-                        <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary/50 to-primary/20"></div>
+                        <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-500/50 to-blue-500/20"></div>
                         
                         {/* Timeline node */}
-                        <div className="relative flex items-start gap-4 p-4 rounded-lg border border-slate-700/30 bg-slate-800/20 hover:bg-slate-700/30 transition-all duration-200">
+                        <div className="relative flex items-start gap-4 p-4 rounded-lg border border-slate-600/50 bg-slate-700/30 hover:bg-slate-600/40 transition-all duration-200">
                           {/* Timeline dot */}
-                          <div className="relative flex-shrink-0">
-                            <div className="w-3 h-3 rounded-full bg-primary border-2 border-background shadow-lg group-hover:scale-125 transition-transform duration-200 z-10"></div>
-                            <div className="absolute inset-0 w-3 h-3 rounded-full bg-primary/30 animate-pulse"></div>
+                          <div className="relative flex-shrink-0 mt-1">
+                            <div className="w-3 h-3 rounded-full bg-blue-400 border-2 border-slate-800 shadow-lg group-hover:scale-125 transition-transform duration-200 z-10"></div>
+                            <div className="absolute inset-0 w-3 h-3 rounded-full bg-blue-400/30 animate-pulse"></div>
                           </div>
                           
                           {/* Book info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1">
-                                <h4 className="text-sm font-medium text-slate-200 line-clamp-2 mb-1">
+                                <h4 className="text-sm font-medium text-slate-200 mb-1">
                                   {node.transmission.title}
                                 </h4>
                                 <p className="text-xs text-slate-400 mb-2">
@@ -220,12 +234,12 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                                 </p>
                                 
                                 {/* Tags */}
-                                {node.transmission.tags && node.transmission.tags.length > 0 && (
+                                {Array.isArray(node.transmission.tags) && node.transmission.tags.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mb-2">
                                     {node.transmission.tags.slice(0, 3).map((tag: string, tagIndex: number) => (
-                                      <Badge key={tagIndex} variant="secondary" className="text-xs px-1.5 py-0.5 bg-slate-700 text-slate-300">
+                                      <div key={tagIndex} className="text-xs px-2 py-1 bg-slate-600/50 text-slate-300 rounded">
                                         {tag}
-                                      </Badge>
+                                      </div>
                                     ))}
                                   </div>
                                 )}
@@ -237,7 +251,7 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                                 </div>
                                 {node.transmission.created_at && (
                                   <div className="text-xs text-slate-500">
-                                    Read: {format(new Date(node.transmission.created_at), 'MMM yyyy')}
+                                    Added: {format(new Date(node.transmission.created_at), 'MMM yyyy')}
                                   </div>
                                 )}
                               </div>
@@ -245,17 +259,17 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                             
                             {/* Notes preview */}
                             {node.transmission.notes && (
-                              <p className="text-xs text-slate-500 line-clamp-2 mt-2">
+                              <p className="text-xs text-slate-500 mt-2 line-clamp-2">
                                 {node.transmission.notes}
                               </p>
                             )}
                           </div>
                         </div>
 
-                        {/* Enhanced hover popup */}
+                        {/* Enhanced hover popup with higher z-index */}
                         {hoveredTransmission === node.transmission.id && (
-                          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 w-80 max-w-sm">
-                            <div className="bg-slate-800 border border-slate-600 rounded-lg shadow-2xl p-6 backdrop-blur-sm">
+                          <div className="fixed inset-0 z-[9999] pointer-events-none flex items-center justify-center">
+                            <div className="bg-slate-800/95 border border-slate-600 rounded-lg shadow-2xl p-6 backdrop-blur-sm max-w-sm w-80 mx-4">
                               <div className="space-y-3">
                                 <div>
                                   <h4 className="font-semibold text-base text-slate-200">{node.transmission.title}</h4>
@@ -264,7 +278,7 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                                 
                                 <div className="flex gap-4 text-xs">
                                   <div>
-                                    <span className="text-slate-500">Published:</span>
+                                    <span className="text-slate-500">Year:</span>
                                     <span className="text-blue-400 ml-1">{node.year}</span>
                                   </div>
                                   {node.transmission.created_at && (
@@ -283,20 +297,15 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                                   </div>
                                 )}
                                 
-                                {node.transmission.tags && node.transmission.tags.length > 0 && (
+                                {Array.isArray(node.transmission.tags) && node.transmission.tags.length > 0 && (
                                   <div className="flex flex-wrap gap-1">
                                     {node.transmission.tags.map((tag: string, tagIndex: number) => (
-                                      <Badge key={tagIndex} variant="outline" className="text-xs border-slate-600 text-slate-300">
+                                      <div key={tagIndex} className="text-xs px-2 py-1 border border-slate-600 text-slate-300 rounded">
                                         {tag}
-                                      </Badge>
+                                      </div>
                                     ))}
                                   </div>
                                 )}
-                              </div>
-                              
-                              {/* Close hint */}
-                              <div className="absolute top-2 right-2 text-xs text-slate-500">
-                                hover to view
                               </div>
                             </div>
                           </div>
@@ -305,34 +314,32 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                     ))}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       </div>
 
       {/* Legend */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            Chrono Thread Legend
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
+      <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Calendar className="w-4 h-4 text-cyan-400" />
+          <h3 className="text-sm font-medium text-slate-200">Chrono Thread Legend</h3>
+        </div>
+        <div className="space-y-3 text-sm">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-primary"></div>
-            <span>Timeline positions represent {viewMode} chronology</span>
+            <div className="w-3 h-3 rounded-full bg-blue-400"></div>
+            <span className="text-slate-300">Timeline positions represent {viewMode} chronology</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-2 bg-gradient-to-r from-muted via-primary to-muted"></div>
-            <span>Books connected through temporal threads</span>
+            <div className="w-8 h-2 bg-gradient-to-r from-slate-700 via-blue-500 to-slate-700"></div>
+            <span className="text-slate-300">Books connected through temporal threads</span>
           </div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-slate-500">
             Hover over books to see detailed information and temporal connections
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
