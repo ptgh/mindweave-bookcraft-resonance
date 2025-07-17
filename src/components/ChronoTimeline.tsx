@@ -1,10 +1,16 @@
-import React, { useState, useMemo } from 'react';
-import { Transmission } from '@/services/transmissionsService';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { format } from 'date-fns';
+import { Calendar, Clock, User, BookOpen, Tag, ChevronDown, ChevronUp, Sparkles, Globe, Zap, RefreshCw, Database } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Clock, Calendar, BookOpen, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
-import { format } from 'date-fns';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Transmission } from '@/services/transmissionsService';
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface ChronoTimelineProps {
   transmissions: Transmission[];
@@ -15,34 +21,75 @@ interface TimelineNode {
   position: number;
   year: number;
   decade: string;
+  era: string;
+  expanded: boolean;
+}
+
+interface EraGroup {
+  era: string;
+  nodes: TimelineNode[];
+  startYear: number;
+  endYear: number;
+  count: number;
+  description: string;
+  significance: string;
 }
 
 export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
   const [selectedDecade, setSelectedDecade] = useState<string | null>(null);
-  const [hoveredTransmission, setHoveredTransmission] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'publication' | 'narrative' | 'reading'>('publication');
+  const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
+  const [isEnriching, setIsEnriching] = useState(false);
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const { toast } = useToast();
 
-  // Process transmissions into timeline nodes
+  // Enhanced data processing with OpenAI enrichment
   const timelineData = useMemo(() => {
     const filteredTransmissions = transmissions.filter(t => {
       const year = getYearForMode(t, viewMode);
-      return year && year > 1800 && year < 2030; // Reasonable range
+      return year && year > 1800 && year < 2100; // Extended range for sci-fi
     });
 
     const nodes: TimelineNode[] = filteredTransmissions.map(transmission => {
       const year = getYearForMode(transmission, viewMode) || new Date().getFullYear();
       const decade = `${Math.floor(year / 10) * 10}s`;
+      const era = getEra(year);
       
       return {
         transmission,
-        position: (year - 1800) / (2030 - 1800) * 100, // Position as percentage
+        position: (year - 1800) / (2100 - 1800) * 100,
         year,
-        decade
+        decade,
+        era,
+        expanded: false
       };
     });
 
     return nodes.sort((a, b) => a.year - b.year);
   }, [transmissions, viewMode]);
+
+  // Enhanced era grouping with better categorization
+  const eras = useMemo(() => {
+    const eraGroups: { [key: string]: TimelineNode[] } = {};
+    
+    timelineData.forEach(node => {
+      if (!eraGroups[node.era]) eraGroups[node.era] = [];
+      eraGroups[node.era].push(node);
+    });
+
+    return Object.entries(eraGroups)
+      .map(([era, nodes]) => ({
+        era,
+        nodes,
+        startYear: Math.min(...nodes.map(n => n.year)),
+        endYear: Math.max(...nodes.map(n => n.year)),
+        count: nodes.length,
+        description: getEraDescription(era),
+        significance: getEraSignificance(era)
+      }))
+      .sort((a, b) => a.startYear - b.startYear);
+  }, [timelineData]);
 
   // Get decades for filtering
   const decades = useMemo(() => {
@@ -51,37 +98,106 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
   }, [timelineData]);
 
   // Filter by selected decade
-  const filteredNodes = selectedDecade 
-    ? timelineData.filter(node => node.decade === selectedDecade)
-    : timelineData;
+  const filteredEras = selectedDecade 
+    ? eras.map(era => ({
+        ...era,
+        nodes: era.nodes.filter(node => node.decade === selectedDecade)
+      })).filter(era => era.nodes.length > 0)
+    : eras;
 
-  // Group nodes by era for visualization
-  const eras = useMemo(() => {
-    const eraGroups: { [key: string]: TimelineNode[] } = {};
-    
-    filteredNodes.forEach(node => {
-      const era = getEra(node.year);
-      if (!eraGroups[era]) eraGroups[era] = [];
-      eraGroups[era].push(node);
-    });
+  // GSAP Animations
+  useEffect(() => {
+    if (!timelineRef.current) return;
 
-    return Object.entries(eraGroups).map(([era, nodes]) => ({
-      era,
-      nodes,
-      startYear: Math.min(...nodes.map(n => n.year)),
-      endYear: Math.max(...nodes.map(n => n.year)),
-      count: nodes.length
-    }));
-  }, [filteredNodes]);
+    const ctx = gsap.context(() => {
+      // Animate timeline container
+      gsap.from(timelineRef.current, {
+        opacity: 0,
+        y: 50,
+        duration: 0.8,
+        ease: "power2.out"
+      });
+
+      // Animate era sections
+      gsap.from(".era-section", {
+        opacity: 0,
+        x: -30,
+        duration: 0.6,
+        stagger: 0.1,
+        ease: "power2.out",
+        delay: 0.2
+      });
+
+      // Animate book cards with scroll trigger
+      cardsRef.current.forEach((card, index) => {
+        if (card) {
+          gsap.fromTo(card, 
+            {
+              opacity: 0,
+              y: 30,
+              scale: 0.95
+            },
+            {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              duration: 0.5,
+              ease: "power2.out",
+              scrollTrigger: {
+                trigger: card,
+                start: "top 90%",
+                toggleActions: "play none none reverse"
+              }
+            }
+          );
+        }
+      });
+
+    }, timelineRef);
+
+    return () => ctx.revert();
+  }, [filteredEras]);
+
+  // OpenAI Data Enrichment
+  const enrichTimelineData = async () => {
+    setIsEnriching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('enrich-timeline-data');
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Timeline Enhanced",
+        description: `Successfully enriched ${data.enriched?.length || 0} books with temporal data`,
+      });
+      
+      // Reload the page to see updated data
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Error enriching timeline data:', error);
+      toast({
+        title: "Enhancement Failed",
+        description: "Failed to enrich timeline data. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsEnriching(false);
+    }
+  };
 
   function getYearForMode(transmission: Transmission, mode: string): number | null {
     switch (mode) {
       case 'publication':
-        // Use publication_year or fallback to created_at year
         return transmission.publication_year || 
                (transmission.created_at ? new Date(transmission.created_at).getFullYear() : null);
       case 'narrative':
-        return transmission.narrative_time_period ? parseInt(transmission.narrative_time_period) : null;
+        // Parse narrative time period - handle various formats
+        if (transmission.narrative_time_period) {
+          const match = transmission.narrative_time_period.match(/(\d{4})/);
+          return match ? parseInt(match[1]) : null;
+        }
+        return null;
       case 'reading':
         return transmission.created_at ? new Date(transmission.created_at).getFullYear() : null;
       default:
@@ -90,256 +206,355 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
   }
 
   function getEra(year: number): string {
-    if (year < 1900) return 'Victorian Era';
-    if (year < 1920) return 'Edwardian Era';
-    if (year < 1950) return 'Early Modern';
-    if (year < 1980) return 'Mid-Century';
-    if (year < 2000) return 'Late 20th Century';
-    return '21st Century';
+    if (year < 1880) return 'Proto Science Fiction';
+    if (year < 1930) return 'Scientific Romance';
+    if (year < 1950) return 'Golden Age';
+    if (year < 1970) return 'Silver Age';
+    if (year < 1990) return 'New Wave & Cyberpunk';
+    if (year < 2010) return 'Modern SF';
+    return 'Contemporary & New Weird';
+  }
+
+  function getEraDescription(era: string): string {
+    const descriptions: { [key: string]: string } = {
+      'Proto Science Fiction': 'Early scientific speculation and fantastical voyages',
+      'Scientific Romance': 'Wells, Verne, and the foundation of scientific fiction',
+      'Golden Age': 'Campbell era - hard science fiction and space opera',
+      'Silver Age': 'Post-war expansion and social science fiction',
+      'New Wave & Cyberpunk': 'Literary experimentation and digital dystopias',
+      'Modern SF': 'Diverse voices and subgenre explosion',
+      'Contemporary & New Weird': 'Genre blending and new mythologies'
+    };
+    return descriptions[era] || 'Temporal classification pending';
+  }
+
+  function getEraSignificance(era: string): string {
+    const significance: { [key: string]: string } = {
+      'Proto Science Fiction': 'Laid groundwork for scientific speculation in literature',
+      'Scientific Romance': 'Established core SF themes and narrative structures',
+      'Golden Age': 'Defined hard SF and created lasting space opera conventions',
+      'Silver Age': 'Introduced social consciousness and psychological depth',
+      'New Wave & Cyberpunk': 'Revolutionized style and explored digital futures',
+      'Modern SF': 'Diversified voices and explored complex social issues',
+      'Contemporary & New Weird': 'Pushes boundaries and creates new mythologies'
+    };
+    return significance[era] || 'Shaping the future of speculative fiction';
   }
 
   function getEraColor(era: string): string {
     const colors: { [key: string]: string } = {
-      'Victorian Era': 'bg-gradient-to-r from-amber-500 to-orange-600',
-      'Edwardian Era': 'bg-gradient-to-r from-emerald-500 to-teal-600',
-      'Early Modern': 'bg-gradient-to-r from-blue-500 to-indigo-600',
-      'Mid-Century': 'bg-gradient-to-r from-purple-500 to-pink-600',
-      'Late 20th Century': 'bg-gradient-to-r from-cyan-500 to-blue-600',
-      '21st Century': 'bg-gradient-to-r from-violet-500 to-purple-600'
+      'Proto Science Fiction': 'from-amber-500/20 to-orange-600/20 border-amber-500/30',
+      'Scientific Romance': 'from-emerald-500/20 to-teal-600/20 border-emerald-500/30',
+      'Golden Age': 'from-yellow-500/20 to-gold-600/20 border-yellow-500/30',
+      'Silver Age': 'from-slate-500/20 to-gray-600/20 border-slate-500/30',
+      'New Wave & Cyberpunk': 'from-purple-500/20 to-pink-600/20 border-purple-500/30',
+      'Modern SF': 'from-blue-500/20 to-indigo-600/20 border-blue-500/30',
+      'Contemporary & New Weird': 'from-violet-500/20 to-purple-600/20 border-violet-500/30'
     };
-    return colors[era] || 'bg-gradient-to-r from-gray-500 to-slate-600';
+    return colors[era] || 'from-muted/20 to-muted-foreground/20 border-muted-foreground/30';
   }
 
+  const toggleCardExpansion = (transmissionId: number) => {
+    setExpandedCards(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(transmissionId)) {
+        newSet.delete(transmissionId);
+      } else {
+        newSet.add(transmissionId);
+      }
+      return newSet;
+    });
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Timeline Controls */}
+    <div ref={timelineRef} className="space-y-6">
+      {/* Enhanced Timeline Controls */}
       <div className="flex flex-wrap gap-4 items-center justify-between">
         <div className="flex gap-2">
-          <button
+          <Button
+            variant={viewMode === 'publication' ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setViewMode('publication')}
-            className={`bg-transparent border text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-200 flex items-center space-x-1 ${
-              viewMode === 'publication'
-                ? "border-blue-400 text-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.3)]" 
-                : "border-slate-600 text-slate-300 hover:border-blue-400 hover:text-blue-400"
-            }`}
+            className="transition-all duration-200"
           >
-            <BookOpen className="w-3 h-3" />
-            <span>Publication</span>
-          </button>
-          <button
+            <BookOpen className="w-4 h-4 mr-2" />
+            Publication
+          </Button>
+          <Button
+            variant={viewMode === 'narrative' ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setViewMode('narrative')}
-            className={`bg-transparent border text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-200 flex items-center space-x-1 ${
-              viewMode === 'narrative'
-                ? "border-purple-400 text-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.3)]" 
-                : "border-slate-600 text-slate-300 hover:border-purple-400 hover:text-purple-400"
-            }`}
+            className="transition-all duration-200"
           >
-            <Calendar className="w-3 h-3" />
-            <span>Narrative</span>
-          </button>
-          <button
+            <Globe className="w-4 h-4 mr-2" />
+            Narrative
+          </Button>
+          <Button
+            variant={viewMode === 'reading' ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setViewMode('reading')}
-            className={`bg-transparent border text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-200 flex items-center space-x-1 ${
-              viewMode === 'reading'
-                ? "border-green-400 text-green-400 shadow-[0_0_10px_rgba(34,197,94,0.3)]" 
-                : "border-slate-600 text-slate-300 hover:border-green-400 hover:text-green-400"
-            }`}
+            className="transition-all duration-200"
           >
-            <Clock className="w-3 h-3" />
-            <span>Reading</span>
-          </button>
+            <Clock className="w-4 h-4 mr-2" />
+            Reading
+          </Button>
         </div>
 
-        <div className="flex gap-2 flex-wrap">
-          <button
+        <div className="flex gap-2 items-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={enrichTimelineData}
+            disabled={isEnriching}
+            className="transition-all duration-200"
+          >
+            {isEnriching ? (
+              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4 mr-2" />
+            )}
+            {isEnriching ? 'Enhancing...' : 'Enhance Data'}
+          </Button>
+          
+          <Button
+            variant={selectedDecade === null ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setSelectedDecade(null)}
-            className={`bg-transparent border text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-200 ${
-              selectedDecade === null
-                ? "border-cyan-400 text-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)]" 
-                : "border-slate-600 text-slate-300 hover:border-cyan-400 hover:text-cyan-400"
-            }`}
           >
             All Eras
-          </button>
+          </Button>
           {decades.map(decade => (
-            <button
+            <Button
               key={decade}
+              variant={selectedDecade === decade ? 'default' : 'outline'}
+              size="sm"
               onClick={() => setSelectedDecade(decade)}
-              className={`bg-transparent border text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-200 ${
-                selectedDecade === decade
-                  ? "border-cyan-400 text-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)]" 
-                  : "border-slate-600 text-slate-300 hover:border-cyan-400 hover:text-cyan-400"
-              }`}
             >
               {decade}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
-      {/* Timeline Visualization */}
-      <div className="relative">
-        {/* Era Sections */}
-        <div className="space-y-6">
-          {eras.map(({ era, nodes, startYear, endYear, count }) => (
-            <div key={era} className="bg-slate-800/50 rounded-lg border border-slate-700 overflow-hidden">
-              <div className="bg-slate-700/50 p-4 border-b border-slate-600">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-blue-400" />
-                    <h3 className="text-lg font-medium text-slate-200">{era}</h3>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="text-slate-400">{startYear} - {endYear}</span>
-                    <div className="bg-slate-600/50 text-slate-300 px-2 py-1 rounded text-xs">
-                      {count} book{count !== 1 ? 's' : ''}
-                    </div>
+      {/* Enhanced Timeline Visualization */}
+      <div className="space-y-8">
+        {filteredEras.map((eraGroup, eraIndex) => (
+          <Card 
+            key={eraGroup.era} 
+            className={`era-section bg-gradient-to-r ${getEraColor(eraGroup.era)} border overflow-hidden`}
+          >
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Zap className="w-6 h-6 text-primary" />
+                  <div>
+                    <h3 className="text-xl font-semibold text-foreground">{eraGroup.era}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{eraGroup.description}</p>
                   </div>
                 </div>
+                <div className="text-right">
+                  <div className="text-lg font-medium text-foreground">
+                    {eraGroup.startYear} - {eraGroup.endYear}
+                  </div>
+                  <Badge variant="secondary" className="mt-1">
+                    {eraGroup.count} book{eraGroup.count !== 1 ? 's' : ''}
+                  </Badge>
+                </div>
               </div>
-              
-              <div className="p-6">
-                {/* Timeline for this era */}
-                <div className="relative">
-                  <div className="absolute inset-x-0 top-8 h-0.5 bg-gradient-to-r from-slate-700 via-blue-500 to-slate-700"></div>
-                  
-                  <div className="relative space-y-4">
-                    {nodes.map((node, index) => (
-                      <div
+              <p className="text-sm text-muted-foreground italic mt-2">
+                {eraGroup.significance}
+              </p>
+            </CardHeader>
+            
+            <CardContent className="space-y-4">
+              {/* Timeline connector */}
+              <div className="relative">
+                <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary/50 to-primary/20"></div>
+                
+                <div className="space-y-6">
+                  {eraGroup.nodes.map((node, index) => {
+                    const isExpanded = expandedCards.has(node.transmission.id);
+                    
+                    return (
+                      <Card
                         key={node.transmission.id}
-                        className="relative group cursor-pointer"
-                        onMouseEnter={() => setHoveredTransmission(node.transmission.id)}
-                        onMouseLeave={() => setHoveredTransmission(null)}
+                        ref={el => cardsRef.current[eraIndex * 100 + index] = el}
+                        className="relative ml-12 transition-all duration-300 hover:shadow-lg border-l-4 border-l-primary/50 bg-card/50 backdrop-blur-sm"
                       >
-                        {/* Timeline connector line */}
-                        <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-500/50 to-blue-500/20"></div>
+                        {/* Timeline dot */}
+                        <div className="absolute -left-14 top-6 w-4 h-4 rounded-full bg-primary border-2 border-background shadow-lg"></div>
                         
-                        {/* Timeline node */}
-                        <div className="relative flex items-start gap-4 p-4 rounded-lg border border-slate-600/50 bg-slate-700/30 hover:bg-slate-600/40 transition-all duration-200">
-                          {/* Timeline dot */}
-                          <div className="relative flex-shrink-0 mt-1">
-                            <div className="w-3 h-3 rounded-full bg-blue-400 border-2 border-slate-800 shadow-lg group-hover:scale-125 transition-transform duration-200 z-10"></div>
-                            <div className="absolute inset-0 w-3 h-3 rounded-full bg-blue-400/30 animate-pulse"></div>
-                          </div>
-                          
-                          {/* Book info */}
-                          <div className="flex-1 min-w-0">
+                        <CardContent className="p-6">
+                          <div className="space-y-4">
+                            {/* Book Header */}
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1">
-                                <h4 className="text-sm font-medium text-slate-200 mb-1">
+                                <h4 className="text-lg font-semibold text-foreground mb-1">
                                   {node.transmission.title}
                                 </h4>
-                                <p className="text-xs text-slate-400 mb-2">
-                                  by {node.transmission.author}
+                                <p className="text-muted-foreground flex items-center gap-2">
+                                  <User className="w-4 h-4" />
+                                  {node.transmission.author}
                                 </p>
-                                
-                                {/* Tags */}
-                                {Array.isArray(node.transmission.tags) && node.transmission.tags.length > 0 && (
-                                  <div className="flex flex-wrap gap-1 mb-2">
-                                    {node.transmission.tags.slice(0, 3).map((tag: string, tagIndex: number) => (
-                                      <div key={tagIndex} className="text-xs px-2 py-1 bg-slate-600/50 text-slate-300 rounded">
-                                        {tag}
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
                               </div>
                               
                               <div className="text-right flex-shrink-0">
-                                <div className="text-sm font-medium text-blue-400">
+                                <div className="text-xl font-bold text-primary mb-1">
                                   {node.year}
                                 </div>
                                 {node.transmission.created_at && (
-                                  <div className="text-xs text-slate-500">
+                                  <div className="text-xs text-muted-foreground">
                                     Added: {format(new Date(node.transmission.created_at), 'MMM yyyy')}
                                   </div>
                                 )}
                               </div>
                             </div>
-                            
-                            {/* Notes preview */}
-                            {node.transmission.notes && (
-                              <p className="text-xs text-slate-500 mt-2 line-clamp-2">
-                                {node.transmission.notes}
-                              </p>
-                            )}
-                          </div>
-                        </div>
 
-                        {/* Enhanced hover popup with higher z-index */}
-                        {hoveredTransmission === node.transmission.id && (
-                          <div className="fixed inset-0 z-[9999] pointer-events-none flex items-center justify-center">
-                            <div className="bg-slate-800/95 border border-slate-600 rounded-lg shadow-2xl p-6 backdrop-blur-sm max-w-sm w-80 mx-4">
-                              <div className="space-y-3">
-                                <div>
-                                  <h4 className="font-semibold text-base text-slate-200">{node.transmission.title}</h4>
-                                  <p className="text-sm text-slate-400">by {node.transmission.author}</p>
-                                </div>
-                                
-                                <div className="flex gap-4 text-xs">
-                                  <div>
-                                    <span className="text-slate-500">Year:</span>
-                                    <span className="text-blue-400 ml-1">{node.year}</span>
-                                  </div>
-                                  {node.transmission.created_at && (
+                            {/* Tags */}
+                            {Array.isArray(node.transmission.historical_context_tags) && 
+                             node.transmission.historical_context_tags.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {node.transmission.historical_context_tags.slice(0, isExpanded ? undefined : 3).map((tag: string, tagIndex: number) => (
+                                  <Badge key={tagIndex} variant="outline" className="text-xs">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                                {!isExpanded && node.transmission.historical_context_tags.length > 3 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    +{node.transmission.historical_context_tags.length - 3} more
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Expandable Content */}
+                            {isExpanded && (
+                              <div className="space-y-3 pt-3 border-t border-border">
+                                {/* Temporal Information */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                  {node.transmission.publication_year && (
                                     <div>
-                                      <span className="text-slate-500">Added:</span>
-                                      <span className="text-green-400 ml-1">{format(new Date(node.transmission.created_at), 'MMM dd, yyyy')}</span>
+                                      <span className="text-muted-foreground">Published:</span>
+                                      <span className="text-foreground ml-2 font-medium">
+                                        {node.transmission.publication_year}
+                                      </span>
                                     </div>
                                   )}
+                                  {node.transmission.narrative_time_period && (
+                                    <div>
+                                      <span className="text-muted-foreground">Setting:</span>
+                                      <span className="text-foreground ml-2 font-medium">
+                                        {node.transmission.narrative_time_period}
+                                      </span>
+                                    </div>
+                                  )}
+                                  <div>
+                                    <span className="text-muted-foreground">Era:</span>
+                                    <span className="text-foreground ml-2 font-medium">{node.era}</span>
+                                  </div>
                                 </div>
-                                
+
+                                {/* Notes */}
                                 {node.transmission.notes && (
                                   <div>
-                                    <p className="text-xs text-slate-400 leading-relaxed">
+                                    <h5 className="text-sm font-medium text-foreground mb-2">Notes:</h5>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
                                       {node.transmission.notes}
                                     </p>
                                   </div>
                                 )}
-                                
-                                {Array.isArray(node.transmission.tags) && node.transmission.tags.length > 0 && (
-                                  <div className="flex flex-wrap gap-1">
-                                    {node.transmission.tags.map((tag: string, tagIndex: number) => (
-                                      <div key={tagIndex} className="text-xs px-2 py-1 border border-slate-600 text-slate-300 rounded">
-                                        {tag}
-                                      </div>
-                                    ))}
+
+                                {/* Additional tags */}
+                                {node.transmission.tags && (
+                                  <div>
+                                    <h5 className="text-sm font-medium text-foreground mb-2">Tags:</h5>
+                                    <div className="flex flex-wrap gap-1">
+                                      {Array.isArray(node.transmission.tags) 
+                                        ? node.transmission.tags.map((tag: string, tagIndex: number) => (
+                                            <Badge key={tagIndex} variant="secondary" className="text-xs">
+                                              {tag}
+                                            </Badge>
+                                          ))
+                                        : typeof node.transmission.tags === 'string' && (
+                                            <Badge variant="secondary" className="text-xs">
+                                              {node.transmission.tags}
+                                            </Badge>
+                                          )
+                                      }
+                                    </div>
                                   </div>
                                 )}
                               </div>
-                            </div>
+                            )}
+
+                            {/* Expand/Collapse Button */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleCardExpansion(node.transmission.id)}
+                              className="w-full mt-4"
+                            >
+                              {isExpanded ? (
+                                <>
+                                  <ChevronUp className="w-4 h-4 mr-2" />
+                                  Show Less
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="w-4 h-4 mr-2" />
+                                  Show More
+                                </>
+                              )}
+                            </Button>
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Legend */}
-      <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Calendar className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-sm font-medium text-slate-200">Chrono Thread Legend</h3>
-        </div>
-        <div className="space-y-3 text-sm">
+      {/* Enhanced Legend */}
+      <Card className="bg-card/50 backdrop-blur-sm">
+        <CardHeader>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-400"></div>
-            <span className="text-slate-300">Timeline positions represent {viewMode} chronology</span>
+            <Database className="w-5 h-5 text-primary" />
+            <h3 className="text-lg font-semibold text-foreground">Chrono Thread Guide</h3>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-2 bg-gradient-to-r from-slate-700 via-blue-500 to-slate-700"></div>
-            <span className="text-slate-300">Books connected through temporal threads</span>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-full bg-primary"></div>
+                <span className="text-foreground">Timeline shows {viewMode} chronology</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-1 bg-gradient-to-r from-primary/50 to-primary/20"></div>
+                <span className="text-foreground">Temporal connections between works</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                <span className="text-foreground">Expand cards for detailed information</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span className="text-foreground">AI-enhanced temporal data available</span>
+              </div>
+            </div>
           </div>
-          <div className="text-xs text-slate-500">
-            Hover over books to see detailed information and temporal connections
-          </div>
-        </div>
-      </div>
+          <p className="text-xs text-muted-foreground">
+            This chronological visualization maps science fiction across temporal dimensions, 
+            inspired by comprehensive SF timelines and enhanced with contextual analysis.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
