@@ -189,62 +189,114 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                 <div className="relative">
                   <div className="absolute inset-x-0 top-8 h-0.5 bg-gradient-to-r from-muted via-primary to-muted"></div>
                   
-                  <div className="relative flex justify-between min-h-[120px]">
+                  <div className="relative grid grid-cols-1 gap-6 min-h-[160px] overflow-visible">
                     {nodes.map((node, index) => (
                       <div
                         key={node.transmission.id}
                         className="relative group cursor-pointer"
-                        style={{
-                          left: `${((node.year - startYear) / (endYear - startYear)) * 80 + 10}%`
-                        }}
                         onMouseEnter={() => setHoveredTransmission(node.transmission.id)}
                         onMouseLeave={() => setHoveredTransmission(null)}
                       >
-                        {/* Timeline dot */}
-                        <div className="absolute top-6 left-1/2 transform -translate-x-1/2">
-                          <div className="w-4 h-4 rounded-full bg-primary border-2 border-background shadow-lg group-hover:scale-125 transition-transform duration-200"></div>
-                        </div>
+                        {/* Timeline connector line */}
+                        <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary/50 to-primary/20"></div>
                         
-                        {/* Book info */}
-                        <div className="mt-12 w-48 text-center">
-                          <div className="text-sm font-medium mb-1 line-clamp-2">
-                            {node.transmission.title}
-                          </div>
-                          <div className="text-xs text-muted-foreground mb-2">
-                            {node.transmission.author}
-                          </div>
-                          <div className="text-xs font-medium text-primary">
-                            {node.year}
+                        {/* Timeline node */}
+                        <div className="relative flex items-start gap-4 p-4 rounded-lg border border-slate-700/30 bg-slate-800/20 hover:bg-slate-700/30 transition-all duration-200">
+                          {/* Timeline dot */}
+                          <div className="relative flex-shrink-0">
+                            <div className="w-3 h-3 rounded-full bg-primary border-2 border-background shadow-lg group-hover:scale-125 transition-transform duration-200 z-10"></div>
+                            <div className="absolute inset-0 w-3 h-3 rounded-full bg-primary/30 animate-pulse"></div>
                           </div>
                           
-                          {/* Tags */}
-                          {node.transmission.tags && Array.isArray(node.transmission.tags) && (
-                            <div className="flex flex-wrap gap-1 mt-2 justify-center">
-                              {node.transmission.tags.slice(0, 2).map((tag: string, tagIndex: number) => (
-                                <Badge key={tagIndex} variant="secondary" className="text-xs px-1 py-0">
-                                  {tag}
-                                </Badge>
-                              ))}
+                          {/* Book info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1">
+                                <h4 className="text-sm font-medium text-slate-200 line-clamp-2 mb-1">
+                                  {node.transmission.title}
+                                </h4>
+                                <p className="text-xs text-slate-400 mb-2">
+                                  by {node.transmission.author}
+                                </p>
+                                
+                                {/* Tags */}
+                                {node.transmission.tags && node.transmission.tags.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mb-2">
+                                    {node.transmission.tags.slice(0, 3).map((tag: string, tagIndex: number) => (
+                                      <Badge key={tagIndex} variant="secondary" className="text-xs px-1.5 py-0.5 bg-slate-700 text-slate-300">
+                                        {tag}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="text-right flex-shrink-0">
+                                <div className="text-sm font-medium text-blue-400">
+                                  {node.year}
+                                </div>
+                                {node.transmission.created_at && (
+                                  <div className="text-xs text-slate-500">
+                                    Read: {format(new Date(node.transmission.created_at), 'MMM yyyy')}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          )}
+                            
+                            {/* Notes preview */}
+                            {node.transmission.notes && (
+                              <p className="text-xs text-slate-500 line-clamp-2 mt-2">
+                                {node.transmission.notes}
+                              </p>
+                            )}
+                          </div>
                         </div>
 
-                        {/* Hover card */}
+                        {/* Enhanced hover popup */}
                         {hoveredTransmission === node.transmission.id && (
-                          <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10 w-64 p-4 bg-card border rounded-lg shadow-lg">
-                            <div className="space-y-2">
-                              <h4 className="font-semibold text-sm">{node.transmission.title}</h4>
-                              <p className="text-xs text-muted-foreground">by {node.transmission.author}</p>
-                              {node.transmission.notes && (
-                                <p className="text-xs text-muted-foreground line-clamp-3">
-                                  {node.transmission.notes}
-                                </p>
-                              )}
-                              <div className="flex justify-between text-xs">
-                                <span>Published: {node.year}</span>
-                                {node.transmission.created_at && (
-                                  <span>Read: {format(new Date(node.transmission.created_at), 'MMM yyyy')}</span>
+                          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 w-80 max-w-sm">
+                            <div className="bg-slate-800 border border-slate-600 rounded-lg shadow-2xl p-6 backdrop-blur-sm">
+                              <div className="space-y-3">
+                                <div>
+                                  <h4 className="font-semibold text-base text-slate-200">{node.transmission.title}</h4>
+                                  <p className="text-sm text-slate-400">by {node.transmission.author}</p>
+                                </div>
+                                
+                                <div className="flex gap-4 text-xs">
+                                  <div>
+                                    <span className="text-slate-500">Published:</span>
+                                    <span className="text-blue-400 ml-1">{node.year}</span>
+                                  </div>
+                                  {node.transmission.created_at && (
+                                    <div>
+                                      <span className="text-slate-500">Added:</span>
+                                      <span className="text-green-400 ml-1">{format(new Date(node.transmission.created_at), 'MMM dd, yyyy')}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {node.transmission.notes && (
+                                  <div>
+                                    <p className="text-xs text-slate-400 leading-relaxed">
+                                      {node.transmission.notes}
+                                    </p>
+                                  </div>
                                 )}
+                                
+                                {node.transmission.tags && node.transmission.tags.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {node.transmission.tags.map((tag: string, tagIndex: number) => (
+                                      <Badge key={tagIndex} variant="outline" className="text-xs border-slate-600 text-slate-300">
+                                        {tag}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Close hint */}
+                              <div className="absolute top-2 right-2 text-xs text-slate-500">
+                                hover to view
                               </div>
                             </div>
                           </div>
