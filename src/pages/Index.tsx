@@ -221,7 +221,7 @@ const Index = () => {
               
               <div className="relative">
                 <ContributionButton 
-                  walletAddress="0x742d35Cc6634C0532925a3b8D598C4e1073b1c0f"
+                  walletAddress="0xDd966928cC8EA2e61221170490D696BD224866bf"
                   className="hover:scale-105 transition-transform"
                 />
               </div>
