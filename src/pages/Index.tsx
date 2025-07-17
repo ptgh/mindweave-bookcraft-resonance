@@ -213,30 +213,32 @@ const Index = () => {
             )}
           </div>
           
-              <div className="mt-12 text-center">
-            <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6">
-              <div className="inline-flex items-center space-x-2 text-slate-400 text-xs">
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-                <span>Tuning frequency: 432 Hz</span>
-                <div className="w-1 h-1 bg-slate-600 rounded-full" />
-                <StandardButton
-                  onClick={() => setShowContactModal(true)}
-                  variant="standard"
-                  size="sm"
-                  className="flex items-center space-x-1 ml-2"
-                >
-                  <Mail className="w-3 h-3" />
-                  <span>Make Contact</span>
-                </StandardButton>
+          <div className="mt-12 pb-8">
+            <footer className="text-center">
+              <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6">
+                <div className="inline-flex items-center space-x-2 text-slate-400 text-xs">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+                  <span>Tuning frequency: 432 Hz</span>
+                  <div className="w-1 h-1 bg-slate-600 rounded-full" />
+                  <StandardButton
+                    onClick={() => setShowContactModal(true)}
+                    variant="standard"
+                    size="sm"
+                    className="flex items-center space-x-1 ml-2"
+                  >
+                    <Mail className="w-3 h-3" />
+                    <span>Make Contact</span>
+                  </StandardButton>
+                </div>
+                
+                <div className="relative">
+                  <ContributionButton 
+                    walletAddress="0xDd966928cC8EA2e61221170490D696BD224866bf"
+                    className="px-2 py-1.5 border border-slate-700 bg-slate-800/50 rounded-md hover:bg-slate-800 hover:scale-105 transition-all"
+                  />
+                </div>
               </div>
-              
-              <div className="relative">
-                <ContributionButton 
-                  walletAddress="0xDd966928cC8EA2e61221170490D696BD224866bf"
-                  className="px-2 py-1.5 border border-slate-700 bg-slate-800/50 rounded-md hover:bg-slate-800 hover:scale-105 transition-all"
-                />
-              </div>
-            </div>
+            </footer>
           </div>
         </main>
         
