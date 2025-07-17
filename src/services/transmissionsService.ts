@@ -27,6 +27,9 @@ export interface Transmission {
   isbn?: string;
   apple_link?: string;
   open_count?: number;
+  publication_year?: number;
+  narrative_time_period?: string;
+  historical_context_tags?: string[];
 }
 
 export const saveTransmission = async (transmission: Omit<Transmission, 'id' | 'user_id' | 'created_at'>) => {
@@ -159,7 +162,10 @@ export const getTransmissions = async (): Promise<Transmission[]> => {
       user_id: item.user_id || '',
       created_at: item.created_at,
       publisher_series_id: item.publisher_series_id,
-      publisher_series: item.publisher_series
+      publisher_series: item.publisher_series,
+      publication_year: item.publication_year,
+      narrative_time_period: item.narrative_time_period,
+      historical_context_tags: item.historical_context_tags
     }));
   } catch (error) {
     console.error('Unexpected error in getTransmissions:', error);

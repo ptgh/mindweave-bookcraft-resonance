@@ -288,6 +288,7 @@ export type Database = {
           editorial_note: string | null
           id: string
           isbn: string | null
+          publication_year: number | null
           series_id: string
           title: string
         }
@@ -298,6 +299,7 @@ export type Database = {
           editorial_note?: string | null
           id?: string
           isbn?: string | null
+          publication_year?: number | null
           series_id: string
           title: string
         }
@@ -308,6 +310,7 @@ export type Database = {
           editorial_note?: string | null
           id?: string
           isbn?: string | null
+          publication_year?: number | null
           series_id?: string
           title?: string
         }
@@ -396,10 +399,13 @@ export type Database = {
           author: string | null
           cover_url: string | null
           created_at: string
+          historical_context_tags: string[] | null
           id: number
           isbn: string | null
+          narrative_time_period: string | null
           notes: string | null
           open_count: number | null
+          publication_year: number | null
           publisher_series_id: string | null
           resonance_labels: string | null
           tags: string | null
@@ -411,10 +417,13 @@ export type Database = {
           author?: string | null
           cover_url?: string | null
           created_at?: string
+          historical_context_tags?: string[] | null
           id?: number
           isbn?: string | null
+          narrative_time_period?: string | null
           notes?: string | null
           open_count?: number | null
+          publication_year?: number | null
           publisher_series_id?: string | null
           resonance_labels?: string | null
           tags?: string | null
@@ -426,10 +435,13 @@ export type Database = {
           author?: string | null
           cover_url?: string | null
           created_at?: string
+          historical_context_tags?: string[] | null
           id?: number
           isbn?: string | null
+          narrative_time_period?: string | null
           notes?: string | null
           open_count?: number | null
+          publication_year?: number | null
           publisher_series_id?: string | null
           resonance_labels?: string | null
           tags?: string | null
