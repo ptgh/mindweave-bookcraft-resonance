@@ -57,22 +57,17 @@ serve(async (req) => {
 
     for (const book of transmissions || []) {
       try {
-        const prompt = `
-Analyze this science fiction book and provide temporal information in JSON format:
+        const prompt = `Analyze this science fiction book and provide temporal information. Title: "${book.title}" by ${book.author}.
 
-Title: "${book.title}"
-Author: "${book.author}"
-
-Please provide:
-1. publication_year: The actual year this book was published (number)
-2. narrative_time_period: The time period the story takes place in (e.g., "2157", "Far Future", "22nd Century")
-3. historical_context: Brief context about when this was written and its significance
-4. temporal_significance: Why this book is important in SF chronology
-5. era_classification: Which era it belongs to (e.g., "Golden Age", "New Wave", "Cyberpunk", "Modern")
-6. connections: Array of related themes or concepts that connect it to other works
-
-Return ONLY valid JSON with these exact field names.
-`;
+Respond with ONLY a valid JSON object (no markdown, no code blocks, no explanations) containing these exact fields:
+{
+  "publication_year": (number - actual publication year),
+  "narrative_time_period": (string - when story takes place, e.g. "2157", "Far Future", "22nd Century"),
+  "historical_context": (string - brief context about significance),
+  "temporal_significance": (string - why important in SF chronology),
+  "era_classification": (string - literary era like "Golden Age", "New Wave", "Cyberpunk"),
+  "connections": (array of strings - related themes/concepts)
+}`;
 
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -91,7 +86,16 @@ Return ONLY valid JSON with these exact field names.
         });
 
         const aiResponse = await response.json();
-        const enrichedInfo = JSON.parse(aiResponse.choices[0].message.content);
+        let content = aiResponse.choices[0].message.content.trim();
+        
+        // Remove markdown code blocks if present
+        if (content.startsWith('```json')) {
+          content = content.replace(/```json\n?/, '').replace(/```$/, '').trim();
+        } else if (content.startsWith('```')) {
+          content = content.replace(/```\n?/, '').replace(/```$/, '').trim();
+        }
+        
+        const enrichedInfo = JSON.parse(content);
 
         // Update the database with enriched information
         const { error: updateError } = await supabase

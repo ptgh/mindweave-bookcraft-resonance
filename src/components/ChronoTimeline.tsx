@@ -339,9 +339,9 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
       {/* Enhanced Timeline Visualization */}
       <div className="space-y-8">
         {filteredEras.map((eraGroup, eraIndex) => (
-          <Card 
+            <Card 
             key={eraGroup.era} 
-            className={`era-section bg-gradient-to-r ${getEraColor(eraGroup.era)} border overflow-hidden`}
+            className="era-section bg-slate-800/50 border border-slate-700 overflow-hidden"
           >
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
@@ -379,7 +379,7 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                       <Card
                         key={node.transmission.id}
                         ref={el => cardsRef.current[eraIndex * 100 + index] = el}
-                        className="relative ml-12 transition-all duration-300 hover:shadow-lg border-l-4 border-l-primary/50 bg-card/50 backdrop-blur-sm"
+                        className="relative ml-12 transition-all duration-300 hover:shadow-lg border-l-4 border-l-primary/50 bg-slate-800/50 border border-slate-700"
                       >
                         {/* Timeline dot */}
                         <div className="absolute -left-14 top-6 w-4 h-4 rounded-full bg-primary border-2 border-background shadow-lg"></div>
@@ -454,13 +454,17 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                                   </div>
                                 </div>
 
-                                {/* Notes */}
+                                {/* Notes with proper show more/less */}
                                 {node.transmission.notes && (
                                   <div>
                                     <h5 className="text-sm font-medium text-foreground mb-2">Notes:</h5>
-                                    <p className="text-sm text-muted-foreground leading-relaxed">
-                                      {node.transmission.notes}
-                                    </p>
+                                    <div className="text-sm text-muted-foreground leading-relaxed">
+                                      {isExpanded || node.transmission.notes.length <= 150 ? (
+                                        <p>{node.transmission.notes}</p>
+                                      ) : (
+                                        <p>{node.transmission.notes.slice(0, 150)}...</p>
+                                      )}
+                                    </div>
                                   </div>
                                 )}
 
@@ -487,25 +491,27 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                               </div>
                             )}
 
-                            {/* Expand/Collapse Button */}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleCardExpansion(node.transmission.id)}
-                              className="w-full mt-4"
-                            >
-                              {isExpanded ? (
-                                <>
-                                  <ChevronUp className="w-4 h-4 mr-2" />
-                                  Show Less
-                                </>
-                              ) : (
-                                <>
-                                  <ChevronDown className="w-4 h-4 mr-2" />
-                                  Show More
-                                </>
-                              )}
-                            </Button>
+                            {/* Expand/Collapse Button - only show if there's enough content */}
+                            {(node.transmission.notes && node.transmission.notes.length > 150) && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleCardExpansion(node.transmission.id)}
+                                className="w-full mt-4"
+                              >
+                                {isExpanded ? (
+                                  <>
+                                    <ChevronUp className="w-4 h-4 mr-2" />
+                                    Show Less
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronDown className="w-4 h-4 mr-2" />
+                                    Show More
+                                  </>
+                                )}
+                              </Button>
+                            )}
                           </div>
                         </CardContent>
                       </Card>
