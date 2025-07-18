@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface EnrichmentJob {
@@ -60,24 +61,60 @@ export const getAuthorDataSources = async (authorId: string): Promise<AuthorData
   return data || [];
 };
 
-export const triggerEnrichmentJob = async (): Promise<void> => {
+export const queueAuthorForEnrichment = async (authorId: string): Promise<void> => {
+  console.log('Queueing author for enrichment:', authorId);
+  
+  try {
+    // Check if already queued and pending
+    const { data: existing } = await supabase
+      .from('author_enrichment_queue')
+      .select('id, status')
+      .eq('author_id', authorId)
+      .eq('status', 'pending')
+      .single();
+    
+    if (existing) {
+      console.log('Author already queued for enrichment');
+      return;
+    }
+    
+    // Queue the author
+    const { error } = await supabase
+      .from('author_enrichment_queue')
+      .insert({
+        author_id: authorId,
+        enrichment_type: 'full',
+        priority: 8, // High priority for manual requests
+        status: 'pending'
+      });
+    
+    if (error) {
+      console.error('Error queueing author for enrichment:', error);
+      throw error;
+    }
+    
+    console.log('Successfully queued author for enrichment');
+  } catch (error) {
+    console.error('Failed to queue author for enrichment:', error);
+    throw error;
+  }
+};
+
+export const triggerEnrichmentJob = async (): Promise<{ success: boolean; message: string; results?: any }> => {
   console.log('Triggering author enrichment job...');
   
   try {
-    const response = await fetch('https://mmnfjeukxandnhdaovzx.supabase.co/functions/v1/enrich-author-data', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tbmZqZXVreGFuZG5oZGFvdnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1OTE3NTgsImV4cCI6MjA2NjE2Nzc1OH0.p8NPVC-MHX_pn9_2BHEQODSG6JVPOORXPTVkmtVxc1E`
-      }
+    const { data, error } = await supabase.functions.invoke('enrich-author-data', {
+      body: {}
     });
     
-    if (!response.ok) {
-      throw new Error(`Enrichment job failed: ${response.statusText}`);
+    if (error) {
+      console.error('Enrichment job error:', error);
+      throw error;
     }
     
-    const result = await response.json();
-    console.log('Enrichment job result:', result);
+    console.log('Enrichment job result:', data);
+    return data;
   } catch (error) {
     console.error('Error triggering enrichment job:', error);
     throw error;
@@ -115,5 +152,28 @@ export const getEnrichmentStats = async () => {
   } catch (error) {
     console.error('Error fetching enrichment stats:', error);
     throw error;
+  }
+};
+
+// Helper function to check enrichment job status
+export const checkEnrichmentStatus = async (authorId: string): Promise<EnrichmentJob | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('author_enrichment_queue')
+      .select('*')
+      .eq('author_id', authorId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+      console.error('Error checking enrichment status:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error in checkEnrichmentStatus:', error);
+    return null;
   }
 };

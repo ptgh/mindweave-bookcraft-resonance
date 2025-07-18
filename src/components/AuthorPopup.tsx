@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { gsap } from 'gsap';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { User, BookOpen, Calendar, X, ExternalLink, CheckCircle, Clock, AlertTriangle, RefreshCw } from 'lucide-react';
 import { ScifiAuthor } from '@/services/scifiAuthorsService';
 import { supabase } from '@/integrations/supabase/client';
-import { triggerEnrichmentJob } from '@/services/authorEnrichmentService';
+import { queueAuthorForEnrichment, triggerEnrichmentJob, checkEnrichmentStatus } from '@/services/authorEnrichmentService';
 
 interface AuthorPopupProps {
   author: ScifiAuthor | null;
@@ -28,6 +29,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
   const contentRef = useRef<HTMLDivElement>(null);
   const [currentAuthor, setCurrentAuthor] = useState<ScifiAuthor | null>(author);
   const [isEnriching, setIsEnriching] = useState(false);
+  const [enrichmentStatus, setEnrichmentStatus] = useState<string>('');
 
   // Update current author when prop changes
   useEffect(() => {
@@ -49,7 +51,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
           filter: `id=eq.${currentAuthor.id}`
         },
         (payload) => {
-          console.log('Author updated:', payload);
+          console.log('Author updated via realtime:', payload);
           const updatedAuthor = payload.new as ScifiAuthor;
           setCurrentAuthor(updatedAuthor);
           onAuthorUpdate?.(updatedAuthor);
@@ -57,6 +59,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
           // Stop enriching animation if data quality improved
           if (updatedAuthor.data_quality_score && updatedAuthor.data_quality_score >= 50) {
             setIsEnriching(false);
+            setEnrichmentStatus('completed');
           }
         }
       )
@@ -67,10 +70,13 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
     };
   }, [currentAuthor?.id, onAuthorUpdate]);
 
+  // GSAP animation for popup
   useEffect(() => {
     if (!popupRef.current || !overlayRef.current || !contentRef.current) return;
 
-    if (isVisible) {
+    if (isVisible && currentAuthor) {
+      console.log('Showing author popup for:', currentAuthor.name);
+      
       // Show animation
       gsap.set(popupRef.current, { display: 'flex' });
       
@@ -98,26 +104,30 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
       );
     } else {
       // Hide animation
-      gsap.to(contentRef.current, {
-        scale: 0.9,
-        opacity: 0,
-        y: 30,
-        duration: 0.2,
-        ease: "power2.in"
-      });
+      if (contentRef.current) {
+        gsap.to(contentRef.current, {
+          scale: 0.9,
+          opacity: 0,
+          y: 30,
+          duration: 0.2,
+          ease: "power2.in"
+        });
+      }
       
-      gsap.to(overlayRef.current, {
-        opacity: 0,
-        duration: 0.3,
-        ease: "power2.in",
-        onComplete: () => {
-          if (popupRef.current) {
-            gsap.set(popupRef.current, { display: 'none' });
+      if (overlayRef.current) {
+        gsap.to(overlayRef.current, {
+          opacity: 0,
+          duration: 0.3,
+          ease: "power2.in",
+          onComplete: () => {
+            if (popupRef.current) {
+              gsap.set(popupRef.current, { display: 'none' });
+            }
           }
-        }
-      });
+        });
+      }
     }
-  }, [isVisible]);
+  }, [isVisible, currentAuthor]);
 
   if (!currentAuthor) {
     return null;
@@ -141,7 +151,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
     } else if (isEnriching) {
       return <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-300 border-blue-400/30"><RefreshCw className="w-3 h-3 mr-1 animate-spin" />Processing...</Badge>;
     } else {
-      return <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-300 border-blue-400/30"><AlertTriangle className="w-3 h-3 mr-1" />Enriching</Badge>;
+      return <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-300 border-blue-400/30 cursor-pointer hover:bg-blue-500/30"><AlertTriangle className="w-3 h-3 mr-1" />Enrich Data</Badge>;
     }
   };
 
@@ -150,31 +160,55 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
     
     console.log('Starting enrichment for author:', currentAuthor.name);
     setIsEnriching(true);
+    setEnrichmentStatus('queuing');
     
     try {
-      // First queue the author for enrichment if not already queued
-      await supabase
-        .from('author_enrichment_queue')
-        .upsert({
-          author_id: currentAuthor.id,
-          enrichment_type: 'full',
-          priority: 8,
-          status: 'pending'
-        });
+      // First queue the author for enrichment
+      await queueAuthorForEnrichment(currentAuthor.id);
+      setEnrichmentStatus('queued');
       
-      console.log('Author queued for enrichment, triggering job...');
-      await triggerEnrichmentJob();
-      console.log('Enrichment job triggered successfully for author:', currentAuthor.name);
+      console.log('Author queued, triggering enrichment job...');
+      const result = await triggerEnrichmentJob();
       
-      // Give it a moment to process
-      setTimeout(() => {
-        console.log('Checking for updates after enrichment...');
-        // The real-time subscription will handle updates
-      }, 2000);
+      if (result.success) {
+        setEnrichmentStatus('processing');
+        console.log('Enrichment job triggered successfully:', result);
+        
+        // Check status periodically
+        const checkInterval = setInterval(async () => {
+          try {
+            const status = await checkEnrichmentStatus(currentAuthor.id);
+            if (status?.status === 'completed') {
+              clearInterval(checkInterval);
+              setIsEnriching(false);
+              setEnrichmentStatus('completed');
+            } else if (status?.status === 'failed') {
+              clearInterval(checkInterval);
+              setIsEnriching(false);
+              setEnrichmentStatus('failed');
+              console.error('Enrichment failed:', status.error_message);
+            }
+          } catch (error) {
+            console.error('Error checking enrichment status:', error);
+          }
+        }, 2000);
+        
+        // Stop checking after 30 seconds
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          if (isEnriching) {
+            setIsEnriching(false);
+            setEnrichmentStatus('timeout');
+          }
+        }, 30000);
+      } else {
+        throw new Error('Enrichment job failed');
+      }
       
     } catch (error) {
       console.error('Failed to trigger enrichment:', error);
       setIsEnriching(false);
+      setEnrichmentStatus('error');
     }
   };
 
@@ -182,7 +216,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
     <div
       ref={popupRef}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ display: isVisible ? 'flex' : 'none' }}
+      style={{ display: 'none' }}
     >
       {/* Overlay */}
       <div
@@ -249,8 +283,8 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
               <div className="space-y-2">
                 <p className="text-sm text-slate-400 italic">
                   {isEnriching 
-                    ? "Gathering biographical information..." 
-                    : "Biographical information is being enriched."
+                    ? `Gathering biographical information... (${enrichmentStatus})` 
+                    : "Click 'Enrich Data' to gather biographical information."
                   }
                 </p>
                 {isEnriching && (
