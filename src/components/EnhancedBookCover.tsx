@@ -8,6 +8,8 @@ import generalPlaceholder from "@/assets/book-placeholder-general.jpg";
 
 interface EnhancedBookCoverProps {
   title: string;
+  author?: string;
+  isbn?: string;
   coverUrl?: string;
   thumbnailUrl?: string;
   smallThumbnailUrl?: string;
@@ -17,6 +19,8 @@ interface EnhancedBookCoverProps {
 
 const EnhancedBookCover = ({ 
   title, 
+  author,
+  isbn,
   coverUrl, 
   thumbnailUrl, 
   smallThumbnailUrl, 
@@ -27,6 +31,50 @@ const EnhancedBookCover = ({
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
+
+  // Get Archive.org cover from free_ebook_links
+  const getArchiveCover = async (title: string, author?: string) => {
+    try {
+      let query = supabase
+        .from('free_ebook_links')
+        .select('archive_url, formats')
+        .eq('book_title', title);
+      
+      if (author) {
+        query = query.eq('book_author', author);
+      }
+      
+      const { data } = await query.limit(1).single();
+      
+      if (data?.archive_url) {
+        // Extract identifier from Archive.org URL
+        const match = data.archive_url.match(/archive\.org\/details\/([^\/\?]+)/);
+        if (match) {
+          const identifier = match[1];
+          // Try multiple cover formats from Archive.org
+          const coverUrls = [
+            `https://archive.org/download/${identifier}/${identifier}.jpg`,
+            `https://archive.org/download/${identifier}/cover.jpg`,
+            `https://archive.org/services/img/${identifier}`,
+            `https://archive.org/download/${identifier}/__ia_thumb.jpg`
+          ];
+          
+          for (const url of coverUrls) {
+            const isValid = await testImageUrl(url);
+            if (isValid) {
+              console.log('Found Archive.org cover:', url);
+              return url;
+            }
+          }
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.warn('Failed to get Archive.org cover:', error);
+      return null;
+    }
+  };
 
   // Get cached image URL from Supabase
   const getCachedImageUrl = async (title: string) => {
@@ -83,15 +131,8 @@ const EnhancedBookCover = ({
 
   useEffect(() => {
     const loadImage = async () => {
-      console.log('Loading cover for:', title, { coverUrl, thumbnailUrl, smallThumbnailUrl });
+      console.log('Loading cover for:', title, { coverUrl, thumbnailUrl, smallThumbnailUrl, author, isbn });
       
-      if (!coverUrl && !thumbnailUrl && !smallThumbnailUrl) {
-        console.log('No image URLs provided for:', title);
-        setIsLoading(false);
-        setHasError(true);
-        return;
-      }
-
       setIsLoading(true);
       setHasError(false);
 
@@ -122,8 +163,19 @@ const EnhancedBookCover = ({
         return url;
       });
 
-      // Combine original and enhanced URLs, prioritizing originals
-      const allUrls = [...originalUrls, ...enhancedUrls.filter(url => !originalUrls.includes(url))];
+      // Try to get Archive.org cover if no cover URLs provided or if existing ones fail
+      let archiveCoverUrl: string | null = null;
+      if (originalUrls.length === 0 || !coverUrl) {
+        console.log('No cover URLs provided, checking Archive.org...');
+        archiveCoverUrl = await getArchiveCover(title, author);
+      }
+
+      // Combine all URLs, prioritizing originals, then enhanced, then Archive.org
+      const allUrls = [
+        ...originalUrls, 
+        ...enhancedUrls.filter(url => !originalUrls.includes(url)),
+        ...(archiveCoverUrl ? [archiveCoverUrl] : [])
+      ];
 
       console.log('Trying URLs for', title, ':', allUrls);
 
@@ -142,6 +194,22 @@ const EnhancedBookCover = ({
         }
       }
 
+      // If we haven't tried Archive.org yet and original URLs failed, try it now
+      if (!archiveCoverUrl && originalUrls.length > 0) {
+        console.log('Original URLs failed, trying Archive.org as fallback...');
+        archiveCoverUrl = await getArchiveCover(title, author);
+        if (archiveCoverUrl) {
+          const isValid = await testImageUrl(archiveCoverUrl);
+          if (isValid) {
+            console.log('Successfully loaded Archive.org cover:', archiveCoverUrl);
+            setCurrentSrc(archiveCoverUrl);
+            setIsLoading(false);
+            await cacheImageUrl(archiveCoverUrl, title);
+            return;
+          }
+        }
+      }
+
       // If all URLs fail
       console.warn('All image URLs failed for', title);
       setIsLoading(false);
@@ -149,7 +217,7 @@ const EnhancedBookCover = ({
     };
 
     loadImage();
-  }, [coverUrl, thumbnailUrl, smallThumbnailUrl, title]);
+  }, [coverUrl, thumbnailUrl, smallThumbnailUrl, title, author, isbn]);
 
   if (isLoading) {
     return (

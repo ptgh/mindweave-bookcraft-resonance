@@ -82,6 +82,8 @@ const BookCard = ({
       <div className="flex items-start space-x-4 flex-1 mb-4">
         <EnhancedBookCover
           title={title}
+          author={author}
+          isbn={isbn}
           coverUrl={coverUrl}
           className="w-12 h-16 flex-shrink-0"
           lazy={false}

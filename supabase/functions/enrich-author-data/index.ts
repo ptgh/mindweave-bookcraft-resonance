@@ -19,7 +19,9 @@ interface WikipediaResponse {
 }
 
 serve(async (req) => {
-  console.log('Enrich author data function called with method:', req.method);
+  console.log('=== Enrich author data function called ===');
+  console.log('Method:', req.method);
+  console.log('Headers:', Object.fromEntries(req.headers.entries()));
   
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -32,20 +34,24 @@ serve(async (req) => {
     console.log('Environment check - URL exists:', !!supabaseUrl, 'Key exists:', !!serviceRoleKey);
     
     if (!supabaseUrl || !serviceRoleKey) {
+      console.error('Missing Supabase environment variables');
       throw new Error('Missing Supabase environment variables');
     }
 
+    console.log('Creating Supabase client...');
     const supabaseClient = createClient(supabaseUrl, serviceRoleKey);
+    console.log('Supabase client created successfully');
 
     // Get pending enrichment jobs with better error handling
-    console.log('Fetching pending enrichment jobs...');
+    console.log('=== Fetching pending enrichment jobs ===');
     const { data: jobs, error: jobsError } = await supabaseClient
       .from('author_enrichment_queue')
-      .select('id, author_id, enrichment_type, attempts')
+      .select('id, author_id, enrichment_type, attempts, created_at')
       .eq('status', 'pending')
       .lt('attempts', 3)
       .order('priority', { ascending: false })
-      .limit(5);
+      .order('created_at', { ascending: true })
+      .limit(10);
 
     if (jobsError) {
       console.error('Error fetching jobs:', jobsError);
@@ -53,14 +59,53 @@ serve(async (req) => {
     }
 
     console.log(`Found ${jobs?.length || 0} pending jobs`);
+    if (jobs && jobs.length > 0) {
+      console.log('Job details:', jobs.map(j => ({ id: j.id, author_id: j.author_id, attempts: j.attempts })));
+    }
     
     if (!jobs || jobs.length === 0) {
+      console.log('=== No pending jobs found ===');
+      
+      // Check if there are any authors needing enrichment
+      const { data: needsEnrichment, error: needsError } = await supabaseClient
+        .from('scifi_authors')
+        .select('id, name, needs_enrichment')
+        .eq('needs_enrichment', true)
+        .limit(5);
+      
+      console.log('Authors needing enrichment:', needsEnrichment?.length || 0);
+      if (needsEnrichment && needsEnrichment.length > 0) {
+        console.log('Creating enrichment jobs for authors:', needsEnrichment.map(a => a.name));
+        
+        // Create jobs for authors that need enrichment
+        const newJobs = needsEnrichment.map(author => ({
+          author_id: author.id,
+          enrichment_type: 'full',
+          priority: 5,
+          status: 'pending'
+        }));
+        
+        const { error: insertError } = await supabaseClient
+          .from('author_enrichment_queue')
+          .insert(newJobs);
+        
+        if (insertError) {
+          console.error('Error creating new jobs:', insertError);
+        } else {
+          console.log(`Created ${newJobs.length} new enrichment jobs`);
+          // Recursively call to process the new jobs
+          const recursiveCall = await serve(req);
+          return recursiveCall;
+        }
+      }
+      
       return new Response(
         JSON.stringify({ 
           success: true, 
           message: 'No pending jobs found',
           processed: 0,
-          results: [] 
+          results: [],
+          authorsNeedingEnrichment: needsEnrichment?.length || 0
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -69,19 +114,25 @@ serve(async (req) => {
     const results = [];
 
     for (const job of jobs) {
-      console.log(`Processing job ${job.id} for author ${job.author_id}`);
+      console.log(`=== Processing job ${job.id} for author ${job.author_id} ===`);
+      console.log(`Job attempts: ${job.attempts}, type: ${job.enrichment_type}`);
       
       try {
         // Mark job as processing
+        console.log('Marking job as processing...');
         const { error: updateError } = await supabaseClient
           .from('author_enrichment_queue')
-          .update({ status: 'processing' })
+          .update({ 
+            status: 'processing',
+            attempts: job.attempts + 1
+          })
           .eq('id', job.id);
 
         if (updateError) {
           console.error('Error updating job status:', updateError);
           continue;
         }
+        console.log('Job marked as processing successfully');
 
         // Get author details
         console.log(`Fetching author details for ${job.author_id}`);

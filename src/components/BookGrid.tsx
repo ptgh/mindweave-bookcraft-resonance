@@ -140,6 +140,7 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                 <div className="flex items-start space-x-4 flex-1 mb-4">
                   <EnhancedBookCover
                     title={book.title}
+                    author={book.author}
                     coverUrl={book.coverUrl || book.thumbnailUrl || book.smallThumbnailUrl}
                     className="w-12 h-16 flex-shrink-0"
                     lazy={true}

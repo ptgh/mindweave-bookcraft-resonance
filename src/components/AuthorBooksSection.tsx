@@ -185,6 +185,7 @@ const AuthorBooksSection = memo(({
                       <div className="flex items-start space-x-4 flex-1 mb-4">
                         <EnhancedBookCover
                           title={book.title}
+                          author={selectedAuthor?.name}
                           coverUrl={book.cover_url}
                           className="w-12 h-16 flex-shrink-0"
                           lazy={true}
