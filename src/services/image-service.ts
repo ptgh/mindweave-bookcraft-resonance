@@ -141,23 +141,35 @@ class ImageService {
     return urls.map(url => {
       if (!url) return url;
       
-      // For Google Books images, prefer larger sizes
+      // For Google Books images, maximize quality
       if (url.includes('books.google.com')) {
-        // Replace zoom=1 with zoom=0 for higher quality, or add zoom=0 if not present
-        if (url.includes('zoom=')) {
-          return url.replace(/zoom=\d+/, 'zoom=0');
+        let enhancedUrl = url;
+        
+        // Remove limiting parameters
+        enhancedUrl = enhancedUrl.replace('&edge=curl', '');
+        enhancedUrl = enhancedUrl.replace('&img=1', '');
+        
+        // Set highest zoom level
+        if (enhancedUrl.includes('zoom=')) {
+          enhancedUrl = enhancedUrl.replace(/zoom=\d+/, 'zoom=0');
         } else {
-          const separator = url.includes('?') ? '&' : '?';
-          return `${url}${separator}zoom=0`;
+          const separator = enhancedUrl.includes('?') ? '&' : '?';
+          enhancedUrl = `${enhancedUrl}${separator}zoom=0`;
         }
+        
+        // Force HTTPS for better performance
+        enhancedUrl = enhancedUrl.replace('http://', 'https://');
+        
+        return enhancedUrl;
       }
       
-      // For other image services, try to get higher quality versions
+      // For other image services, maximize quality
       if (url.includes('thumbnail') && !url.includes('maxres')) {
         return url.replace('thumbnail', 'maxresdefault');
       }
       
-      return url;
+      // Ensure HTTPS
+      return url.replace('http://', 'https://');
     });
   }
 

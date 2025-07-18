@@ -6,17 +6,34 @@ export const transformGoogleBookData = (item: GoogleBooksVolumeInfo): GoogleBook
   
   const { volumeInfo } = item;
   
-  // Get the best available cover image
+  // Get the best available cover image with maximum quality
   const getCoverUrl = () => {
     const images = volumeInfo.imageLinks;
     if (!images) return undefined;
     
-    // Prefer higher quality images
-    return images.large || 
-           images.medium || 
-           images.small || 
-           images.thumbnail?.replace('&edge=curl', '') || 
-           images.smallThumbnail?.replace('&edge=curl', '');
+    // Prefer highest quality images and enhance them
+    const baseUrl = images.large || 
+                   images.medium || 
+                   images.small || 
+                   images.thumbnail || 
+                   images.smallThumbnail;
+    
+    if (!baseUrl) return undefined;
+    
+    // Enhance the URL for maximum quality
+    let enhancedUrl = baseUrl
+      .replace('&edge=curl', '')
+      .replace('&img=1', '')
+      .replace('zoom=1', 'zoom=0')
+      .replace('http://', 'https://');
+    
+    // Add zoom=0 if not present
+    if (!enhancedUrl.includes('zoom=')) {
+      const separator = enhancedUrl.includes('?') ? '&' : '?';
+      enhancedUrl = `${enhancedUrl}${separator}zoom=0`;
+    }
+    
+    return enhancedUrl;
   };
   
   return {
