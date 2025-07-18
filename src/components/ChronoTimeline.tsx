@@ -1,16 +1,17 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { format } from 'date-fns';
-import { Calendar, Clock, User, BookOpen, Tag, ChevronDown, ChevronUp, Sparkles, Globe, Zap, RefreshCw, Database, X } from 'lucide-react';
+import { gsap } from 'gsap';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ChevronDown, ChevronUp, User, BookOpen, Globe, Tag, Calendar, Clock, TrendingUp, RefreshCw, Sparkles } from 'lucide-react';
+import { Transmission } from '@/services/transmissionsService';
+import { getTransmissions } from '@/services/transmissionsService';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Transmission } from '@/services/transmissionsService';
+import { AuthorPopup } from '@/components/AuthorPopup';
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin();
 
 interface ChronoTimelineProps {
   transmissions: Transmission[];
@@ -40,6 +41,8 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
   const [viewMode, setViewMode] = useState<'publication' | 'narrative' | 'reading'>('publication');
   const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
   const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set());
+  const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
+  const [authorPopupVisible, setAuthorPopupVisible] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
@@ -251,6 +254,57 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
       return newSet;
     });
   };
+
+  const handleAuthorClick = (authorName: string) => {
+    setSelectedAuthor(authorName);
+    setAuthorPopupVisible(true);
+  };
+
+  const closeAuthorPopup = () => {
+    setAuthorPopupVisible(false);
+    setSelectedAuthor(null);
+  };
+
+  // Mock author data - in a real app, this would come from an API
+  const getAuthorInfo = (authorName: string) => {
+    const mockAuthors: Record<string, any> = {
+      "Edwin A. Abbott": {
+        name: "Edwin A. Abbott",
+        bio: "English schoolmaster, theologian, and mathematician who wrote the satirical novella Flatland.",
+        birthYear: 1838,
+        deathYear: 1926,
+        nationality: "British",
+        notableWorks: ["Flatland", "The Kernel and the Husk", "Philomythus"],
+        totalWorks: 15
+      },
+      "Jack London": {
+        name: "Jack London", 
+        bio: "American novelist, journalist, and social activist known for his rugged tales of adventure.",
+        birthYear: 1876,
+        deathYear: 1916,
+        nationality: "American",
+        notableWorks: ["The Call of the Wild", "White Fang", "The Sea-Wolf", "To Build a Fire"],
+        totalWorks: 23
+      },
+      "Aldous Huxley": {
+        name: "Aldous Huxley",
+        bio: "English writer and philosopher best known for his dystopian novel Brave New World.",
+        birthYear: 1894,
+        deathYear: 1963,
+        nationality: "British",
+        notableWorks: ["Brave New World", "Point Counter Point", "The Doors of Perception", "Island"],
+        totalWorks: 47
+      }
+    };
+
+    return mockAuthors[authorName] || {
+      name: authorName,
+      bio: `${authorName} is a renowned author whose works have contributed significantly to literature.`,
+      notableWorks: ["Various acclaimed works"],
+      totalWorks: 1
+    };
+  };
+
 
   function getEra(year: number): string {
     if (year >= 2100) return "Far Future";
@@ -510,7 +564,12 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                   </h3>
                   <div className="flex items-center gap-2 text-slate-300 text-sm">
                     <User className="w-4 h-4" />
-                    <span>{node.transmission.author}</span>
+                    <button
+                      onClick={() => handleAuthorClick(node.transmission.author || '')}
+                      className="hover:text-blue-400 transition-colors duration-200 underline decoration-dotted underline-offset-2"
+                    >
+                      {node.transmission.author}
+                    </button>
                   </div>
                 </CardHeader>
 
@@ -605,6 +664,15 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
           ))}
         </div>
       </div>
+
+      {/* Author Popup */}
+      {selectedAuthor && (
+        <AuthorPopup
+          author={getAuthorInfo(selectedAuthor)}
+          isVisible={authorPopupVisible}
+          onClose={closeAuthorPopup}
+        />
+      )}
     </div>
   );
 }
