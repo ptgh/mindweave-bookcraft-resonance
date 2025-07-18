@@ -1,27 +1,71 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { gsap } from 'gsap';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, BookOpen, Calendar, X, ExternalLink, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { User, BookOpen, Calendar, X, ExternalLink, CheckCircle, Clock, AlertTriangle, RefreshCw } from 'lucide-react';
 import { ScifiAuthor } from '@/services/scifiAuthorsService';
+import { supabase } from '@/integrations/supabase/client';
+import { triggerEnrichmentJob } from '@/services/authorEnrichmentService';
 
 interface AuthorPopupProps {
   author: ScifiAuthor | null;
   isVisible: boolean;
   onClose: () => void;
   triggerRef?: React.RefObject<HTMLElement>;
+  onAuthorUpdate?: (updatedAuthor: ScifiAuthor) => void;
 }
 
 export const AuthorPopup: React.FC<AuthorPopupProps> = ({
   author,
   isVisible,
   onClose,
-  triggerRef
+  triggerRef,
+  onAuthorUpdate
 }) => {
   const popupRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const [currentAuthor, setCurrentAuthor] = useState<ScifiAuthor | null>(author);
+  const [isEnriching, setIsEnriching] = useState(false);
+
+  // Update current author when prop changes
+  useEffect(() => {
+    setCurrentAuthor(author);
+  }, [author]);
+
+  // Set up real-time subscription for author updates
+  useEffect(() => {
+    if (!currentAuthor?.id) return;
+
+    const channel = supabase
+      .channel('author-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'scifi_authors',
+          filter: `id=eq.${currentAuthor.id}`
+        },
+        (payload) => {
+          console.log('Author updated:', payload);
+          const updatedAuthor = payload.new as ScifiAuthor;
+          setCurrentAuthor(updatedAuthor);
+          onAuthorUpdate?.(updatedAuthor);
+          
+          // Stop enriching animation if data quality improved
+          if (updatedAuthor.data_quality_score && updatedAuthor.data_quality_score >= 50) {
+            setIsEnriching(false);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentAuthor?.id, onAuthorUpdate]);
 
   useEffect(() => {
     if (!popupRef.current || !overlayRef.current || !contentRef.current) return;
@@ -75,27 +119,42 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
     }
   }, [isVisible]);
 
-  if (!isVisible || !author) {
+  if (!isVisible || !currentAuthor) {
     return null;
   }
 
   const formatLifespan = () => {
-    if (author.birth_year && author.death_year) {
-      return `${author.birth_year} - ${author.death_year}`;
-    } else if (author.birth_year) {
-      return `Born ${author.birth_year}`;
+    if (currentAuthor.birth_year && currentAuthor.death_year) {
+      return `${currentAuthor.birth_year} - ${currentAuthor.death_year}`;
+    } else if (currentAuthor.birth_year) {
+      return `Born ${currentAuthor.birth_year}`;
     }
     return null;
   };
 
   const getDataQualityBadge = () => {
-    const score = author.data_quality_score || 0;
+    const score = currentAuthor.data_quality_score || 0;
     if (score >= 80) {
       return <Badge variant="default" className="text-xs bg-green-500/20 text-green-300 border-green-400/30"><CheckCircle className="w-3 h-3 mr-1" />Complete</Badge>;
     } else if (score >= 50) {
       return <Badge variant="secondary" className="text-xs bg-yellow-500/20 text-yellow-300 border-yellow-400/30"><Clock className="w-3 h-3 mr-1" />Partial</Badge>;
+    } else if (isEnriching) {
+      return <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-300 border-blue-400/30"><RefreshCw className="w-3 h-3 mr-1 animate-spin" />Processing...</Badge>;
     } else {
       return <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-300 border-blue-400/30"><AlertTriangle className="w-3 h-3 mr-1" />Enriching</Badge>;
+    }
+  };
+
+  const handleEnrichment = async () => {
+    if (isEnriching) return;
+    
+    setIsEnriching(true);
+    try {
+      await triggerEnrichmentJob();
+      console.log('Enrichment job triggered for author:', currentAuthor.name);
+    } catch (error) {
+      console.error('Failed to trigger enrichment:', error);
+      setIsEnriching(false);
     }
   };
 
@@ -135,9 +194,11 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="text-xl font-bold text-slate-100">
-                  {author.name}
+                  {currentAuthor.name}
                 </h3>
-                {getDataQualityBadge()}
+                <div onClick={handleEnrichment} className="cursor-pointer">
+                  {getDataQualityBadge()}
+                </div>
               </div>
               {formatLifespan() && (
                 <div className="flex items-center gap-2 text-slate-400 text-sm">
@@ -145,9 +206,9 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
                   <span>{formatLifespan()}</span>
                 </div>
               )}
-              {author.nationality && (
+              {currentAuthor.nationality && (
                 <Badge className="mt-2 bg-emerald-500/20 text-emerald-300 border-emerald-400/30">
-                  {author.nationality}
+                  {currentAuthor.nationality}
                 </Badge>
               )}
             </div>
@@ -157,37 +218,47 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
         <CardContent className="space-y-4">
           {/* Bio */}
           <div className="bg-slate-700/50 rounded-lg p-3 border border-slate-600/30">
-            {author.bio ? (
+            {currentAuthor.bio ? (
               <p className="text-sm text-slate-200 leading-relaxed">
-                {author.bio.length > 150 
-                  ? `${author.bio.substring(0, 150)}...` 
-                  : author.bio
+                {currentAuthor.bio.length > 150 
+                  ? `${currentAuthor.bio.substring(0, 150)}...` 
+                  : currentAuthor.bio
                 }
               </p>
             ) : (
-              <p className="text-sm text-slate-400 italic">
-                Biographical information is being enriched. 
-                {author.needs_enrichment && " Data collection in progress..."}
-              </p>
+              <div className="space-y-2">
+                <p className="text-sm text-slate-400 italic">
+                  {isEnriching 
+                    ? "Gathering biographical information..." 
+                    : "Biographical information is being enriched."
+                  }
+                </p>
+                {isEnriching && (
+                  <div className="flex items-center gap-2 text-xs text-blue-300">
+                    <RefreshCw className="w-3 h-3 animate-spin" />
+                    <span>Searching Wikipedia and other sources...</span>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
           {/* Notable Works */}
-          {author.notable_works && author.notable_works.length > 0 && (
+          {currentAuthor.notable_works && currentAuthor.notable_works.length > 0 && (
             <div className="bg-slate-700/50 rounded-lg p-3 border border-slate-600/30">
               <div className="flex items-center gap-2 mb-2">
                 <BookOpen className="w-4 h-4 text-blue-400" />
                 <span className="text-sm font-medium text-blue-300">Notable Works</span>
               </div>
               <div className="space-y-1">
-                {author.notable_works.slice(0, 4).map((work, index) => (
+                {currentAuthor.notable_works.slice(0, 4).map((work, index) => (
                   <div key={index} className="text-sm text-slate-300">
                     • {work}
                   </div>
                 ))}
-                {author.notable_works.length > 4 && (
+                {currentAuthor.notable_works.length > 4 && (
                   <div className="text-sm text-slate-400 italic">
-                    ...and {author.notable_works.length - 4} more works
+                    ...and {currentAuthor.notable_works.length - 4} more works
                   </div>
                 )}
               </div>
@@ -195,12 +266,12 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
           )}
 
           {/* Data Source Info */}
-          {author.data_source && (
+          {currentAuthor.data_source && (
             <div className="text-xs text-slate-400 border-t pt-2">
               <div className="flex items-center justify-between">
-                <span>Source: {author.data_source}</span>
-                {author.last_enriched && (
-                  <span>Updated: {new Date(author.last_enriched).toLocaleDateString()}</span>
+                <span>Source: {currentAuthor.data_source}</span>
+                {currentAuthor.last_enriched && (
+                  <span>Updated: {new Date(currentAuthor.last_enriched).toLocaleDateString()}</span>
                 )}
               </div>
             </div>
@@ -212,8 +283,8 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
             size="sm"
             className="w-full bg-purple-500/20 border-purple-400/30 text-purple-300 hover:bg-purple-500/30"
             onClick={() => {
-              const searchQuery = encodeURIComponent(`${author.name} author biography`);
-              window.open(`https://www.google.com/search?q=${searchQuery}`, '_blank');
+              const wikipediaUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(currentAuthor.name.replace(/ /g, '_'))}`;
+              window.open(wikipediaUrl, '_blank');
             }}
           >
             <ExternalLink className="w-4 h-4 mr-2" />
