@@ -66,6 +66,13 @@ const EnhancedBookCover = ({
     const loadImageProgressively = async () => {
       console.log('Loading cover for:', title, { coverUrl, thumbnailUrl, smallThumbnailUrl });
       
+      if (!coverUrl && !thumbnailUrl && !smallThumbnailUrl) {
+        console.log('No image URLs provided for:', title);
+        setIsLoading(false);
+        setHasError(true);
+        return;
+      }
+
       // First check Supabase cache
       const cachedUrl = await getCachedImageUrl(title);
       if (cachedUrl) {
@@ -75,117 +82,51 @@ const EnhancedBookCover = ({
         return;
       }
 
-      if (!coverUrl && !thumbnailUrl && !smallThumbnailUrl) {
-        console.log('No image URLs provided for:', title);
-        setIsLoading(false);
-        setHasError(true);
-        return;
-      }
-
       setIsLoading(true);
       setHasError(false);
       setIsProgressiveLoading(true);
 
-      // Simpler, more reliable loading with clear fallback chain
-      const lowQualityUrls = [
-        smallThumbnailUrl,
-        thumbnailUrl
-      ].filter(Boolean) as string[];
+      // Enhanced URLs for better quality
+      const enhanceUrl = (url: string) => url
+        .replace('zoom=1', 'zoom=0')
+        .replace('&edge=curl', '');
 
-      const highQualityUrls = [
+      const allUrls = [
         coverUrl,
         thumbnailUrl,
         smallThumbnailUrl
-      ].filter(Boolean) as string[];
+      ].filter(Boolean).map(url => enhanceUrl(url!)) as string[];
 
       try {
-        console.log('Starting progressive load for:', title);
+        console.log('Loading image for:', title, 'URLs:', allUrls);
         
-        // Load low quality first for quick display
-        if (lowQualityUrls.length > 0) {
-          try {
-            console.log('Loading low quality image:', lowQualityUrls[0]);
-            const lowResSrc = await imageService.loadImage({
-              src: lowQualityUrls[0],
-              fallbacks: lowQualityUrls.slice(1),
-              timeout: 800
-            });
-            console.log('Low quality image loaded:', lowResSrc);
-            setLowResSrc(lowResSrc);
-          } catch (error) {
-            console.warn('Low quality image failed:', error);
-          }
-        }
-
-        // Then load high quality
-        console.log('Loading high quality image:', highQualityUrls[0]);
-        const highResSrc = await imageService.loadImage({
-          src: highQualityUrls[0] || '',
-          fallbacks: highQualityUrls.slice(1),
-          timeout: 3000
+        const loadedSrc = await imageService.loadImage({
+          src: allUrls[0],
+          fallbacks: allUrls.slice(1),
+          timeout: 5000
         });
         
-        console.log('High quality image loaded:', highResSrc);
-        setCurrentSrc(highResSrc);
+        console.log('Image loaded successfully:', loadedSrc);
+        setCurrentSrc(loadedSrc);
         setIsLoading(false);
         setIsProgressiveLoading(false);
         
         // Cache the successful URL
-        await cacheImageUrl(highResSrc, title);
+        await cacheImageUrl(loadedSrc, title);
       } catch (error) {
-        console.warn('High quality image failed for', title, ':', error);
+        console.warn('All image URLs failed for', title, ':', error);
         setIsLoading(false);
         setHasError(true);
         setIsProgressiveLoading(false);
       }
     };
 
-    if (lazy && imgRef.current) {
-      const primaryUrl = coverUrl || thumbnailUrl || smallThumbnailUrl;
-      if (primaryUrl) {
-        console.log('Setting up lazy loading for:', title, primaryUrl);
-        // Enhanced URL for better quality
-        const enhancedUrl = primaryUrl
-          .replace('zoom=1', 'zoom=0')
-          .replace('&edge=curl', '');
-        
-        // Set the image src immediately for lazy loading
-        imgRef.current.src = enhancedUrl;
-        setIsLoading(false);
-        return;
-      } else {
-        console.log('No primary URL for lazy loading:', title);
-        setIsLoading(false);
-        setHasError(true);
-        return;
-      }
-    }
-
-    // Start progressive loading immediately for non-lazy images
     loadImageProgressively();
-  }, [coverUrl, thumbnailUrl, smallThumbnailUrl, title, lazy]);
+  }, [coverUrl, thumbnailUrl, smallThumbnailUrl, title]);
 
-  if (lazy) {
-    return (
-      <div className={`${className} flex-shrink-0 rounded overflow-hidden relative bg-slate-700`}>
-        <img
-          ref={imgRef}
-          alt={title}
-          className="w-full h-full object-cover transition-opacity duration-300"
-          style={{ imageRendering: 'crisp-edges' }}
-          onError={() => setHasError(true)}
-          onLoad={() => setHasError(false)}
-        />
-        {hasError && (
-          <div className="absolute inset-0">
-            <PlaceholderCover title={title} className="w-full h-full" />
-          </div>
-        )}
-      </div>
-    );
-  }
+  // Removed lazy loading - all images load immediately for better UX
 
-  if (isLoading && !lowResSrc) {
+  if (isLoading) {
     return (
       <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-gradient-to-br from-blue-900/40 to-blue-700/60`}>
         <div className="w-full h-full animate-pulse flex items-center justify-center">
@@ -195,38 +136,18 @@ const EnhancedBookCover = ({
     );
   }
 
-  // Show progressive loading: low res first, then high res
-  if (lowResSrc && (isProgressiveLoading || !currentSrc)) {
-    return (
-      <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-gradient-to-br from-blue-900/40 to-blue-700/60 relative`}>
-        <img
-          src={lowResSrc}
-          alt={title}
-          className="w-full h-full object-cover filter blur-sm"
-          style={{ imageRendering: 'auto' }}
-        />
-        {isProgressiveLoading && (
-          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-            <div className="w-3 h-3 border border-white/60 border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (hasError || (!currentSrc && !lowResSrc)) {
+  if (hasError || !currentSrc) {
     return <PlaceholderCover title={title} className={className} />;
   }
 
   return (
     <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-gradient-to-br from-blue-900/40 to-blue-700/60`}>
       <img
-        src={currentSrc || lowResSrc}
+        src={currentSrc}
         alt={title}
         className="w-full h-full object-cover transition-all duration-500"
         style={{ imageRendering: 'crisp-edges' }}
         onError={() => setHasError(true)}
-        loading="lazy"
       />
     </div>
   );

@@ -148,10 +148,30 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
   const handleEnrichment = async () => {
     if (isEnriching) return;
     
+    console.log('Starting enrichment for author:', currentAuthor.name);
     setIsEnriching(true);
+    
     try {
+      // First queue the author for enrichment if not already queued
+      await supabase
+        .from('author_enrichment_queue')
+        .upsert({
+          author_id: currentAuthor.id,
+          enrichment_type: 'full',
+          priority: 8,
+          status: 'pending'
+        });
+      
+      console.log('Author queued for enrichment, triggering job...');
       await triggerEnrichmentJob();
-      console.log('Enrichment job triggered for author:', currentAuthor.name);
+      console.log('Enrichment job triggered successfully for author:', currentAuthor.name);
+      
+      // Give it a moment to process
+      setTimeout(() => {
+        console.log('Checking for updates after enrichment...');
+        // The real-time subscription will handle updates
+      }, 2000);
+      
     } catch (error) {
       console.error('Failed to trigger enrichment:', error);
       setIsEnriching(false);
