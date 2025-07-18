@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Edit, Archive, X } from "lucide-react";
 import PublisherResonanceBadge from "./PublisherResonanceBadge";
+import PenguinPublisherBadge from "./PenguinPublisherBadge";
 import EnhancedBookCover from "./EnhancedBookCover";
 import FreeEbookDownloadIcon from "./FreeEbookDownloadIcon";
 
@@ -77,6 +78,11 @@ const BookCard = ({
 
   const resonanceLabels = getResonanceLabels();
 
+  // Check if this is a Penguin book based on various indicators
+  const isPenguinBook = publisher_series?.name.toLowerCase().includes('penguin') || 
+                        title.toLowerCase().includes('penguin') ||
+                        author.toLowerCase().includes('penguin');
+
   return (
     <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors h-full flex flex-col">
       <div className="flex items-start space-x-4 flex-1 mb-4">
@@ -107,8 +113,12 @@ const BookCard = ({
             </div>
           </div>
           
-          {/* Publisher Resonance Badge */}
-          {publisher_series && (
+          {/* Publisher Badge - Show Penguin badge for Penguin books, otherwise show generic */}
+          {isPenguinBook ? (
+            <div className="mt-2">
+              <PenguinPublisherBadge size="sm" />
+            </div>
+          ) : publisher_series && (
             <div className="mt-2">
               <PublisherResonanceBadge series={publisher_series} />
             </div>

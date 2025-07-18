@@ -81,13 +81,14 @@ const Header = () => {
               </Link>
               <Link
                 to="/publisher-resonance"
-                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 flex items-center space-x-1 ${
                   location.pathname === '/publisher-resonance' 
-                    ? 'text-purple-400' 
-                    : 'text-slate-300 hover:text-purple-400'
+                    ? 'text-orange-400' 
+                    : 'text-slate-300 hover:text-orange-400'
                 }`}
               >
-                Publisher Resonance
+                <span>🐧</span>
+                <span>Publisher Resonance</span>
               </Link>
               <Link
                 to="/test-brain"

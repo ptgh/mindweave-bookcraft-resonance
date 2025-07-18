@@ -3,6 +3,7 @@ import { memo, useState, useEffect, useRef } from "react";
 import { EnhancedBookSuggestion } from "@/services/googleBooksApi";
 import EnhancedBookCover from "./EnhancedBookCover";
 import EnhancedBookPreviewModal from "./EnhancedBookPreviewModal";
+import PenguinPublisherBadge from "./PenguinPublisherBadge";
 import { Button } from "./ui/button";
 import { Plus } from "lucide-react";
 import { useDeepLinking } from "@/hooks/useDeepLinking";
@@ -119,6 +120,13 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
     setSelectedBookForPreview(null);
   };
 
+  // Check if a book is likely a Penguin publication
+  const isPenguinBook = (book: EnhancedBookSuggestion) => {
+    return book.title.toLowerCase().includes('penguin') ||
+           book.author.toLowerCase().includes('penguin') ||
+           (book.categories && book.categories.some(cat => cat.toLowerCase().includes('penguin')));
+  };
+
   return (
     <>
       {/* Grid matching Transmissions design */}
@@ -126,6 +134,7 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
         {books.map((book, index) => {
           const isVisible = visibleBooks.has(index);
           const deepLink = getDeepLink(book);
+          const showPenguinBadge = isPenguinBook(book);
           
           return (
             <div
@@ -156,6 +165,13 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                       </div>
                       <div className="w-3 h-3 rounded-full border-2 border-slate-500 bg-slate-500/10 flex-shrink-0" />
                     </div>
+                    
+                    {/* Show Penguin badge if applicable */}
+                    {showPenguinBadge && (
+                      <div className="mt-2">
+                        <PenguinPublisherBadge size="sm" />
+                      </div>
+                    )}
                     
                     {book.categories && book.categories.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
