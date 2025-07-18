@@ -82,20 +82,13 @@ const EnhancedBookCover = ({
       setHasError(false);
       setIsProgressiveLoading(true);
 
-      // Progressive loading: start with low quality, then load high quality
+      // Simpler, more reliable loading with clear fallback chain
       const lowQualityUrls = [
         smallThumbnailUrl,
-        thumbnailUrl?.replace('zoom=0', 'zoom=1'),
-        coverUrl?.replace('zoom=0', 'zoom=1')
+        thumbnailUrl
       ].filter(Boolean) as string[];
 
       const highQualityUrls = [
-        // Highest quality versions
-        coverUrl?.replace('zoom=1', 'zoom=0').replace('&edge=curl', '').replace('&img=1', ''),
-        coverUrl?.replace('zoom=1', 'zoom=0').replace('&edge=curl', ''),
-        thumbnailUrl?.replace('zoom=1', 'zoom=0').replace('&edge=curl', ''),
-        coverUrl?.replace('&edge=curl', ''),
-        thumbnailUrl?.replace('&edge=curl', ''),
         coverUrl,
         thumbnailUrl,
         smallThumbnailUrl

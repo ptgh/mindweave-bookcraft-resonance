@@ -151,8 +151,8 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
         delay: 0.2
       });
 
-      // Animate "Temporal Significance" text with subtle emphasis
-      gsap.from(".temporal-significance", {
+      // Animate "Temporal Tags" text with subtle emphasis
+      gsap.from(".temporal-tags", {
         opacity: 0,
         y: 10,
         duration: 0.8,
@@ -160,8 +160,8 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
         delay: 0.5
       });
 
-      // Subtle pulse effect for "Temporal Significance"
-      gsap.to(".temporal-significance", {
+      // Subtle pulse effect for "Temporal Tags"
+      gsap.to(".temporal-tags", {
         opacity: 0.7,
         duration: 2,
         ease: "power2.inOut",
@@ -468,8 +468,11 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
             <div key={node.transmission.id} className="relative flex justify-center">
               {/* Timeline marker */}
               <div 
-                className="absolute top-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-slate-800 shadow-lg transform -translate-x-1/2 -translate-y-8"
-                style={{ left: `${node.position}%` }}
+                className="absolute top-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-slate-800 shadow-lg"
+                style={{ 
+                  left: '50%',
+                  transform: 'translateX(-50%) translateY(-32px)'
+                }}
               />
               
               {/* Card - styled like Signal Preview modal, wider and more spread out */}
@@ -569,18 +572,16 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                       </div>
                     )}
 
-                    {/* Temporal Significance */}
+                    {/* Temporal Tags */}
                     {node.transmission.historical_context_tags && node.transmission.historical_context_tags.length > 0 && (
                       <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600/30">
-                        <h5 className="temporal-significance text-slate-300 font-medium mb-2 flex items-center gap-2">
+                        <h5 className="temporal-tags text-slate-300 font-medium mb-2 flex items-center gap-2">
                           <Globe className="w-4 h-4 text-cyan-400" />
-                          Temporal Significance:
+                          Temporal Tags:
                         </h5>
-                        <div className="mt-2">
-                          <p className="text-slate-400 text-sm leading-relaxed">
-                            {node.transmission.historical_context_tags.join('. ')}
-                          </p>
-                        </div>
+                        <p className="text-slate-400 text-sm leading-relaxed">
+                          {node.transmission.historical_context_tags.join('. ')}
+                        </p>
                       </div>
                     )}
 
