@@ -153,6 +153,10 @@ const EnhancedBookCover = ({
         return;
       } else {
         console.log('No primary URL for lazy loading:', title);
+        // For lazy loading without URLs, show placeholder immediately
+        setIsLoading(false);
+        setHasError(true);
+        return;
       }
     }
 

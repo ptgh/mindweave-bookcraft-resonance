@@ -257,6 +257,7 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
   };
 
   const handleAuthorClick = async (authorName: string) => {
+    console.log('Author clicked:', authorName);
     try {
       // First try to get existing author
       let authorData = await getAuthorByName(authorName);
@@ -272,18 +273,27 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
       }
       
       if (authorData) {
+        console.log('Setting author:', authorData);
         setSelectedAuthor(authorData);
         setAuthorPopupVisible(true);
       } else {
-        // Fallback: create minimal author object for display
+        // Fallback: create minimal author object for display with proper UUID
         const fallbackAuthor: ScifiAuthor = {
-          id: 'temp',
+          id: crypto.randomUUID(),
           name: authorName,
           bio: undefined,
           notable_works: [],
           needs_enrichment: true,
-          data_quality_score: 0
+          data_quality_score: 0,
+          birth_year: undefined,
+          death_year: undefined,
+          last_enriched: undefined,
+          enrichment_attempts: 0,
+          nationality: undefined,
+          data_source: 'manual',
+          verification_status: 'pending'
         };
+        console.log('Using fallback author:', fallbackAuthor);
         setSelectedAuthor(fallbackAuthor);
         setAuthorPopupVisible(true);
       }
@@ -292,13 +302,21 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
       
       // Fallback: show author popup with minimal data
       const fallbackAuthor: ScifiAuthor = {
-        id: 'temp',
+        id: crypto.randomUUID(),
         name: authorName,
         bio: 'Author information is being loaded...',
         notable_works: [],
         needs_enrichment: true,
-        data_quality_score: 0
+        data_quality_score: 0,
+        birth_year: undefined,
+        death_year: undefined,
+        last_enriched: undefined,
+        enrichment_attempts: 0,
+        nationality: undefined,
+        data_source: 'manual',
+        verification_status: 'pending'
       };
+      console.log('Using error fallback author:', fallbackAuthor);
       setSelectedAuthor(fallbackAuthor);
       setAuthorPopupVisible(true);
     }
