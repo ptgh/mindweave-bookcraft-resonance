@@ -64,15 +64,19 @@ const EnhancedBookCover = ({
 
   useEffect(() => {
     const loadImageProgressively = async () => {
+      console.log('Loading cover for:', title, { coverUrl, thumbnailUrl, smallThumbnailUrl });
+      
       // First check Supabase cache
       const cachedUrl = await getCachedImageUrl(title);
       if (cachedUrl) {
+        console.log('Using cached image:', cachedUrl);
         setCurrentSrc(cachedUrl);
         setIsLoading(false);
         return;
       }
 
       if (!coverUrl && !thumbnailUrl && !smallThumbnailUrl) {
+        console.log('No image URLs provided for:', title);
         setIsLoading(false);
         setHasError(true);
         return;
@@ -95,14 +99,18 @@ const EnhancedBookCover = ({
       ].filter(Boolean) as string[];
 
       try {
+        console.log('Starting progressive load for:', title);
+        
         // Load low quality first for quick display
         if (lowQualityUrls.length > 0) {
           try {
+            console.log('Loading low quality image:', lowQualityUrls[0]);
             const lowResSrc = await imageService.loadImage({
               src: lowQualityUrls[0],
               fallbacks: lowQualityUrls.slice(1),
               timeout: 800
             });
+            console.log('Low quality image loaded:', lowResSrc);
             setLowResSrc(lowResSrc);
           } catch (error) {
             console.warn('Low quality image failed:', error);
@@ -110,12 +118,14 @@ const EnhancedBookCover = ({
         }
 
         // Then load high quality
+        console.log('Loading high quality image:', highQualityUrls[0]);
         const highResSrc = await imageService.loadImage({
           src: highQualityUrls[0] || '',
           fallbacks: highQualityUrls.slice(1),
           timeout: 3000
         });
         
+        console.log('High quality image loaded:', highResSrc);
         setCurrentSrc(highResSrc);
         setIsLoading(false);
         setIsProgressiveLoading(false);
@@ -123,7 +133,7 @@ const EnhancedBookCover = ({
         // Cache the successful URL
         await cacheImageUrl(highResSrc, title);
       } catch (error) {
-        console.warn('High quality image failed:', error);
+        console.warn('High quality image failed for', title, ':', error);
         setIsLoading(false);
         setHasError(true);
         setIsProgressiveLoading(false);
@@ -133,6 +143,7 @@ const EnhancedBookCover = ({
     if (lazy && imgRef.current) {
       const primaryUrl = coverUrl || thumbnailUrl || smallThumbnailUrl;
       if (primaryUrl) {
+        console.log('Setting up lazy loading for:', title, primaryUrl);
         // Use progressive loading for lazy images too
         const enhancedUrl = primaryUrl
           .replace('zoom=1', 'zoom=0')
@@ -140,6 +151,8 @@ const EnhancedBookCover = ({
         imageService.setupLazyLoading(imgRef.current, enhancedUrl);
         setIsLoading(false);
         return;
+      } else {
+        console.log('No primary URL for lazy loading:', title);
       }
     }
 

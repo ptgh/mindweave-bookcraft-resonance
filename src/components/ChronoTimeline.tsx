@@ -714,6 +714,9 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
         author={selectedAuthor}
         isVisible={authorPopupVisible}
         onClose={closeAuthorPopup}
+        onAuthorUpdate={(updatedAuthor) => {
+          setSelectedAuthor(updatedAuthor);
+        }}
       />
     </div>
   );
