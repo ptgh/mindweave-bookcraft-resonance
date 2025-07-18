@@ -9,6 +9,12 @@ export interface ScifiAuthor {
   notable_works?: string[];
   birth_year?: number;
   death_year?: number;
+  last_enriched?: string;
+  data_source?: string;
+  verification_status?: string;
+  data_quality_score?: number;
+  enrichment_attempts?: number;
+  needs_enrichment?: boolean;
 }
 
 export interface AuthorBook {
@@ -48,6 +54,45 @@ export const getScifiAuthors = async (): Promise<ScifiAuthor[]> => {
   return data || [];
 };
 
+export const getAuthorByName = async (authorName: string): Promise<ScifiAuthor | null> => {
+  console.log('Fetching author by name:', authorName);
+  
+  const { data, error } = await supabase
+    .from('scifi_authors')
+    .select('*')
+    .ilike('name', `%${authorName.trim()}%`)
+    .order('data_quality_score', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  
+  if (error) {
+    console.error('Error fetching author by name:', error);
+    return null;
+  }
+  
+  return data;
+};
+
+export const findOrCreateAuthor = async (authorName: string): Promise<string | null> => {
+  console.log('Finding or creating author:', authorName);
+  
+  try {
+    const { data, error } = await supabase.rpc('find_or_create_scifi_author', {
+      author_name: authorName
+    });
+    
+    if (error) {
+      console.error('Error in find_or_create_scifi_author:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (err) {
+    console.error('Error calling find_or_create_scifi_author:', err);
+    return null;
+  }
+};
+
 export const getAuthorBooks = async (authorId: string): Promise<AuthorBook[]> => {
   console.log('Fetching books for author:', authorId);
   
@@ -71,4 +116,24 @@ export const getAuthorBooks = async (authorId: string): Promise<AuthorBook[]> =>
   
   console.log('No books found in database for author:', authorId);
   return [];
+};
+
+export const triggerAuthorEnrichment = async (authorId: string): Promise<void> => {
+  console.log('Triggering enrichment for author:', authorId);
+  
+  try {
+    const response = await fetch('/api/enrich-author-data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ authorId })
+    });
+    
+    if (!response.ok) {
+      console.warn('Author enrichment request failed:', response.statusText);
+    }
+  } catch (error) {
+    console.warn('Author enrichment trigger failed:', error);
+  }
 };

@@ -79,6 +79,97 @@ export type Database = {
           },
         ]
       }
+      author_data_sources: {
+        Row: {
+          author_id: string | null
+          confidence_score: number | null
+          created_at: string
+          data_retrieved: Json | null
+          id: string
+          last_validated: string | null
+          source_type: string
+          source_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          data_retrieved?: Json | null
+          id?: string
+          last_validated?: string | null
+          source_type: string
+          source_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          data_retrieved?: Json | null
+          id?: string
+          last_validated?: string | null
+          source_type?: string
+          source_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "author_data_sources_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "scifi_authors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      author_enrichment_queue: {
+        Row: {
+          attempts: number | null
+          author_id: string | null
+          created_at: string
+          enrichment_type: string
+          error_message: string | null
+          id: string
+          priority: number | null
+          processed_at: string | null
+          scheduled_for: string | null
+          status: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          author_id?: string | null
+          created_at?: string
+          enrichment_type: string
+          error_message?: string | null
+          id?: string
+          priority?: number | null
+          processed_at?: string | null
+          scheduled_for?: string | null
+          status?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          author_id?: string | null
+          created_at?: string
+          enrichment_type?: string
+          error_message?: string | null
+          id?: string
+          priority?: number | null
+          processed_at?: string | null
+          scheduled_for?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "author_enrichment_queue_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "scifi_authors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       book_interactions: {
         Row: {
           book_author: string
@@ -359,36 +450,54 @@ export type Database = {
           bio: string | null
           birth_year: number | null
           created_at: string
+          data_quality_score: number | null
+          data_source: string | null
           death_year: number | null
+          enrichment_attempts: number | null
           id: string
+          last_enriched: string | null
           name: string
           nationality: string | null
+          needs_enrichment: boolean | null
           notable_works: string[] | null
           updated_at: string
+          verification_status: string | null
           wikipedia_url: string | null
         }
         Insert: {
           bio?: string | null
           birth_year?: number | null
           created_at?: string
+          data_quality_score?: number | null
+          data_source?: string | null
           death_year?: number | null
+          enrichment_attempts?: number | null
           id?: string
+          last_enriched?: string | null
           name: string
           nationality?: string | null
+          needs_enrichment?: boolean | null
           notable_works?: string[] | null
           updated_at?: string
+          verification_status?: string | null
           wikipedia_url?: string | null
         }
         Update: {
           bio?: string | null
           birth_year?: number | null
           created_at?: string
+          data_quality_score?: number | null
+          data_source?: string | null
           death_year?: number | null
+          enrichment_attempts?: number | null
           id?: string
+          last_enriched?: string | null
           name?: string
           nationality?: string | null
+          needs_enrichment?: boolean | null
           notable_works?: string[] | null
           updated_at?: string
+          verification_status?: string | null
           wikipedia_url?: string | null
         }
         Relationships: []
@@ -463,6 +572,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      find_or_create_scifi_author: {
+        Args: { author_name: string }
+        Returns: string
+      }
       log_book_interaction: {
         Args: {
           p_user_id: string

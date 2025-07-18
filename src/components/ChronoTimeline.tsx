@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AuthorPopup } from '@/components/AuthorPopup';
+import { getAuthorByName, ScifiAuthor, findOrCreateAuthor } from '@/services/scifiAuthorsService';
 
 gsap.registerPlugin();
 
@@ -41,7 +42,7 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
   const [viewMode, setViewMode] = useState<'publication' | 'narrative' | 'reading'>('publication');
   const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
   const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set());
-  const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
+  const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
   const [authorPopupVisible, setAuthorPopupVisible] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -255,9 +256,52 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
     });
   };
 
-  const handleAuthorClick = (authorName: string) => {
-    setSelectedAuthor(authorName);
-    setAuthorPopupVisible(true);
+  const handleAuthorClick = async (authorName: string) => {
+    try {
+      // First try to get existing author
+      let authorData = await getAuthorByName(authorName);
+      
+      // If not found, create new author record
+      if (!authorData) {
+        console.log('Author not found in database, creating new record:', authorName);
+        const newAuthorId = await findOrCreateAuthor(authorName);
+        if (newAuthorId) {
+          // Try to fetch the newly created author
+          authorData = await getAuthorByName(authorName);
+        }
+      }
+      
+      if (authorData) {
+        setSelectedAuthor(authorData);
+        setAuthorPopupVisible(true);
+      } else {
+        // Fallback: create minimal author object for display
+        const fallbackAuthor: ScifiAuthor = {
+          id: 'temp',
+          name: authorName,
+          bio: undefined,
+          notable_works: [],
+          needs_enrichment: true,
+          data_quality_score: 0
+        };
+        setSelectedAuthor(fallbackAuthor);
+        setAuthorPopupVisible(true);
+      }
+    } catch (error) {
+      console.error('Error fetching author data:', error);
+      
+      // Fallback: show author popup with minimal data
+      const fallbackAuthor: ScifiAuthor = {
+        id: 'temp',
+        name: authorName,
+        bio: 'Author information is being loaded...',
+        notable_works: [],
+        needs_enrichment: true,
+        data_quality_score: 0
+      };
+      setSelectedAuthor(fallbackAuthor);
+      setAuthorPopupVisible(true);
+    }
   };
 
   const closeAuthorPopup = () => {
@@ -666,13 +710,11 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
       </div>
 
       {/* Author Popup */}
-      {selectedAuthor && (
-        <AuthorPopup
-          author={getAuthorInfo(selectedAuthor)}
-          isVisible={authorPopupVisible}
-          onClose={closeAuthorPopup}
-        />
-      )}
+      <AuthorPopup
+        author={selectedAuthor}
+        isVisible={authorPopupVisible}
+        onClose={closeAuthorPopup}
+      />
     </div>
   );
 }

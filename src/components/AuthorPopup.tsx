@@ -3,20 +3,11 @@ import { gsap } from 'gsap';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, BookOpen, Calendar, X, ExternalLink } from 'lucide-react';
-
-interface AuthorInfo {
-  name: string;
-  bio?: string;
-  birthYear?: number;
-  deathYear?: number;
-  nationality?: string;
-  notableWorks?: string[];
-  totalWorks?: number;
-}
+import { User, BookOpen, Calendar, X, ExternalLink, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { ScifiAuthor } from '@/services/scifiAuthorsService';
 
 interface AuthorPopupProps {
-  author: AuthorInfo;
+  author: ScifiAuthor | null;
   isVisible: boolean;
   onClose: () => void;
   triggerRef?: React.RefObject<HTMLElement>;
@@ -84,17 +75,28 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
     }
   }, [isVisible]);
 
-  if (!isVisible) {
+  if (!isVisible || !author) {
     return null;
   }
 
   const formatLifespan = () => {
-    if (author.birthYear && author.deathYear) {
-      return `${author.birthYear} - ${author.deathYear}`;
-    } else if (author.birthYear) {
-      return `Born ${author.birthYear}`;
+    if (author.birth_year && author.death_year) {
+      return `${author.birth_year} - ${author.death_year}`;
+    } else if (author.birth_year) {
+      return `Born ${author.birth_year}`;
     }
     return null;
+  };
+
+  const getDataQualityBadge = () => {
+    const score = author.data_quality_score || 0;
+    if (score >= 80) {
+      return <Badge variant="default" className="text-xs bg-green-500/20 text-green-300 border-green-400/30"><CheckCircle className="w-3 h-3 mr-1" />Complete</Badge>;
+    } else if (score >= 50) {
+      return <Badge variant="secondary" className="text-xs bg-yellow-500/20 text-yellow-300 border-yellow-400/30"><Clock className="w-3 h-3 mr-1" />Partial</Badge>;
+    } else {
+      return <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-300 border-blue-400/30"><AlertTriangle className="w-3 h-3 mr-1" />Enriching</Badge>;
+    }
   };
 
   return (
@@ -131,9 +133,12 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
               <User className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-slate-100 mb-1">
-                {author.name}
-              </h3>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-xl font-bold text-slate-100">
+                  {author.name}
+                </h3>
+                {getDataQualityBadge()}
+              </div>
               {formatLifespan() && (
                 <div className="flex items-center gap-2 text-slate-400 text-sm">
                   <Calendar className="w-3 h-3" />
@@ -151,46 +156,53 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
 
         <CardContent className="space-y-4">
           {/* Bio */}
-          {author.bio && (
-            <div className="bg-slate-700/50 rounded-lg p-3 border border-slate-600/30">
+          <div className="bg-slate-700/50 rounded-lg p-3 border border-slate-600/30">
+            {author.bio ? (
               <p className="text-sm text-slate-200 leading-relaxed">
                 {author.bio.length > 150 
                   ? `${author.bio.substring(0, 150)}...` 
                   : author.bio
                 }
               </p>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-slate-400 italic">
+                Biographical information is being enriched. 
+                {author.needs_enrichment && " Data collection in progress..."}
+              </p>
+            )}
+          </div>
 
           {/* Notable Works */}
-          {author.notableWorks && author.notableWorks.length > 0 && (
+          {author.notable_works && author.notable_works.length > 0 && (
             <div className="bg-slate-700/50 rounded-lg p-3 border border-slate-600/30">
               <div className="flex items-center gap-2 mb-2">
                 <BookOpen className="w-4 h-4 text-blue-400" />
                 <span className="text-sm font-medium text-blue-300">Notable Works</span>
               </div>
               <div className="space-y-1">
-                {author.notableWorks.slice(0, 4).map((work, index) => (
+                {author.notable_works.slice(0, 4).map((work, index) => (
                   <div key={index} className="text-sm text-slate-300">
                     • {work}
                   </div>
                 ))}
-                {author.notableWorks.length > 4 && (
+                {author.notable_works.length > 4 && (
                   <div className="text-sm text-slate-400 italic">
-                    ...and {author.notableWorks.length - 4} more works
+                    ...and {author.notable_works.length - 4} more works
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          {/* Total Works Count */}
-          {author.totalWorks && (
-            <div className="flex items-center justify-between bg-slate-700/30 rounded-lg p-3">
-              <span className="text-sm text-slate-300">Total Published Works</span>
-              <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30">
-                {author.totalWorks}
-              </Badge>
+          {/* Data Source Info */}
+          {author.data_source && (
+            <div className="text-xs text-slate-400 border-t pt-2">
+              <div className="flex items-center justify-between">
+                <span>Source: {author.data_source}</span>
+                {author.last_enriched && (
+                  <span>Updated: {new Date(author.last_enriched).toLocaleDateString()}</span>
+                )}
+              </div>
             </div>
           )}
 
