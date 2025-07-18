@@ -119,7 +119,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
     }
   }, [isVisible]);
 
-  if (!isVisible || !currentAuthor) {
+  if (!currentAuthor) {
     return null;
   }
 
@@ -162,7 +162,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
     <div
       ref={popupRef}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ display: 'none' }}
+      style={{ display: isVisible ? 'flex' : 'none' }}
     >
       {/* Overlay */}
       <div

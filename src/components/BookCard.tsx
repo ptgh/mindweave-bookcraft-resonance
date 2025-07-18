@@ -80,25 +80,12 @@ const BookCard = ({
   return (
     <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors h-full flex flex-col">
       <div className="flex items-start space-x-4 flex-1 mb-4">
-        <div className="relative">
-          <EnhancedBookCover
-            title={title}
-            coverUrl={coverUrl}
-            className="w-12 h-16 flex-shrink-0"
-            lazy={false}
-          />
-          {/* Debug overlay */}
-          {!coverUrl && (
-            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 py-0.5 rounded text-[10px]">
-              No URL
-            </div>
-          )}
-          {coverUrl && (
-            <div className="absolute -bottom-1 -left-1 bg-green-500 text-white text-xs px-1 py-0.5 rounded text-[8px] max-w-[50px] truncate" title={coverUrl}>
-              {coverUrl.includes('google') ? 'Google' : coverUrl.includes('apple') ? 'Apple' : 'URL'}
-            </div>
-          )}
-        </div>
+        <EnhancedBookCover
+          title={title}
+          coverUrl={coverUrl}
+          className="w-12 h-16 flex-shrink-0"
+          lazy={false}
+        />
         
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between">

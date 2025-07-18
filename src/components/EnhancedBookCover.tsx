@@ -144,23 +144,24 @@ const EnhancedBookCover = ({
       const primaryUrl = coverUrl || thumbnailUrl || smallThumbnailUrl;
       if (primaryUrl) {
         console.log('Setting up lazy loading for:', title, primaryUrl);
-        // Use progressive loading for lazy images too
+        // Enhanced URL for better quality
         const enhancedUrl = primaryUrl
           .replace('zoom=1', 'zoom=0')
           .replace('&edge=curl', '');
-        imageService.setupLazyLoading(imgRef.current, enhancedUrl);
+        
+        // Set the image src immediately for lazy loading
+        imgRef.current.src = enhancedUrl;
         setIsLoading(false);
         return;
       } else {
         console.log('No primary URL for lazy loading:', title);
-        // For lazy loading without URLs, show placeholder immediately
         setIsLoading(false);
         setHasError(true);
         return;
       }
     }
 
-    // Start progressive loading immediately
+    // Start progressive loading immediately for non-lazy images
     loadImageProgressively();
   }, [coverUrl, thumbnailUrl, smallThumbnailUrl, title, lazy]);
 
