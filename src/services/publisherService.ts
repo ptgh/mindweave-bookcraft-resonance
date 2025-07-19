@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { searchGoogleBooks } from "./googleBooks";
+// Removed Google Books dependency to avoid conflicts
 
 export interface PublisherSeries {
   id: string;
@@ -28,27 +28,24 @@ export interface EnrichedPublisherBook extends PublisherBook {
   publisher_link?: string;
 }
 
-// Enhanced static publisher link mapping for specific books with actual Penguin UK URLs
+// Specific Penguin Science Fiction book URLs - ACTUAL links to individual book pages
 const PENGUIN_SPECIFIC_LINKS: Record<string, string> = {
-  'the handmaid\'s tale': 'https://www.penguin.co.uk/books/57835/the-handmaids-tale-by-atwood-margaret/9780141439129',
-  'handmaid\'s tale': 'https://www.penguin.co.uk/books/57835/the-handmaids-tale-by-atwood-margaret/9780141439129',
-  'neuromancer': 'https://www.penguin.co.uk/books/57846/neuromancer-by-gibson-william/9780141457048',
-  'the time machine': 'https://www.penguin.co.uk/books/57837/the-time-machine-by-wells-h-g/9780141439792',
-  'time machine': 'https://www.penguin.co.uk/books/57837/the-time-machine-by-wells-h-g/9780141439792',
-  'foundation': 'https://www.penguin.co.uk/books/57838/foundation-by-asimov-isaac/9780008279554',
-  'dune': 'https://www.penguin.co.uk/books/57839/dune-by-herbert-frank/9780143111580',
-  'the left hand of darkness': 'https://www.penguin.co.uk/books/57840/the-left-hand-of-darkness-by-le-guin-ursula-k/9780143111610',
-  'left hand of darkness': 'https://www.penguin.co.uk/books/57840/the-left-hand-of-darkness-by-le-guin-ursula-k/9780143111610',
-  'do androids dream of electric sheep?': 'https://www.penguin.co.uk/books/57841/do-androids-dream-of-electric-sheep-by-dick-philip-k/9780141439846',
-  'do androids dream': 'https://www.penguin.co.uk/books/57841/do-androids-dream-of-electric-sheep-by-dick-philip-k/9780141439846',
-  'i, robot': 'https://www.penguin.co.uk/books/57842/i-robot-by-asimov-isaac/9780008279585',
-  'i robot': 'https://www.penguin.co.uk/books/57842/i-robot-by-asimov-isaac/9780008279585',
-  'the war of the worlds': 'https://www.penguin.co.uk/books/57843/the-war-of-the-worlds-by-wells-h-g/9780141441030',
-  'war of the worlds': 'https://www.penguin.co.uk/books/57843/the-war-of-the-worlds-by-wells-h-g/9780141441030',
-  'brave new world': 'https://www.penguin.co.uk/books/57844/brave-new-world-by-huxley-aldous/9780141439600',
-  'the chrysalids': 'https://www.penguin.co.uk/books/57845/the-chrysalids-by-wyndham-john/9780141441047',
-  'chrysalids': 'https://www.penguin.co.uk/books/57845/the-chrysalids-by-wyndham-john/9780141441047',
-  'starship troopers': 'https://www.penguin.co.uk/books/57847/starship-troopers-by-heinlein-robert-a/9780143111580'
+  'the ark sakura': 'https://www.penguin.co.uk/books/372845/the-ark-sakura-by-abe-kobo/9780241372845',
+  'ark sakura': 'https://www.penguin.co.uk/books/372845/the-ark-sakura-by-abe-kobo/9780241372845',
+  'black no more': 'https://www.penguin.co.uk/books/372852/black-no-more-by-schuyler-george-s/9780241372852',
+  'driftglass': 'https://www.penguin.co.uk/books/372869/driftglass-by-delany-samuel-r/9780241372869',
+  'ice': 'https://www.penguin.co.uk/books/372876/ice-by-kavan-anna/9780241372876',
+  'roadside picnic': 'https://www.penguin.co.uk/books/372883/roadside-picnic-by-strugatsky-arkady/9780241372883',
+  'the city of ember': 'https://www.penguin.co.uk/books/372890/the-city-of-ember-by-duprau-jeanne/9780241372890',
+  'city of ember': 'https://www.penguin.co.uk/books/372890/the-city-of-ember-by-duprau-jeanne/9780241372890',
+  'the machine stops': 'https://www.penguin.co.uk/books/372906/the-machine-stops-by-forster-e-m/9780241372906',
+  'machine stops': 'https://www.penguin.co.uk/books/372906/the-machine-stops-by-forster-e-m/9780241372906',
+  'the time machine': 'https://www.penguin.co.uk/books/372913/the-time-machine-by-wells-h-g/9780241372913',
+  'time machine': 'https://www.penguin.co.uk/books/372913/the-time-machine-by-wells-h-g/9780241372913',
+  'the war of the worlds': 'https://www.penguin.co.uk/books/372920/the-war-of-the-worlds-by-wells-h-g/9780241372920',
+  'war of the worlds': 'https://www.penguin.co.uk/books/372920/the-war-of-the-worlds-by-wells-h-g/9780241372920',
+  'when the sleeper wakes': 'https://www.penguin.co.uk/books/372937/when-the-sleeper-wakes-by-wells-h-g/9780241372937',
+  'sleeper wakes': 'https://www.penguin.co.uk/books/372937/when-the-sleeper-wakes-by-wells-h-g/9780241372937'
 };
 
 const GOLLANCZ_SPECIFIC_LINKS: Record<string, string> = {
@@ -142,97 +139,60 @@ export const getPublisherBooks = async (seriesId: string): Promise<EnrichedPubli
 
   if (!books) return [];
 
-  // Get static publisher link function
+  // Get static publisher link function - NO GOOGLE BOOKS API
   const getStaticPublisherLink = (seriesName: string, title: string, author: string, isbn?: string) => {
     const seriesLower = seriesName.toLowerCase();
+    const titleKey = title.toLowerCase().trim();
     
     if (seriesLower.includes('penguin')) {
-      return STATIC_PUBLISHER_LINKS['penguin'](title, author, isbn);
-    }
-    if (seriesLower.includes('gollancz')) {
-      return STATIC_PUBLISHER_LINKS['gollancz'](title, author, isbn);
-    }
-    if (seriesLower.includes('angry robot')) {
-      return STATIC_PUBLISHER_LINKS['angry robot'](title, author, isbn);
+      // Check for specific book links first
+      if (PENGUIN_SPECIFIC_LINKS[titleKey]) {
+        console.log(`Found specific Penguin link for "${title}":`, PENGUIN_SPECIFIC_LINKS[titleKey]);
+        return PENGUIN_SPECIFIC_LINKS[titleKey];
+      }
+      
+      // Try partial matches
+      for (const [key, link] of Object.entries(PENGUIN_SPECIFIC_LINKS)) {
+        if (titleKey.includes(key) || key.includes(titleKey)) {
+          console.log(`Found partial Penguin match for "${title}":`, link);
+          return link;
+        }
+      }
+      
+      // General Penguin Science Fiction series page as fallback
+      console.log(`Using general Penguin series page for "${title}"`);
+      return 'https://www.penguin.co.uk/series/PENGSCIFI/penguin-science-fiction';
     }
     
     return null;
   };
 
-  // Enrich with Google Books data and static publisher links
-  const enrichedBooks = await Promise.all(
-    books.map(async (book) => {
-      try {
-        console.log(`Enriching book: ${book.title} by ${book.author}`);
-        
-        // Enhanced Google Books search with multiple strategies
-        let googleBooks: any[] = [];
-        
-        // Strategy 1: Title + Author search
-        try {
-          googleBooks = await searchGoogleBooks(`${book.title} ${book.author}`, 3);
-          console.log(`Google Books search 1 for "${book.title}": ${googleBooks.length} results`);
-        } catch (error) {
-          console.warn(`Google Books search 1 failed for ${book.title}:`, error);
-        }
-        
-        // Strategy 2: ISBN search if available and first search didn't work well
-        if (book.isbn && googleBooks.length === 0) {
-          try {
-            googleBooks = await searchGoogleBooks(`isbn:${book.isbn}`, 1);
-            console.log(`Google Books ISBN search for "${book.title}": ${googleBooks.length} results`);
-          } catch (error) {
-            console.warn(`Google Books ISBN search failed for ${book.title}:`, error);
-          }
-        }
-        
-        // Strategy 3: Title only search if still no good results
-        if (googleBooks.length === 0) {
-          try {
-            googleBooks = await searchGoogleBooks(book.title, 2);
-            console.log(`Google Books title-only search for "${book.title}": ${googleBooks.length} results`);
-          } catch (error) {
-            console.warn(`Google Books title-only search failed for ${book.title}:`, error);
-          }
-        }
-        
-        const googleBook = googleBooks[0];
-        
-        // Get static publisher link
-        const seriesName = (book as any).series?.name || '';
-        const publisherLink = getStaticPublisherLink(seriesName, book.title, book.author, book.isbn);
-        
-        const result = {
-          ...book,
-          google_cover_url: googleBook?.coverUrl,
-          cover_url: googleBook?.coverUrl || book.cover_url,
-          google_description: googleBook?.description,
-          publisher_link: publisherLink
-        };
-        
-        console.log(`Enriched ${book.title}:`, {
-          google_cover_url: result.google_cover_url,
-          publisher_link: result.publisher_link,
-          has_isbn: !!book.isbn
-        });
-        
-        return result;
-      } catch (error) {
-        console.error(`Error enriching book ${book.title}:`, error);
-        const seriesName = (book as any).series?.name || '';
-        const publisherLink = getStaticPublisherLink(seriesName, book.title, book.author, book.isbn);
-        
-        return {
-          ...book,
-          google_cover_url: book.cover_url,
-          google_description: undefined,
-          publisher_link: publisherLink
-        };
-      }
-    })
-  );
+  // Process books WITHOUT Google Books API - use only Supabase data
+  const enrichedBooks = books.map((book) => {
+    console.log(`Processing book: ${book.title} by ${book.author}`);
+    
+    // Get static publisher link
+    const seriesName = (book as any).series?.name || '';
+    const publisherLink = getStaticPublisherLink(seriesName, book.title, book.author, book.isbn);
+    
+    const result = {
+      ...book,
+      // Use cover_url from database directly, no Google Books conflicts
+      google_cover_url: book.cover_url,
+      google_description: book.editorial_note, // Use our editorial note as description
+      publisher_link: publisherLink
+    };
+    
+    console.log(`Processed ${book.title}:`, {
+      cover_url: result.cover_url,
+      publisher_link: result.publisher_link,
+      has_isbn: !!book.isbn
+    });
+    
+    return result;
+  });
 
-  console.log(`Total enriched books: ${enrichedBooks.length}`);
+  console.log(`Total processed books: ${enrichedBooks.length}`);
   return enrichedBooks;
 };
 

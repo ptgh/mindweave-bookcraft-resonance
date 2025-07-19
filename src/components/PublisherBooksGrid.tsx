@@ -73,11 +73,7 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {books.map((book) => {
-          console.log(`Book ${book.title} - Cover URLs:`, {
-            google_cover_url: book.google_cover_url,
-            cover_url: book.cover_url,
-            id: book.id
-          });
+          console.log(`Displaying book: ${book.title} - Cover URL:`, book.cover_url);
           
           return (
             <div 
@@ -86,27 +82,26 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
               onClick={() => handleBookClick(book.id)}
             >
               <div className="flex items-start space-x-4">
-                {/* Book Cover - improved display with better error handling */}
+                {/* Book Cover - using direct cover_url from database */}
                 <div className="w-12 h-16 bg-slate-700 rounded flex items-center justify-center flex-shrink-0 overflow-hidden relative">
-                  {(book.google_cover_url || book.cover_url) ? (
+                  {book.cover_url ? (
                     <img 
-                      src={book.google_cover_url || book.cover_url} 
+                      src={book.cover_url} 
                       alt={book.title} 
                       className="w-full h-full object-cover rounded"
-                      style={{ imageRendering: 'crisp-edges' }}
                       onError={(e) => {
-                        console.error(`Failed to load cover for ${book.title}:`, book.google_cover_url || book.cover_url);
+                        console.error(`Failed to load cover for ${book.title}:`, book.cover_url);
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
                         const fallback = target.nextElementSibling as HTMLElement;
                         if (fallback) fallback.classList.remove('hidden');
                       }}
                       onLoad={() => {
-                        console.log(`Cover loaded successfully for ${book.title}:`, book.google_cover_url || book.cover_url);
+                        console.log(`Cover loaded successfully for ${book.title}:`, book.cover_url);
                       }}
                     />
                   ) : null}
-                  <div className={`flex items-center justify-center text-slate-300 text-lg absolute inset-0 ${(book.google_cover_url || book.cover_url) ? 'hidden' : ''}`}>
+                  <div className={`flex items-center justify-center text-slate-300 text-lg absolute inset-0 ${book.cover_url ? 'hidden' : ''}`}>
                     {getSeriesPlaceholder(series.name)}
                   </div>
                 </div>
