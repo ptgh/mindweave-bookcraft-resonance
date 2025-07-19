@@ -560,15 +560,7 @@ export type Database = {
           title?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "transmissions_publisher_series_id_fkey"
-            columns: ["publisher_series_id"]
-            isOneToOne: false
-            referencedRelation: "publisher_series"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {

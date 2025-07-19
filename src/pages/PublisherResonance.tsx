@@ -35,33 +35,15 @@ const PublisherResonance = () => {
   const { user, loading: authLoading } = useAuth();
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
 
-  // Static fallback data for Penguin Science Fiction series
-  const penguinFallbackBooks: EnrichedPublisherBook[] = useMemo(() => [
-    {
-      id: "ark-sakura",
-      series_id: "penguin-scifi",
-      title: "The Ark Sakura",
-      author: "Kobo Abe & Juliet Winters Carpenter",
-      isbn: "9780241454589",
-      cover_url: "/lovable-uploads/bf7a5e03-17a9-4a36-b156-3d23678f4ba5.png",
-      publisher_link: "https://www.penguin.co.uk/books/317662/the-ark-sakura-by-abe-kobo/9780241454589",
-      editorial_note: "'One of Japan's most venerated writers' David Mitchell\n\nIn this unnerving fable from one of Japan's greatest novelists, a recluse known as 'Mole' retreats to a vast underground bunker, only to find that strange guests, booby traps and a giant toilet may prove even greater obstacles than nuclear disaster.",
-      google_cover_url: null,
-      created_at: new Date().toISOString()
-    }
-  ], []);
-
   const currentSeries = useMemo(() => 
     publisherSeries.find(series => series.publisher === selectedPublisher),
     [publisherSeries, selectedPublisher]
   );
 
   const filteredBooks = useMemo(() => {
-    if (!currentSeries) {
-      return selectedPublisher === 'Penguin' ? penguinFallbackBooks : [];
-    }
+    if (!currentSeries) return [];
     return books.filter(book => book.series_id === currentSeries.id);
-  }, [books, currentSeries, selectedPublisher, penguinFallbackBooks]);
+  }, [books, currentSeries]);
 
   // Load publisher series and books
   useEffect(() => {
@@ -135,9 +117,8 @@ const PublisherResonance = () => {
     setSelectedBook(null);
   }, []);
 
-  const handlePublisherClick = (publisher: 'Penguin' | 'Gollancz', url: string) => {
+  const handlePublisherClick = (publisher: 'Penguin' | 'Gollancz') => {
     setSelectedPublisher(publisher);
-    window.open(url, '_blank');
   };
 
   // Show loading state while auth is being determined
@@ -170,15 +151,15 @@ const PublisherResonance = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <StandardButton
-                  onClick={() => handlePublisherClick('Penguin', 'https://www.penguin.co.uk/series/PENGSCIFI/penguin-science-fiction')}
-                  variant="standard"
+                  onClick={() => handlePublisherClick('Penguin')}
+                  variant={selectedPublisher === 'Penguin' ? 'primary' : 'ghost'}
                   className="touch-manipulation active:scale-95"
                 >
                   Penguin Scan Signal Collection
                 </StandardButton>
                 <StandardButton
-                  onClick={() => handlePublisherClick('Gollancz', 'https://store.gollancz.co.uk/collections/series-s-f-masterworks')}
-                  variant="standard"
+                  onClick={() => handlePublisherClick('Gollancz')}
+                  variant={selectedPublisher === 'Gollancz' ? 'primary' : 'ghost'}
                   className="touch-manipulation active:scale-95"
                 >
                   Gollancz SF Scan Signal Collection
