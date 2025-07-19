@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Transmission {
@@ -25,7 +24,7 @@ export interface Transmission {
     description: string;
     logo_url?: string;
     badge_emoji: string;
-  };
+  } | null;
   isbn?: string;
   apple_link?: string;
   open_count?: number;
@@ -132,15 +131,7 @@ export const getTransmissions = async (): Promise<Transmission[]> => {
     const { data, error } = await supabase
       .from('transmissions')
       .select(`
-        *,
-        publisher_series (
-          id,
-          name,
-          publisher,
-          description,
-          logo_url,
-          badge_emoji
-        )
+        *
       `)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
@@ -166,7 +157,7 @@ export const getTransmissions = async (): Promise<Transmission[]> => {
       user_id: item.user_id || '',
       created_at: item.created_at,
       publisher_series_id: item.publisher_series_id,
-      publisher_series: item.publisher_series,
+      publisher_series: null, // Set to null since we're not joining
       publication_year: item.publication_year,
       narrative_time_period: item.narrative_time_period,
       historical_context_tags: item.historical_context_tags

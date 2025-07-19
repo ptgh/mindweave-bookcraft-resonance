@@ -1,11 +1,10 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Transmission } from "./transmissionsService";
 
 // Optimized version with better query performance and error handling
 export const getTransmissionsOptimized = async (): Promise<Transmission[]> => {
   try {
-    // Single optimized query using the new indexes
+    // Single optimized query without publisher_series join
     const { data, error } = await supabase
       .from('transmissions')
       .select(`
@@ -18,15 +17,7 @@ export const getTransmissionsOptimized = async (): Promise<Transmission[]> => {
         notes,
         created_at,
         user_id,
-        publisher_series_id,
-        publisher_series!inner (
-          id,
-          name,
-          publisher,
-          description,
-          logo_url,
-          badge_emoji
-        )
+        publisher_series_id
       `)
       .order('created_at', { ascending: false })
       .limit(50); // Limit initial load for better performance
@@ -44,8 +35,8 @@ export const getTransmissionsOptimized = async (): Promise<Transmission[]> => {
       rating: item.resonance_labels ? JSON.parse(item.resonance_labels) : {},
       user_id: item.user_id || '',
       created_at: item.created_at,
-      publisher_series_id: item.publisher_series_id,
-      publisher_series: item.publisher_series
+      publisher_series_id: item.publisher_series_id || '',
+      publisher_series: null // Set to null since we're not joining
     }));
   } catch (error) {
     console.error('Error fetching transmissions:', error);
@@ -61,15 +52,16 @@ export const searchTransmissionsOptimized = async (query: string): Promise<Trans
     const { data, error } = await supabase
       .from('transmissions')
       .select(`
-        *,
-        publisher_series (
-          id,
-          name,
-          publisher,
-          description,
-          logo_url,
-          badge_emoji
-        )
+        id,
+        title,
+        author,
+        cover_url,
+        tags,
+        resonance_labels,
+        notes,
+        created_at,
+        user_id,
+        publisher_series_id
       `)
       .or(`title.fts.${query},author.fts.${query}`)
       .limit(20);
@@ -87,8 +79,8 @@ export const searchTransmissionsOptimized = async (query: string): Promise<Trans
       rating: item.resonance_labels ? JSON.parse(item.resonance_labels) : {},
       user_id: item.user_id || '',
       created_at: item.created_at,
-      publisher_series_id: item.publisher_series_id,
-      publisher_series: item.publisher_series
+      publisher_series_id: item.publisher_series_id || '',
+      publisher_series: null // Set to null since we're not joining
     }));
   } catch (error) {
     console.error('Error searching transmissions:', error);
