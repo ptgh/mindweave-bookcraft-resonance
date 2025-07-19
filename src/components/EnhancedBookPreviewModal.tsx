@@ -420,11 +420,39 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                 </div>
               )}
               
+              {/* Publisher Hard Copy Section */}
+              {book.publisher_link && (
+                <div className="border border-slate-700 rounded-lg p-2 bg-slate-700/20 mb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Globe className="w-4 h-4 text-slate-400" />
+                      <div className="flex items-center space-x-2">
+                        <span className="text-slate-200 text-sm font-medium">Publisher Store</span>
+                        <span className="text-slate-400 text-sm">(Hard Copy)</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (book.publisher_link) {
+                          window.open(book.publisher_link, '_blank', 'noopener,noreferrer');
+                        }
+                      }}
+                      className="h-9 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-xs rounded-lg transition-all duration-300 ease-in-out text-[#cdd6f4] hover:border-[#89b4fa]"
+                      style={{
+                        boxShadow: "0 0 0px transparent"
+                      }}
+                    >
+                      Visit Store
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Digital Copy Section */}
               <div className="border border-slate-700 rounded-lg p-2 bg-slate-700/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <ExternalLink className="w-4 h-4 text-slate-400" />
+                    <Smartphone className="w-4 h-4 text-slate-400" />
                     <div className="flex items-center space-x-2">
                       <span className="text-slate-200 text-sm font-medium">{digitalCopyInfo.service}</span>
                       {digitalCopyInfo.hasPrice && (
@@ -437,18 +465,18 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                     onClick={digitalCopyInfo.disabled ? undefined : handleDigitalCopyAction}
                     disabled={digitalCopyInfo.disabled}
                     className={`h-9 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-xs rounded-lg transition-all duration-300 ease-in-out ${
-                      digitalCopyInfo.disabled 
-                        ? 'text-slate-500 cursor-not-allowed' 
-                        : 'text-[#cdd6f4] hover:border-[#89b4fa]'
-                    }`}
-                    style={{
-                      boxShadow: "0 0 0px transparent"
-                    }}
-                  >
-                    {digitalCopyInfo.buttonText}
-                  </button>
-                </div>
-              </div>
+                       digitalCopyInfo.disabled 
+                         ? 'text-slate-500 cursor-not-allowed' 
+                         : 'text-[#cdd6f4] hover:border-[#89b4fa]'
+                     }`}
+                     style={{
+                       boxShadow: "0 0 0px transparent"
+                     }}
+                   >
+                     {digitalCopyInfo.buttonText}
+                   </button>
+                 </div>
+               </div>
             </div>
           )}
         </div>

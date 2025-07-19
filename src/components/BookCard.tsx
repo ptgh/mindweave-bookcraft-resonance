@@ -113,14 +113,10 @@ const BookCard = ({
             </div>
           </div>
           
-          {/* Publisher Badge - Show Penguin badge for Penguin books, otherwise show generic */}
-          {isPenguinBook ? (
+          {/* Publisher Badge - More prominent display */}
+          {publisher_series && (
             <div className="mt-2">
-              <PenguinPublisherBadge size="sm" />
-            </div>
-          ) : publisher_series && (
-            <div className="mt-2">
-              <PublisherResonanceBadge series={publisher_series} />
+              <PublisherResonanceBadge series={publisher_series} size="md" />
             </div>
           )}
           

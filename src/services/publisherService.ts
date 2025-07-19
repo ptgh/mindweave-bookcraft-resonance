@@ -26,6 +26,7 @@ export interface PublisherBook {
 export interface EnrichedPublisherBook extends PublisherBook {
   google_cover_url?: string;
   google_description?: string;
+  publisher_link?: string;
 }
 
 export const getPublisherSeries = async (): Promise<PublisherSeries[]> => {
@@ -39,35 +40,58 @@ export const getPublisherSeries = async (): Promise<PublisherSeries[]> => {
 };
 
 export const getPublisherBooks = async (seriesId: string): Promise<EnrichedPublisherBook[]> => {
-  const { data, error } = await supabase
+  const { data: books, error } = await supabase
     .from('publisher_books')
-    .select('*')
-    .eq('series_id', seriesId)
-    .order('title');
+    .select(`
+      *,
+      series:publisher_series!inner(*)
+    `)
+    .eq('series_id', seriesId);
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error fetching publisher books:', error);
+    throw error;
+  }
 
-  // Enrich books with Google Books API data
+  if (!books) return [];
+
+  // Helper function to generate publisher store links
+  const getPublisherLink = (seriesName: string, title: string, author: string, isbn?: string) => {
+    if (seriesName.toLowerCase().includes('gollancz')) {
+      return `https://store.gollancz.co.uk/collections/series-s-f-masterworks`;
+    }
+    if (seriesName.toLowerCase().includes('penguin')) {
+      return `https://www.penguin.co.uk/series/PENGSCIFI/penguin-science-fiction`;
+    }
+    if (seriesName.toLowerCase().includes('angry robot')) {
+      return `https://angryrobotbooks.com`;
+    }
+    return null;
+  };
+
+  // Enrich with Google Books data and publisher links
   const enrichedBooks = await Promise.all(
-    (data || []).map(async (book) => {
+    books.map(async (book) => {
       try {
-        // Search for book using title and author or ISBN
-        const searchQuery = book.isbn || `${book.title} ${book.author}`;
-        const googleBooks = await searchBooks(searchQuery);
+        const googleBooks = await searchBooks(`${book.title} ${book.author}`);
+        const googleBook = googleBooks[0];
+        const seriesName = (book as any).series?.name || '';
         
-        if (googleBooks.length > 0) {
-          const firstResult = googleBooks[0];
-          return {
-            ...book,
-            google_cover_url: firstResult.coverUrl,
-            cover_url: firstResult.coverUrl || book.cover_url
-          };
-        }
+        return {
+          ...book,
+          google_cover_url: googleBook?.coverUrl || book.cover_url,
+          google_description: undefined, // Book interface doesn't have description
+          publisher_link: getPublisherLink(seriesName, book.title, book.author, book.isbn)
+        };
       } catch (error) {
-        console.warn(`Failed to fetch Google Books data for ${book.title}:`, error);
+        console.error(`Error enriching book ${book.title}:`, error);
+        return {
+          ...book,
+          google_cover_url: book.cover_url,
+          google_description: undefined,
+          publisher_link: null
+        };
       }
-      
-      return book;
     })
   );
 

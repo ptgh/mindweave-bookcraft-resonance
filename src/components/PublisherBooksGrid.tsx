@@ -3,15 +3,19 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import PublisherResonanceBadge from "./PublisherResonanceBadge";
 import { EnrichedPublisherBook, PublisherSeries } from "@/services/publisherService";
+import EnhancedBookPreviewModal from "./EnhancedBookPreviewModal";
 
 interface PublisherBooksGridProps {
   books: EnrichedPublisherBook[];
-  series: PublisherSeries;
+  series?: PublisherSeries;
   onAddBook: (book: EnrichedPublisherBook) => void;
   loading?: boolean;
 }
 
 const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBooksGridProps) => {
+  if (!series) return null;
+  
+  const [selectedBook, setSelectedBook] = useState<EnrichedPublisherBook | null>(null);
   const getSeriesPlaceholder = (seriesName: string) => {
     if (seriesName.toLowerCase().includes('penguin')) return '🐧';
     if (seriesName.toLowerCase().includes('gollancz')) return '🏛️';
@@ -53,7 +57,11 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {books.map((book) => (
-          <div key={book.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors">
+          <div 
+            key={book.id} 
+            className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors cursor-pointer"
+            onClick={() => setSelectedBook(book)}
+          >
             <div className="flex items-start space-x-4">
               {/* Book Cover - matching transmissions page size */}
               <div className="w-12 h-16 bg-slate-700 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
@@ -94,22 +102,37 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
                   <p className="text-slate-500 text-xs font-mono mb-3">ISBN: {book.isbn}</p>
                 )}
                 
-                {/* Add Button - properly aligned */}
-                <Button
-                  size="sm"
-                  onClick={() => onAddBook(book)}
-                  className="w-full bg-purple-600/70 hover:bg-purple-600/90 text-white text-xs h-8 font-light border-0 flex items-center justify-center"
-                >
-                  <div className="w-3 h-3 rounded-full border border-white mr-2 flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                  </div>
-                  Add to Transmissions
-                </Button>
+                 {/* Add Button - properly aligned */}
+                 <Button
+                   size="sm"
+                   onClick={(e) => {
+                     e.stopPropagation();
+                     onAddBook(book);
+                   }}
+                   className="w-full bg-primary/70 hover:bg-primary/90 text-white text-xs h-8 font-light border-0 flex items-center justify-center"
+                 >
+                   <div className="w-3 h-3 rounded-full border border-white mr-2 flex items-center justify-center">
+                     <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                   </div>
+                   Add to Transmissions
+                 </Button>
               </div>
             </div>
           </div>
         ))}
       </div>
+      
+      {/* Book Preview Modal */}
+      {selectedBook && (
+        <EnhancedBookPreviewModal
+          book={selectedBook}
+          onClose={() => setSelectedBook(null)}
+          onAddBook={(book) => {
+            onAddBook(book);
+            setSelectedBook(null);
+          }}
+        />
+      )}
     </div>
   );
 };
