@@ -1,24 +1,39 @@
 
 import { useState } from "react";
-import { X, ExternalLink, Download, ShoppingCart } from "lucide-react";
+import { X, ExternalLink, Download, Building, Zap, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { EnrichedPublisherBook } from "@/services/publisherService";
+import { EnrichedPublisherBook, PublisherSeries } from "@/services/publisherService";
 
 interface PublisherBookModalProps {
   book: EnrichedPublisherBook;
+  series: PublisherSeries;
   isOpen: boolean;
   onClose: () => void;
   onAddToTransmissions: (book: EnrichedPublisherBook) => void;
 }
 
-const PublisherBookModal = ({ book, isOpen, onClose, onAddToTransmissions }: PublisherBookModalProps) => {
+const PublisherBookModal = ({ book, series, isOpen, onClose, onAddToTransmissions }: PublisherBookModalProps) => {
   if (!isOpen) return null;
 
-  const isPenguinBook = book.series_id.includes('penguin') || book.title.toLowerCase().includes('penguin');
+  const getPublisherIcon = () => {
+    if (series.name.toLowerCase().includes('gollancz')) return Zap;
+    if (series.name.toLowerCase().includes('robot')) return Bot;
+    return Building;
+  };
+
+  const Icon = getPublisherIcon();
   
-  const generatePenguinStoreUrl = (title: string, author: string) => {
+  const generatePublisherStoreUrl = (title: string, author: string, seriesName: string) => {
     const searchQuery = `${title} ${author}`.replace(/\s+/g, '+');
-    return `https://www.penguin.co.uk/search?q=${searchQuery}`;
+    
+    if (seriesName.toLowerCase().includes('penguin')) {
+      return `https://www.penguin.co.uk/search?q=${searchQuery}`;
+    } else if (seriesName.toLowerCase().includes('gollancz')) {
+      return `https://store.gollancz.co.uk/search?q=${searchQuery}`;
+    } else if (seriesName.toLowerCase().includes('robot')) {
+      return `https://angryrobotbooks.com/?s=${searchQuery}`;
+    }
+    return `https://www.google.com/search?q=${searchQuery}+book`;
   };
 
   const generateAppleBooksUrl = (title: string, author: string) => {
@@ -37,11 +52,9 @@ const PublisherBookModal = ({ book, isOpen, onClose, onAddToTransmissions }: Pub
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-700/30">
           <div className="flex items-center space-x-3">
-            {isPenguinBook && (
-              <div className="w-8 h-8 bg-gradient-to-br from-orange-500/20 to-orange-600/30 rounded-lg flex items-center justify-center border border-orange-500/30">
-                <span className="text-lg">🐧</span>
-              </div>
-            )}
+            <div className="w-8 h-8 bg-gradient-to-br from-primary/20 to-primary/30 rounded-lg flex items-center justify-center border border-primary/30">
+              <Icon className="w-4 h-4 text-primary" />
+            </div>
             <div>
               <h2 className="text-xl text-slate-200 font-medium">{book.title}</h2>
               <p className="text-slate-400 text-sm">{book.author}</p>
@@ -74,8 +87,8 @@ const PublisherBookModal = ({ book, isOpen, onClose, onAddToTransmissions }: Pub
                     }}
                   />
                 ) : null}
-                <div className={`flex items-center justify-center text-slate-400 text-3xl ${book.cover_url ? 'hidden' : ''}`}>
-                  {isPenguinBook ? '🐧' : '📚'}
+                <div className={`flex items-center justify-center text-primary text-3xl ${book.cover_url ? 'hidden' : ''}`}>
+                  <Icon className="w-8 h-8" />
                 </div>
               </div>
             </div>
@@ -100,24 +113,22 @@ const PublisherBookModal = ({ book, isOpen, onClose, onAddToTransmissions }: Pub
               <div className="space-y-3">
                 <h3 className="text-slate-300 font-medium mb-3">Get This Book</h3>
                 
-                {/* Penguin Store Link (for Penguin books) */}
-                {isPenguinBook && (
-                  <a
-                    href={generatePenguinStoreUrl(book.title, book.author)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between w-full p-3 bg-gradient-to-r from-orange-500/10 to-orange-600/20 border border-orange-500/30 rounded-lg hover:from-orange-500/20 hover:to-orange-600/30 transition-all duration-200 group"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <span className="text-lg">🐧</span>
-                      <div>
-                        <div className="text-orange-300 font-medium text-sm">Penguin Store</div>
-                        <div className="text-orange-400/70 text-xs">Official paperback & digital</div>
-                      </div>
+                {/* Publisher Store Link */}
+                <a
+                  href={generatePublisherStoreUrl(book.title, book.author, series.name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between w-full p-3 bg-gradient-to-r from-primary/10 to-primary/20 border border-primary/30 rounded-lg hover:from-primary/20 hover:to-primary/30 transition-all duration-200 group"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Icon className="w-5 h-5 text-primary" />
+                    <div>
+                      <div className="text-primary font-medium text-sm">{series.publisher} Store</div>
+                      <div className="text-primary/70 text-xs">Official paperback & digital</div>
                     </div>
-                    <ExternalLink className="w-4 h-4 text-orange-400 group-hover:text-orange-300" />
-                  </a>
-                )}
+                  </div>
+                  <ExternalLink className="w-4 h-4 text-primary group-hover:text-primary/80" />
+                </a>
                 
                 {/* Apple Books */}
                 <a
@@ -127,7 +138,7 @@ const PublisherBookModal = ({ book, isOpen, onClose, onAddToTransmissions }: Pub
                   className="flex items-center justify-between w-full p-3 bg-slate-700/30 border border-slate-600/50 rounded-lg hover:bg-slate-700/50 transition-all duration-200 group"
                 >
                   <div className="flex items-center space-x-3">
-                    <span className="text-lg">📱</span>
+                    <ExternalLink className="w-5 h-5 text-slate-400" />
                     <div>
                       <div className="text-slate-300 font-medium text-sm">Apple Books</div>
                       <div className="text-slate-400 text-xs">Digital edition</div>
@@ -168,12 +179,9 @@ const PublisherBookModal = ({ book, isOpen, onClose, onAddToTransmissions }: Pub
           </Button>
           <Button
             onClick={() => onAddToTransmissions(book)}
-            className={`${isPenguinBook 
-              ? 'bg-orange-600/80 hover:bg-orange-600/90 text-white' 
-              : 'bg-blue-600/80 hover:bg-blue-600/90 text-white'
-            } transition-all duration-200`}
+            className="bg-primary/80 hover:bg-primary/90 text-white transition-all duration-200"
           >
-            <span className="mr-2">{isPenguinBook ? '🐧' : '📚'}</span>
+            <Icon className="w-4 h-4 mr-2" />
             Add to Transmissions
           </Button>
         </div>
