@@ -55,52 +55,57 @@ export const getPublisherBooks = async (seriesId: string): Promise<EnrichedPubli
 
   if (!books) return [];
 
-  // Helper function to generate specific book links
-  const getPublisherLink = (seriesName: string, title: string, author: string, isbn?: string) => {
-    console.log('Generating link for:', { seriesName, title, author, isbn });
+  // Dynamic link verification function
+  const verifyAndGetPublisherLink = async (seriesName: string, title: string, author: string, isbn?: string) => {
+    console.log('Getting publisher link for:', { seriesName, title, author, isbn });
     
-    // Create URL-friendly slugs
-    const titleSlug = title.toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
-    
-    const authorSlug = author.toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
+    try {
+      // Call the edge function to get dynamic publisher links
+      const { data, error } = await supabase.functions.invoke('search-free-ebooks', {
+        body: {
+          title,
+          author,
+          includePublisherLinks: true
+        }
+      });
 
+      if (!error && data?.publisherLink) {
+        return data.publisherLink;
+      }
+    } catch (error) {
+      console.warn('Failed to get dynamic publisher link:', error);
+    }
+
+    // Fallback to series-specific pages that we know exist
     if (seriesName.toLowerCase().includes('gollancz')) {
-      // Use direct Gollancz series URL since individual book URLs are complex
       return `https://www.gollancz.co.uk/series/sf-masterworks/`;
     }
     if (seriesName.toLowerCase().includes('penguin')) {
-      // Use Penguin Science Fiction series URL
       return `https://www.penguin.co.uk/series/PENGSCIFI/penguin-science-fiction`;
     }
     if (seriesName.toLowerCase().includes('angry robot')) {
-      // Use main Angry Robot books page since individual URLs vary
       return `https://angryrobotbooks.com/books/`;
     }
     return null;
   };
 
-  // Enrich with Google Books data and publisher links
+  // Enrich with Google Books data and dynamic publisher links
   const enrichedBooks = await Promise.all(
     books.map(async (book) => {
       try {
-        const googleBooks = await searchBooks(`${book.title} ${book.author}`);
+        const [googleBooks, publisherLink] = await Promise.all([
+          searchBooks(`${book.title} ${book.author}`),
+          verifyAndGetPublisherLink((book as any).series?.name || '', book.title, book.author, book.isbn)
+        ]);
+        
         const googleBook = googleBooks[0];
-        const seriesName = (book as any).series?.name || '';
         
         return {
           ...book,
           google_cover_url: googleBook?.coverUrl,
-          cover_url: googleBook?.coverUrl || book.cover_url, // Update cover_url with Google Books cover
-          google_description: undefined, // Book interface doesn't have description
-          publisher_link: getPublisherLink(seriesName, book.title, book.author, book.isbn)
+          cover_url: googleBook?.coverUrl || book.cover_url,
+          google_description: undefined,
+          publisher_link: publisherLink
         };
       } catch (error) {
         console.error(`Error enriching book ${book.title}:`, error);
@@ -109,7 +114,7 @@ export const getPublisherBooks = async (seriesId: string): Promise<EnrichedPubli
           ...book,
           google_cover_url: book.cover_url,
           google_description: undefined,
-          publisher_link: getPublisherLink(seriesName, book.title, book.author, book.isbn)
+          publisher_link: await verifyAndGetPublisherLink(seriesName, book.title, book.author, book.isbn)
         };
       }
     })
