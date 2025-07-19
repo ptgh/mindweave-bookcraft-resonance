@@ -142,15 +142,16 @@ const PublisherResonance = () => {
           {selectedSeriesData && (
             <div className="mb-8">
               <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search books..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-slate-800/50 border-slate-600 text-slate-200 placeholder-slate-400"
-                  />
-                </div>
+                 <div className="relative flex-1 max-w-md">
+                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                   <Input
+                     placeholder="Search books..."
+                     value={searchQuery}
+                     onChange={(e) => setSearchQuery(e.target.value)}
+                     className="pl-10 bg-slate-800/50 border-slate-600 text-slate-200 placeholder-slate-400"
+                   />
+                   <p className="text-slate-400 text-xs mt-1">Search within the selected publisher's collection</p>
+                 </div>
                 
                  <div className="relative">
                    <Button

@@ -57,6 +57,8 @@ export const getPublisherBooks = async (seriesId: string): Promise<EnrichedPubli
 
   // Helper function to generate specific book links
   const getPublisherLink = (seriesName: string, title: string, author: string, isbn?: string) => {
+    console.log('Generating link for:', { seriesName, title, author, isbn });
+    
     // Create URL-friendly slugs
     const titleSlug = title.toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
@@ -71,16 +73,16 @@ export const getPublisherBooks = async (seriesId: string): Promise<EnrichedPubli
       .trim();
 
     if (seriesName.toLowerCase().includes('gollancz')) {
-      // Generate specific Gollancz book URL structure
-      return `https://store.gollancz.co.uk/products/${titleSlug}-by-${authorSlug}`;
+      // Use direct Gollancz series URL since individual book URLs are complex
+      return `https://www.gollancz.co.uk/series/sf-masterworks/`;
     }
     if (seriesName.toLowerCase().includes('penguin')) {
-      // Generate specific Penguin book URL structure  
-      return `https://www.penguin.co.uk/books/${titleSlug}-by-${authorSlug}${isbn ? `/${isbn}` : ''}`;
+      // Use Penguin Science Fiction series URL
+      return `https://www.penguin.co.uk/series/PENGSCIFI/penguin-science-fiction`;
     }
     if (seriesName.toLowerCase().includes('angry robot')) {
-      // Generate specific Angry Robot book URL
-      return `https://angryrobotbooks.com/book/${titleSlug}`;
+      // Use main Angry Robot books page since individual URLs vary
+      return `https://angryrobotbooks.com/books/`;
     }
     return null;
   };

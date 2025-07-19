@@ -21,6 +21,12 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
   useEffect(() => {
     setSelectedBook(null);
   }, [books]);
+
+  // Add click handler that ensures we get the right book
+  const handleBookClick = (book: EnrichedPublisherBook) => {
+    console.log('Clicking book:', book.title, book.author);
+    setSelectedBook(book);
+  };
   const getSeriesPlaceholder = (seriesName: string) => {
     if (seriesName.toLowerCase().includes('penguin')) return '📚';
     if (seriesName.toLowerCase().includes('gollancz')) return '🏛️';
@@ -65,7 +71,7 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
           <div 
             key={book.id} 
             className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors cursor-pointer"
-            onClick={() => setSelectedBook(book)}
+            onClick={() => handleBookClick(book)}
           >
             <div className="flex items-start space-x-4">
               {/* Book Cover - matching transmissions page size */}
