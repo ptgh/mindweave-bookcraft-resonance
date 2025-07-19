@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import PublisherResonanceBadge from "./PublisherResonanceBadge";
 import { EnrichedPublisherBook, PublisherSeries } from "@/services/publisherService";
@@ -15,23 +15,27 @@ interface PublisherBooksGridProps {
 const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBooksGridProps) => {
   if (!series) return null;
   
-  const [selectedBook, setSelectedBook] = useState<EnrichedPublisherBook | null>(null);
+  const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   
   // Reset selected book when books change
   useEffect(() => {
-    setSelectedBook(null);
+    setSelectedBookId(null);
   }, [books]);
 
-  // Add click handler that ensures we get the right book
-  const handleBookClick = (book: EnrichedPublisherBook) => {
-    console.log('Clicking book:', book.title, book.author);
-    setSelectedBook(book);
+  // Get the selected book by ID to ensure correct book data
+  const selectedBook = selectedBookId ? books.find(book => book.id === selectedBookId) : null;
+
+  const handleBookClick = (bookId: string) => {
+    console.log('Clicking book with ID:', bookId);
+    setSelectedBookId(bookId);
   };
+
   const getSeriesPlaceholder = (seriesName: string) => {
     if (seriesName.toLowerCase().includes('penguin')) return '📚';
     if (seriesName.toLowerCase().includes('gollancz')) return '🏛️';
     if (seriesName.toLowerCase().includes('tor')) return '🗲';
     if (seriesName.toLowerCase().includes('oxford')) return '📜';
+    if (seriesName.toLowerCase().includes('angry robot')) return '🤖';
     return '📚';
   };
 
@@ -62,8 +66,8 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
     <div>
       <div className="mb-6">
         <PublisherResonanceBadge series={series} size="md" />
-        <p className="text-slate-300 text-sm mt-2 leading-relaxed">{series.description}</p>
-        <p className="text-slate-500 text-xs mt-1">Covers powered by Google Books API</p>
+        <p className="text-slate-200 text-sm mt-3 leading-relaxed">{series.description}</p>
+        <p className="text-slate-400 text-xs mt-2">Book covers powered by Google Books API</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -71,10 +75,10 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
           <div 
             key={book.id} 
             className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors cursor-pointer"
-            onClick={() => handleBookClick(book)}
+            onClick={() => handleBookClick(book.id)}
           >
             <div className="flex items-start space-x-4">
-              {/* Book Cover - matching transmissions page size */}
+              {/* Book Cover - improved display */}
               <div className="w-12 h-16 bg-slate-700 rounded flex items-center justify-center flex-shrink-0 overflow-hidden relative">
                 {(book.google_cover_url || book.cover_url) ? (
                   <img 
@@ -87,6 +91,9 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
                       target.style.display = 'none';
                       const fallback = target.nextElementSibling as HTMLElement;
                       if (fallback) fallback.classList.remove('hidden');
+                    }}
+                    onLoad={() => {
+                      console.log('Cover loaded for:', book.title);
                     }}
                   />
                 ) : null}
@@ -113,7 +120,7 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
                   <p className="text-slate-500 text-xs font-mono mb-3">ISBN: {book.isbn}</p>
                 )}
                 
-                 {/* Add Button - properly aligned */}
+                 {/* Add Button */}
                  <Button
                    size="sm"
                    onClick={(e) => {
@@ -137,10 +144,10 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
       {selectedBook && (
         <EnhancedBookPreviewModal
           book={selectedBook}
-          onClose={() => setSelectedBook(null)}
+          onClose={() => setSelectedBookId(null)}
           onAddBook={(book) => {
             onAddBook(book);
-            setSelectedBook(null);
+            setSelectedBookId(null);
           }}
         />
       )}

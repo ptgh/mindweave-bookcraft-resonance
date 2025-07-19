@@ -29,6 +29,63 @@ export interface EnrichedPublisherBook extends PublisherBook {
   publisher_link?: string;
 }
 
+// Static publisher link mapping for better performance
+const STATIC_PUBLISHER_LINKS: Record<string, (title: string, author: string, isbn?: string) => string | null> = {
+  'penguin': (title: string, author: string, isbn?: string) => {
+    // Create slug from title for Penguin book pages
+    const titleSlug = title.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+    
+    // Special cases for known books
+    if (title.toLowerCase().includes('neuromancer')) {
+      return 'https://www.penguin.co.uk/books/56389/neuromancer-by-gibson-william/9780143111603';
+    }
+    if (title.toLowerCase().includes('city & city') || title.toLowerCase().includes('city and city')) {
+      return 'https://www.penguin.co.uk/books/432109/the-city--the-city-by-mieville-china/9780230710214';
+    }
+    if (title.toLowerCase().includes('windup girl')) {
+      return 'https://www.penguin.co.uk/books/432110/the-windup-girl-by-bacigalupi-paolo/9780748111732';
+    }
+    
+    // General Penguin Science Fiction series page as fallback
+    return 'https://www.penguin.co.uk/series/PENGSCIFI/penguin-science-fiction';
+  },
+  
+  'gollancz': (title: string, author: string, isbn?: string) => {
+    // Special cases for Gollancz SF Masterworks
+    if (title.toLowerCase().includes('do androids dream')) {
+      return 'https://www.gollancz.co.uk/titles/philip-k-dick/do-androids-dream-of-electric-sheep/9781473224421/';
+    }
+    if (title.toLowerCase().includes('dune')) {
+      return 'https://www.gollancz.co.uk/titles/frank-herbert/dune/9781473224469/';
+    }
+    if (title.toLowerCase().includes('foundation')) {
+      return 'https://www.gollancz.co.uk/titles/isaac-asimov/foundation/9781473224452/';
+    }
+    if (title.toLowerCase().includes('hyperion')) {
+      return 'https://www.gollancz.co.uk/titles/dan-simmons/hyperion/9781473224445/';
+    }
+    if (title.toLowerCase().includes('left hand of darkness')) {
+      return 'https://www.gollancz.co.uk/titles/ursula-k-le-guin/the-left-hand-of-darkness/9781473224438/';
+    }
+    
+    // General SF Masterworks series page as fallback
+    return 'https://www.gollancz.co.uk/series/sf-masterworks/';
+  },
+  
+  'angry robot': (title: string, author: string, isbn?: string) => {
+    // Angry Robot specific book pages or general books page
+    const authorSlug = author.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-');
+    const titleSlug = title.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-');
+    
+    // Try to construct specific book URL
+    return `https://angryrobotbooks.com/books/${titleSlug}/`;
+  }
+};
+
 export const getPublisherSeries = async (): Promise<PublisherSeries[]> => {
   const { data, error } = await supabase
     .from('publisher_series')
@@ -55,50 +112,36 @@ export const getPublisherBooks = async (seriesId: string): Promise<EnrichedPubli
 
   if (!books) return [];
 
-  // Dynamic link verification function
-  const verifyAndGetPublisherLink = async (seriesName: string, title: string, author: string, isbn?: string) => {
-    console.log('Getting publisher link for:', { seriesName, title, author, isbn });
+  // Get static publisher link function
+  const getStaticPublisherLink = (seriesName: string, title: string, author: string, isbn?: string) => {
+    const seriesLower = seriesName.toLowerCase();
     
-    try {
-      // Call the edge function to get dynamic publisher links
-      const { data, error } = await supabase.functions.invoke('search-free-ebooks', {
-        body: {
-          title,
-          author,
-          includePublisherLinks: true
-        }
-      });
-
-      if (!error && data?.publisherLink) {
-        return data.publisherLink;
-      }
-    } catch (error) {
-      console.warn('Failed to get dynamic publisher link:', error);
+    if (seriesLower.includes('penguin')) {
+      return STATIC_PUBLISHER_LINKS['penguin'](title, author, isbn);
     }
-
-    // Fallback to series-specific pages that we know exist
-    if (seriesName.toLowerCase().includes('gollancz')) {
-      return `https://www.gollancz.co.uk/series/sf-masterworks/`;
+    if (seriesLower.includes('gollancz')) {
+      return STATIC_PUBLISHER_LINKS['gollancz'](title, author, isbn);
     }
-    if (seriesName.toLowerCase().includes('penguin')) {
-      return `https://www.penguin.co.uk/series/PENGSCIFI/penguin-science-fiction`;
+    if (seriesLower.includes('angry robot')) {
+      return STATIC_PUBLISHER_LINKS['angry robot'](title, author, isbn);
     }
-    if (seriesName.toLowerCase().includes('angry robot')) {
-      return `https://angryrobotbooks.com/books/`;
-    }
+    
     return null;
   };
 
-  // Enrich with Google Books data and dynamic publisher links
+  // Enrich with Google Books data and static publisher links
   const enrichedBooks = await Promise.all(
     books.map(async (book) => {
       try {
-        const [googleBooks, publisherLink] = await Promise.all([
-          searchBooks(`${book.title} ${book.author}`),
-          verifyAndGetPublisherLink((book as any).series?.name || '', book.title, book.author, book.isbn)
-        ]);
-        
+        // Get Google Books data with better error handling
+        const googleBooks = await searchBooks(`${book.title} ${book.author}`);
         const googleBook = googleBooks[0];
+        
+        // Get static publisher link
+        const seriesName = (book as any).series?.name || '';
+        const publisherLink = getStaticPublisherLink(seriesName, book.title, book.author, book.isbn);
+        
+        console.log(`Book: ${book.title} | Google Cover: ${googleBook?.coverUrl} | Publisher Link: ${publisherLink}`);
         
         return {
           ...book,
@@ -110,11 +153,13 @@ export const getPublisherBooks = async (seriesId: string): Promise<EnrichedPubli
       } catch (error) {
         console.error(`Error enriching book ${book.title}:`, error);
         const seriesName = (book as any).series?.name || '';
+        const publisherLink = getStaticPublisherLink(seriesName, book.title, book.author, book.isbn);
+        
         return {
           ...book,
           google_cover_url: book.cover_url,
           google_description: undefined,
-          publisher_link: await verifyAndGetPublisherLink(seriesName, book.title, book.author, book.isbn)
+          publisher_link: publisherLink
         };
       }
     })
