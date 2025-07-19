@@ -73,7 +73,12 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {books.map((book) => {
-          console.log(`Displaying book: ${book.title} - Cover URL:`, book.cover_url);
+          console.log(`=== BOOK DISPLAY DEBUG ===`);
+          console.log(`Title: ${book.title}`);
+          console.log(`Cover URL: ${book.cover_url}`);
+          console.log(`Publisher Link: ${book.publisher_link}`);
+          console.log(`Google Cover URL: ${book.google_cover_url}`);
+          console.log(`===========================`);
           
           return (
             <div 
@@ -89,18 +94,21 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
                       src={book.cover_url} 
                       alt={book.title} 
                       className="w-full h-full object-cover rounded"
+                      crossOrigin="anonymous"
                       onError={(e) => {
-                        console.error(`Failed to load cover for ${book.title}:`, book.cover_url);
+                        console.error(`❌ COVER FAILED: ${book.title}`, book.cover_url);
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
                         const fallback = target.nextElementSibling as HTMLElement;
                         if (fallback) fallback.classList.remove('hidden');
                       }}
                       onLoad={() => {
-                        console.log(`Cover loaded successfully for ${book.title}:`, book.cover_url);
+                        console.log(`✅ COVER LOADED: ${book.title}`, book.cover_url);
                       }}
                     />
-                  ) : null}
+                  ) : (
+                    <div className="text-slate-300 text-xs text-center p-1">No Cover</div>
+                  )}
                   <div className={`flex items-center justify-center text-slate-300 text-lg absolute inset-0 ${book.cover_url ? 'hidden' : ''}`}>
                     {getSeriesPlaceholder(series.name)}
                   </div>
@@ -151,7 +159,7 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
           book={selectedBook}
           onClose={() => setSelectedBookId(null)}
           onAddBook={(book) => {
-            onAddBook(book);
+            onAddBook(selectedBook);
             setSelectedBookId(null);
           }}
         />
