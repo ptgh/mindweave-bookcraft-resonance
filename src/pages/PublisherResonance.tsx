@@ -13,17 +13,30 @@ import EnhancedBookPreviewModal from "@/components/EnhancedBookPreviewModal";
 import PublisherBookCard from "@/components/PublisherBookCard";
 import { EnrichedPublisherBook } from "@/services/publisherService";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
+import { supabase } from "@/integrations/supabase/client";
 import penguinLogo from "@/assets/penguin-logo.png";
+
+type PublisherSeries = {
+  id: string;
+  name: string;
+  publisher: string;
+  description: string;
+  badge_emoji: string;
+};
 
 const PublisherResonance = () => {
   const [selectedBook, setSelectedBook] = useState<EnrichedPublisherBook | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [selectedPublisher, setSelectedPublisher] = useState<'Penguin' | 'Gollancz'>('Penguin');
+  const [publisherSeries, setPublisherSeries] = useState<PublisherSeries[]>([]);
+  const [books, setBooks] = useState<EnrichedPublisherBook[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
 
-  // Static data for Penguin Science Fiction series
-  const penguinBooks: EnrichedPublisherBook[] = useMemo(() => [
+  // Static fallback data for Penguin Science Fiction series
+  const penguinFallbackBooks: EnrichedPublisherBook[] = useMemo(() => [
     {
       id: "ark-sakura",
       series_id: "penguin-scifi",
@@ -38,13 +51,71 @@ const PublisherResonance = () => {
     }
   ], []);
 
-  const publisherSeries = {
-    id: "penguin-scifi",
-    name: "Penguin Science Fiction",
-    publisher: "Penguin",
-    badge_emoji: "🐧",
-    description: "Classic and contemporary science fiction from Penguin"
-  };
+  const currentSeries = useMemo(() => 
+    publisherSeries.find(series => series.publisher === selectedPublisher),
+    [publisherSeries, selectedPublisher]
+  );
+
+  const filteredBooks = useMemo(() => {
+    if (!currentSeries) {
+      return selectedPublisher === 'Penguin' ? penguinFallbackBooks : [];
+    }
+    return books.filter(book => book.series_id === currentSeries.id);
+  }, [books, currentSeries, selectedPublisher, penguinFallbackBooks]);
+
+  // Load publisher series and books
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        // Load publisher series
+        const { data: seriesData, error: seriesError } = await supabase
+          .from('publisher_series')
+          .select('*');
+        
+        if (seriesError) throw seriesError;
+        
+        // Load books
+        const { data: booksData, error: booksError } = await supabase
+          .from('publisher_books')
+          .select(`
+            id,
+            series_id,
+            title,
+            author,
+            isbn,
+            cover_url,
+            editorial_note,
+            penguin_url,
+            publication_year,
+            created_at
+          `);
+        
+        if (booksError) throw booksError;
+        
+        setPublisherSeries(seriesData || []);
+        setBooks((booksData || []).map(book => ({
+          ...book,
+          publisher_link: book.penguin_url,
+          google_cover_url: null,
+          created_at: book.created_at || new Date().toISOString()
+        })));
+        
+      } catch (error) {
+        console.error('Error loading publisher data:', error);
+        toast({
+          title: "Connection Error",
+          description: "Using cached signal data",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [toast]);
 
   const handleBookPreview = useCallback((book: EnrichedPublisherBook) => {
     setSelectedBook(book);
@@ -63,6 +134,11 @@ const PublisherResonance = () => {
     setShowPreviewModal(false);
     setSelectedBook(null);
   }, []);
+
+  const handlePublisherClick = (publisher: 'Penguin' | 'Gollancz', url: string) => {
+    setSelectedPublisher(publisher);
+    window.open(url, '_blank');
+  };
 
   // Show loading state while auth is being determined
   if (authLoading) {
@@ -92,27 +168,60 @@ const PublisherResonance = () => {
               <p className="text-slate-300 max-w-2xl mx-auto leading-relaxed mb-6">
                 Discover your next science fiction transmission through the quantum field of possibilities
               </p>
-              <StandardButton
-                onClick={() => window.open('https://www.penguin.co.uk/series/PENGSCIFI/penguin-science-fiction', '_blank')}
-                variant="standard"
-                className="touch-manipulation active:scale-95"
-              >
-                Penguin Scan Signal Collection
-              </StandardButton>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <StandardButton
+                  onClick={() => handlePublisherClick('Penguin', 'https://www.penguin.co.uk/series/PENGSCIFI/penguin-science-fiction')}
+                  variant="standard"
+                  className="touch-manipulation active:scale-95"
+                >
+                  Penguin Scan Signal Collection
+                </StandardButton>
+                <StandardButton
+                  onClick={() => handlePublisherClick('Gollancz', 'https://store.gollancz.co.uk/collections/series-s-f-masterworks')}
+                  variant="standard"
+                  className="touch-manipulation active:scale-95"
+                >
+                  Gollancz SF Scan Signal Collection
+                </StandardButton>
+              </div>
             </div>
           </div>
           
           <div ref={addFeatureBlockRef} className="feature-block mb-8">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {penguinBooks.map(book => (
-                <PublisherBookCard
-                  key={book.id}
-                  book={book}
-                  onLogSignal={() => handleAddToTransmissions(book)}
-                  onPreview={() => handleBookPreview(book)}
-                />
-              ))}
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-light text-slate-300 mb-2">
+                {currentSeries ? `${currentSeries.publisher} ${currentSeries.name}` : `${selectedPublisher} Collection`}
+              </h2>
+              {currentSeries && (
+                <p className="text-slate-400 text-sm">{currentSeries.description}</p>
+              )}
             </div>
+            
+            {loading ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="animate-pulse">
+                    <div className="bg-slate-800 rounded-lg h-96"></div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredBooks.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {filteredBooks.map(book => (
+                  <PublisherBookCard
+                    key={book.id}
+                    book={book}
+                    onLogSignal={() => handleAddToTransmissions(book)}
+                    onPreview={() => handleBookPreview(book)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="No signals detected"
+                description={`No books found in the ${selectedPublisher} collection`}
+              />
+            )}
           </div>
           
           <div className="mt-12 pb-8">
