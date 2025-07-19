@@ -12,7 +12,8 @@ export const transformGoogleBookData = (item: GoogleBooksVolumeInfo): GoogleBook
     if (!images) return undefined;
     
     // Prefer highest quality images and enhance them
-    const baseUrl = images.large || 
+    const baseUrl = images.extraLarge || 
+                   images.large || 
                    images.medium || 
                    images.small || 
                    images.thumbnail || 
@@ -27,16 +28,17 @@ export const transformGoogleBookData = (item: GoogleBooksVolumeInfo): GoogleBook
       .replace('zoom=1', 'zoom=0')
       .replace('http://', 'https://');
     
-    // Add zoom=0 if not present
+    // Add zoom=0 if not present for best quality
     if (!enhancedUrl.includes('zoom=')) {
       const separator = enhancedUrl.includes('?') ? '&' : '?';
       enhancedUrl = `${enhancedUrl}${separator}zoom=0`;
     }
     
+    console.log(`Cover URL for "${volumeInfo.title}": ${enhancedUrl}`);
     return enhancedUrl;
   };
   
-  return {
+  const result = {
     id: item.id,
     title: volumeInfo.title,
     subtitle: volumeInfo.subtitle,
@@ -51,4 +53,6 @@ export const transformGoogleBookData = (item: GoogleBooksVolumeInfo): GoogleBook
     previewLink: volumeInfo.previewLink,
     infoLink: volumeInfo.infoLink
   };
+  
+  return result;
 };

@@ -101,23 +101,26 @@ const PublisherResonance = () => {
 
             {/* Publisher Series Selector */}
             <div className="flex flex-wrap justify-center gap-3 mb-8">
-              {publisherSeries.map((series) => (
-                <Button
-                  key={series.id}
-                  variant={selectedSeries === series.id ? "default" : "outline"}
-                  onClick={() => setSelectedSeries(series.id)}
-                  className={`
-                     ${selectedSeries === series.id 
-                       ? 'bg-primary/80 hover:bg-primary/90 text-white border-primary' 
-                       : 'bg-transparent border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:border-primary/50'
-                     }
-                    transition-all duration-300
-                  `}
-                >
-                  <span className="mr-2">{series.badge_emoji}</span>
-                  {series.name}
-                </Button>
-              ))}
+              {publisherSeries.map((series) => {
+                const isPenguin = series.name.toLowerCase().includes('penguin');
+                return (
+                  <Button
+                    key={series.id}
+                    variant={selectedSeries === series.id ? "default" : "outline"}
+                    onClick={() => setSelectedSeries(series.id)}
+                    className={`
+                       ${selectedSeries === series.id 
+                         ? 'bg-primary/80 hover:bg-primary/90 text-white border-primary' 
+                         : 'bg-transparent border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:border-primary/50'
+                       }
+                      transition-all duration-300
+                    `}
+                  >
+                    <span className="mr-2">{isPenguin ? '🐧' : series.badge_emoji}</span>
+                    {series.name}
+                  </Button>
+                );
+              })}
             </div>
           </div>
 
@@ -160,7 +163,7 @@ const PublisherResonance = () => {
                 <Building className="w-12 h-12 mx-auto mb-4" />
               </div>
               <h2 className="text-xl text-slate-200 mb-4">Mapping Publisher Consciousness</h2>
-              <p className="text-slate-400 mb-6">
+              <p className="text-slate-300 mb-6 leading-relaxed">
                 Publisher series are being calibrated. Select a series above to explore curated collections.
               </p>
               <div className="flex items-center justify-center space-x-2">

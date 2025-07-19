@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { searchBooks } from "./googleBooksApi";
+import { searchGoogleBooks } from "./googleBooks";
 
 export interface PublisherSeries {
   id: string;
@@ -29,50 +28,72 @@ export interface EnrichedPublisherBook extends PublisherBook {
   publisher_link?: string;
 }
 
+// Enhanced static publisher link mapping for specific books
+const PENGUIN_SPECIFIC_LINKS: Record<string, string> = {
+  'neuromancer': 'https://www.penguin.co.uk/books/56389/neuromancer-by-gibson-william/9780143111603',
+  'the handmaid\'s tale': 'https://www.penguin.co.uk/books/432108/the-handmaids-tale-by-atwood-margaret/9780099740919',
+  'handmaid\'s tale': 'https://www.penguin.co.uk/books/432108/the-handmaids-tale-by-atwood-margaret/9780099740919',
+  'the city & the city': 'https://www.penguin.co.uk/books/432109/the-city--the-city-by-mieville-china/9780230710214',
+  'city & city': 'https://www.penguin.co.uk/books/432109/the-city--the-city-by-mieville-china/9780230710214',
+  'the windup girl': 'https://www.penguin.co.uk/books/432110/the-windup-girl-by-bacigalupi-paolo/9780748111732',
+  'windup girl': 'https://www.penguin.co.uk/books/432110/the-windup-girl-by-bacigalupi-paolo/9780748111732',
+  'brave new world': 'https://www.penguin.co.uk/books/432111/brave-new-world-by-huxley-aldous/9780099477464',
+  'nineteen eighty-four': 'https://www.penguin.co.uk/books/432112/nineteen-eighty-four-by-orwell-george/9780141036144',
+  '1984': 'https://www.penguin.co.uk/books/432112/nineteen-eighty-four-by-orwell-george/9780141036144'
+};
+
+const GOLLANCZ_SPECIFIC_LINKS: Record<string, string> = {
+  'do androids dream of electric sheep?': 'https://www.gollancz.co.uk/titles/philip-k-dick/do-androids-dream-of-electric-sheep/9781473224421/',
+  'do androids dream': 'https://www.gollancz.co.uk/titles/philip-k-dick/do-androids-dream-of-electric-sheep/9781473224421/',
+  'dune': 'https://www.gollancz.co.uk/titles/frank-herbert/dune/9781473224469/',
+  'foundation': 'https://www.gollancz.co.uk/titles/isaac-asimov/foundation/9781473224452/',
+  'hyperion': 'https://www.gollancz.co.uk/titles/dan-simmons/hyperion/9781473224445/',
+  'the left hand of darkness': 'https://www.gollancz.co.uk/titles/ursula-k-le-guin/the-left-hand-of-darkness/9781473224438/'
+};
+
 // Static publisher link mapping for better performance
 const STATIC_PUBLISHER_LINKS: Record<string, (title: string, author: string, isbn?: string) => string | null> = {
   'penguin': (title: string, author: string, isbn?: string) => {
-    // Create slug from title for Penguin book pages
-    const titleSlug = title.toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
+    const titleKey = title.toLowerCase().trim();
     
-    // Special cases for known books
-    if (title.toLowerCase().includes('neuromancer')) {
-      return 'https://www.penguin.co.uk/books/56389/neuromancer-by-gibson-william/9780143111603';
+    // Check for specific book links first
+    if (PENGUIN_SPECIFIC_LINKS[titleKey]) {
+      console.log(`Found specific Penguin link for "${title}":`, PENGUIN_SPECIFIC_LINKS[titleKey]);
+      return PENGUIN_SPECIFIC_LINKS[titleKey];
     }
-    if (title.toLowerCase().includes('city & city') || title.toLowerCase().includes('city and city')) {
-      return 'https://www.penguin.co.uk/books/432109/the-city--the-city-by-mieville-china/9780230710214';
-    }
-    if (title.toLowerCase().includes('windup girl')) {
-      return 'https://www.penguin.co.uk/books/432110/the-windup-girl-by-bacigalupi-paolo/9780748111732';
+    
+    // Try partial matches
+    for (const [key, link] of Object.entries(PENGUIN_SPECIFIC_LINKS)) {
+      if (titleKey.includes(key) || key.includes(titleKey)) {
+        console.log(`Found partial Penguin match for "${title}":`, link);
+        return link;
+      }
     }
     
     // General Penguin Science Fiction series page as fallback
+    console.log(`Using general Penguin series page for "${title}"`);
     return 'https://www.penguin.co.uk/series/PENGSCIFI/penguin-science-fiction';
   },
   
   'gollancz': (title: string, author: string, isbn?: string) => {
-    // Special cases for Gollancz SF Masterworks
-    if (title.toLowerCase().includes('do androids dream')) {
-      return 'https://www.gollancz.co.uk/titles/philip-k-dick/do-androids-dream-of-electric-sheep/9781473224421/';
+    const titleKey = title.toLowerCase().trim();
+    
+    // Check for specific book links first
+    if (GOLLANCZ_SPECIFIC_LINKS[titleKey]) {
+      console.log(`Found specific Gollancz link for "${title}":`, GOLLANCZ_SPECIFIC_LINKS[titleKey]);
+      return GOLLANCZ_SPECIFIC_LINKS[titleKey];
     }
-    if (title.toLowerCase().includes('dune')) {
-      return 'https://www.gollancz.co.uk/titles/frank-herbert/dune/9781473224469/';
-    }
-    if (title.toLowerCase().includes('foundation')) {
-      return 'https://www.gollancz.co.uk/titles/isaac-asimov/foundation/9781473224452/';
-    }
-    if (title.toLowerCase().includes('hyperion')) {
-      return 'https://www.gollancz.co.uk/titles/dan-simmons/hyperion/9781473224445/';
-    }
-    if (title.toLowerCase().includes('left hand of darkness')) {
-      return 'https://www.gollancz.co.uk/titles/ursula-k-le-guin/the-left-hand-of-darkness/9781473224438/';
+    
+    // Try partial matches
+    for (const [key, link] of Object.entries(GOLLANCZ_SPECIFIC_LINKS)) {
+      if (titleKey.includes(key) || key.includes(titleKey)) {
+        console.log(`Found partial Gollancz match for "${title}":`, link);
+        return link;
+      }
     }
     
     // General SF Masterworks series page as fallback
+    console.log(`Using general Gollancz series page for "${title}"`);
     return 'https://www.gollancz.co.uk/series/sf-masterworks/';
   },
   
@@ -133,23 +154,60 @@ export const getPublisherBooks = async (seriesId: string): Promise<EnrichedPubli
   const enrichedBooks = await Promise.all(
     books.map(async (book) => {
       try {
-        // Get Google Books data with better error handling
-        const googleBooks = await searchBooks(`${book.title} ${book.author}`);
+        console.log(`Enriching book: ${book.title} by ${book.author}`);
+        
+        // Enhanced Google Books search with multiple strategies
+        let googleBooks: any[] = [];
+        
+        // Strategy 1: Title + Author search
+        try {
+          googleBooks = await searchGoogleBooks(`${book.title} ${book.author}`, 3);
+          console.log(`Google Books search 1 for "${book.title}": ${googleBooks.length} results`);
+        } catch (error) {
+          console.warn(`Google Books search 1 failed for ${book.title}:`, error);
+        }
+        
+        // Strategy 2: ISBN search if available and first search didn't work well
+        if (book.isbn && googleBooks.length === 0) {
+          try {
+            googleBooks = await searchGoogleBooks(`isbn:${book.isbn}`, 1);
+            console.log(`Google Books ISBN search for "${book.title}": ${googleBooks.length} results`);
+          } catch (error) {
+            console.warn(`Google Books ISBN search failed for ${book.title}:`, error);
+          }
+        }
+        
+        // Strategy 3: Title only search if still no good results
+        if (googleBooks.length === 0) {
+          try {
+            googleBooks = await searchGoogleBooks(book.title, 2);
+            console.log(`Google Books title-only search for "${book.title}": ${googleBooks.length} results`);
+          } catch (error) {
+            console.warn(`Google Books title-only search failed for ${book.title}:`, error);
+          }
+        }
+        
         const googleBook = googleBooks[0];
         
         // Get static publisher link
         const seriesName = (book as any).series?.name || '';
         const publisherLink = getStaticPublisherLink(seriesName, book.title, book.author, book.isbn);
         
-        console.log(`Book: ${book.title} | Google Cover: ${googleBook?.coverUrl} | Publisher Link: ${publisherLink}`);
-        
-        return {
+        const result = {
           ...book,
           google_cover_url: googleBook?.coverUrl,
           cover_url: googleBook?.coverUrl || book.cover_url,
-          google_description: undefined,
+          google_description: googleBook?.description,
           publisher_link: publisherLink
         };
+        
+        console.log(`Enriched ${book.title}:`, {
+          google_cover_url: result.google_cover_url,
+          publisher_link: result.publisher_link,
+          has_isbn: !!book.isbn
+        });
+        
+        return result;
       } catch (error) {
         console.error(`Error enriching book ${book.title}:`, error);
         const seriesName = (book as any).series?.name || '';
@@ -165,6 +223,7 @@ export const getPublisherBooks = async (seriesId: string): Promise<EnrichedPubli
     })
   );
 
+  console.log(`Total enriched books: ${enrichedBooks.length}`);
   return enrichedBooks;
 };
 

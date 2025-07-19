@@ -1,47 +1,35 @@
 
-import { useNavigate } from "react-router-dom";
-import { Building, Zap, Bot } from "lucide-react";
+import { Building } from "lucide-react";
 
 interface PublisherResonanceBadgeProps {
   series: {
+    id: string;
     name: string;
     publisher: string;
+    description: string;
+    logo_url?: string;
     badge_emoji: string;
   };
   size?: "sm" | "md";
+  className?: string;
 }
 
-const PublisherResonanceBadge = ({ series, size = "sm" }: PublisherResonanceBadgeProps) => {
-  const navigate = useNavigate();
-
-  const handleClick = () => {
-    navigate('/publisher-resonance');
-  };
-
-  const getIcon = () => {
-    if (series.name.toLowerCase().includes('gollancz')) return Zap;
-    if (series.name.toLowerCase().includes('robot')) return Bot;
-    return Building;
-  };
+const PublisherResonanceBadge = ({ series, size = "sm", className = "" }: PublisherResonanceBadgeProps) => {
+  const isPenguin = series.name.toLowerCase().includes('penguin');
+  const penguinEmoji = '🐧';
   
-  const Icon = getIcon();
-  const bgColor = 'bg-gradient-to-r from-primary/10 to-primary/20';
-  const borderColor = 'border-slate-600/40';
-  const textColor = 'text-primary';
-
   return (
-    <button
-      onClick={handleClick}
-      className={`
-        inline-flex items-center border ${borderColor} ${bgColor} rounded cursor-pointer transition-all duration-200
-        ${size === "sm" ? "text-xs px-2 py-0.5 space-x-1" : "text-sm px-3 py-1 space-x-1.5"}
-        hover:from-primary/20 hover:to-primary/30 hover:border-primary/50
-      `}
-      title={`View ${series.name} collection`}
-    >
-      <Icon className={`${size === "sm" ? "w-3 h-3" : "w-4 h-4"} text-primary`} />
-      <span className={`${textColor} font-light truncate`}>{series.name}</span>
-    </button>
+    <div className={`inline-flex items-center space-x-2 ${className}`}>
+      <div className={`
+        inline-flex items-center border border-primary/30 bg-gradient-to-r from-primary/10 to-primary/20 rounded-lg
+        ${size === "sm" ? "text-xs px-2 py-1 space-x-1" : "text-sm px-3 py-1.5 space-x-2"}
+      `}>
+        <span className={`${size === "sm" ? "text-base" : "text-lg"}`}>
+          {isPenguin ? penguinEmoji : series.badge_emoji}
+        </span>
+        <span className="text-primary font-medium truncate">{series.name}</span>
+      </div>
+    </div>
   );
 };
 

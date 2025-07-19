@@ -28,7 +28,10 @@ export const searchGoogleBooks = async (query: string, maxResults = 10): Promise
   
   const cacheKey = `search:${query}:${maxResults}`;
   const cached = googleBooksCache.get(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    console.log(`Cache hit for query: ${query}`);
+    return cached;
+  }
   
   if (!rateLimiter.canMakeRequest()) {
     console.warn('Rate limit reached for Google Books API');
@@ -49,6 +52,8 @@ export const searchGoogleBooks = async (query: string, maxResults = 10): Promise
       orderBy: 'relevance'
     });
     
+    console.log(`Google Books API request: ${query} (max: ${maxResults})`);
+    
     const response = await fetch(`${BASE_URL}?${params}`, {
       signal: controller.signal,
       headers: {
@@ -65,14 +70,19 @@ export const searchGoogleBooks = async (query: string, maxResults = 10): Promise
     const data: GoogleBooksApiResponse = await response.json();
     const books = (data.items || []).map(transformGoogleBookData).filter(Boolean) as GoogleBook[];
     
+    console.log(`Google Books API response: ${books.length} books found for "${query}"`);
+    books.forEach(book => {
+      console.log(`- ${book.title} by ${book.author} | Cover: ${book.coverUrl ? 'Yes' : 'No'}`);
+    });
+    
     googleBooksCache.set(cacheKey, books);
     return books;
     
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      console.warn('Google Books API request timed out');
+      console.warn(`Google Books API request timed out for: ${query}`);
     } else {
-      console.error('Error searching Google Books:', error);
+      console.error(`Error searching Google Books for "${query}":`, error);
     }
     return [];
   }
@@ -84,10 +94,11 @@ export const getBookByISBN = async (isbn: string): Promise<GoogleBook | null> =>
   if (cached && cached.length > 0) return cached[0];
   
   try {
+    console.log(`Searching Google Books by ISBN: ${isbn}`);
     const books = await searchGoogleBooks(`isbn:${isbn}`, 1);
     return books[0] || null;
   } catch (error) {
-    console.error('Error fetching book by ISBN:', error);
+    console.error(`Error fetching book by ISBN ${isbn}:`, error);
     return null;
   }
 };

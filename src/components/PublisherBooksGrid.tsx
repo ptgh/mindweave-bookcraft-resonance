@@ -27,11 +27,13 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
 
   const handleBookClick = (bookId: string) => {
     console.log('Clicking book with ID:', bookId);
+    const book = books.find(b => b.id === bookId);
+    console.log('Found book:', book?.title, book?.author);
     setSelectedBookId(bookId);
   };
 
   const getSeriesPlaceholder = (seriesName: string) => {
-    if (seriesName.toLowerCase().includes('penguin')) return '📚';
+    if (seriesName.toLowerCase().includes('penguin')) return '🐧';
     if (seriesName.toLowerCase().includes('gollancz')) return '🏛️';
     if (seriesName.toLowerCase().includes('tor')) return '🗲';
     if (seriesName.toLowerCase().includes('oxford')) return '📜';
@@ -67,82 +69,91 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
       <div className="mb-6">
         <PublisherResonanceBadge series={series} size="md" />
         <p className="text-slate-200 text-sm mt-3 leading-relaxed">{series.description}</p>
-        <p className="text-slate-400 text-xs mt-2">Book covers powered by Google Books API</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {books.map((book) => (
-          <div 
-            key={book.id} 
-            className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors cursor-pointer"
-            onClick={() => handleBookClick(book.id)}
-          >
-            <div className="flex items-start space-x-4">
-              {/* Book Cover - improved display */}
-              <div className="w-12 h-16 bg-slate-700 rounded flex items-center justify-center flex-shrink-0 overflow-hidden relative">
-                {(book.google_cover_url || book.cover_url) ? (
-                  <img 
-                    src={book.google_cover_url || book.cover_url} 
-                    alt={book.title} 
-                    className="w-full h-full object-cover rounded"
-                    style={{ imageRendering: 'crisp-edges' }}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      const fallback = target.nextElementSibling as HTMLElement;
-                      if (fallback) fallback.classList.remove('hidden');
-                    }}
-                    onLoad={() => {
-                      console.log('Cover loaded for:', book.title);
-                    }}
-                  />
-                ) : null}
-                <div className={`flex items-center justify-center text-slate-400 text-lg absolute inset-0 ${(book.google_cover_url || book.cover_url) ? 'hidden' : ''}`}>
-                  {getSeriesPlaceholder(series.name)}
-                </div>
-              </div>
-              
-              {/* Book Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h3 className="text-slate-200 font-medium text-sm leading-tight">{book.title}</h3>
-                    <p className="text-slate-400 text-xs mt-1">{book.author}</p>
+        {books.map((book) => {
+          console.log(`Book ${book.title} - Cover URLs:`, {
+            google_cover_url: book.google_cover_url,
+            cover_url: book.cover_url,
+            id: book.id
+          });
+          
+          return (
+            <div 
+              key={book.id} 
+              className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors cursor-pointer"
+              onClick={() => handleBookClick(book.id)}
+            >
+              <div className="flex items-start space-x-4">
+                {/* Book Cover - improved display with better error handling */}
+                <div className="w-12 h-16 bg-slate-700 rounded flex items-center justify-center flex-shrink-0 overflow-hidden relative">
+                  {(book.google_cover_url || book.cover_url) ? (
+                    <img 
+                      src={book.google_cover_url || book.cover_url} 
+                      alt={book.title} 
+                      className="w-full h-full object-cover rounded"
+                      style={{ imageRendering: 'crisp-edges' }}
+                      onError={(e) => {
+                        console.error(`Failed to load cover for ${book.title}:`, book.google_cover_url || book.cover_url);
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const fallback = target.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.classList.remove('hidden');
+                      }}
+                      onLoad={() => {
+                        console.log(`Cover loaded successfully for ${book.title}:`, book.google_cover_url || book.cover_url);
+                      }}
+                    />
+                  ) : null}
+                  <div className={`flex items-center justify-center text-slate-400 text-lg absolute inset-0 ${(book.google_cover_url || book.cover_url) ? 'hidden' : ''}`}>
+                    {getSeriesPlaceholder(series.name)}
                   </div>
-                  <div className="w-3 h-3 rounded-full border-2 border-purple-400 bg-purple-400/10 flex-shrink-0"></div>
                 </div>
                 
-                {book.editorial_note && (
-                  <p className="text-slate-400 text-xs italic leading-relaxed line-clamp-2 mb-2">{book.editorial_note}</p>
-                )}
-                
-                {book.isbn && (
-                  <p className="text-slate-500 text-xs font-mono mb-3">ISBN: {book.isbn}</p>
-                )}
-                
-                 {/* Add Button */}
-                 <Button
-                   size="sm"
-                   onClick={(e) => {
-                     e.stopPropagation();
-                     onAddBook(book);
-                   }}
-                   className="w-full bg-primary/70 hover:bg-primary/90 text-white text-xs h-8 font-light border-0 flex items-center justify-center"
-                 >
-                   <div className="w-3 h-3 rounded-full border border-white mr-2 flex items-center justify-center">
-                     <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                   </div>
-                   Add to Transmissions
-                 </Button>
+                {/* Book Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h3 className="text-slate-200 font-medium text-sm leading-tight">{book.title}</h3>
+                      <p className="text-slate-400 text-xs mt-1">{book.author}</p>
+                    </div>
+                    <div className="w-3 h-3 rounded-full border-2 border-purple-400 bg-purple-400/10 flex-shrink-0"></div>
+                  </div>
+                  
+                  {book.editorial_note && (
+                    <p className="text-slate-400 text-xs italic leading-relaxed line-clamp-2 mb-2">{book.editorial_note}</p>
+                  )}
+                  
+                  {book.isbn && (
+                    <p className="text-slate-500 text-xs font-mono mb-3">ISBN: {book.isbn}</p>
+                  )}
+                  
+                   {/* Add Button */}
+                   <Button
+                     size="sm"
+                     onClick={(e) => {
+                       e.stopPropagation();
+                       onAddBook(book);
+                     }}
+                     className="w-full bg-primary/70 hover:bg-primary/90 text-white text-xs h-8 font-light border-0 flex items-center justify-center"
+                   >
+                     <div className="w-3 h-3 rounded-full border border-white mr-2 flex items-center justify-center">
+                       <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                     </div>
+                     Add to Transmissions
+                   </Button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       
-      {/* Book Preview Modal */}
+      {/* Book Preview Modal - ensure correct book data */}
       {selectedBook && (
         <EnhancedBookPreviewModal
+          key={selectedBook.id} // Force re-render with new book
           book={selectedBook}
           onClose={() => setSelectedBookId(null)}
           onAddBook={(book) => {
