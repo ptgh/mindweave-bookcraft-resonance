@@ -11,68 +11,40 @@ import { useAuth } from "@/hooks/useAuth";
 import EmptyState from "@/components/EmptyState";
 import EnhancedBookPreviewModal from "@/components/EnhancedBookPreviewModal";
 import PublisherBookCard from "@/components/PublisherBookCard";
-import { EnrichedPublisherBook, getPublisherSeries, getPublisherBooks } from "@/services/publisherService";
+import { EnrichedPublisherBook } from "@/services/publisherService";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 import penguinLogo from "@/assets/penguin-logo.png";
 
 const PublisherResonance = () => {
   const [selectedBook, setSelectedBook] = useState<EnrichedPublisherBook | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [selectedPublisher, setSelectedPublisher] = useState<'penguin' | 'gollancz'>('penguin');
-  const [publisherSeries, setPublisherSeries] = useState<any[]>([]);
-  const [publisherBooks, setPublisherBooks] = useState<EnrichedPublisherBook[]>([]);
-  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
 
-  // Load publisher data on mount and when publisher changes
-  useEffect(() => {
-    const loadPublisherData = async () => {
-      try {
-        setLoading(true);
-        const series = await getPublisherSeries();
-        setPublisherSeries(series);
-        
-        // Find the appropriate series based on selected publisher
-        const targetSeries = series.find(s => 
-          selectedPublisher === 'penguin' 
-            ? s.publisher.toLowerCase().includes('penguin')
-            : s.publisher.toLowerCase().includes('gollancz')
-        );
-        
-        if (targetSeries) {
-          const books = await getPublisherBooks(targetSeries.id);
-          setPublisherBooks(books);
-        }
-      } catch (error) {
-        console.error('Error loading publisher data:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load publisher data",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Static data for Penguin Science Fiction series
+  const penguinBooks: EnrichedPublisherBook[] = useMemo(() => [
+    {
+      id: "ark-sakura",
+      series_id: "penguin-scifi",
+      title: "The Ark Sakura",
+      author: "Kobo Abe & Juliet Winters Carpenter",
+      isbn: "9780241454589",
+      cover_url: "/lovable-uploads/bf7a5e03-17a9-4a36-b156-3d23678f4ba5.png",
+      publisher_link: "https://www.penguin.co.uk/books/317662/the-ark-sakura-by-abe-kobo/9780241454589",
+      editorial_note: "'One of Japan's most venerated writers' David Mitchell\n\nIn this unnerving fable from one of Japan's greatest novelists, a recluse known as 'Mole' retreats to a vast underground bunker, only to find that strange guests, booby traps and a giant toilet may prove even greater obstacles than nuclear disaster.",
+      google_cover_url: null,
+      created_at: new Date().toISOString()
+    }
+  ], []);
 
-    loadPublisherData();
-  }, [selectedPublisher, toast]);
-
-  const currentSeries = useMemo(() => {
-    return publisherSeries.find(s => 
-      selectedPublisher === 'penguin' 
-        ? s.publisher.toLowerCase().includes('penguin')
-        : s.publisher.toLowerCase().includes('gollancz')
-    );
-  }, [publisherSeries, selectedPublisher]);
-
-  const storeUrl = useMemo(() => {
-    return selectedPublisher === 'penguin' 
-      ? 'https://www.penguin.co.uk/series/PENGSCIFI/penguin-science-fiction'
-      : 'https://store.gollancz.co.uk/collections/series-s-f-masterworks';
-  }, [selectedPublisher]);
+  const publisherSeries = {
+    id: "penguin-scifi",
+    name: "Penguin Science Fiction",
+    publisher: "Penguin",
+    badge_emoji: "🐧",
+    description: "Classic and contemporary science fiction from Penguin"
+  };
 
   const handleBookPreview = useCallback((book: EnrichedPublisherBook) => {
     setSelectedBook(book);
@@ -93,7 +65,7 @@ const PublisherResonance = () => {
   }, []);
 
   // Show loading state while auth is being determined
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
@@ -120,52 +92,27 @@ const PublisherResonance = () => {
               <p className="text-slate-300 max-w-2xl mx-auto leading-relaxed mb-6">
                 Discover your next science fiction transmission through the quantum field of possibilities
               </p>
-              
-              {/* Publisher Selection */}
-              <div className="flex justify-center gap-4 mb-6">
-                <StandardButton
-                  onClick={() => setSelectedPublisher('penguin')}
-                  variant={selectedPublisher === 'penguin' ? 'primary' : 'ghost'}
-                  className="touch-manipulation active:scale-95"
-                >
-                  🐧 Penguin Scan Signal Collection
-                </StandardButton>
-                <StandardButton
-                  onClick={() => setSelectedPublisher('gollancz')}
-                  variant={selectedPublisher === 'gollancz' ? 'primary' : 'ghost'}
-                  className="touch-manipulation active:scale-95"
-                >
-                  🏛️ Gollancz SF Scan Signal Collection
-                </StandardButton>
-              </div>
-              
               <StandardButton
-                onClick={() => window.open(storeUrl, '_blank')}
+                onClick={() => window.open('https://www.penguin.co.uk/series/PENGSCIFI/penguin-science-fiction', '_blank')}
                 variant="standard"
                 className="touch-manipulation active:scale-95"
               >
-                Discover {selectedPublisher === 'penguin' ? 'Penguin' : 'Gollancz'} Collection
+                Discover Scan Signal Collection
               </StandardButton>
             </div>
           </div>
           
           <div ref={addFeatureBlockRef} className="feature-block mb-8">
-            {publisherBooks.length > 0 ? (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {publisherBooks.map(book => (
-                  <PublisherBookCard
-                    key={book.id}
-                    book={book}
-                    onLogSignal={() => handleAddToTransmissions(book)}
-                    onPreview={() => handleBookPreview(book)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-slate-400">No books found for {selectedPublisher === 'penguin' ? 'Penguin' : 'Gollancz'} collection</p>
-              </div>
-            )}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {penguinBooks.map(book => (
+                <PublisherBookCard
+                  key={book.id}
+                  book={book}
+                  onLogSignal={() => handleAddToTransmissions(book)}
+                  onPreview={() => handleBookPreview(book)}
+                />
+              ))}
+            </div>
           </div>
           
           <div className="mt-12 pb-8">

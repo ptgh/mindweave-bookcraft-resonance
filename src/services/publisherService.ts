@@ -50,7 +50,6 @@ const PENGUIN_SPECIFIC_LINKS: Record<string, string> = {
 };
 
 const GOLLANCZ_SPECIFIC_LINKS: Record<string, string> = {
-  'flowers for algernon': 'https://store.gollancz.co.uk/products/flowers-for-algernon',
   'do androids dream of electric sheep?': 'https://www.gollancz.co.uk/titles/philip-k-dick/do-androids-dream-of-electric-sheep/9781473224421/',
   'do androids dream': 'https://www.gollancz.co.uk/titles/philip-k-dick/do-androids-dream-of-electric-sheep/9781473224421/',
   'dune': 'https://www.gollancz.co.uk/titles/frank-herbert/dune/9781473224469/',
@@ -102,7 +101,7 @@ const STATIC_PUBLISHER_LINKS: Record<string, (title: string, author: string, isb
     
     // General SF Masterworks series page as fallback
     console.log(`Using general Gollancz series page for "${title}"`);
-    return 'https://store.gollancz.co.uk/collections/series-s-f-masterworks';
+    return 'https://www.gollancz.co.uk/series/sf-masterworks/';
   },
   
   'angry robot': (title: string, author: string, isbn?: string) => {
@@ -164,24 +163,6 @@ export const getPublisherBooks = async (seriesId: string): Promise<EnrichedPubli
       // General Penguin Science Fiction series page as fallback
       console.log(`Using general Penguin series page for "${title}"`);
       return 'https://www.penguin.co.uk/series/PENGSCIFI/penguin-science-fiction';
-    } else if (seriesLower.includes('gollancz') || seriesLower.includes('masterworks')) {
-      // Check for specific book links first
-      if (GOLLANCZ_SPECIFIC_LINKS[titleKey]) {
-        console.log(`Found specific Gollancz link for "${title}":`, GOLLANCZ_SPECIFIC_LINKS[titleKey]);
-        return GOLLANCZ_SPECIFIC_LINKS[titleKey];
-      }
-      
-      // Try partial matches
-      for (const [key, link] of Object.entries(GOLLANCZ_SPECIFIC_LINKS)) {
-        if (titleKey.includes(key) || key.includes(titleKey)) {
-          console.log(`Found partial Gollancz match for "${title}":`, link);
-          return link;
-        }
-      }
-      
-      // General SF Masterworks series page as fallback
-      console.log(`Using general Gollancz series page for "${title}"`);
-      return 'https://store.gollancz.co.uk/collections/series-s-f-masterworks';
     }
     
     return null;
