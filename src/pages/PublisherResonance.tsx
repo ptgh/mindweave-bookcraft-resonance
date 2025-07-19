@@ -135,7 +135,7 @@ const PublisherResonance = () => {
                   variant={selectedPublisher === 'gollancz' ? 'primary' : 'ghost'}
                   className="touch-manipulation active:scale-95"
                 >
-                  🏛️ Gollancz Scan Signal Collection
+                  🏛️ Gollancz SF Scan Signal Collection
                 </StandardButton>
               </div>
               
