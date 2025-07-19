@@ -1,5 +1,6 @@
 
 import { Building } from "lucide-react";
+import penguinLogo from "@/assets/penguin-logo.png";
 
 interface PublisherResonanceBadgeProps {
   series: {
@@ -16,7 +17,6 @@ interface PublisherResonanceBadgeProps {
 
 const PublisherResonanceBadge = ({ series, size = "sm", className = "" }: PublisherResonanceBadgeProps) => {
   const isPenguin = series.name.toLowerCase().includes('penguin');
-  const penguinEmoji = '🐧';
   
   return (
     <div className={`inline-flex items-center space-x-2 ${className}`}>
@@ -24,9 +24,17 @@ const PublisherResonanceBadge = ({ series, size = "sm", className = "" }: Publis
         inline-flex items-center border border-primary/30 bg-gradient-to-r from-primary/10 to-primary/20 rounded-lg
         ${size === "sm" ? "text-xs px-2 py-1 space-x-1" : "text-sm px-3 py-1.5 space-x-2"}
       `}>
-        <span className={`${size === "sm" ? "text-base" : "text-lg"}`}>
-          {isPenguin ? penguinEmoji : series.badge_emoji}
-        </span>
+        {isPenguin ? (
+          <img 
+            src={penguinLogo} 
+            alt="Penguin" 
+            className={`${size === "sm" ? "w-4 h-4" : "w-5 h-5"} object-contain`}
+          />
+        ) : (
+          <span className={`${size === "sm" ? "text-base" : "text-lg"}`}>
+            {series.badge_emoji}
+          </span>
+        )}
         <span className="text-primary font-medium truncate">{series.name}</span>
       </div>
     </div>

@@ -82,7 +82,7 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
           return (
             <div 
               key={book.id} 
-              className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors cursor-pointer"
+              className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-all duration-300 cursor-pointer group"
               onClick={() => handleBookClick(book.id)}
             >
               <div className="flex items-start space-x-4">
@@ -106,7 +106,7 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
                       }}
                     />
                   ) : null}
-                  <div className={`flex items-center justify-center text-slate-400 text-lg absolute inset-0 ${(book.google_cover_url || book.cover_url) ? 'hidden' : ''}`}>
+                  <div className={`flex items-center justify-center text-slate-300 text-lg absolute inset-0 ${(book.google_cover_url || book.cover_url) ? 'hidden' : ''}`}>
                     {getSeriesPlaceholder(series.name)}
                   </div>
                 </div>
@@ -115,34 +115,33 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                    <h3 className="text-foreground font-medium text-sm leading-tight">{book.title}</h3>
-                      <p className="text-foreground/70 text-xs mt-1">{book.author}</p>
+                      <h3 className="text-slate-200 font-medium text-sm leading-tight group-hover:text-blue-400 transition-colors">{book.title}</h3>
+                      <p className="text-slate-400 text-xs mt-1">{book.author}</p>
                     </div>
-                    <div className="w-3 h-3 rounded-full border-2 border-purple-400 bg-purple-400/10 flex-shrink-0"></div>
+                    <div className="w-3 h-3 rounded-full border-2 border-blue-400 bg-blue-400/10 flex-shrink-0"></div>
                   </div>
                   
                   {book.editorial_note && (
-                    <p className="text-foreground/60 text-xs italic leading-relaxed line-clamp-2 mb-2">{book.editorial_note}</p>
+                    <p className="text-slate-400 text-xs italic leading-relaxed line-clamp-2 mb-2">{book.editorial_note}</p>
                   )}
                   
                   {book.isbn && (
-                    <p className="text-foreground/50 text-xs font-mono mb-3">ISBN: {book.isbn}</p>
+                    <p className="text-slate-500 text-xs font-mono mb-3">ISBN: {book.isbn}</p>
                   )}
                   
-                   {/* Add Button */}
-                   <Button
-                     size="sm"
+                   {/* Add Button - styled like transmissions page */}
+                   <button
                      onClick={(e) => {
                        e.stopPropagation();
                        onAddBook(book);
                      }}
-                     className="w-full bg-primary/70 hover:bg-primary/90 text-white text-xs h-8 font-light border-0 flex items-center justify-center"
+                     className="w-full bg-gradient-to-r from-blue-600/80 to-blue-500/80 hover:from-blue-600 hover:to-blue-500 text-white text-xs h-8 font-light border-0 flex items-center justify-center rounded transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/20"
                    >
                      <div className="w-3 h-3 rounded-full border border-white mr-2 flex items-center justify-center">
                        <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                      </div>
                      Add to Transmissions
-                   </Button>
+                   </button>
                 </div>
               </div>
             </div>

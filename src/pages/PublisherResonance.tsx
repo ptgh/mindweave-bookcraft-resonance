@@ -11,6 +11,7 @@ import PublisherBooksGrid from "@/components/PublisherBooksGrid";
 import { Button } from "@/components/ui/button";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import penguinLogo from "@/assets/penguin-logo.png";
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
@@ -117,7 +118,15 @@ const PublisherResonance = () => {
                       transition-all duration-300
                     `}
                   >
-                    <span className="mr-2">{isPenguin ? '🐧' : series.badge_emoji}</span>
+                    {isPenguin ? (
+                      <img 
+                        src={penguinLogo} 
+                        alt="Penguin" 
+                        className="w-4 h-4 mr-1 object-contain"
+                      />
+                    ) : (
+                      <span className="mr-2">{series.badge_emoji}</span>
+                    )}
                     {series.name}
                   </Button>
                 );
