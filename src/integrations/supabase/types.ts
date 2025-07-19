@@ -379,6 +379,7 @@ export type Database = {
           editorial_note: string | null
           id: string
           isbn: string | null
+          penguin_url: string | null
           publication_year: number | null
           series_id: string
           title: string
@@ -390,6 +391,7 @@ export type Database = {
           editorial_note?: string | null
           id?: string
           isbn?: string | null
+          penguin_url?: string | null
           publication_year?: number | null
           series_id: string
           title: string
@@ -401,6 +403,7 @@ export type Database = {
           editorial_note?: string | null
           id?: string
           isbn?: string | null
+          penguin_url?: string | null
           publication_year?: number | null
           series_id?: string
           title?: string

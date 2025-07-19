@@ -19,6 +19,7 @@ export interface PublisherBook {
   isbn?: string;
   cover_url?: string;
   editorial_note?: string;
+  penguin_url?: string;
   created_at: string;
 }
 
