@@ -97,7 +97,7 @@ const PublisherResonance = () => {
                 variant="standard"
                 className="touch-manipulation active:scale-95"
               >
-                Discover Scan Signal Collection
+                Penguin Scan Signal Collection
               </StandardButton>
             </div>
           </div>
