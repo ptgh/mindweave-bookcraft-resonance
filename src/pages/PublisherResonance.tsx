@@ -104,11 +104,11 @@ const PublisherResonance = () => {
           {/* Hero Section */}
           <div ref={heroRef} className="text-center mb-12">
             <div className="flex items-center justify-center space-x-4 mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-orange-500/20 to-orange-600/30 rounded-lg flex items-center justify-center border border-orange-500/30">
-                <span className="text-2xl">🐧</span>
+              <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/30 rounded-lg flex items-center justify-center border border-primary/30">
+                <Building className="w-8 h-8 text-primary" />
               </div>
               <h1 className="text-4xl font-light text-slate-200 tracking-wide">
-                <span className="text-orange-400">Publisher Resonance</span>
+                <span className="text-primary">Publisher Resonance</span>
               </h1>
             </div>
             
@@ -124,10 +124,10 @@ const PublisherResonance = () => {
                   variant={selectedSeries === series.id ? "default" : "outline"}
                   onClick={() => setSelectedSeries(series.id)}
                   className={`
-                    ${selectedSeries === series.id 
-                      ? 'bg-orange-500/80 hover:bg-orange-500/90 text-white border-orange-400' 
-                      : 'bg-transparent border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:border-orange-400/50'
-                    }
+                     ${selectedSeries === series.id 
+                       ? 'bg-primary/80 hover:bg-primary/90 text-white border-primary' 
+                       : 'bg-transparent border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:border-primary/50'
+                     }
                     transition-all duration-300
                   `}
                 >
@@ -169,66 +169,66 @@ const PublisherResonance = () => {
               <div ref={gridRef}>
                 {booksLoading ? (
                   <div className="text-center py-12">
-                    <div className="w-8 h-8 border-2 border-orange-400 border-t-transparent rounded-full mx-auto mb-4 animate-spin"></div>
+                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4 animate-spin"></div>
                     <p className="text-slate-400">Loading collection...</p>
                   </div>
                 ) : filteredBooks.length > 0 ? (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {filteredBooks.map((book) => (
                       <div key={book.id} ref={addToCardsRef}>
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-all duration-300 hover:border-orange-400/30 group">
-                          <div className="flex items-start space-x-4">
-                            {/* Book Cover */}
-                            <div className="w-12 h-16 bg-slate-700 rounded flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:shadow-lg transition-shadow">
-                              {book.cover_url ? (
-                                <img 
-                                  src={book.cover_url} 
-                                  alt={book.title} 
-                                  className="w-full h-full object-cover rounded"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                    const fallback = target.nextElementSibling as HTMLElement;
-                                    if (fallback) fallback.classList.remove('hidden');
-                                  }}
-                                />
-                              ) : null}
-                              <div className={`flex items-center justify-center text-orange-400 text-lg ${book.cover_url ? 'hidden' : ''}`}>
-                                🐧
-                              </div>
-                            </div>
-                            
-                            {/* Book Info */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between mb-2">
-                                <div>
-                                  <h3 className="text-slate-200 font-medium text-sm leading-tight group-hover:text-orange-300 transition-colors">{book.title}</h3>
-                                  <p className="text-slate-400 text-xs mt-1">{book.author}</p>
-                                </div>
-                                <div className="w-3 h-3 rounded-full border-2 border-orange-400 bg-orange-400/10 flex-shrink-0 group-hover:bg-orange-400/20 transition-colors"></div>
-                              </div>
-                              
-                              {book.editorial_note && (
-                                <p className="text-slate-400 text-xs italic leading-relaxed line-clamp-2 mb-3">{book.editorial_note}</p>
-                              )}
-                              
-                              <Button
-                                size="sm"
-                                className="w-full bg-orange-600/70 hover:bg-orange-600/90 text-white text-xs h-8 font-light border-0 group-hover:bg-orange-500 transition-all duration-300"
-                              >
-                                <span className="mr-2">🐧</span>
-                                Add to Transmissions
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
+                         <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-all duration-300 hover:border-primary/30 group">
+                           <div className="flex items-start space-x-4">
+                             {/* Book Cover */}
+                             <div className="w-12 h-16 bg-slate-700 rounded flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:shadow-lg transition-shadow">
+                               {book.cover_url ? (
+                                 <img 
+                                   src={book.cover_url} 
+                                   alt={book.title} 
+                                   className="w-full h-full object-cover rounded"
+                                   onError={(e) => {
+                                     const target = e.target as HTMLImageElement;
+                                     target.style.display = 'none';
+                                     const fallback = target.nextElementSibling as HTMLElement;
+                                     if (fallback) fallback.classList.remove('hidden');
+                                   }}
+                                 />
+                               ) : null}
+                               <div className={`flex items-center justify-center text-primary text-lg ${book.cover_url ? 'hidden' : ''}`}>
+                                 <Building className="w-4 h-4" />
+                               </div>
+                             </div>
+                             
+                             {/* Book Info */}
+                             <div className="flex-1 min-w-0">
+                               <div className="flex items-start justify-between mb-2">
+                                 <div>
+                                   <h3 className="text-slate-200 font-medium text-sm leading-tight group-hover:text-primary transition-colors">{book.title}</h3>
+                                   <p className="text-slate-400 text-xs mt-1">{book.author}</p>
+                                 </div>
+                                 <div className="w-3 h-3 rounded-full border-2 border-primary bg-primary/10 flex-shrink-0 group-hover:bg-primary/20 transition-colors"></div>
+                               </div>
+                               
+                               {book.editorial_note && (
+                                 <p className="text-slate-400 text-xs italic leading-relaxed line-clamp-2 mb-3">{book.editorial_note}</p>
+                               )}
+                               
+                               <Button
+                                 size="sm"
+                                 className="w-full bg-primary/70 hover:bg-primary/90 text-white text-xs h-8 font-light border-0 group-hover:bg-primary transition-all duration-300"
+                               >
+                                 <Building className="w-3 h-3 mr-2" />
+                                 Add to Transmissions
+                               </Button>
+                             </div>
+                           </div>
+                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-12">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600/50 flex items-center justify-center">
-                      <span className="text-2xl">🐧</span>
+                      <Building className="w-8 h-8 text-slate-400" />
                     </div>
                     <h3 className="text-slate-300 text-lg font-medium mb-2">No books found</h3>
                     <p className="text-slate-400 text-sm">
@@ -242,8 +242,8 @@ const PublisherResonance = () => {
 
           {/* Fallback for no series selected */}
           {!selectedSeriesData && !seriesLoading && (
-            <div className="bg-slate-800/30 border border-orange-500/30 rounded-lg p-8 max-w-2xl mx-auto text-center">
-              <div className="text-orange-400 mb-4">
+            <div className="bg-slate-800/30 border border-primary/30 rounded-lg p-8 max-w-2xl mx-auto text-center">
+              <div className="text-primary mb-4">
                 <Building className="w-12 h-12 mx-auto mb-4" />
               </div>
               <h2 className="text-xl text-slate-200 mb-4">Mapping Publisher Consciousness</h2>
@@ -251,9 +251,9 @@ const PublisherResonance = () => {
                 Publisher series are being calibrated. Select a series above to explore curated collections.
               </p>
               <div className="flex items-center justify-center space-x-2">
-                <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
-                <div className="w-2 h-2 bg-orange-300 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
-                <div className="w-2 h-2 bg-orange-200 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
+                <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                <div className="w-2 h-2 bg-primary/70 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
+                <div className="w-2 h-2 bg-primary/40 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
               </div>
             </div>
           )}

@@ -2,6 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { gsap } from "gsap";
 import { useRef, useEffect } from "react";
+import { Building } from "lucide-react";
 
 interface PenguinPublisherBadgeProps {
   seriesName?: string;
@@ -20,8 +21,8 @@ const PenguinPublisherBadge = ({ seriesName = "Penguin Science Fiction", size = 
     const handleMouseEnter = () => {
       gsap.to(badge, {
         scale: 1.05,
-        borderColor: "#fb923c",
-        boxShadow: "0 0 12px rgba(251, 146, 60, 0.4)",
+        borderColor: "hsl(217, 91%, 60%)",
+        boxShadow: "0 0 12px hsl(217, 91%, 60%, 0.4)",
         duration: 0.3,
         ease: "power2.out"
       });
@@ -55,15 +56,15 @@ const PenguinPublisherBadge = ({ seriesName = "Penguin Science Fiction", size = 
       ref={badgeRef}
       onClick={handleClick}
       className={`
-        inline-flex items-center border border-slate-600/40 bg-gradient-to-r from-orange-500/10 to-orange-600/20 rounded cursor-pointer transition-all duration-200
+        inline-flex items-center border border-slate-600/40 bg-gradient-to-r from-primary/10 to-primary/20 rounded cursor-pointer transition-all duration-200
         ${size === "sm" ? "text-xs px-2 py-0.5 space-x-1" : "text-sm px-3 py-1 space-x-1.5"}
-        hover:from-orange-500/20 hover:to-orange-600/30
+        hover:from-primary/20 hover:to-primary/30
         ${className}
       `}
       title={`View ${seriesName} collection`}
     >
-      <span className="text-orange-400">🐧</span>
-      <span className="text-orange-300 font-light truncate">{seriesName}</span>
+      <Building className={`${size === "sm" ? "w-3 h-3" : "w-4 h-4"} text-primary`} />
+      <span className="text-primary font-light truncate">{seriesName}</span>
     </button>
   );
 };
