@@ -23,6 +23,8 @@ export const getTransmissionsOptimized = async (): Promise<Transmission[]> => {
           id,
           name,
           publisher,
+          description,
+          logo_url,
           badge_emoji
         )
       `)
@@ -64,6 +66,8 @@ export const searchTransmissionsOptimized = async (query: string): Promise<Trans
           id,
           name,
           publisher,
+          description,
+          logo_url,
           badge_emoji
         )
       `)

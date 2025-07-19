@@ -23,6 +23,8 @@ interface BookCardProps {
     id: string;
     name: string;
     publisher: string;
+    description: string;
+    logo_url?: string;
     badge_emoji: string;
   };
   isbn?: string;

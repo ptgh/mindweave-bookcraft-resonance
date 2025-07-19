@@ -22,6 +22,8 @@ export interface Transmission {
     id: string;
     name: string;
     publisher: string;
+    description: string;
+    logo_url?: string;
     badge_emoji: string;
   };
   isbn?: string;
@@ -135,6 +137,8 @@ export const getTransmissions = async (): Promise<Transmission[]> => {
           id,
           name,
           publisher,
+          description,
+          logo_url,
           badge_emoji
         )
       `)
