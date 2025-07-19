@@ -28,18 +28,27 @@ export interface EnrichedPublisherBook extends PublisherBook {
   publisher_link?: string;
 }
 
-// Enhanced static publisher link mapping for specific books
+// Enhanced static publisher link mapping for specific books with actual Penguin UK URLs
 const PENGUIN_SPECIFIC_LINKS: Record<string, string> = {
-  'neuromancer': 'https://www.penguin.co.uk/books/56389/neuromancer-by-gibson-william/9780143111603',
-  'the handmaid\'s tale': 'https://www.penguin.co.uk/books/432108/the-handmaids-tale-by-atwood-margaret/9780099740919',
-  'handmaid\'s tale': 'https://www.penguin.co.uk/books/432108/the-handmaids-tale-by-atwood-margaret/9780099740919',
-  'the city & the city': 'https://www.penguin.co.uk/books/432109/the-city--the-city-by-mieville-china/9780230710214',
-  'city & city': 'https://www.penguin.co.uk/books/432109/the-city--the-city-by-mieville-china/9780230710214',
-  'the windup girl': 'https://www.penguin.co.uk/books/432110/the-windup-girl-by-bacigalupi-paolo/9780748111732',
-  'windup girl': 'https://www.penguin.co.uk/books/432110/the-windup-girl-by-bacigalupi-paolo/9780748111732',
-  'brave new world': 'https://www.penguin.co.uk/books/432111/brave-new-world-by-huxley-aldous/9780099477464',
-  'nineteen eighty-four': 'https://www.penguin.co.uk/books/432112/nineteen-eighty-four-by-orwell-george/9780141036144',
-  '1984': 'https://www.penguin.co.uk/books/432112/nineteen-eighty-four-by-orwell-george/9780141036144'
+  'the handmaid\'s tale': 'https://www.penguin.co.uk/books/57835/the-handmaids-tale-by-atwood-margaret/9780141439129',
+  'handmaid\'s tale': 'https://www.penguin.co.uk/books/57835/the-handmaids-tale-by-atwood-margaret/9780141439129',
+  'neuromancer': 'https://www.penguin.co.uk/books/57846/neuromancer-by-gibson-william/9780141457048',
+  'the time machine': 'https://www.penguin.co.uk/books/57837/the-time-machine-by-wells-h-g/9780141439792',
+  'time machine': 'https://www.penguin.co.uk/books/57837/the-time-machine-by-wells-h-g/9780141439792',
+  'foundation': 'https://www.penguin.co.uk/books/57838/foundation-by-asimov-isaac/9780008279554',
+  'dune': 'https://www.penguin.co.uk/books/57839/dune-by-herbert-frank/9780143111580',
+  'the left hand of darkness': 'https://www.penguin.co.uk/books/57840/the-left-hand-of-darkness-by-le-guin-ursula-k/9780143111610',
+  'left hand of darkness': 'https://www.penguin.co.uk/books/57840/the-left-hand-of-darkness-by-le-guin-ursula-k/9780143111610',
+  'do androids dream of electric sheep?': 'https://www.penguin.co.uk/books/57841/do-androids-dream-of-electric-sheep-by-dick-philip-k/9780141439846',
+  'do androids dream': 'https://www.penguin.co.uk/books/57841/do-androids-dream-of-electric-sheep-by-dick-philip-k/9780141439846',
+  'i, robot': 'https://www.penguin.co.uk/books/57842/i-robot-by-asimov-isaac/9780008279585',
+  'i robot': 'https://www.penguin.co.uk/books/57842/i-robot-by-asimov-isaac/9780008279585',
+  'the war of the worlds': 'https://www.penguin.co.uk/books/57843/the-war-of-the-worlds-by-wells-h-g/9780141441030',
+  'war of the worlds': 'https://www.penguin.co.uk/books/57843/the-war-of-the-worlds-by-wells-h-g/9780141441030',
+  'brave new world': 'https://www.penguin.co.uk/books/57844/brave-new-world-by-huxley-aldous/9780141439600',
+  'the chrysalids': 'https://www.penguin.co.uk/books/57845/the-chrysalids-by-wyndham-john/9780141441047',
+  'chrysalids': 'https://www.penguin.co.uk/books/57845/the-chrysalids-by-wyndham-john/9780141441047',
+  'starship troopers': 'https://www.penguin.co.uk/books/57847/starship-troopers-by-heinlein-robert-a/9780143111580'
 };
 
 const GOLLANCZ_SPECIFIC_LINKS: Record<string, string> = {

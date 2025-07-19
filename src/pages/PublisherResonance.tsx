@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
 import { Building } from "lucide-react";
@@ -80,10 +81,10 @@ const PublisherResonance = () => {
 
   return (
     <AuthWrapper fallback={<Auth />}>
-      <div className="min-h-screen bg-slate-900">
+      <div className="min-h-screen bg-slate-900 flex flex-col">
         <Header />
         
-        <main className="container mx-auto px-6 py-12">
+        <main className="container mx-auto px-6 py-12 flex-1">
           {/* Hero Section */}
           <div ref={heroRef} className="text-center mb-12">
             <div className="flex items-center justify-center space-x-4 mb-6">
@@ -174,6 +175,8 @@ const PublisherResonance = () => {
             </div>
           )}
         </main>
+        
+        <Footer />
       </div>
     </AuthWrapper>
   );

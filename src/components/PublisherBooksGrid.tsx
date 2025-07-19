@@ -44,8 +44,8 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
   if (loading) {
     return (
       <div className="text-center py-12">
-        <div className="w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full mx-auto mb-4 animate-spin"></div>
-        <p className="text-slate-400">Loading curated collection...</p>
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4 animate-spin"></div>
+        <p className="text-foreground/70">Loading curated collection...</p>
       </div>
     );
   }
@@ -68,7 +68,7 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
     <div>
       <div className="mb-6">
         <PublisherResonanceBadge series={series} size="md" />
-        <p className="text-slate-200 text-sm mt-3 leading-relaxed">{series.description}</p>
+        <p className="text-foreground/80 text-sm mt-3 leading-relaxed">{series.description}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -115,18 +115,18 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <h3 className="text-slate-200 font-medium text-sm leading-tight">{book.title}</h3>
-                      <p className="text-slate-400 text-xs mt-1">{book.author}</p>
+                    <h3 className="text-foreground font-medium text-sm leading-tight">{book.title}</h3>
+                      <p className="text-foreground/70 text-xs mt-1">{book.author}</p>
                     </div>
                     <div className="w-3 h-3 rounded-full border-2 border-purple-400 bg-purple-400/10 flex-shrink-0"></div>
                   </div>
                   
                   {book.editorial_note && (
-                    <p className="text-slate-400 text-xs italic leading-relaxed line-clamp-2 mb-2">{book.editorial_note}</p>
+                    <p className="text-foreground/60 text-xs italic leading-relaxed line-clamp-2 mb-2">{book.editorial_note}</p>
                   )}
                   
                   {book.isbn && (
-                    <p className="text-slate-500 text-xs font-mono mb-3">ISBN: {book.isbn}</p>
+                    <p className="text-foreground/50 text-xs font-mono mb-3">ISBN: {book.isbn}</p>
                   )}
                   
                    {/* Add Button */}
