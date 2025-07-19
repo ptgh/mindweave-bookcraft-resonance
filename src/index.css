@@ -84,15 +84,30 @@
     @apply bg-background text-foreground;
     overflow-x: hidden;
     max-width: 100vw;
+    /* iOS Safari scroll fixes */
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
   }
   
   body {
     position: relative;
+    /* Prevent iOS Safari zoom on input focus */
+    -webkit-text-size-adjust: 100%;
   }
   
   #root {
     overflow-x: hidden;
     max-width: 100vw;
+    /* Enable momentum scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+  
+  /* Allow text selection for input elements */
+  input, textarea, [contenteditable] {
+    -webkit-user-select: auto;
+    user-select: auto;
+    touch-action: manipulation;
   }
 }
 
@@ -145,11 +160,47 @@
   }
 }
 
-/* Safari-specific optimizations */
+/* iOS Safari specific accessibility fixes */
 @supports (-webkit-touch-callout: none) {
   .modal-content {
     -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
+  }
+  
+  /* Ensure header stays accessible on iOS */
+  header {
+    position: relative;
+    z-index: 1000;
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  
+  /* Fix touch targets for iOS */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Prevent iOS Safari bounce scroll */
+  body {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  #root {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
