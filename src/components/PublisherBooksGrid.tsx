@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import PublisherResonanceBadge from "./PublisherResonanceBadge";
 import { EnrichedPublisherBook, PublisherSeries } from "@/services/publisherService";
@@ -16,8 +16,13 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
   if (!series) return null;
   
   const [selectedBook, setSelectedBook] = useState<EnrichedPublisherBook | null>(null);
+  
+  // Reset selected book when books change
+  useEffect(() => {
+    setSelectedBook(null);
+  }, [books]);
   const getSeriesPlaceholder = (seriesName: string) => {
-    if (seriesName.toLowerCase().includes('penguin')) return '🐧';
+    if (seriesName.toLowerCase().includes('penguin')) return '📚';
     if (seriesName.toLowerCase().includes('gollancz')) return '🏛️';
     if (seriesName.toLowerCase().includes('tor')) return '🗲';
     if (seriesName.toLowerCase().includes('oxford')) return '📜';
@@ -64,10 +69,10 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
           >
             <div className="flex items-start space-x-4">
               {/* Book Cover - matching transmissions page size */}
-              <div className="w-12 h-16 bg-slate-700 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
-                {book.cover_url ? (
+              <div className="w-12 h-16 bg-slate-700 rounded flex items-center justify-center flex-shrink-0 overflow-hidden relative">
+                {(book.google_cover_url || book.cover_url) ? (
                   <img 
-                    src={book.cover_url} 
+                    src={book.google_cover_url || book.cover_url} 
                     alt={book.title} 
                     className="w-full h-full object-cover rounded"
                     style={{ imageRendering: 'crisp-edges' }}
@@ -79,7 +84,7 @@ const PublisherBooksGrid = ({ books, series, onAddBook, loading }: PublisherBook
                     }}
                   />
                 ) : null}
-                <div className={`flex items-center justify-center text-slate-400 text-lg absolute inset-0 ${book.cover_url ? 'hidden' : ''}`}>
+                <div className={`flex items-center justify-center text-slate-400 text-lg absolute inset-0 ${(book.google_cover_url || book.cover_url) ? 'hidden' : ''}`}>
                   {getSeriesPlaceholder(series.name)}
                 </div>
               </div>

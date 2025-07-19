@@ -11,7 +11,7 @@ const PublisherGridFilters = ({ series, activeFilters, onFilterToggle }: Publish
   const publishers = [...new Set(series.map(s => s.publisher))];
 
   const getPublisherIcon = (publisher: string) => {
-    if (publisher.toLowerCase().includes('penguin')) return '🐧';
+    if (publisher.toLowerCase().includes('penguin')) return '📚';
     if (publisher.toLowerCase().includes('gollancz')) return '🏛️';
     if (publisher.toLowerCase().includes('tor')) return '⚡';
     if (publisher.toLowerCase().includes('oxford')) return '📜';

@@ -55,16 +55,32 @@ export const getPublisherBooks = async (seriesId: string): Promise<EnrichedPubli
 
   if (!books) return [];
 
-  // Helper function to generate publisher store links
+  // Helper function to generate specific book links
   const getPublisherLink = (seriesName: string, title: string, author: string, isbn?: string) => {
+    // Create URL-friendly slugs
+    const titleSlug = title.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+    
+    const authorSlug = author.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+
     if (seriesName.toLowerCase().includes('gollancz')) {
-      return `https://store.gollancz.co.uk/collections/series-s-f-masterworks`;
+      // Generate specific Gollancz book URL structure
+      return `https://store.gollancz.co.uk/products/${titleSlug}-by-${authorSlug}`;
     }
     if (seriesName.toLowerCase().includes('penguin')) {
-      return `https://www.penguin.co.uk/series/PENGSCIFI/penguin-science-fiction`;
+      // Generate specific Penguin book URL structure  
+      return `https://www.penguin.co.uk/books/${titleSlug}-by-${authorSlug}${isbn ? `/${isbn}` : ''}`;
     }
     if (seriesName.toLowerCase().includes('angry robot')) {
-      return `https://angryrobotbooks.com`;
+      // Generate specific Angry Robot book URL
+      return `https://angryrobotbooks.com/book/${titleSlug}`;
     }
     return null;
   };
@@ -79,17 +95,19 @@ export const getPublisherBooks = async (seriesId: string): Promise<EnrichedPubli
         
         return {
           ...book,
-          google_cover_url: googleBook?.coverUrl || book.cover_url,
+          google_cover_url: googleBook?.coverUrl,
+          cover_url: googleBook?.coverUrl || book.cover_url, // Update cover_url with Google Books cover
           google_description: undefined, // Book interface doesn't have description
           publisher_link: getPublisherLink(seriesName, book.title, book.author, book.isbn)
         };
       } catch (error) {
         console.error(`Error enriching book ${book.title}:`, error);
+        const seriesName = (book as any).series?.name || '';
         return {
           ...book,
           google_cover_url: book.cover_url,
           google_description: undefined,
-          publisher_link: null
+          publisher_link: getPublisherLink(seriesName, book.title, book.author, book.isbn)
         };
       }
     })

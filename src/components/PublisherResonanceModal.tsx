@@ -58,11 +58,7 @@ const PublisherResonanceModal = ({ isOpen, onClose, series, onAddBook }: Publish
         <div className="flex items-center justify-between p-4 border-b border-slate-700/30 flex-shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-5 h-5 bg-slate-700/50 rounded-full flex items-center justify-center border border-slate-600/30">
-              {series.name.toLowerCase().includes('penguin') ? (
-                <span className="text-xs">🐧</span>
-              ) : (
-                <div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div>
-              )}
+              <div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div>
             </div>
             <div>
               <PublisherResonanceBadge series={series} size="sm" />

@@ -45,7 +45,7 @@ const PublisherMindMap = ({ series, selectedSeriesId, onSeriesChange }: Publishe
   };
 
   const getPublisherIcon = (name: string) => {
-    if (name.toLowerCase().includes('penguin')) return '🐧';
+    if (name.toLowerCase().includes('penguin')) return '📚';
     if (name.toLowerCase().includes('gollancz')) return '🏛️';
     if (name.toLowerCase().includes('tor')) return '🗲';
     if (name.toLowerCase().includes('oxford')) return '📜';

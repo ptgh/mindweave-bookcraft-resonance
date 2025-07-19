@@ -97,24 +97,24 @@ const PublisherResonance = () => {
 
   return (
     <AuthWrapper fallback={<Auth />}>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="min-h-screen bg-slate-900">
         <Header />
         
         <main className="container mx-auto px-6 py-12">
-          {/* Hero Section */}
-          <div ref={heroRef} className="text-center mb-12">
-            <div className="flex items-center justify-center space-x-4 mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/30 rounded-lg flex items-center justify-center border border-primary/30">
-                <Building className="w-8 h-8 text-primary" />
-              </div>
-              <h1 className="text-4xl font-light text-slate-200 tracking-wide">
-                <span className="text-primary">Publisher Resonance</span>
-              </h1>
+        {/* Hero Section */}
+        <div ref={heroRef} className="text-center mb-12">
+          <div className="flex items-center justify-center space-x-4 mb-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/30 rounded-lg flex items-center justify-center border border-primary/30">
+              <Building className="w-8 h-8 text-primary" />
             </div>
-            
-            <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed mb-8">
-              Curated collections from consciousness-shaping publishers
-            </p>
+            <h1 className="text-4xl font-light text-slate-200 tracking-wide">
+              <span className="text-primary">Publisher Resonance</span>
+            </h1>
+          </div>
+          
+          <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed mb-8">
+            Curated collections from consciousness-shaping publishers
+          </p>
 
             {/* Publisher Series Selector */}
             <div className="flex flex-wrap justify-center gap-3 mb-8">
