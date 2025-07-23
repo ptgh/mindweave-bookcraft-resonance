@@ -9,25 +9,25 @@ const Header = () => {
   
   return (
     <header className="bg-slate-900 border-b border-slate-700">
-      <div className="container mx-auto px-6 py-4">
+      <div className="container mx-auto px-4 py-3 md:px-6 md:py-4">
         <div className="flex items-center justify-between">
           <Link 
             to="/" 
-            className="flex items-center space-x-3 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-lg p-1"
+            className="flex items-center space-x-2 md:space-x-3 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-lg p-1"
             aria-label="Leafnode - Home"
           >
-            <div className="w-8 h-8 flex items-center justify-center">
-              <div className="w-6 h-6 bg-blue-400 rounded-full animate-pulse" />
+            <div className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center">
+              <div className="w-4 h-4 md:w-6 md:h-6 bg-blue-400 rounded-full animate-pulse" />
             </div>
-            <div>
-              <h1 className="text-xl font-light text-slate-200 tracking-wider">
+            <div className="hidden sm:block">
+              <h1 className="text-lg md:text-xl font-light text-slate-200 tracking-wider">
                 LEAFNODE
               </h1>
               <p className="text-xs text-slate-400 -mt-1">for the future-literate</p>
             </div>
           </Link>
           
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-2 md:space-x-6">
             <a
               href="https://instagram.com/leafnode.scifi"
               target="_blank"
@@ -112,8 +112,8 @@ const Header = () => {
             </nav>
 
             {user && (
-              <div className="flex items-center space-x-4">
-                <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-xs font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 py-1 px-2 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)]">
+              <div className="flex items-center space-x-1 md:space-x-4">
+                <span className="hidden md:inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-xs font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 py-1 px-2 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)]">
                   {user.email}
                 </span>
                 <StandardButton
@@ -123,7 +123,7 @@ const Header = () => {
                   className="flex items-center space-x-1"
                 >
                   <LogOut className="w-3 h-3" />
-                  <span>Sign Out</span>
+                  <span className="hidden sm:inline">Sign Out</span>
                 </StandardButton>
               </div>
             )}
