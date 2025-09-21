@@ -170,6 +170,47 @@ export type Database = {
           },
         ]
       }
+      book_collections: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_collections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       book_interactions: {
         Row: {
           book_author: string
@@ -226,6 +267,47 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      collection_books: {
+        Row: {
+          added_at: string | null
+          book_author: string
+          book_isbn: string | null
+          book_title: string
+          collection_id: string
+          cover_url: string | null
+          id: string
+          personal_notes: string | null
+        }
+        Insert: {
+          added_at?: string | null
+          book_author: string
+          book_isbn?: string | null
+          book_title: string
+          collection_id: string
+          cover_url?: string | null
+          id?: string
+          personal_notes?: string | null
+        }
+        Update: {
+          added_at?: string | null
+          book_author?: string
+          book_isbn?: string | null
+          book_title?: string
+          collection_id?: string
+          cover_url?: string | null
+          id?: string
+          personal_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_books_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "book_collections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contacts: {
         Row: {
@@ -502,6 +584,53 @@ export type Database = {
         }
         Relationships: []
       }
+      reading_sessions: {
+        Row: {
+          book_author: string
+          book_title: string
+          created_at: string | null
+          id: string
+          mood_rating: number | null
+          notes: string | null
+          pages_read: number | null
+          session_end: string | null
+          session_start: string | null
+          user_id: string
+        }
+        Insert: {
+          book_author: string
+          book_title: string
+          created_at?: string | null
+          id?: string
+          mood_rating?: number | null
+          notes?: string | null
+          pages_read?: number | null
+          session_end?: string | null
+          session_start?: string | null
+          user_id: string
+        }
+        Update: {
+          book_author?: string
+          book_title?: string
+          created_at?: string | null
+          id?: string
+          mood_rating?: number | null
+          notes?: string | null
+          pages_read?: number | null
+          session_end?: string | null
+          session_start?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reading_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scifi_authors: {
         Row: {
           bio: string | null
@@ -571,6 +700,7 @@ export type Database = {
           narrative_time_period: string | null
           notes: string | null
           open_count: number | null
+          profile_id: string | null
           publication_year: number | null
           publisher_series_id: string | null
           resonance_labels: string | null
@@ -589,6 +719,7 @@ export type Database = {
           narrative_time_period?: string | null
           notes?: string | null
           open_count?: number | null
+          profile_id?: string | null
           publication_year?: number | null
           publisher_series_id?: string | null
           resonance_labels?: string | null
@@ -607,6 +738,7 @@ export type Database = {
           narrative_time_period?: string | null
           notes?: string | null
           open_count?: number | null
+          profile_id?: string | null
           publication_year?: number | null
           publisher_series_id?: string | null
           resonance_labels?: string | null
@@ -614,7 +746,15 @@ export type Database = {
           title?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transmissions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
