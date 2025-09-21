@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -573,31 +573,31 @@ export type Database = {
       }
       log_book_interaction: {
         Args: {
-          p_user_id: string
-          p_book_title: string
           p_book_author: string
           p_book_isbn?: string
-          p_interaction_type?: string
-          p_digital_source?: string
-          p_source_context?: string
-          p_device_type?: string
+          p_book_title: string
           p_browser_type?: string
-          p_search_query?: string
-          p_response_time_ms?: number
-          p_success?: boolean
+          p_device_type?: string
+          p_digital_source?: string
           p_error_details?: string
+          p_interaction_type?: string
           p_metadata?: Json
+          p_response_time_ms?: number
+          p_search_query?: string
+          p_source_context?: string
+          p_success?: boolean
+          p_user_id: string
         }
         Returns: string
       }
       log_performance_metric: {
         Args: {
+          p_context?: string
+          p_device_type?: string
           p_metric_type: string
           p_metric_value: number
-          p_context?: string
-          p_user_agent?: string
-          p_device_type?: string
           p_network_type?: string
+          p_user_agent?: string
         }
         Returns: string
       }
