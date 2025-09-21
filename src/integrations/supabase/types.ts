@@ -371,6 +371,60 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          display_name: string | null
+          email: string
+          first_name: string | null
+          id: string
+          language: string | null
+          last_active: string | null
+          last_name: string | null
+          notification_settings: Json | null
+          reading_preferences: Json | null
+          theme_preference: string | null
+          timezone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          email: string
+          first_name?: string | null
+          id: string
+          language?: string | null
+          last_active?: string | null
+          last_name?: string | null
+          notification_settings?: Json | null
+          reading_preferences?: Json | null
+          theme_preference?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          email?: string
+          first_name?: string | null
+          id?: string
+          language?: string | null
+          last_active?: string | null
+          last_name?: string | null
+          notification_settings?: Json | null
+          reading_preferences?: Json | null
+          theme_preference?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       publisher_books: {
         Row: {
           author: string
@@ -562,6 +616,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -570,6 +648,17 @@ export type Database = {
       find_or_create_scifi_author: {
         Args: { author_name: string }
         Returns: string
+      }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
       }
       log_book_interaction: {
         Args: {
@@ -603,7 +692,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user" | "premium"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -730,6 +819,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user", "premium"],
+    },
   },
 } as const
