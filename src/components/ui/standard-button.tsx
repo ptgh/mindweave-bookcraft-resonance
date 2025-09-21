@@ -11,7 +11,7 @@ const standardButtonVariants = cva(
       variant: {
         standard: "bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)]",
         primary: "bg-blue-600 hover:bg-blue-700 text-white touch-manipulation active:scale-95",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+        ghost: "text-[#cdd6f4] hover:bg-accent hover:text-accent-foreground",
       },
       size: {
         default: "py-1.5 px-3",

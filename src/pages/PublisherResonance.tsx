@@ -77,12 +77,22 @@ const PublisherResonance = () => {
         if (booksError) throw booksError;
         
         setPublisherSeries(seriesData || []);
-        setBooks((booksData || []).map(book => ({
-          ...book,
-          publisher_link: book.penguin_url,
-          google_cover_url: null,
-          created_at: book.created_at || new Date().toISOString()
-        })));
+        setBooks((booksData || []).map(book => {
+          const series = (seriesData || []).find(s => s.id === book.series_id);
+          let publisher_link: string | null = book.penguin_url || null;
+          const titleKey = (book.title || '').toLowerCase().trim();
+          if (series?.publisher === 'Gollancz') {
+            if (titleKey === 'flowers for algernon') {
+              publisher_link = 'https://store.gollancz.co.uk/products/flowers-for-algernon';
+            }
+          }
+          return {
+            ...book,
+            publisher_link,
+            google_cover_url: null,
+            created_at: book.created_at || new Date().toISOString()
+          };
+        }));
         
       } catch (error) {
         console.error('Error loading publisher data:', error);

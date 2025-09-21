@@ -290,7 +290,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   };
 
   const displayData = appleBook || googleFallback || book;
-  const coverUrl = appleBook?.coverUrl || googleFallback?.coverUrl || book.google_cover_url || book.cover_url;
+  const coverUrl = book.cover_url || book.google_cover_url || appleBook?.coverUrl || googleFallback?.coverUrl;
   const description = appleBook?.description || googleFallback?.description || book.editorial_note;
 
   // Determine which digital copy option to show
