@@ -110,39 +110,47 @@ const EnhancedBookCover = ({
     }
   };
 
-  // Enhanced URL creation with better fallbacks
+  // Build robust fallbacks for Google Books image URLs
   const createImageFallbacks = (urls: string[]): string[] => {
-    const allUrls = [];
-    
-    for (const url of urls) {
-      if (!url) continue;
-      
-      // Add original URL first
-      allUrls.push(url);
-      
-      // Create enhanced versions for Google Books URLs
-      if (url.includes('books.google.com')) {
-        // Try without edge parameter
-        const withoutEdge = url.replace(/[&?]edge=[^&]*/, '');
-        if (withoutEdge !== url) allUrls.push(withoutEdge);
-        
-        // Try with zoom=0 for maximum quality
-        let enhanced = url;
-        if (enhanced.includes('zoom=')) {
-          enhanced = enhanced.replace(/zoom=\d+/, 'zoom=0');
-        } else {
-          const separator = enhanced.includes('?') ? '&' : '?';
-          enhanced = `${enhanced}${separator}zoom=0`;
+    const variants = new Set<string>();
+
+    const ensureParam = (u: string, key: string, value: string) =>
+      new RegExp(`[?&]${key}=`).test(u) ? u : `${u}${u.includes('?') ? '&' : '?'}${key}=${value}`;
+
+    for (const raw of urls) {
+      if (!raw) continue;
+
+      // Prefer HTTPS variant and keep original too
+      const https = raw.replace(/^http:\/\//, 'https://');
+      variants.add(raw);
+      variants.add(https);
+
+      // Special handling for Google Books content endpoint
+      if (/books\.google(?:usercontent)?\.com\/books\/content/.test(https)) {
+        const base = ensureParam(ensureParam(https, 'img', '1'), 'printsec', 'frontcover');
+        variants.add(base);
+
+        // Try both hosts as some titles only resolve on one
+        variants.add(base.replace('books.google.com', 'books.googleusercontent.com'));
+        variants.add(base.replace('books.googleusercontent.com', 'books.google.com'));
+
+        // Provide multiple zoom levels (do NOT force 0)
+        for (const z of [1, 2, 3, 4]) {
+          const withZoom = /[?&]zoom=/.test(base)
+            ? base.replace(/([?&])zoom=\d+/, `$1zoom=${z}`)
+            : `${base}${base.includes('?') ? '&' : '?'}zoom=${z}`;
+          variants.add(withZoom);
+          variants.add(withZoom.replace('books.google.com', 'books.googleusercontent.com'));
         }
-        if (enhanced !== url) allUrls.push(enhanced);
-        
-        // Try HTTPS if not already
-        const httpsUrl = url.replace(/^http:/, 'https:');
-        if (httpsUrl !== url) allUrls.push(httpsUrl);
+
+        // Also try keeping/adding edge=curl (some covers require it)
+        if (!/[?&]edge=/.test(base)) {
+          variants.add(`${base}${base.includes('?') ? '&' : '?'}edge=curl`);
+        }
       }
     }
-    
-    return [...new Set(allUrls)]; // Remove duplicates
+
+    return Array.from(variants);
   };
 
   useEffect(() => {
