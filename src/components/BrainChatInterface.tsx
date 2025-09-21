@@ -258,18 +258,18 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
   return (
     <div className="fixed bottom-6 right-12 z-30 w-96 h-[600px] flex flex-col">
       
-      <Card className="bg-slate-900/95 border-cyan-400/30 backdrop-blur-sm h-full flex flex-col">
+      <Card className="bg-background/40 border-border/30 backdrop-blur-md h-full flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-cyan-400/20">
+        <div className="flex items-center justify-between p-4 border-b border-border/20">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
-            <span className="text-cyan-400 font-medium">Neural Assistant</span>
+            <div className="w-3 h-3 bg-cyan-400/80 rounded-full animate-pulse" />
+            <span className="text-foreground/90 font-medium">Neural Assistant</span>
           </div>
           <Button
             onClick={() => setIsOpen(false)}
             variant="ghost"
             size="icon"
-            className="text-cyan-400/70 hover:text-cyan-400 hover:bg-cyan-400/10"
+            className="text-muted-foreground hover:text-foreground hover:bg-accent/50"
           >
             <X className="w-4 h-4" />
           </Button>
@@ -279,10 +279,10 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 && (
             <div className="text-center py-8">
-              <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-cyan-400/50 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-cyan-400" />
+              <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-cyan-400/40 flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-cyan-400/80" />
               </div>
-              <p className="text-cyan-400/70 text-sm mb-4">
+              <p className="text-muted-foreground text-sm mb-4">
                 Ask me about your reading network, thematic connections, or book recommendations!
               </p>
               <div className="space-y-2">
@@ -290,7 +290,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
                   <button
                     key={index}
                     onClick={() => handleSuggestionClick(suggestion)}
-                    className="block w-full text-left text-xs text-cyan-400/60 hover:text-cyan-400 p-2 rounded border border-cyan-400/20 hover:border-cyan-400/40 transition-colors"
+                    className="block w-full text-left text-xs text-muted-foreground/80 hover:text-foreground p-2 rounded border border-border/30 hover:border-border/60 transition-colors"
                   >
                     {suggestion}
                   </button>
@@ -307,22 +307,22 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
               <div
                 className={`max-w-[80%] p-3 rounded-lg text-sm ${
                   message.isUser
-                    ? 'bg-cyan-500/20 text-cyan-100 border border-cyan-400/30'
+                    ? 'bg-primary/10 text-foreground/90 border border-border/40'
                     : message.isError
-                    ? 'bg-red-500/20 text-red-100 border border-red-400/30'
-                    : 'bg-slate-800/50 text-slate-200 border border-slate-600/30'
+                    ? 'bg-destructive/10 text-destructive-foreground border border-destructive/30'
+                    : 'bg-muted/30 text-foreground/85 border border-border/20'
                 }`}
               >
                 {message.isError && (
                   <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="w-4 h-4 text-red-400" />
-                    <span className="text-red-400 text-xs font-medium">Error</span>
+                    <AlertTriangle className="w-4 h-4 text-destructive" />
+                    <span className="text-destructive text-xs font-medium">Error</span>
                   </div>
                 )}
                 {message.text}
                 {message.highlights && (message.highlights.nodeIds.length > 0 || message.highlights.tags.length > 0) && (
-                  <div className="mt-2 pt-2 border-t border-slate-600/30">
-                    <div className="text-xs text-cyan-400/70">
+                  <div className="mt-2 pt-2 border-t border-border/20">
+                    <div className="text-xs text-muted-foreground">
                       Highlighted: {message.highlights.nodeIds.length} books, {message.highlights.tags.length} themes
                     </div>
                   </div>
@@ -333,11 +333,11 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
 
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-slate-800/50 border border-slate-600/30 rounded-lg p-3">
+              <div className="bg-muted/30 border border-border/20 rounded-lg p-3">
                 <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" />
-                  <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                  <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                  <div className="w-2 h-2 bg-cyan-400/80 rounded-full animate-bounce" />
+                  <div className="w-2 h-2 bg-cyan-400/80 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                  <div className="w-2 h-2 bg-cyan-400/80 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
                 </div>
               </div>
             </div>
@@ -347,7 +347,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         </div>
 
         {/* Input */}
-        <div className="p-4 border-t border-cyan-400/20">
+        <div className="p-4 border-t border-border/20">
           <div className="flex gap-2">
             <input
               ref={inputRef}
@@ -356,14 +356,14 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
               onChange={(e) => setInputText(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Ask about your reading network..."
-              className="flex-1 bg-slate-800/50 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:border-cyan-400/50 focus:ring-1 focus:ring-cyan-400/30"
+              className="flex-1 bg-background/30 border border-border/40 rounded-lg px-3 py-2 text-sm text-foreground/90 placeholder-muted-foreground focus:outline-none focus:border-ring/50 focus:ring-1 focus:ring-ring/30"
               disabled={isLoading}
             />
             <Button
               onClick={handleSendMessage}
               disabled={!inputText.trim() || isLoading}
               size="icon"
-              className="bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 text-cyan-400 disabled:opacity-50"
+              className="bg-primary/10 hover:bg-primary/20 border border-border/50 text-foreground/80 disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
             </Button>
