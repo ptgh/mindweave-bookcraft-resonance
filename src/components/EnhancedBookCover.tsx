@@ -209,6 +209,14 @@ const EnhancedBookCover = ({
         }
       }
 
+      // As a last resort, let the <img> tag try the raw URL directly
+      if (originalUrls.length > 0) {
+        console.warn('Preload failed; falling back to raw <img> for', originalUrls[0]);
+        setCurrentSrc(originalUrls[0]);
+        setIsLoading(false);
+        return;
+      }
+
       // Try Archive.org as last resort
       console.log('All provided URLs failed, trying Archive.org...');
       const archiveCoverUrl = await getArchiveCover(title, author);

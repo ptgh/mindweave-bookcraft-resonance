@@ -43,13 +43,6 @@ class ImageService {
   private loadSingleImage(src: string, timeout: number): Promise<void> {
     return new Promise((resolve, reject) => {
       const img = new Image();
-      // Help with cross-origin and referrer-restricted images
-      try {
-        img.crossOrigin = 'anonymous';
-        // @ts-ignore - referrerPolicy is widely supported on modern browsers
-        img.referrerPolicy = 'no-referrer';
-      } catch (_) {}
-
       const timer = setTimeout(() => {
         reject(new Error(`Image load timeout: ${src}`));
       }, timeout);
