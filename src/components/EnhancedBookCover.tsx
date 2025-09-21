@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { imageService } from "@/services/image-service";
 import scifiPlaceholder from "@/assets/book-placeholder-scifi.jpg";
 import classicPlaceholder from "@/assets/book-placeholder-classic.jpg";
 import generalPlaceholder from "@/assets/book-placeholder-general.jpg";
@@ -44,7 +45,7 @@ const EnhancedBookCover = ({
         query = query.eq('book_author', author);
       }
       
-      const { data } = await query.limit(1).single();
+      const { data } = await query.limit(1).maybeSingle();
       
       if (data?.archive_url) {
         // Extract identifier from Archive.org URL
@@ -60,10 +61,12 @@ const EnhancedBookCover = ({
           ];
           
           for (const url of coverUrls) {
-            const isValid = await testImageUrl(url);
-            if (isValid) {
+            try {
+              await imageService.loadImage({ src: url, timeout: 8000 });
               console.log('Found Archive.org cover:', url);
               return url;
+            } catch (error) {
+              continue;
             }
           }
         }
@@ -83,7 +86,7 @@ const EnhancedBookCover = ({
         .from('ebook_search_cache')
         .select('internet_archive_results')
         .eq('search_key', `cover_${title}`)
-        .single();
+        .maybeSingle();
       
       const results = data?.internet_archive_results as { cover_url?: string } | null;
       return results?.cover_url;
@@ -107,26 +110,39 @@ const EnhancedBookCover = ({
     }
   };
 
-  // Test if image URL is valid
-  const testImageUrl = (url: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      const timer = setTimeout(() => {
-        resolve(false);
-      }, 3000);
-
-      img.onload = () => {
-        clearTimeout(timer);
-        resolve(true);
-      };
-
-      img.onerror = () => {
-        clearTimeout(timer);
-        resolve(false);
-      };
-
-      img.src = url;
-    });
+  // Enhanced URL creation with better fallbacks
+  const createImageFallbacks = (urls: string[]): string[] => {
+    const allUrls = [];
+    
+    for (const url of urls) {
+      if (!url) continue;
+      
+      // Add original URL first
+      allUrls.push(url);
+      
+      // Create enhanced versions for Google Books URLs
+      if (url.includes('books.google.com')) {
+        // Try without edge parameter
+        const withoutEdge = url.replace(/[&?]edge=[^&]*/, '');
+        if (withoutEdge !== url) allUrls.push(withoutEdge);
+        
+        // Try with zoom=0 for maximum quality
+        let enhanced = url;
+        if (enhanced.includes('zoom=')) {
+          enhanced = enhanced.replace(/zoom=\d+/, 'zoom=0');
+        } else {
+          const separator = enhanced.includes('?') ? '&' : '?';
+          enhanced = `${enhanced}${separator}zoom=0`;
+        }
+        if (enhanced !== url) allUrls.push(enhanced);
+        
+        // Try HTTPS if not already
+        const httpsUrl = url.replace(/^http:/, 'https:');
+        if (httpsUrl !== url) allUrls.push(httpsUrl);
+      }
+    }
+    
+    return [...new Set(allUrls)]; // Remove duplicates
   };
 
   useEffect(() => {
@@ -136,77 +152,71 @@ const EnhancedBookCover = ({
       setIsLoading(true);
       setHasError(false);
 
-      // First check cache
+      // First check if image service has this URL cached
+      const imageServiceCached = imageService.getCachedUrl(coverUrl || '');
+      if (imageServiceCached) {
+        console.log('Using image service cache:', imageServiceCached);
+        setCurrentSrc(imageServiceCached);
+        setIsLoading(false);
+        return;
+      }
+
+      // Then check Supabase cache
       const cachedUrl = await getCachedImageUrl(title);
       if (cachedUrl) {
-        console.log('Using cached image:', cachedUrl);
-        const isValid = await testImageUrl(cachedUrl);
-        if (isValid) {
-          setCurrentSrc(cachedUrl);
+        console.log('Using Supabase cached image:', cachedUrl);
+        try {
+          const validUrl = await imageService.loadImage({ src: cachedUrl, timeout: 8000 });
+          setCurrentSrc(validUrl);
           setIsLoading(false);
           return;
+        } catch (error) {
+          console.log('Cached URL no longer valid:', cachedUrl);
         }
       }
 
-      // Prepare all available URLs without modification first
+      // Prepare all available URLs with fallbacks
       const originalUrls = [coverUrl, thumbnailUrl, smallThumbnailUrl].filter(Boolean) as string[];
-      
-      // Then create enhanced versions as fallbacks
-      const enhancedUrls = originalUrls.map(url => {
-        if (url.includes('books.google.com')) {
-          let enhanced = url.replace('&edge=curl', '');
-          if (enhanced.includes('zoom=')) {
-            enhanced = enhanced.replace(/zoom=\d+/, 'zoom=0');
-          }
-          return enhanced;
-        }
-        return url;
-      });
-
-      // Try to get Archive.org cover if no cover URLs provided or if existing ones fail
-      let archiveCoverUrl: string | null = null;
-      if (originalUrls.length === 0 || !coverUrl) {
-        console.log('No cover URLs provided, checking Archive.org...');
-        archiveCoverUrl = await getArchiveCover(title, author);
-      }
-
-      // Combine all URLs, prioritizing originals, then enhanced, then Archive.org
-      const allUrls = [
-        ...originalUrls, 
-        ...enhancedUrls.filter(url => !originalUrls.includes(url)),
-        ...(archiveCoverUrl ? [archiveCoverUrl] : [])
-      ];
+      const allUrls = createImageFallbacks(originalUrls);
 
       console.log('Trying URLs for', title, ':', allUrls);
 
-      // Try each URL until one works
+      // Try each URL with image service
       for (const url of allUrls) {
         console.log('Testing URL:', url);
-        const isValid = await testImageUrl(url);
-        if (isValid) {
-          console.log('Successfully loaded:', url);
-          setCurrentSrc(url);
+        try {
+          const validUrl = await imageService.loadImage({ 
+            src: url, 
+            timeout: 8000,
+            fallbacks: []
+          });
+          console.log('Successfully loaded:', validUrl);
+          setCurrentSrc(validUrl);
           setIsLoading(false);
-          await cacheImageUrl(url, title);
+          await cacheImageUrl(validUrl, title);
           return;
-        } else {
+        } catch (error) {
           console.log('Failed to load:', url);
+          continue;
         }
       }
 
-      // If we haven't tried Archive.org yet and original URLs failed, try it now
-      if (!archiveCoverUrl && originalUrls.length > 0) {
-        console.log('Original URLs failed, trying Archive.org as fallback...');
-        archiveCoverUrl = await getArchiveCover(title, author);
-        if (archiveCoverUrl) {
-          const isValid = await testImageUrl(archiveCoverUrl);
-          if (isValid) {
-            console.log('Successfully loaded Archive.org cover:', archiveCoverUrl);
-            setCurrentSrc(archiveCoverUrl);
-            setIsLoading(false);
-            await cacheImageUrl(archiveCoverUrl, title);
-            return;
-          }
+      // Try Archive.org as last resort
+      console.log('All provided URLs failed, trying Archive.org...');
+      const archiveCoverUrl = await getArchiveCover(title, author);
+      if (archiveCoverUrl) {
+        try {
+          const validUrl = await imageService.loadImage({ 
+            src: archiveCoverUrl, 
+            timeout: 8000 
+          });
+          console.log('Successfully loaded Archive.org cover:', validUrl);
+          setCurrentSrc(validUrl);
+          setIsLoading(false);
+          await cacheImageUrl(validUrl, title);
+          return;
+        } catch (error) {
+          console.log('Archive.org cover also failed:', archiveCoverUrl);
         }
       }
 
@@ -215,6 +225,11 @@ const EnhancedBookCover = ({
       setIsLoading(false);
       setHasError(true);
     };
+
+    // Don't reload if we already have a working image
+    if (currentSrc && !hasError) {
+      return;
+    }
 
     loadImage();
   }, [coverUrl, thumbnailUrl, smallThumbnailUrl, title, author, isbn]);
