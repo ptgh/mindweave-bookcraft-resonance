@@ -18,6 +18,7 @@ interface Message {
     tags: string[];
   };
   isError?: boolean;
+  errorCode?: string;
 }
 
 interface BrainChatInterfaceProps {
@@ -35,12 +36,44 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Initialize or retrieve conversation when chat opens
+  useEffect(() => {
+    const initConversation = async () => {
+      if (isOpen && !conversationId) {
+        try {
+          // Create a new conversation
+          const { data: userData } = await supabase.auth.getUser();
+          if (userData?.user) {
+            const { data, error } = await supabase
+              .from('chat_conversations')
+              .insert({
+                user_id: userData.user.id,
+                title: 'Neural Map Chat'
+              })
+              .select()
+              .single();
+
+            if (!error && data) {
+              setConversationId(data.id);
+              console.log('Created new conversation:', data.id);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to create conversation:', error);
+          // Continue without conversation storage if it fails
+        }
+      }
+    };
+
+    initConversation();
+  }, [isOpen, conversationId]);
   // Generate suggestions when brain data changes
   useEffect(() => {
     if (nodes.length > 0) {
@@ -158,25 +191,24 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
       const cleanData = cleanBrainData(nodes, links);
       console.log('Cleaned data counts - nodes:', cleanData.nodes.length, 'links:', cleanData.links.length);
 
+      // Build conversation history for context
+      const conversationHistory = messages.map(msg => ({
+        role: msg.isUser ? 'user' as const : 'assistant' as const,
+        content: msg.text
+      }));
+
       // Create the payload and test it
       const payload = {
         message: inputText,
+        conversationId: conversationId || undefined,
+        messages: conversationHistory,
         brainData: {
           ...cleanData,
           activeFilters: Array.isArray(activeFilters) ? activeFilters : []
         }
       };
 
-      // Final serialization test
-      try {
-        JSON.stringify(payload);
-        console.log('Final payload serialization test passed');
-      } catch (finalSerError) {
-        console.error('Final payload serialization failed:', finalSerError);
-        throw new Error('Payload contains non-serializable data');
-      }
-
-      console.log('Calling supabase function with payload size:', JSON.stringify(payload).length, 'characters');
+      console.log('Calling supabase function with conversation history:', conversationHistory.length, 'messages');
 
       const { data, error } = await supabase.functions.invoke('brain-chat', {
         body: payload
@@ -191,7 +223,20 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
 
       if (data?.error) {
         console.error('Function returned error:', data.error);
-        throw new Error(data.error);
+        
+        // Handle specific error codes
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: data.error,
+          isUser: false,
+          timestamp: new Date(),
+          isError: true,
+          errorCode: data.errorCode
+        };
+        
+        setMessages(prev => [...prev, errorMessage]);
+        setIsLoading(false);
+        return;
       }
 
       if (!data?.response) {
@@ -253,8 +298,17 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
 
     try {
       const cleanData = cleanBrainData(nodes, links);
+      
+      // Build conversation history
+      const conversationHistory = messages.map(msg => ({
+        role: msg.isUser ? 'user' as const : 'assistant' as const,
+        content: msg.text
+      }));
+
       const payload = {
         message: suggestion,
+        conversationId: conversationId || undefined,
+        messages: conversationHistory,
         brainData: {
           ...cleanData,
           activeFilters: Array.isArray(activeFilters) ? activeFilters : []
@@ -266,7 +320,21 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
       });
 
       if (error) throw new Error(`Function call failed: ${error.message}`);
-      if (data?.error) throw new Error(data.error);
+      
+      if (data?.error) {
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: data.error,
+          isUser: false,
+          timestamp: new Date(),
+          isError: true,
+          errorCode: data.errorCode
+        };
+        setMessages(prev => [...prev, errorMessage]);
+        setIsLoading(false);
+        return;
+      }
+      
       if (!data?.response) throw new Error('No response received from AI');
 
       const aiMessage: Message = {
@@ -318,7 +386,10 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         <div className="flex items-center justify-between p-4 border-b border-cyan-400/30 bg-cyan-900/40">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50" />
-            <span className="text-white font-medium">Neural Assistant</span>
+            <div className="flex flex-col">
+              <span className="text-white font-medium text-sm">Neural Assistant</span>
+              <span className="text-cyan-300/70 text-[10px]">Powered by Gemini 2.5 • FREE until Oct 6</span>
+            </div>
           </div>
           <Button
             onClick={() => setIsOpen(false)}
@@ -370,8 +441,12 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
               >
                 {message.isError && (
                   <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="w-4 h-4 text-destructive" />
-                    <span className="text-destructive text-xs font-medium">Error</span>
+                    <AlertTriangle className="w-4 h-4 text-red-400" />
+                    <span className="text-red-400 text-xs font-medium">
+                      {message.errorCode === 'RATE_LIMIT' && 'Rate Limit Exceeded'}
+                      {message.errorCode === 'NO_CREDITS' && 'AI Credits Depleted'}
+                      {!message.errorCode && 'Error'}
+                    </span>
                   </div>
                 )}
                 {message.text}

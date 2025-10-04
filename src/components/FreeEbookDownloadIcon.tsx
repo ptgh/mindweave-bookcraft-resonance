@@ -97,6 +97,7 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
         title={title}
         author={author}
         ebookData={ebookData}
+        isLoading={false}
       />
     </>
   );

@@ -18,7 +18,7 @@ enable_signup = true
 enable_anonymous_sign_ins = false
 
 [functions.brain-chat]
-verify_jwt = false
+verify_jwt = true
 
 [functions.auth-confirmation-email]
 verify_jwt = false

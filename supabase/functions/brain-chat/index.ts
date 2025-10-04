@@ -1,6 +1,7 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,8 +25,15 @@ interface BookLink {
   connectionReason: string;
 }
 
+interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
 interface ChatRequest {
   message: string;
+  conversationId?: string;
+  messages?: ChatMessage[];
   brainData: {
     nodes: BrainNode[];
     links: BookLink[];
@@ -39,19 +47,24 @@ serve(async (req) => {
   }
 
   try {
-    // Check if OpenAI API key is configured
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    console.log('Checking OpenAI API key...', openAIApiKey ? 'Key found' : 'Key missing');
+    // Check if Lovable API key is configured
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    console.log('Checking Lovable API key...', lovableApiKey ? 'Key found' : 'Key missing');
     
-    if (!openAIApiKey) {
-      console.error('OpenAI API key not found in environment variables');
+    if (!lovableApiKey) {
+      console.error('Lovable API key not found in environment variables');
       return new Response(JSON.stringify({ 
-        error: 'OpenAI API key is not configured. Please add your OpenAI API key in the Supabase Edge Function secrets.' 
+        error: 'Lovable AI is not configured. Please contact support.' 
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // Initialize Supabase client for conversation storage
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Parse request body
     let requestBody;
@@ -68,7 +81,7 @@ serve(async (req) => {
       });
     }
 
-    const { message, brainData }: ChatRequest = requestBody;
+    const { message, conversationId, messages = [], brainData }: ChatRequest = requestBody;
 
     // Validate required fields
     if (!message) {
@@ -123,55 +136,63 @@ When referencing specific books, use their exact titles. When discussing connect
 
 IMPORTANT: Write your responses in clear, flowing paragraphs. Do NOT use bold markdown (**text**) or asterisks for emphasis. Write naturally as if speaking to someone. Use proper paragraph breaks for readability. Keep your tone conversational, insightful, and focused on the neural network aspects of their library.`;
 
-    console.log('Making OpenAI API request...');
-    console.log('Using model: gpt-4o-mini');
+    console.log('Making Lovable AI request...');
+    console.log('Using model: google/gemini-2.5-flash (FREE until Oct 6, 2025)');
     
-    // Test OpenAI API connection
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Build message history for context
+    const conversationMessages: ChatMessage[] = [
+      { role: 'system', content: systemPrompt },
+      ...messages, // Previous conversation
+      { role: 'user', content: message } // Current message
+    ];
+
+    console.log(`Message history: ${conversationMessages.length} messages`);
+    
+    // Call Lovable AI Gateway
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: message }
-        ],
+        model: 'google/gemini-2.5-flash',
+        messages: conversationMessages,
         temperature: 0.7,
-        max_tokens: 800,
+        max_tokens: 1000,
       }),
     });
 
-    console.log('OpenAI API response status:', response.status);
-    console.log('OpenAI API response headers:', Object.fromEntries(response.headers.entries()));
+    console.log('Lovable AI response status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error details:', {
+      console.error('Lovable AI error details:', {
         status: response.status,
         statusText: response.statusText,
         error: errorText
       });
       
-      if (response.status === 401) {
+      if (response.status === 429) {
         return new Response(JSON.stringify({ 
-          error: 'Invalid OpenAI API key. Please check your API key in the Supabase Edge Function secrets.' 
+          error: 'Rate limit exceeded. Please try again in a moment.',
+          errorCode: 'RATE_LIMIT'
         }), {
-          status: 500,
+          status: 429,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
-      } else if (response.status === 429) {
+      } else if (response.status === 402) {
         return new Response(JSON.stringify({ 
-          error: 'OpenAI API rate limit exceeded. Please try again in a moment.' 
+          error: 'AI credits depleted. Please add credits in Settings > Workspace > Usage.',
+          errorCode: 'NO_CREDITS'
         }), {
-          status: 500,
+          status: 402,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } else {
         return new Response(JSON.stringify({ 
-          error: `OpenAI API error (${response.status}): ${errorText}` 
+          error: `AI service error (${response.status}): ${errorText}`,
+          errorCode: 'AI_ERROR'
         }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -182,11 +203,11 @@ IMPORTANT: Write your responses in clear, flowing paragraphs. Do NOT use bold ma
     let data;
     try {
       data = await response.json();
-      console.log('OpenAI response parsed successfully');
+      console.log('Lovable AI response parsed successfully');
     } catch (jsonError) {
-      console.error('Failed to parse OpenAI response:', jsonError);
+      console.error('Failed to parse Lovable AI response:', jsonError);
       return new Response(JSON.stringify({ 
-        error: 'Invalid response from OpenAI API' 
+        error: 'Invalid response from AI service' 
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -194,9 +215,9 @@ IMPORTANT: Write your responses in clear, flowing paragraphs. Do NOT use bold ma
     }
 
     if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
-      console.error('Invalid OpenAI response structure:', data);
+      console.error('Invalid AI response structure:', data);
       return new Response(JSON.stringify({ 
-        error: 'Invalid response structure from OpenAI API' 
+        error: 'Invalid response structure from AI service' 
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -212,6 +233,31 @@ IMPORTANT: Write your responses in clear, flowing paragraphs. Do NOT use bold ma
     // Analyze response for actionable highlights
     const highlights = extractHighlights(aiResponse, brainData);
     console.log('Extracted highlights:', highlights);
+
+    // Store conversation if conversationId provided
+    if (conversationId) {
+      try {
+        // Store user message
+        await supabase.from('chat_messages').insert({
+          conversation_id: conversationId,
+          role: 'user',
+          content: message
+        });
+
+        // Store assistant response
+        await supabase.from('chat_messages').insert({
+          conversation_id: conversationId,
+          role: 'assistant',
+          content: formattedResponse,
+          highlights: highlights
+        });
+
+        console.log('Conversation saved successfully');
+      } catch (dbError) {
+        console.error('Failed to save conversation:', dbError);
+        // Don't fail the request if conversation storage fails
+      }
+    }
 
     return new Response(JSON.stringify({ 
       response: formattedResponse,
