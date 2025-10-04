@@ -12,14 +12,6 @@ export const useAuth = () => {
     console.log('Auth hook initializing...');
     
     let isMounted = true;
-    let fallbackTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    // Safety: ensure we never hang on loading forever
-    fallbackTimeout = setTimeout(() => {
-      if (!isMounted) return;
-      console.warn('Auth init timeout reached — proceeding unauthenticated');
-      setLoading(false);
-    }, 5000);
 
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -30,10 +22,6 @@ export const useAuth = () => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-        if (fallbackTimeout) {
-          clearTimeout(fallbackTimeout);
-          fallbackTimeout = null;
-        }
       }
     );
 
@@ -50,24 +38,15 @@ export const useAuth = () => {
       }
       
       setLoading(false);
-      if (fallbackTimeout) {
-        clearTimeout(fallbackTimeout);
-        fallbackTimeout = null;
-      }
     }).catch((err) => {
       console.error('Unexpected error getting session:', err);
       if (!isMounted) return;
       setLoading(false);
-      if (fallbackTimeout) {
-        clearTimeout(fallbackTimeout);
-        fallbackTimeout = null;
-      }
     });
 
     return () => {
       isMounted = false;
       console.log('Auth cleanup');
-      if (fallbackTimeout) clearTimeout(fallbackTimeout);
       subscription.unsubscribe();
     };
   }, []);
