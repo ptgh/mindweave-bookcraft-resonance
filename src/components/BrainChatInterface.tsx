@@ -33,7 +33,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
   activeFilters,
   onHighlight
 }) => {
-  const [isOpen, setIsOpen] = useState(true); // Changed from false to true to start open
+  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -247,7 +247,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-12 z-30 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 backdrop-blur-sm text-cyan-400 rounded-full p-4 transition-all duration-300 hover:scale-110"
+        className="fixed bottom-6 right-12 z-30 bg-background/95 hover:bg-accent/80 border border-primary/30 backdrop-blur-md text-primary shadow-lg shadow-primary/20 rounded-full p-4 transition-all duration-300 hover:scale-110 hover:shadow-primary/40"
         size="icon"
       >
         <MessageCircle className="w-6 h-6" />
@@ -258,18 +258,18 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
   return (
     <div className="fixed bottom-6 right-12 z-30 w-96 h-[600px] flex flex-col">
       
-      <Card className="bg-background/40 border-border/30 backdrop-blur-md h-full flex flex-col">
+      <Card className="bg-background/98 border-primary/30 backdrop-blur-xl h-full flex flex-col shadow-2xl shadow-primary/10">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border/20">
+        <div className="flex items-center justify-between p-4 border-b border-primary/20 bg-accent/30">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-cyan-400/80 rounded-full animate-pulse" />
-            <span className="text-foreground/90 font-medium">Neural Assistant</span>
+            <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-lg shadow-primary/50" />
+            <span className="text-foreground font-medium">Neural Assistant</span>
           </div>
           <Button
             onClick={() => setIsOpen(false)}
             variant="ghost"
             size="icon"
-            className="text-muted-foreground hover:text-foreground hover:bg-accent/50"
+            className="text-muted-foreground hover:text-foreground hover:bg-primary/20"
           >
             <X className="w-4 h-4" />
           </Button>
@@ -279,10 +279,10 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 && (
             <div className="text-center py-8">
-              <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-cyan-400/40 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-cyan-400/80" />
+              <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-primary/60 bg-primary/10 flex items-center justify-center shadow-lg shadow-primary/20">
+                <Sparkles className="w-6 h-6 text-primary" />
               </div>
-              <p className="text-muted-foreground text-sm mb-4">
+              <p className="text-foreground/80 text-sm mb-4">
                 Ask me about your reading network, thematic connections, or book recommendations!
               </p>
               <div className="space-y-2">
@@ -290,7 +290,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
                   <button
                     key={index}
                     onClick={() => handleSuggestionClick(suggestion)}
-                    className="block w-full text-left text-xs text-muted-foreground/80 hover:text-foreground p-2 rounded border border-border/30 hover:border-border/60 transition-colors"
+                    className="block w-full text-left text-xs text-foreground/70 hover:text-foreground p-2 rounded border border-primary/30 hover:border-primary/50 bg-accent/20 hover:bg-accent/40 transition-all"
                   >
                     {suggestion}
                   </button>
@@ -307,10 +307,10 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
               <div
                 className={`max-w-[80%] p-3 rounded-lg text-sm ${
                   message.isUser
-                    ? 'bg-primary/10 text-foreground/90 border border-border/40'
+                    ? 'bg-primary/20 text-foreground border border-primary/40 shadow-md shadow-primary/10'
                     : message.isError
-                    ? 'bg-destructive/10 text-destructive-foreground border border-destructive/30'
-                    : 'bg-muted/30 text-foreground/85 border border-border/20'
+                    ? 'bg-destructive/20 text-destructive-foreground border border-destructive/50'
+                    : 'bg-accent/40 text-foreground border border-primary/30'
                 }`}
               >
                 {message.isError && (
@@ -333,11 +333,11 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
 
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-muted/30 border border-border/20 rounded-lg p-3">
+              <div className="bg-accent/40 border border-primary/30 rounded-lg p-3">
                 <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-cyan-400/80 rounded-full animate-bounce" />
-                  <div className="w-2 h-2 bg-cyan-400/80 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                  <div className="w-2 h-2 bg-cyan-400/80 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce shadow-sm shadow-primary/50" />
+                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce shadow-sm shadow-primary/50" style={{ animationDelay: '0.1s' }} />
+                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce shadow-sm shadow-primary/50" style={{ animationDelay: '0.2s' }} />
                 </div>
               </div>
             </div>
@@ -347,7 +347,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         </div>
 
         {/* Input */}
-        <div className="p-4 border-t border-border/20">
+        <div className="p-4 border-t border-primary/20 bg-accent/20">
           <div className="flex gap-2">
             <input
               ref={inputRef}
@@ -356,14 +356,14 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
               onChange={(e) => setInputText(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Ask about your reading network..."
-              className="flex-1 bg-background/30 border border-border/40 rounded-lg px-3 py-2 text-sm text-foreground/90 placeholder-muted-foreground focus:outline-none focus:border-ring/50 focus:ring-1 focus:ring-ring/30"
+              className="flex-1 bg-background/60 border border-primary/40 rounded-lg px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
               disabled={isLoading}
             />
             <Button
               onClick={handleSendMessage}
               disabled={!inputText.trim() || isLoading}
               size="icon"
-              className="bg-primary/10 hover:bg-primary/20 border border-border/50 text-foreground/80 disabled:opacity-50"
+              className="bg-primary/20 hover:bg-primary/30 border border-primary/50 text-foreground hover:shadow-md hover:shadow-primary/20 disabled:opacity-50 transition-all"
             >
               <Send className="w-4 h-4" />
             </Button>
