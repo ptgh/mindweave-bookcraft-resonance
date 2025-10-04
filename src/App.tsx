@@ -15,6 +15,7 @@ import BookBrowser from "./pages/BookBrowser";
 import PublisherResonance from "./pages/PublisherResonance";
 import Auth from "./pages/Auth";
 import TestBrain from "./pages/TestBrain";
+import AdminEnrichment from "./pages/AdminEnrichment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ const AppRoutes = () => {
       <Route path="/book-browser" element={<BookBrowser />} />
       <Route path="/publisher-resonance" element={<PublisherResonance />} />
       <Route path="/test-brain" element={<TestBrain />} />
+      <Route path="/admin/enrichment" element={<AdminEnrichment />} />
       <Route path="/auth" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

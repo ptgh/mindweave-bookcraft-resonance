@@ -144,14 +144,83 @@ export const getEnrichmentStats = async () => {
       pendingJobs: queueStats?.length || 0,
       totalAuthors: authorStats?.length || 0,
       completeAuthors: authorStats?.filter(a => a.data_quality_score >= 80).length || 0,
-      needsEnrichment: authorStats?.filter(a => a.needs_enrichment).length || 0,
-      averageQuality: authorStats?.reduce((sum, a) => sum + (a.data_quality_score || 0), 0) / (authorStats?.length || 1)
+      authorsNeedingEnrichment: authorStats?.filter(a => a.needs_enrichment).length || 0,
+      avgQuality: Math.round(authorStats?.reduce((sum, a) => sum + (a.data_quality_score || 0), 0) / (authorStats?.length || 1))
     };
     
     return stats;
   } catch (error) {
     console.error('Error fetching enrichment stats:', error);
     throw error;
+  }
+};
+
+export const bulkProcessAllPending = async (
+  onProgress?: (current: number, total: number) => void
+): Promise<{ processed: number; successful: number; failed: number }> => {
+  console.log('Starting bulk processing of all pending enrichment jobs...');
+  
+  try {
+    // Get total pending jobs
+    const { count: totalPending } = await supabase
+      .from('author_enrichment_queue')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending');
+    
+    if (!totalPending || totalPending === 0) {
+      console.log('No pending jobs to process');
+      return { processed: 0, successful: 0, failed: 0 };
+    }
+    
+    console.log(`Found ${totalPending} pending jobs. Starting processing...`);
+    
+    // Calculate number of runs needed (10 jobs per run)
+    const runsNeeded = Math.ceil(totalPending / 10);
+    let totalProcessed = 0;
+    let totalSuccessful = 0;
+    let totalFailed = 0;
+    
+    // Process in batches
+    for (let i = 0; i < runsNeeded; i++) {
+      console.log(`Processing batch ${i + 1}/${runsNeeded}...`);
+      
+      try {
+        const result = await triggerEnrichmentJob();
+        
+        if (result.success) {
+          totalProcessed += result.results?.processed || 0;
+          totalSuccessful += result.results?.successful || 0;
+          totalFailed += result.results?.failed || 0;
+        } else {
+          console.error(`Batch ${i + 1} failed:`, result.message);
+          totalFailed += 10; // Assume all failed in this batch
+        }
+        
+        // Update progress
+        if (onProgress) {
+          onProgress(Math.min((i + 1) * 10, totalPending), totalPending);
+        }
+        
+        // Wait between batches to avoid rate limits (except for last batch)
+        if (i < runsNeeded - 1) {
+          await new Promise(resolve => setTimeout(resolve, 5000)); // 5 second delay
+        }
+      } catch (error) {
+        console.error(`Error in batch ${i + 1}:`, error);
+        totalFailed += 10;
+      }
+    }
+    
+    console.log(`Bulk processing complete. Processed: ${totalProcessed}, Successful: ${totalSuccessful}, Failed: ${totalFailed}`);
+    
+    return {
+      processed: totalProcessed,
+      successful: totalSuccessful,
+      failed: totalFailed
+    };
+  } catch (error) {
+    console.error('Error in bulk processing:', error);
+    throw new Error('Failed to bulk process enrichment jobs');
   }
 };
 
