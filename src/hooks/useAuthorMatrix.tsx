@@ -8,7 +8,7 @@ import { SearchResult } from "@/services/searchService";
 import { searchBooksEnhanced, EnhancedBookSuggestion } from "@/services/googleBooksApi";
 import { searchDebouncer } from "@/services/debounced-search";
 import { imageService } from "@/services/image-service";
-
+import { searchAppleBooks } from "@/services/appleBooks";
 const AUTHORS_PER_PAGE = 20;
 
 export const useAuthorMatrix = () => {
@@ -160,6 +160,17 @@ export const useAuthorMatrix = () => {
 
   const addToTransmissions = useCallback(async (book: AuthorBook) => {
     try {
+      // Try to enrich with Apple Books link (cached)
+      let appleLink: string | undefined;
+      try {
+        const found = await searchAppleBooks(book.title, selectedAuthor?.name || '', undefined);
+        if (found?.storeUrl) {
+          appleLink = found.storeUrl;
+        }
+      } catch (e) {
+        console.warn('Apple Books lookup failed (author matrix):', e);
+      }
+
       await saveTransmission({
         title: book.title,
         author: selectedAuthor?.name || 'Unknown',
@@ -167,7 +178,8 @@ export const useAuthorMatrix = () => {
         tags: book.categories || [],
         rating: {},
         notes: book.description || '',
-        status: 'want-to-read'
+        status: 'want-to-read',
+        apple_link: appleLink
       });
       
       toast({

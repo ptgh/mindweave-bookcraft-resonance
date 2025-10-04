@@ -1,12 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Edit, Archive, X } from "lucide-react";
 import PublisherResonanceBadge from "./PublisherResonanceBadge";
 import PenguinPublisherBadge from "./PenguinPublisherBadge";
 import EnhancedBookCover from "./EnhancedBookCover";
 import FreeEbookDownloadIcon from "./FreeEbookDownloadIcon";
 import AppleBooksLink from "./AppleBooksLink";
-
+import { searchAppleBooks } from "@/services/appleBooks";
 interface BookCardProps {
   id: number;
   title: string;
@@ -54,6 +54,7 @@ const BookCard = ({
 }: BookCardProps) => {
   const [showActions, setShowActions] = useState(false);
   const [hasFreeEbook, setHasFreeEbook] = useState(false);
+  const [appleUrl, setAppleUrl] = useState<string | null>(null);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -86,6 +87,23 @@ const BookCard = ({
   const isPenguinBook = publisher_series?.name.toLowerCase().includes('penguin') || 
                         title.toLowerCase().includes('penguin') ||
                         author.toLowerCase().includes('penguin');
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchApple = async () => {
+      if (apple_link) return; // use persisted link if available
+      try {
+        const result = await searchAppleBooks(title, author, isbn);
+        if (!cancelled && result?.storeUrl) {
+          setAppleUrl(result.storeUrl);
+        }
+      } catch (_) {
+        // silent fail
+      }
+    };
+    fetchApple();
+    return () => { cancelled = true; };
+  }, [apple_link, title, author, isbn]);
 
   return (
     <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors h-full flex flex-col">
@@ -169,11 +187,11 @@ const BookCard = ({
       </div>
 
       {/* External links - subtle row above action buttons */}
-      {(apple_link || hasFreeEbook) && (
+      {(apple_link || appleUrl || hasFreeEbook) && (
         <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-700/50">
-          {apple_link && (
+          {(apple_link || appleUrl) && (
             <AppleBooksLink 
-              appleLink={apple_link} 
+              appleLink={(apple_link || appleUrl)!} 
               title={title}
             />
           )}

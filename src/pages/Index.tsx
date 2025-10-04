@@ -14,6 +14,7 @@ import { getTransmissions, saveTransmission, updateTransmission, deleteTransmiss
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 import ContributionButton from "@/components/ContributionButton";
 import ContactModal from "@/components/ContactModal";
+import { searchAppleBooks } from "@/services/appleBooks";
 
 const Index = () => {
   const [books, setBooks] = useState<Transmission[]>([]);

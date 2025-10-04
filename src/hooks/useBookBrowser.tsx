@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { searchBooksEnhanced, EnhancedBookSuggestion } from "@/services/googleBooksApi";
 import { saveTransmission } from "@/services/transmissionsService";
+import { searchAppleBooks } from "@/services/appleBooks";
 import { imageService } from "@/services/image-service";
 import { debounce } from "@/utils/performance";
 
@@ -118,6 +119,17 @@ export const useBookBrowser = () => {
 
   const addToTransmissions = useCallback(async (book: EnhancedBookSuggestion) => {
     try {
+      // Try to enrich with Apple Books link (cached via proxy)
+      let appleLink: string | undefined;
+      try {
+        const found = await searchAppleBooks(book.title, book.author || '', undefined);
+        if (found?.storeUrl) {
+          appleLink = found.storeUrl;
+        }
+      } catch (e) {
+        console.warn('Apple Books lookup failed, proceeding without link:', e);
+      }
+
       await saveTransmission({
         title: book.title,
         author: book.author || 'Unknown',
@@ -126,8 +138,7 @@ export const useBookBrowser = () => {
         rating: {},
         notes: book.description || '',
         status: 'want-to-read',
-        isbn: undefined,
-        apple_link: undefined,
+        apple_link: appleLink,
         open_count: 0
       });
       
