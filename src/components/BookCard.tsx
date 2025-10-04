@@ -5,6 +5,7 @@ import PublisherResonanceBadge from "./PublisherResonanceBadge";
 import PenguinPublisherBadge from "./PenguinPublisherBadge";
 import EnhancedBookCover from "./EnhancedBookCover";
 import FreeEbookDownloadIcon from "./FreeEbookDownloadIcon";
+import AppleBooksLink from "./AppleBooksLink";
 
 interface BookCardProps {
   id: number;
@@ -155,8 +156,26 @@ const BookCard = ({
         </div>
       </div>
       
+      {/* External links - subtle row above action buttons */}
+      {(apple_link || isbn) && (
+        <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-700/50">
+          {apple_link && (
+            <AppleBooksLink 
+              appleLink={apple_link} 
+              title={title}
+            />
+          )}
+          <FreeEbookDownloadIcon 
+            title={title} 
+            author={author} 
+            isbn={isbn}
+            className="flex-shrink-0"
+          />
+        </div>
+      )}
+      
       {/* Action buttons - moved to bottom horizontal layout */}
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {onEdit && (
           <button
             onClick={onEdit}
@@ -190,11 +209,6 @@ const BookCard = ({
             <span className="whitespace-nowrap">Discard</span>
           </button>
         )}
-        <FreeEbookDownloadIcon 
-          title={title} 
-          author={author} 
-          isbn={isbn}
-        />
       </div>
     </div>
   );
