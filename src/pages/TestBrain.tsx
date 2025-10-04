@@ -51,6 +51,11 @@ const TestBrain = () => {
   const [allTags, setAllTags] = useState<string[]>([]);
   const [remappingActive, setRemappingActive] = useState(false);
   
+  // Performance optimization: track active particles
+  const activeParticlesRef = useRef<number>(0);
+  const MAX_PARTICLES = 80;
+  const lastHoverTimeRef = useRef<Map<string, number>>(new Map());
+  
   // Chat highlighting state
   const [chatHighlights, setChatHighlights] = useState<{
     nodeIds: string[];
@@ -181,26 +186,35 @@ const TestBrain = () => {
     return connections;
   };
 
-  // Enhanced synaptic firing with more dynamic, alive particle streams
+  // Optimized synaptic firing with particle limiting
   const triggerSynapticFiring = (sourceNode: BrainNode) => {
+    // Check particle limit
+    if (activeParticlesRef.current >= MAX_PARTICLES) return;
+    
     const relatedLinks = links.filter(link => 
       link.fromId === sourceNode.id || link.toId === sourceNode.id
     );
 
-    relatedLinks.forEach((link, index) => {
+    // Limit to 3 most relevant links
+    const limitedLinks = relatedLinks.slice(0, 3);
+
+    limitedLinks.forEach((link, index) => {
       const fromNode = nodes.find(n => n.id === link.fromId);
       const toNode = nodes.find(n => n.id === link.toId);
       
       if (!fromNode || !toNode) return;
 
-      // Create multiple waves of particles with varying characteristics
-      for (let wave = 0; wave < 3; wave++) {
+      // Reduced waves and particles
+      for (let wave = 0; wave < 2; wave++) {
         setTimeout(() => {
-          for (let i = 0; i < 8; i++) {
+          // Check again before creating wave
+          if (activeParticlesRef.current >= MAX_PARTICLES) return;
+          
+          for (let i = 0; i < 3; i++) {
+            activeParticlesRef.current++;
             const particle = document.createElement('div');
             particle.className = 'neural-particle';
             
-            // More dynamic particle styling with multiple colors
             const colors = ['#00ffff', '#40e0d0', '#00d4ff', '#0099ff', '#7df9ff'];
             const color = colors[Math.floor(Math.random() * colors.length)];
             const particleSize = 1 + Math.random() * 2;
@@ -220,16 +234,15 @@ const TestBrain = () => {
               z-index: 20;
               pointer-events: none;
               opacity: ${0.8 + Math.random() * 0.2};
+              will-change: transform;
             `;
             
             canvasRef.current?.appendChild(particle);
 
-            // Calculate highly organic curved path with multiple control points
             const dx = toNode.x - fromNode.x;
             const dy = toNode.y - fromNode.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            // Create flowing, organic curves like neural pathways
             const curvature = 0.6 + Math.random() * 0.8;
             const midX1 = fromNode.x + dx * 0.2 + (Math.random() - 0.5) * distance * curvature;
             const midY1 = fromNode.y + dy * 0.2 + (Math.random() - 0.5) * distance * curvature;
@@ -246,8 +259,11 @@ const TestBrain = () => {
               scale: 0.2
             });
 
-            // Enhanced particle animation with more life-like movement
-            const tl = gsap.timeline();
+            const tl = gsap.timeline({
+              onComplete: () => {
+                activeParticlesRef.current--;
+              }
+            });
             
             tl.to(particle, {
               scale: 1.5 + Math.random() * 0.8,
@@ -262,26 +278,21 @@ const TestBrain = () => {
               duration: 1.8 + Math.random() * 1.2,
               ease: "power1.inOut",
               onComplete: () => {
-                // Enhanced arrival burst with multiple rings
                 if (toNode.element) {
-                  for (let ring = 0; ring < 3; ring++) {
-                    gsap.delayedCall(ring * 0.1, () => {
-                      gsap.to(toNode.element, {
-                        scale: 2.5 + ring * 0.5,
-                        boxShadow: `0 0 ${30 + ring * 15}px ${color}, 0 0 ${60 + ring * 30}px ${color}60, 0 0 ${90 + ring * 45}px ${color}20`,
-                        duration: 0.2,
-                        ease: "power3.out",
-                        yoyo: true,
-                        repeat: 1
-                      });
-                    });
-                  }
+                  gsap.to(toNode.element, {
+                    scale: 2.5,
+                    boxShadow: `0 0 30px ${color}, 0 0 60px ${color}60`,
+                    duration: 0.2,
+                    ease: "power3.out",
+                    yoyo: true,
+                    repeat: 1
+                  });
                   
                   gsap.to(toNode.element, {
                     scale: 1,
                     boxShadow: '0 0 12px rgba(0, 212, 255, 0.9), 0 0 24px rgba(0, 212, 255, 0.6)',
                     duration: 0.8,
-                    delay: 0.6,
+                    delay: 0.4,
                     ease: "elastic.out(1, 0.6)"
                   });
                 }
@@ -294,42 +305,18 @@ const TestBrain = () => {
               duration: 0.4,
               ease: "sine.inOut",
               yoyo: true,
-              repeat: 3
+              repeat: 2
             }, "<");
-
-            // Add flowing energy trail effect
-            const trail = document.createElement('div');
-            trail.style.cssText = `
-              position: absolute;
-              width: 1px;
-              height: 8px;
-              background: linear-gradient(180deg, ${color}00 0%, ${color} 50%, ${color}00 100%);
-              border-radius: 50%;
-              z-index: 18;
-              pointer-events: none;
-              opacity: 0.7;
-            `;
-            canvasRef.current?.appendChild(trail);
-            
-            gsap.to(trail, {
-              motionPath: {
-                path: pathData,
-                autoRotate: true
-              },
-              duration: 1.8 + Math.random() * 1.2,
-              delay: Math.random() * 0.5,
-              ease: "power1.inOut",
-              onComplete: () => trail.remove()
-            });
           }
         }, wave * 200);
       }
     });
   };
 
-  // Create continuously flowing ambient energy streams
+  // Optimized ambient energy flow
   const createAmbientEnergyFlow = () => {
     if (!canvasRef.current || links.length === 0) return;
+    if (activeParticlesRef.current >= MAX_PARTICLES) return;
 
     const link = links[Math.floor(Math.random() * links.length)];
     const fromNode = nodes.find(n => n.id === link.fromId);
@@ -337,6 +324,7 @@ const TestBrain = () => {
     
     if (!fromNode || !toNode) return;
 
+    activeParticlesRef.current++;
     const ambientParticle = document.createElement('div');
     const color = '#00d4ff40';
     ambientParticle.style.cssText = `
@@ -349,6 +337,7 @@ const TestBrain = () => {
       z-index: 15;
       pointer-events: none;
       opacity: 0.6;
+      will-change: transform;
     `;
     
     canvasRef.current.appendChild(ambientParticle);
@@ -369,7 +358,10 @@ const TestBrain = () => {
       },
       duration: 8 + Math.random() * 4,
       ease: "none",
-      onComplete: () => ambientParticle.remove()
+      onComplete: () => {
+        ambientParticle.remove();
+        activeParticlesRef.current--;
+      }
     });
   };
 
@@ -422,12 +414,18 @@ const TestBrain = () => {
         z-index: 10;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         border: 1px solid ${highlightColor}80;
+        will-change: transform, opacity;
       `;
 
       (nodeElement as any).nodeData = node;
       node.element = nodeElement;
 
       nodeElement.addEventListener('mouseenter', (e) => {
+        // Throttle hover events - only trigger once per 500ms per node
+        const now = Date.now();
+        const lastHover = lastHoverTimeRef.current.get(node.id) || 0;
+        const shouldTrigger = now - lastHover > 500;
+        
         const rect = nodeElement.getBoundingClientRect();
         const canvasRect = canvas.getBoundingClientRect();
         
@@ -458,7 +456,10 @@ const TestBrain = () => {
             ease: "back.out(2)"
           });
 
-        triggerSynapticFiring(node);
+        if (shouldTrigger) {
+          lastHoverTimeRef.current.set(node.id, now);
+          triggerSynapticFiring(node);
+        }
       });
 
       nodeElement.addEventListener('mouseleave', () => {
@@ -512,10 +513,10 @@ const TestBrain = () => {
         delay: Math.random() * 3
       });
 
-      // Spontaneous activity bursts for high-activity nodes
+      // Reduced spontaneous activity bursts
       if (isHighActivity) {
         const burstInterval = setInterval(() => {
-          if (Math.random() < 0.3) {
+          if (Math.random() < 0.2 && activeParticlesRef.current < MAX_PARTICLES) {
             gsap.to(nodeElement, {
               boxShadow: `
                 0 0 ${baseSize * 8}px #00ffff,
@@ -528,11 +529,11 @@ const TestBrain = () => {
               ease: "sine.inOut"
             });
             
-            if (Math.random() < 0.5) {
+            if (Math.random() < 0.3) {
               triggerSynapticFiring(node);
             }
           }
-        }, 3000 + Math.random() * 7000);
+        }, 5000 + Math.random() * 10000);
         
         // Clean up interval when component unmounts
         setTimeout(() => clearInterval(burstInterval), 300000);
@@ -542,11 +543,13 @@ const TestBrain = () => {
     // Draw enhanced neural pathways
     drawLivingConnections(svg, nodes, links);
 
-    // Start continuous ambient energy flow
-    const ambientFlowInterval = setInterval(createAmbientEnergyFlow, 2000 + Math.random() * 3000);
+    // Reduced ambient energy flow frequency
+    const ambientFlowInterval = setInterval(createAmbientEnergyFlow, 4000 + Math.random() * 4000);
     
     return () => {
       clearInterval(ambientFlowInterval);
+      // Reset particle counter on cleanup
+      activeParticlesRef.current = 0;
     };
 
   }, [nodes, links, chatHighlights]);
@@ -712,11 +715,15 @@ const TestBrain = () => {
         delay: Math.random() * 4
       });
 
-      // Create flowing energy streams for stronger connections
-      if (connection.strength > 1) {
+      // Optimized energy streams for stronger connections
+      if (connection.strength > 1.5 && activeParticlesRef.current < MAX_PARTICLES) {
         setTimeout(() => {
           const createEnergyStream = () => {
-            for (let stream = 0; stream < Math.min(connection.strength, 4); stream++) {
+            if (activeParticlesRef.current >= MAX_PARTICLES) return;
+            
+            // Reduced particle count
+            for (let stream = 0; stream < Math.min(connection.strength, 2); stream++) {
+              activeParticlesRef.current++;
               const energyParticle = document.createElement('div');
               energyParticle.style.cssText = `
                 position: absolute;
@@ -728,6 +735,7 @@ const TestBrain = () => {
                 z-index: 12;
                 pointer-events: none;
                 opacity: ${style.intensity * 0.9};
+                will-change: transform;
               `;
               canvasRef.current?.appendChild(energyParticle);
 
@@ -740,15 +748,18 @@ const TestBrain = () => {
                 duration: 5 + Math.random() * 4,
                 ease: "none",
                 delay: stream * 0.8,
-                onComplete: () => energyParticle.remove()
+                onComplete: () => {
+                  energyParticle.remove();
+                  activeParticlesRef.current--;
+                }
               });
             }
           };
 
           createEnergyStream();
           
-          // Repeat streams
-          setInterval(createEnergyStream, 8000 + Math.random() * 4000);
+          // Less frequent repeat streams
+          setInterval(createEnergyStream, 12000 + Math.random() * 6000);
         }, Math.random() * 5000);
       }
     });
