@@ -7,44 +7,13 @@ export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const initializationRef = useRef(false);
 
   useEffect(() => {
-    // Prevent multiple initializations
-    if (initializationRef.current) return;
-    initializationRef.current = true;
-
     console.log('Auth hook initializing...');
     
     let isMounted = true;
 
-    // Get initial session first
-    const getInitialSession = async () => {
-      try {
-        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting initial session:', error);
-        } else {
-          console.log('Initial session check:', initialSession?.user?.email || 'No user');
-          
-          if (isMounted) {
-            setSession(initialSession);
-            setUser(initialSession?.user ?? null);
-          }
-        }
-      } catch (error) {
-        console.error('Unexpected error getting initial session:', error);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    getInitialSession();
-
-    // Set up auth state listener after initial session
+    // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!isMounted) return;
@@ -52,11 +21,24 @@ export const useAuth = () => {
         console.log('Auth state changed:', event, session?.user?.email || 'No user');
         setSession(session);
         setUser(session?.user ?? null);
-        
-        // Ensure loading is false after any auth state change
         setLoading(false);
       }
     );
+
+    // Then get initial session
+    supabase.auth.getSession().then(({ data: { session: initialSession }, error }) => {
+      if (!isMounted) return;
+      
+      if (error) {
+        console.error('Error getting initial session:', error);
+      } else {
+        console.log('Initial session check:', initialSession?.user?.email || 'No user');
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+      }
+      
+      setLoading(false);
+    });
 
     return () => {
       isMounted = false;
