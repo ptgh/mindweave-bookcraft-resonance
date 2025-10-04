@@ -8,7 +8,11 @@ interface AppleBooksLinkProps {
 
 const AppleBooksLink = ({ appleLink, title, className = "" }: AppleBooksLinkProps) => {
   const handleClick = () => {
-    window.open(appleLink, '_blank', 'noopener,noreferrer');
+    // If appleLink is just a numeric trackId, convert to full URL
+    const url = /^\d+$/.test(appleLink) 
+      ? `https://books.apple.com/gb/book/id${appleLink}`
+      : appleLink;
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (

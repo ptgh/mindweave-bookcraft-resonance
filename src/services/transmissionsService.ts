@@ -158,6 +158,9 @@ export const getTransmissions = async (): Promise<Transmission[]> => {
       created_at: item.created_at,
       publisher_series_id: item.publisher_series_id,
       publisher_series: null, // Set to null since we're not joining
+      isbn: item.isbn,
+      apple_link: item.apple_link,
+      open_count: item.open_count || 0,
       publication_year: item.publication_year,
       narrative_time_period: item.narrative_time_period,
       historical_context_tags: item.historical_context_tags
