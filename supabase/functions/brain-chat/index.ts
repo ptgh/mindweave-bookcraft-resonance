@@ -121,7 +121,7 @@ You can help users:
 
 When referencing specific books, use their exact titles. When discussing connections, mention the connection types and strengths. Provide insights that help users understand their reading patterns and discover new connections.
 
-Keep responses conversational, insightful, and focused on the neural network aspects of their library.`;
+IMPORTANT: Write your responses in clear, flowing paragraphs. Do NOT use bold markdown (**text**) or asterisks for emphasis. Write naturally as if speaking to someone. Use proper paragraph breaks for readability. Keep your tone conversational, insightful, and focused on the neural network aspects of their library.`;
 
     console.log('Making OpenAI API request...');
     console.log('Using model: gpt-4o-mini');
@@ -206,12 +206,15 @@ Keep responses conversational, insightful, and focused on the neural network asp
     const aiResponse = data.choices[0].message.content;
     console.log('AI response received, length:', aiResponse.length);
 
+    // Format the response for better readability
+    const formattedResponse = formatAIResponse(aiResponse);
+
     // Analyze response for actionable highlights
     const highlights = extractHighlights(aiResponse, brainData);
     console.log('Extracted highlights:', highlights);
 
     return new Response(JSON.stringify({ 
-      response: aiResponse,
+      response: formattedResponse,
       highlights: highlights 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -300,6 +303,28 @@ Network Density: ${density}% connectivity
   } catch (error) {
     console.error('Error generating brain context:', error);
     return `Library contains ${nodes.length} books with ${links.length} connections.`;
+  }
+}
+
+function formatAIResponse(response: string): string {
+  try {
+    // Remove markdown bold formatting
+    let formatted = response.replace(/\*\*([^*]+)\*\*/g, '$1');
+    
+    // Remove single asterisks used for emphasis
+    formatted = formatted.replace(/\*([^*]+)\*/g, '$1');
+    
+    // Ensure proper paragraph spacing by normalizing line breaks
+    // Replace multiple line breaks with double line breaks for paragraphs
+    formatted = formatted.replace(/\n{3,}/g, '\n\n');
+    
+    // Clean up any remaining markdown artifacts
+    formatted = formatted.replace(/#{1,6}\s/g, '');
+    
+    return formatted.trim();
+  } catch (error) {
+    console.error('Error formatting AI response:', error);
+    return response;
   }
 }
 

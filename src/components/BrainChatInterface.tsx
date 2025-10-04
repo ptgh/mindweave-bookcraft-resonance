@@ -236,10 +236,65 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
     }
   };
 
-  const handleSuggestionClick = (suggestion: string) => {
+  const handleSuggestionClick = async (suggestion: string) => {
     setInputText(suggestion);
-    if (inputRef.current) {
-      inputRef.current.focus();
+    
+    // Auto-send the suggestion
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: suggestion,
+      isUser: true,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputText('');
+    setIsLoading(true);
+
+    try {
+      const cleanData = cleanBrainData(nodes, links);
+      const payload = {
+        message: suggestion,
+        brainData: {
+          ...cleanData,
+          activeFilters: Array.isArray(activeFilters) ? activeFilters : []
+        }
+      };
+
+      const { data, error } = await supabase.functions.invoke('brain-chat', {
+        body: payload
+      });
+
+      if (error) throw new Error(`Function call failed: ${error.message}`);
+      if (data?.error) throw new Error(data.error);
+      if (!data?.response) throw new Error('No response received from AI');
+
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: data.response,
+        isUser: false,
+        timestamp: new Date(),
+        highlights: data.highlights
+      };
+
+      setMessages(prev => [...prev, aiMessage]);
+
+      if (data.highlights && onHighlight) {
+        onHighlight(data.highlights);
+      }
+
+    } catch (error) {
+      console.error('Chat error:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.',
+        isUser: false,
+        timestamp: new Date(),
+        isError: true
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -258,7 +313,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
   return (
     <div className="fixed bottom-6 right-12 z-30 w-96 h-[600px] flex flex-col">
       
-      <Card className="bg-cyan-950/80 border-cyan-400/40 backdrop-blur-xl h-full flex flex-col shadow-2xl shadow-cyan-500/20">
+      <Card className="bg-cyan-950/95 border-cyan-400/40 backdrop-blur-xl h-full flex flex-col shadow-2xl shadow-cyan-500/20">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-cyan-400/30 bg-cyan-900/40">
           <div className="flex items-center gap-2">
@@ -305,12 +360,12 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
               className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[80%] p-3 rounded-lg text-sm ${
+                className={`max-w-[80%] p-3 rounded-lg text-sm whitespace-pre-line ${
                   message.isUser
                     ? 'bg-cyan-500/30 text-white border border-cyan-400/50 shadow-md shadow-cyan-500/20'
                     : message.isError
                     ? 'bg-red-500/30 text-red-100 border border-red-400/50'
-                    : 'bg-cyan-900/50 text-cyan-50 border border-cyan-400/30'
+                    : 'bg-cyan-900/60 text-white border border-cyan-400/30'
                 }`}
               >
                 {message.isError && (
