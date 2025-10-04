@@ -151,19 +151,6 @@ const Index = () => {
     loadTransmissions();
   }, [loadTransmissions]);
 
-  // Show loading state while auth is being determined
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center">
-            <div className="w-6 h-6 rounded-full border-2 border-blue-400 animate-pulse" />
-          </div>
-          <p className="text-slate-400">Establishing connection...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <AuthWrapper fallback={<Auth />}>
