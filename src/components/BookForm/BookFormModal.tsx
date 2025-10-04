@@ -49,6 +49,7 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModal
   const [titleSearch, setTitleSearch] = useState("");
   const [authorSearch, setAuthorSearch] = useState("");
   const [detectedSeries, setDetectedSeries] = useState<PublisherSeries | null>(null);
+  const [selectedAuthorName, setSelectedAuthorName] = useState<string>("");
 
   const resetForm = useCallback(() => {
     setFormData({
@@ -162,12 +163,18 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModal
             onAuthorSearchChange={(value) => {
               setAuthorSearch(value);
               setFormData(prev => ({ ...prev, author: value }));
+              // Clear selected author if user manually changes the field
+              if (value !== selectedAuthorName) {
+                setSelectedAuthorName("");
+              }
             }}
             onBookSelect={handleBookSelect}
             onAuthorSelect={(author) => {
               setFormData(prev => ({ ...prev, author: author.name }));
               setAuthorSearch(author.name);
+              setSelectedAuthorName(author.name); // Set the selected author for filtering
             }}
+            selectedAuthorName={selectedAuthorName}
           />
           
           {detectedSeries && (

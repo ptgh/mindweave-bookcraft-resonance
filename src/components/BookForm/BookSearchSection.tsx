@@ -14,6 +14,7 @@ interface BookSearchSectionProps {
   onAuthorSearchChange: (value: string) => void;
   onBookSelect: (book: EnhancedBookSuggestion) => void;
   onAuthorSelect?: (author: ScifiAuthor) => void;
+  selectedAuthorName?: string; // Track selected author for filtering
 }
 
 const BookSearchSection = ({
@@ -24,7 +25,8 @@ const BookSearchSection = ({
   onTitleSearchChange,
   onAuthorSearchChange,
   onBookSelect,
-  onAuthorSelect
+  onAuthorSelect,
+  selectedAuthorName
 }: BookSearchSectionProps) => {
   const handleBookSelection = (book: EnhancedBookSuggestion) => {
     console.log('Book selected in BookSearchSection:', book);
@@ -49,6 +51,7 @@ const BookSearchSection = ({
             value={titleSearch}
             onValueChange={onTitleSearchChange}
             onBookSelect={handleBookSelection}
+            authorFilter={selectedAuthorName}
           />
         </div>
         <div>

@@ -120,11 +120,13 @@ export const searchBooks = async (query: string): Promise<Book[]> => {
   }
 };
 
-export const searchBooksEnhanced = async (query: string, maxResults = 10, startIndex = 0): Promise<EnhancedBookSuggestion[]> => {
+export const searchBooksEnhanced = async (query: string, maxResults = 10, startIndex = 0, authorFilter?: string): Promise<EnhancedBookSuggestion[]> => {
   try {
-    // Enhanced sci-fi specific query
-    const sciFiQuery = `${query} science fiction OR sci-fi OR cyberpunk OR dystopian OR space opera OR futuristic`;
-    const books = await searchGoogleBooks(sciFiQuery, maxResults);
+    // If author is specified, search by author + title; otherwise use enhanced sci-fi query
+    const searchQuery = authorFilter 
+      ? `${query} inauthor:${authorFilter}`
+      : `${query} science fiction OR sci-fi OR cyberpunk OR dystopian OR space opera OR futuristic`;
+    const books = await searchGoogleBooks(searchQuery, maxResults);
     
     return books
       .filter(book => book.title && book.author && isSciFiBook(book))

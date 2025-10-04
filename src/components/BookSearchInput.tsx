@@ -10,6 +10,7 @@ interface BookSearchInputProps {
   onValueChange: (value: string) => void;
   onBookSelect: (book: EnhancedBookSuggestion) => void;
   disabled?: boolean;
+  authorFilter?: string; // Filter results by author
 }
 
 const BookSearchInput = ({ 
@@ -17,7 +18,8 @@ const BookSearchInput = ({
   value, 
   onValueChange, 
   onBookSelect,
-  disabled 
+  disabled,
+  authorFilter
 }: BookSearchInputProps) => {
   const [suggestions, setSuggestions] = useState<EnhancedBookSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -39,8 +41,8 @@ const BookSearchInput = ({
     searchDebouncer.search(
       searchKey,
       async () => {
-        console.log('Executing book search for:', value);
-        const results = await searchBooksEnhanced(value, 10);
+        console.log('Executing book search for:', value, 'with author filter:', authorFilter);
+        const results = await searchBooksEnhanced(value, 10, 0, authorFilter);
         console.log('Book search results:', results);
         return results;
       },
@@ -51,7 +53,7 @@ const BookSearchInput = ({
         setIsLoading(false);
       }
     );
-  }, [value]);
+  }, [value, authorFilter]);
 
   const handleSuggestionClick = (book: EnhancedBookSuggestion) => {
     console.log('Book suggestion clicked:', book);
