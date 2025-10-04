@@ -54,75 +54,63 @@ export const useAuthorMatrix = () => {
       
       const dbBooks = await getAuthorBooks(author.id);
       
-      if (dbBooks.length > 0) {
-        setAuthorBooks(dbBooks);
-        
-        const imageUrls = dbBooks.map(book => book.cover_url).filter(Boolean) as string[];
-        if (imageUrls.length > 0) {
-          imageService.preloadImages(imageUrls);
-        }
-      } else {
-        const searchKey = `author_books_${author.id}_${Date.now()}`;
-        
-        searchDebouncer.search(
-          searchKey,
-          () => {
-            const sciFiQuery = `author:"${author.name}" subject:"science fiction" OR author:"${author.name}" subject:"sci-fi"`;
-            return searchBooksEnhanced(sciFiQuery, 20);
-          },
-          (googleBooks: EnhancedBookSuggestion[]) => {
-            const sciFiBooks = googleBooks.filter(book => {
-              const categories = book.categories || [];
-              const description = book.description || '';
-              const title = book.title || '';
-              
-              const isSciFi = categories.some(cat => 
-                cat.toLowerCase().includes('science fiction') ||
-                cat.toLowerCase().includes('sci-fi')
-              ) || 
-              [title, description].some(text => 
-                text.toLowerCase().includes('science fiction') ||
-                text.toLowerCase().includes('sci-fi') ||
-                text.toLowerCase().includes('space') ||
-                text.toLowerCase().includes('future') ||
-                text.toLowerCase().includes('alien')
-              );
-              
-              return isSciFi;
-            });
-            
-            const convertedBooks: AuthorBook[] = sciFiBooks.map(book => ({
-              id: book.id,
-              author_id: author.id,
-              google_books_id: book.id,
-              title: book.title,
-              subtitle: book.subtitle,
-              description: book.description,
-              cover_url: book.coverUrl,
-              categories: book.categories,
-              published_date: book.publishedDate,
-              page_count: book.pageCount,
-              rating: book.rating,
-              ratings_count: book.ratingsCount,
-              preview_link: book.previewLink,
-              info_link: book.infoLink,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }));
-            
-            setAuthorBooks(convertedBooks);
-            
-            const imageUrls = sciFiBooks
-              .map(book => [book.coverUrl, book.thumbnailUrl, book.smallThumbnailUrl])
-              .flat()
-              .filter(Boolean) as string[];
-            
-            if (imageUrls.length > 0) {
-              imageService.preloadImages(imageUrls);
-            }
-          }
-        );
+      // Always start with DB books (author-curated) and then augment with Google Books
+      setAuthorBooks(dbBooks);
+      
+      const dbImageUrls = dbBooks.map(book => book.cover_url).filter(Boolean) as string[];
+      if (dbImageUrls.length > 0) {
+        imageService.preloadImages(dbImageUrls);
       }
+      
+      // Fetch additional titles from Google Books for the selected author and merge
+      const searchKey = `author_books_${author.id}_${Date.now()}`;
+      
+      searchDebouncer.search(
+        searchKey,
+        () => {
+          // Use dedicated author filter to restrict results strictly to this author
+          return searchBooksEnhanced(author.name, 30, 0, author.name);
+        },
+        (googleBooks: EnhancedBookSuggestion[]) => {
+          // Convert Google results to AuthorBook and merge with DB, de-duplicating by title
+          const apiBooks: AuthorBook[] = googleBooks.map(book => ({
+            id: book.id,
+            author_id: author.id,
+            google_books_id: book.id,
+            title: book.title,
+            subtitle: book.subtitle,
+            description: book.description,
+            cover_url: book.coverUrl,
+            categories: book.categories,
+            published_date: book.publishedDate,
+            page_count: book.pageCount,
+            rating: book.rating,
+            ratings_count: book.ratingsCount,
+            preview_link: book.previewLink,
+            info_link: book.infoLink,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }));
+          
+          const byTitle = new Map<string, AuthorBook>();
+          // Prefer DB entries when titles collide
+          dbBooks.forEach(b => byTitle.set((b.title || '').toLowerCase(), b));
+          apiBooks.forEach(b => {
+            const key = (b.title || '').toLowerCase();
+            if (!byTitle.has(key)) byTitle.set(key, b);
+          });
+          
+          const merged = Array.from(byTitle.values());
+          setAuthorBooks(merged);
+          
+          const imageUrls = merged
+            .map(book => book.cover_url)
+            .filter(Boolean) as string[];
+          if (imageUrls.length > 0) {
+            imageService.preloadImages(imageUrls);
+          }
+        }
+      );
     } catch (error: any) {
       console.error('Error loading books:', error);
       toast({

@@ -85,14 +85,26 @@ const Index = () => {
   const addBook = useCallback(async (newBook: any) => {
     try {
       setError(null);
+
+      // Enrich with Apple Books link before saving (best-effort)
+      const enriched = { ...newBook };
+      try {
+        const apple = await searchAppleBooks(newBook.title, newBook.author, newBook.isbn);
+        if (apple?.storeUrl) {
+          enriched.apple_link = apple.storeUrl;
+        }
+      } catch (e) {
+        console.warn('Apple enrichment failed:', e);
+      }
+
       if (editingBook) {
-        await updateTransmission(editingBook.id, newBook);
+        await updateTransmission(editingBook.id, enriched);
         toast({
           title: "Signal Updated",
           description: "Your transmission has been successfully modified.",
         });
       } else {
-        await saveTransmission(newBook);
+        await saveTransmission(enriched);
         toast({
           title: "Signal Logged",
           description: "New transmission added to your consciousness record.",

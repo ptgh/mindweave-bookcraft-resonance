@@ -91,7 +91,7 @@ const BookSearchInput = ({
       )}
       
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-slate-700 border border-slate-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-[99999] w-full mt-1 bg-slate-700 border border-slate-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
           {suggestions.map((book) => (
             <button
               key={book.id}
