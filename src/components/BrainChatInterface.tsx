@@ -247,7 +247,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-12 z-30 bg-background/95 hover:bg-accent/80 border border-primary/30 backdrop-blur-md text-primary shadow-lg shadow-primary/20 rounded-full p-4 transition-all duration-300 hover:scale-110 hover:shadow-primary/40"
+        className="fixed bottom-6 right-12 z-30 bg-cyan-950/90 hover:bg-cyan-900/90 border border-cyan-400/50 backdrop-blur-md text-cyan-400 shadow-lg shadow-cyan-500/20 rounded-full p-4 transition-all duration-300 hover:scale-110 hover:shadow-cyan-400/40"
         size="icon"
       >
         <MessageCircle className="w-6 h-6" />
@@ -258,18 +258,18 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
   return (
     <div className="fixed bottom-6 right-12 z-30 w-96 h-[600px] flex flex-col">
       
-      <Card className="bg-background/98 border-primary/30 backdrop-blur-xl h-full flex flex-col shadow-2xl shadow-primary/10">
+      <Card className="bg-cyan-950/80 border-cyan-400/40 backdrop-blur-xl h-full flex flex-col shadow-2xl shadow-cyan-500/20">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-primary/20 bg-accent/30">
+        <div className="flex items-center justify-between p-4 border-b border-cyan-400/30 bg-cyan-900/40">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-lg shadow-primary/50" />
-            <span className="text-foreground font-medium">Neural Assistant</span>
+            <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50" />
+            <span className="text-white font-medium">Neural Assistant</span>
           </div>
           <Button
             onClick={() => setIsOpen(false)}
             variant="ghost"
             size="icon"
-            className="text-muted-foreground hover:text-foreground hover:bg-primary/20"
+            className="text-cyan-200 hover:text-white hover:bg-cyan-400/20"
           >
             <X className="w-4 h-4" />
           </Button>
@@ -279,10 +279,10 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 && (
             <div className="text-center py-8">
-              <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-primary/60 bg-primary/10 flex items-center justify-center shadow-lg shadow-primary/20">
-                <Sparkles className="w-6 h-6 text-primary" />
+              <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-cyan-400/60 bg-cyan-400/10 flex items-center justify-center shadow-lg shadow-cyan-400/20">
+                <Sparkles className="w-6 h-6 text-cyan-400" />
               </div>
-              <p className="text-foreground/80 text-sm mb-4">
+              <p className="text-white/90 text-sm mb-4">
                 Ask me about your reading network, thematic connections, or book recommendations!
               </p>
               <div className="space-y-2">
@@ -290,7 +290,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
                   <button
                     key={index}
                     onClick={() => handleSuggestionClick(suggestion)}
-                    className="block w-full text-left text-xs text-foreground/70 hover:text-foreground p-2 rounded border border-primary/30 hover:border-primary/50 bg-accent/20 hover:bg-accent/40 transition-all"
+                    className="block w-full text-left text-xs text-cyan-100 hover:text-white p-2 rounded border border-cyan-400/30 hover:border-cyan-400/50 bg-cyan-900/30 hover:bg-cyan-800/40 transition-all"
                   >
                     {suggestion}
                   </button>
@@ -307,10 +307,10 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
               <div
                 className={`max-w-[80%] p-3 rounded-lg text-sm ${
                   message.isUser
-                    ? 'bg-primary/20 text-foreground border border-primary/40 shadow-md shadow-primary/10'
+                    ? 'bg-cyan-500/30 text-white border border-cyan-400/50 shadow-md shadow-cyan-500/20'
                     : message.isError
-                    ? 'bg-destructive/20 text-destructive-foreground border border-destructive/50'
-                    : 'bg-accent/40 text-foreground border border-primary/30'
+                    ? 'bg-red-500/30 text-red-100 border border-red-400/50'
+                    : 'bg-cyan-900/50 text-cyan-50 border border-cyan-400/30'
                 }`}
               >
                 {message.isError && (
@@ -321,8 +321,8 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
                 )}
                 {message.text}
                 {message.highlights && (message.highlights.nodeIds.length > 0 || message.highlights.tags.length > 0) && (
-                  <div className="mt-2 pt-2 border-t border-border/20">
-                    <div className="text-xs text-muted-foreground">
+                  <div className="mt-2 pt-2 border-t border-cyan-400/20">
+                    <div className="text-xs text-cyan-200">
                       Highlighted: {message.highlights.nodeIds.length} books, {message.highlights.tags.length} themes
                     </div>
                   </div>
@@ -333,11 +333,11 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
 
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-accent/40 border border-primary/30 rounded-lg p-3">
+              <div className="bg-cyan-900/50 border border-cyan-400/30 rounded-lg p-3">
                 <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce shadow-sm shadow-primary/50" />
-                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce shadow-sm shadow-primary/50" style={{ animationDelay: '0.1s' }} />
-                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce shadow-sm shadow-primary/50" style={{ animationDelay: '0.2s' }} />
+                  <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce shadow-sm shadow-cyan-400/50" />
+                  <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce shadow-sm shadow-cyan-400/50" style={{ animationDelay: '0.1s' }} />
+                  <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce shadow-sm shadow-cyan-400/50" style={{ animationDelay: '0.2s' }} />
                 </div>
               </div>
             </div>
@@ -347,7 +347,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         </div>
 
         {/* Input */}
-        <div className="p-4 border-t border-primary/20 bg-accent/20">
+        <div className="p-4 border-t border-cyan-400/30 bg-cyan-900/40">
           <div className="flex gap-2">
             <input
               ref={inputRef}
@@ -356,14 +356,14 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
               onChange={(e) => setInputText(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Ask about your reading network..."
-              className="flex-1 bg-background/60 border border-primary/40 rounded-lg px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
+              className="flex-1 bg-cyan-950/60 border border-cyan-400/40 rounded-lg px-3 py-2 text-sm text-white placeholder-cyan-300/60 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30"
               disabled={isLoading}
             />
             <Button
               onClick={handleSendMessage}
               disabled={!inputText.trim() || isLoading}
               size="icon"
-              className="bg-primary/20 hover:bg-primary/30 border border-primary/50 text-foreground hover:shadow-md hover:shadow-primary/20 disabled:opacity-50 transition-all"
+              className="bg-cyan-500/30 hover:bg-cyan-500/40 border border-cyan-400/50 text-white hover:shadow-md hover:shadow-cyan-400/20 disabled:opacity-50 transition-all"
             >
               <Send className="w-4 h-4" />
             </Button>
