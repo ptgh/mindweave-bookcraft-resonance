@@ -9,9 +9,10 @@ interface FreeEbookDownloadIconProps {
   author: string;
   isbn?: string;
   className?: string;
+  onAvailabilityChange?: (hasLinks: boolean) => void;
 }
 
-const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEbookDownloadIconProps) => {
+const FreeEbookDownloadIcon = ({ title, author, isbn, className = "", onAvailabilityChange }: FreeEbookDownloadIconProps) => {
   const [ebookData, setEbookData] = useState<EbookSearchResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -56,6 +57,13 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "" }: FreeEboo
       });
     }
   }, [ebookData?.hasLinks]);
+
+  // Notify parent when availability changes
+  useEffect(() => {
+    if (onAvailabilityChange && !isLoading) {
+      onAvailabilityChange(!!ebookData?.hasLinks);
+    }
+  }, [ebookData?.hasLinks, isLoading, onAvailabilityChange]);
 
   const handleClick = () => {
     if (ebookData?.hasLinks) {

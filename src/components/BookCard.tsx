@@ -53,6 +53,7 @@ const BookCard = ({
   onDiscard
 }: BookCardProps) => {
   const [showActions, setShowActions] = useState(false);
+  const [hasFreeEbook, setHasFreeEbook] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -156,8 +157,19 @@ const BookCard = ({
         </div>
       </div>
       
+      {/* Hidden probe to detect free ebook availability without affecting layout */}
+      <div className="hidden">
+        <FreeEbookDownloadIcon 
+          title={title} 
+          author={author} 
+          isbn={isbn}
+          className="hidden"
+          onAvailabilityChange={(has) => setHasFreeEbook(has)}
+        />
+      </div>
+
       {/* External links - subtle row above action buttons */}
-      {(apple_link || isbn) && (
+      {(apple_link || hasFreeEbook) && (
         <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-700/50">
           {apple_link && (
             <AppleBooksLink 
@@ -165,12 +177,15 @@ const BookCard = ({
               title={title}
             />
           )}
-          <FreeEbookDownloadIcon 
-            title={title} 
-            author={author} 
-            isbn={isbn}
-            className="flex-shrink-0"
-          />
+          {/* Visible Internet Archive/Gutenberg icon if available */}
+          {hasFreeEbook && (
+            <FreeEbookDownloadIcon 
+              title={title} 
+              author={author} 
+              isbn={isbn}
+              className="flex-shrink-0"
+            />
+          )}
         </div>
       )}
       
