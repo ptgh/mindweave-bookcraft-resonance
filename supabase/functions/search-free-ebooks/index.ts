@@ -97,34 +97,49 @@ serve(async (req) => {
       console.error('Gutenberg search error:', error)
     }
 
-    // Search Internet Archive (enhanced with ISBN and borrow-only fallback)
+    // Search Internet Archive (enhanced with ISBN, normalization, and borrow-only fallback)
     try {
-      // Build query with ISBN if available for better accuracy
-      let archiveQuery = `title:(${title}) AND creator:(${author}) AND mediatype:texts`
+      const clean = (s: string) => s.replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+      const normTitle = clean(title);
+      const normAuthor = clean(author);
+
+      // Build primary query with ISBN if available for better accuracy
+      let primaryQuery = `title:(${normTitle}) AND creator:(${normAuthor}) AND mediatype:texts`;
       if (isbn) {
-        archiveQuery = `(isbn:${isbn} OR (${archiveQuery}))`
+        primaryQuery = `(isbn:${isbn} OR (${primaryQuery}))`;
       }
-      
-      const archiveUrl = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(archiveQuery)}&fl=identifier,title,creator,format,downloads&rows=10&page=1&output=json`
-      
-      const archiveResponse = await fetch(archiveUrl)
-      
-      if (archiveResponse.ok) {
-        const archiveData = await archiveResponse.json()
-        const items: ArchiveItem[] = archiveData.response?.docs || []
-        
+
+      const buildUrl = (q: string) => `https://archive.org/advancedsearch.php?q=${encodeURIComponent(q)}&fl=identifier,title,creator,format,downloads&rows=10&page=1&output=json`;
+
+      const fetchItems = async (q: string): Promise<ArchiveItem[]> => {
+        const res = await fetch(buildUrl(q));
+        if (!res.ok) return [];
+        const data = await res.json();
+        return data.response?.docs || [];
+      };
+
+      // Try primary query first
+      let items: ArchiveItem[] = await fetchItems(primaryQuery);
+
+      // Fallback: title-only query if nothing returned
+      if (!items || items.length === 0) {
+        const fallbackQuery = `title:(\"${normTitle}\") AND mediatype:texts`;
+        items = await fetchItems(fallbackQuery);
+      }
+
+      if (items && items.length > 0) {
         // First try: Find match with direct downloadable formats (PDF/EPUB/TXT)
         let bestMatch = items.find(item => {
-          const formats = Array.isArray(item.format) ? item.format : []
-          return formats.some(f => f.toLowerCase().includes('pdf') || f.toLowerCase().includes('epub') || f.toLowerCase().includes('txt'))
-        })
-        
+          const formats = Array.isArray(item.format) ? item.format : [];
+          return formats.some(f => f.toLowerCase().includes('pdf') || f.toLowerCase().includes('epub') || f.toLowerCase().includes('txt'));
+        });
+
         // If found, build direct download URLs
         if (bestMatch) {
           const formats: Record<string, string> = {}
           const baseUrl = `https://archive.org/download/${bestMatch.identifier}`
           const availableFormats = Array.isArray(bestMatch.format) ? bestMatch.format : []
-          
+
           if (availableFormats.some(f => f.toLowerCase().includes('epub'))) {
             formats.epub = `${baseUrl}/${bestMatch.identifier}.epub`
           }
@@ -134,24 +149,22 @@ serve(async (req) => {
           if (availableFormats.some(f => f.toLowerCase().includes('txt'))) {
             formats.txt = `${baseUrl}/${bestMatch.identifier}.txt`
           }
-          
+
           archiveResult = {
             url: `https://archive.org/details/${bestMatch.identifier}`,
             id: bestMatch.identifier,
             formats
           }
           console.log(`Found Archive match with direct downloads: ${bestMatch.title}`)
-        } else if (items.length > 0) {
-          // Fallback: Use best match even if borrow-only (no direct download formats)
-          // Return details page URL so users can borrow/read online
-          bestMatch = items[0]
-          
+        } else {
+          // Fallback: Use top item even if borrow-only
+          const top = items[0];
           archiveResult = {
-            url: `https://archive.org/details/${bestMatch.identifier}`,
-            id: bestMatch.identifier,
-            formats: {} // Empty formats indicates borrow-only
+            url: `https://archive.org/details/${top.identifier}`,
+            id: top.identifier,
+            formats: {}
           }
-          console.log(`Found Archive match (borrow-only): ${bestMatch.title}`)
+          console.log(`Found Archive match (borrow-only): ${top.title}`)
         }
       }
     } catch (error) {

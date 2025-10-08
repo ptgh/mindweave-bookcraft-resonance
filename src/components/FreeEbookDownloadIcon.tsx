@@ -23,7 +23,7 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "", onAvailabi
 
     const searchForFreeEbooks = async () => {
       try {
-        const result = await searchFreeEbooks(title, author, isbn);
+        const result = await searchFreeEbooks(title, author, isbn, { forceRefresh: true });
         if (isMounted) {
           setEbookData(result);
         }
@@ -74,9 +74,14 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "", onAvailabi
   // Show loading state briefly, then hide if no links found
   if (isLoading) {
     return (
-      <div className={`p-1.5 ${className}`}>
-        <Loader2 className="w-4 h-4 animate-spin text-slate-500" />
-      </div>
+      <button
+        disabled
+        className={`flex items-center justify-center px-2 py-1 bg-transparent border border-[rgba(255,255,255,0.1)] text-slate-400 text-xs rounded-md ${className}`}
+        aria-label="Loading Internet Archive availability"
+      >
+        <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+        <span className="text-[10px]">Archive</span>
+      </button>
     );
   }
 
@@ -90,13 +95,12 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "", onAvailabi
       <button
         ref={buttonRef}
         onClick={handleClick}
-        className={`flex items-center justify-center px-3 py-1.5 bg-transparent border border-[rgba(34,197,94,0.3)] text-green-400 text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-green-400 hover:bg-green-400/10 ${className}`}
-        style={{ boxShadow: "0 0 0px transparent" }}
-        title="View in Internet Archive"
+        className={`flex items-center justify-center px-2 py-1 bg-transparent border border-[rgba(255,255,255,0.1)] text-slate-400 text-xs rounded-md transition-all duration-300 ease-in-out hover:border-slate-300 hover:text-slate-200 ${className}`}
+        title={`View "${title}" on Internet Archive`}
         aria-label={`View free ebook in Internet Archive: ${title}`}
       >
-        <Archive className="w-3 h-3 mr-2 flex-shrink-0" />
-        <span className="whitespace-nowrap">Archive</span>
+        <Archive className="w-3 h-3 mr-1.5 flex-shrink-0" />
+        <span className="text-[10px] whitespace-nowrap">Archive</span>
       </button>
       
       <FreeEbookModal
