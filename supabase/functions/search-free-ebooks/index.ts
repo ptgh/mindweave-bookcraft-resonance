@@ -171,25 +171,42 @@ serve(async (req) => {
       console.error('Archive search error:', error)
     }
 
-    // Cache the results in database
+    // Cache the results in database (replace existing row for this title/author)
     if (gutenbergResult || archiveResult) {
       try {
-        await supabase
+        // Remove any existing cache entries for this book to avoid duplicates
+        const { error: delError } = await supabase
           .from('free_ebook_links')
-          .upsert({
-            book_title: title,
-            book_author: author,
-            isbn: isbn || null,
-            gutenberg_url: gutenbergResult?.url || null,
-            gutenberg_id: gutenbergResult?.id || null,
-            archive_url: archiveResult?.url || null,
-            archive_id: archiveResult?.id || null,
-            formats: {
-              ...gutenbergResult?.formats,
-              ...archiveResult?.formats
-            },
-            last_checked: new Date().toISOString()
-          })
+          .delete()
+          .eq('book_title', title)
+          .eq('book_author', author);
+        if (delError) {
+          console.warn('Cache delete warning:', delError.message);
+        }
+
+        const payload = {
+          book_title: title,
+          book_author: author,
+          isbn: isbn || null,
+          gutenberg_url: gutenbergResult?.url || null,
+          gutenberg_id: gutenbergResult?.id || null,
+          archive_url: archiveResult?.url || null,
+          archive_id: archiveResult?.id || null,
+          formats: {
+            ...(gutenbergResult?.formats || {}),
+            ...(archiveResult?.formats || {})
+          },
+          last_checked: new Date().toISOString()
+        };
+
+        const { error: insError } = await supabase
+          .from('free_ebook_links')
+          .insert(payload);
+        if (insError) {
+          console.error('Database cache insert error:', insError);
+        } else {
+          console.log('Cached free_ebook_links payload:', payload);
+        }
       } catch (dbError) {
         console.error('Database cache error:', dbError)
         // Don't fail the whole request if caching fails

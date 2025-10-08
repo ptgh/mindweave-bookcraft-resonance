@@ -253,7 +253,14 @@ const determinePriority = (title: string, author: string): 'high' | 'normal' | '
  */
 const cacheNegativeResult = async (title: string, author: string, isbn?: string) => {
   try {
-    await supabase.from('free_ebook_links').upsert({
+    // Replace any existing entry for this title/author to avoid duplicates
+    await supabase
+      .from('free_ebook_links')
+      .delete()
+      .eq('book_title', title)
+      .eq('book_author', author);
+
+    await supabase.from('free_ebook_links').insert({
       book_title: title,
       book_author: author,
       isbn: isbn,
@@ -261,8 +268,6 @@ const cacheNegativeResult = async (title: string, author: string, isbn?: string)
       gutenberg_url: null,
       archive_url: null,
       formats: {}
-    }, {
-      onConflict: 'book_title,book_author'
     });
     console.log('💾 [FreeEbook] Cached negative result');
   } catch (error) {

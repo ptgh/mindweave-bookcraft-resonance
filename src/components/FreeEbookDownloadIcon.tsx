@@ -23,7 +23,8 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "", onAvailabi
 
     const searchForFreeEbooks = async () => {
       try {
-        const result = await searchFreeEbooks(title, author, isbn, { forceRefresh: true });
+        // Use cache by default for card-level icon; preview modal will force refresh
+        const result = await searchFreeEbooks(title, author, isbn);
         if (isMounted) {
           setEbookData(result);
         }
@@ -71,7 +72,7 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "", onAvailabi
     }
   };
 
-  // Show loading state briefly, then hide if no links found
+  // Show loading state with consistent sizing; keep space even if hidden later
   if (isLoading) {
     return (
       <button

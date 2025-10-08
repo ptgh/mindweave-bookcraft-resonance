@@ -143,8 +143,8 @@ const BookCard = ({
       try {
         const result = await searchFreeEbooks(title, author, isbn);
         if (!cancelled) setHasFreeEbook(!!result?.hasLinks);
-      } catch (_) {
-        // silent fail
+      } catch (e) {
+        console.warn('Free ebook check failed:', e);
       }
     })();
     return () => { cancelled = true; };
