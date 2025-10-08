@@ -14,6 +14,45 @@ interface ContactFormRequest {
   message: string;
 }
 
+// Validation function
+const validateContactForm = (data: ContactFormRequest): { valid: boolean; error?: string } => {
+  if (!data.name || typeof data.name !== 'string') {
+    return { valid: false, error: "Name is required" };
+  }
+  if (data.name.trim().length === 0) {
+    return { valid: false, error: "Name cannot be empty" };
+  }
+  if (data.name.length > 100) {
+    return { valid: false, error: "Name must be less than 100 characters" };
+  }
+  
+  if (!data.email || typeof data.email !== 'string') {
+    return { valid: false, error: "Email is required" };
+  }
+  if (data.email.trim().length === 0) {
+    return { valid: false, error: "Email cannot be empty" };
+  }
+  if (data.email.length > 255) {
+    return { valid: false, error: "Email must be less than 255 characters" };
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(data.email)) {
+    return { valid: false, error: "Invalid email address" };
+  }
+  
+  if (!data.message || typeof data.message !== 'string') {
+    return { valid: false, error: "Message is required" };
+  }
+  if (data.message.trim().length === 0) {
+    return { valid: false, error: "Message cannot be empty" };
+  }
+  if (data.message.length > 2000) {
+    return { valid: false, error: "Message must be less than 2000 characters" };
+  }
+  
+  return { valid: true };
+};
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -21,12 +60,27 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { name, email, message }: ContactFormRequest = await req.json();
+    const formData: ContactFormRequest = await req.json();
 
-    // Validate required fields
-    if (!name || !email || !message) {
-      throw new Error("All fields are required");
+    // Validate form data
+    const validation = validateContactForm(formData);
+    if (!validation.valid) {
+      return new Response(
+        JSON.stringify({ error: validation.error }),
+        {
+          status: 400,
+          headers: { 
+            "Content-Type": "application/json", 
+            ...corsHeaders 
+          },
+        }
+      );
     }
+
+    // Sanitize inputs
+    const name = formData.name.trim();
+    const email = formData.email.trim().toLowerCase();
+    const message = formData.message.trim();
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

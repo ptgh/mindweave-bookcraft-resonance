@@ -6,6 +6,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { StandardButton } from "@/components/ui/standard-button";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+
+const contactFormSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
+  message: z.string().trim().min(1, "Message is required").max(2000, "Message must be less than 2000 characters")
+});
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -26,9 +33,12 @@ const ContactModal = ({ isOpen, onClose }: ContactModalProps) => {
     setIsSubmitting(true);
 
     try {
+      // Validate form data
+      const validatedData = contactFormSchema.parse(formData);
+
       // Call the edge function to handle the contact form submission
       const { data, error } = await supabase.functions.invoke('contact-form', {
-        body: formData
+        body: validatedData
       });
 
       if (error) throw error;
@@ -42,12 +52,19 @@ const ContactModal = ({ isOpen, onClose }: ContactModalProps) => {
       setFormData({ name: "", email: "", message: "" });
       onClose();
     } catch (error: any) {
-      console.error('Contact form error:', error);
-      toast({
-        title: "Transmission failed",
-        description: error.message || "Unable to send your message. Please try again.",
-        variant: "destructive",
-      });
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Validation error",
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Transmission failed",
+          description: error.message || "Unable to send your message. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -22,3 +22,9 @@ verify_jwt = true
 
 [functions.auth-confirmation-email]
 verify_jwt = false
+
+[functions.enrich-author-data]
+verify_jwt = true
+
+[functions.contact-form]
+verify_jwt = false

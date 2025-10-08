@@ -38,9 +38,48 @@ serve(async (req) => {
       throw new Error('Missing Supabase environment variables');
     }
 
+    // Security: Verify admin role
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) {
+      console.log('No authorization header provided');
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('Creating Supabase client...');
-    const supabaseClient = createClient(supabaseUrl, serviceRoleKey);
+    const supabaseClient = createClient(supabaseUrl, serviceRoleKey, {
+      global: {
+        headers: {
+          Authorization: authHeader,
+        },
+      },
+    });
     console.log('Supabase client created successfully');
+
+    // Verify the user has admin role
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      console.log('Invalid user authentication:', userError);
+      return new Response(
+        JSON.stringify({ error: "Invalid authentication" }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { data: roleData, error: roleError } = await supabaseClient
+      .rpc('has_role', { _user_id: user.id, _role: 'admin' });
+
+    if (roleError || !roleData) {
+      console.log("Admin check failed:", { roleError, roleData, userId: user.id });
+      return new Response(
+        JSON.stringify({ error: "Administrator privileges required" }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log("Admin authorization verified for user:", user.id);
 
     // Get pending enrichment jobs with better error handling
     console.log('=== Fetching pending enrichment jobs ===');
