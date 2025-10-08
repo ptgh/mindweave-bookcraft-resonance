@@ -213,25 +213,21 @@ const BookCard = ({
       
 
       {/* External links - subtle row above action buttons */}
-      {(apple_link || appleUrl || hasFreeEbook) && (
-        <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-700/50">
-          {(apple_link || appleUrl) && (
-            <AppleBooksLink 
-              appleLink={(apple_link || appleUrl)!} 
-              title={title}
-            />
-          )}
-          {/* Visible Internet Archive/Gutenberg icon if available */}
-          {hasFreeEbook && (
-            <FreeEbookDownloadIcon 
-              title={title} 
-              author={author} 
-              isbn={isbn}
-              className="flex-shrink-0"
-            />
-          )}
-        </div>
-      )}
+      <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-700/50">
+        {(apple_link || appleUrl) ? (
+          <AppleBooksLink 
+            appleLink={(apple_link || appleUrl)!} 
+            title={title}
+          />
+        ) : null}
+        {/* Internet Archive / Gutenberg icon handles availability internally */}
+        <FreeEbookDownloadIcon 
+          title={title} 
+          author={author} 
+          isbn={isbn}
+          className="flex-shrink-0"
+        />
+      </div>
       
       {/* Action buttons - moved to bottom horizontal layout */}
       <div className="grid grid-cols-3 gap-2">

@@ -81,11 +81,31 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
         const settings = getOptimizedSettings();
         const searchResults = { apple: false, freeEbooks: false, google: false };
         
-        // Try Apple Books first with detailed timing
-        console.log('📱 [BookPreview] Attempting Apple Books search...');
+        // Launch Apple Books and Free Ebooks in parallel to avoid gating
         const appleStartTime = Date.now();
-        const appleResult = await searchAppleBooks(book.title, book.author, book.isbn);
+        const freeEbookStartTime = Date.now();
+        
+        const applePromise = searchAppleBooks(book.title, book.author, book.isbn);
+        const freePromise = (async () => {
+          const freeEbookPromise = searchFreeEbooks(book.title, book.author, book.isbn);
+          const timeoutDuration = Math.max(settings.maxConcurrentRequests * 1000, 15000); // Min 15s timeout
+          const timeoutPromise = new Promise<EbookSearchResult | null>(resolve => 
+            setTimeout(() => {
+              console.log(`⏰ [BookPreview] Free ebook search timed out after ${timeoutDuration}ms`);
+              resolve(null);
+            }, timeoutDuration)
+          );
+          return Promise.race([freeEbookPromise, timeoutPromise]);
+        })();
+        
+        const [appleResult, freeEbookResult] = await Promise.allSettled([applePromise, freePromise]).then((results) => {
+          const apple = results[0].status === 'fulfilled' ? (results[0].value as AppleBook | null) : null;
+          const free = results[1].status === 'fulfilled' ? (results[1].value as EbookSearchResult | null) : null;
+          return [apple, free] as const;
+        });
+        
         const appleResponseTime = Date.now() - appleStartTime;
+        const freeEbookResponseTime = Date.now() - freeEbookStartTime;
         
         if (appleResult) {
           console.log(`✅ [BookPreview] Apple Books result found in ${appleResponseTime}ms:`, {
@@ -96,59 +116,44 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
           });
           setAppleBook(appleResult);
           searchResults.apple = true;
-          
           await analyticsService.logApiResponse('apple_books', appleResponseTime, true);
         } else {
-          console.log(`❌ [BookPreview] No Apple Books result after ${appleResponseTime}ms, searching free ebooks...`);
+          console.log(`❌ [BookPreview] No Apple Books result after ${appleResponseTime}ms`);
           await analyticsService.logApiResponse('apple_books', appleResponseTime, false);
-          
-          // Search for free ebooks with enhanced timeout handling
-          const freeEbookStartTime = Date.now();
-          const freeEbookPromise = searchFreeEbooks(book.title, book.author, book.isbn);
-          const timeoutDuration = Math.max(settings.maxConcurrentRequests * 1000, 15000); // Min 15s timeout
-          const timeoutPromise = new Promise<EbookSearchResult | null>(resolve => 
-            setTimeout(() => {
-              console.log(`⏰ [BookPreview] Free ebook search timed out after ${timeoutDuration}ms`);
-              resolve(null);
-            }, timeoutDuration)
-          );
-          
-          const freeEbookResult = await Promise.race([freeEbookPromise, timeoutPromise]);
-          const freeEbookResponseTime = Date.now() - freeEbookStartTime;
-          
+        }
+        
+        if (freeEbookResult) {
           console.log(`📚 [BookPreview] Free ebook search completed in ${freeEbookResponseTime}ms:`, {
             hasLinks: !!freeEbookResult?.hasLinks,
             hasGutenberg: !!freeEbookResult?.gutenberg,
             hasArchive: !!freeEbookResult?.archive,
             timedOut: freeEbookResult === null
           });
-          
           setFreeEbooks(freeEbookResult);
           searchResults.freeEbooks = !!freeEbookResult?.hasLinks;
-          
           await analyticsService.logApiResponse('free_ebooks', freeEbookResponseTime, !!freeEbookResult);
+        }
+        
+        // Fallback to Google Books only if nothing else found
+        if (!appleResult && !freeEbookResult?.hasLinks) {
+          console.log('📖 [BookPreview] No Apple or free ebooks found, trying Google Books fallback...');
+          const googleStartTime = Date.now();
+          const googleBooks = await searchGoogleBooks(`${book.title} ${book.author}`, 1);
+          const googleResponseTime = Date.now() - googleStartTime;
           
-          // Fallback to Google Books for additional data (with enhanced caching)
-          if (!freeEbookResult?.hasLinks) {
-            console.log('📖 [BookPreview] No free ebooks found, trying Google Books fallback...');
-            const googleStartTime = Date.now();
-            const googleBooks = await searchGoogleBooks(`${book.title} ${book.author}`, 1);
-            const googleResponseTime = Date.now() - googleStartTime;
-            
-            if (googleBooks.length > 0) {
-              console.log(`✅ [BookPreview] Google Books fallback result found in ${googleResponseTime}ms:`, {
-                title: googleBooks[0].title,
-                hasDescription: !!googleBooks[0].description,
-                coverUrl: !!googleBooks[0].coverUrl
-              });
-              setGoogleFallback(googleBooks[0]);
-              searchResults.google = true;
-            } else {
-              console.log(`❌ [BookPreview] No Google Books result after ${googleResponseTime}ms`);
-            }
-            
-            await analyticsService.logApiResponse('google_books', googleResponseTime, googleBooks.length > 0);
+          if (googleBooks.length > 0) {
+            console.log(`✅ [BookPreview] Google Books fallback result found in ${googleResponseTime}ms:`, {
+              title: googleBooks[0].title,
+              hasDescription: !!googleBooks[0].description,
+              coverUrl: !!googleBooks[0].coverUrl
+            });
+            setGoogleFallback(googleBooks[0]);
+            searchResults.google = true;
+          } else {
+            console.log(`❌ [BookPreview] No Google Books result after ${googleResponseTime}ms`);
           }
+          
+          await analyticsService.logApiResponse('google_books', googleResponseTime, googleBooks.length > 0);
         }
         
         const totalResponseTime = Date.now() - startTime;
