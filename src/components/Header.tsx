@@ -128,16 +128,7 @@ const Header = () => {
               </div>
             )}
 
-            {/* Mobile Navigation Toggle - for future mobile menu implementation */}
-            <button 
-              className="md:hidden text-slate-300 hover:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded p-1"
-              aria-label="Open navigation menu"
-              aria-expanded="false"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
+            {/* Mobile Navigation - Hidden for now */}
           </div>
         </div>
       </div>

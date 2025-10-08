@@ -79,19 +79,6 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData, isLoading =
                     <span>View</span>
                   </button>
                 </div>
-                {ebookData.archive.formats && Object.keys(ebookData.archive.formats).length > 0 && (
-                  <div className="flex gap-1 flex-wrap">
-                    {getAvailableFormats(ebookData.archive.formats).map(format => (
-                      <Badge 
-                        key={format} 
-                        variant="outline" 
-                        className="text-xs border-green-400/30 text-green-400 bg-green-400/5"
-                      >
-                        {format}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
               </div>
             )}
 
@@ -115,19 +102,6 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData, isLoading =
                     <span>View</span>
                   </button>
                 </div>
-                {ebookData.gutenberg.formats && Object.keys(ebookData.gutenberg.formats).length > 0 && (
-                  <div className="flex gap-1 flex-wrap">
-                    {getAvailableFormats(ebookData.gutenberg.formats).map(format => (
-                      <Badge 
-                        key={format} 
-                        variant="outline" 
-                        className="text-xs border-green-400/30 text-green-400 bg-green-400/5"
-                      >
-                        {format}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
               </div>
             )}
           </>

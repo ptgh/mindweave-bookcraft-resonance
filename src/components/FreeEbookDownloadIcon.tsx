@@ -81,7 +81,7 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "", onAvailabi
         aria-label="Loading Internet Archive availability"
       >
         <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
-        <span className="text-[10px]">Archive</span>
+        <span className="text-[10px]">Internet Archive</span>
       </button>
     );
   }
@@ -101,7 +101,7 @@ const FreeEbookDownloadIcon = ({ title, author, isbn, className = "", onAvailabi
         aria-label={`View free ebook in Internet Archive: ${title}`}
       >
         <Archive className="w-3 h-3 mr-1.5 flex-shrink-0" />
-        <span className="text-[10px] whitespace-nowrap">Archive</span>
+        <span className="text-[10px] whitespace-nowrap">Internet Archive</span>
       </button>
       
       <FreeEbookModal
