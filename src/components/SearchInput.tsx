@@ -9,6 +9,7 @@ interface SearchInputProps {
   onResults: (results: SearchResult[]) => void;
   placeholder?: string;
   className?: string;
+  onQueryChange?: (value: string) => void;
 }
 
 const SearchInput = ({ onResults, placeholder = "Search authors, books, or your transmissions...", className = "" }: SearchInputProps) => {

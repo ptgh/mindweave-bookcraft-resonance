@@ -133,9 +133,19 @@ export const useAuthorMatrix = () => {
       );
       if (matchingAuthors.length > 0) {
         setAuthors([...matchingAuthors, ...authors.filter(a => !matchingAuthors.includes(a))]);
+        // Auto-highlight/select when there's a strong/unique match
+        const top = authorResults[0];
+        const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '').trim();
+        const exact = authors.find(a => normalize(a.name) === normalize(top.title));
+        if (authorResults.length === 1 || exact) {
+          const toSelect = exact || matchingAuthors[0];
+          if (toSelect && (!selectedAuthor || selectedAuthor.id !== toSelect.id)) {
+            handleAuthorSelect(toSelect);
+          }
+        }
       }
     }
-  }, [authors]);
+  }, [authors, selectedAuthor, handleAuthorSelect]);
 
   const handleSearchResultSelect = useCallback((result: SearchResult) => {
     if (result.type === 'author') {
