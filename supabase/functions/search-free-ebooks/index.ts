@@ -128,44 +128,43 @@ serve(async (req) => {
       }
 
       if (items && items.length > 0) {
-        // First try: Find match with direct downloadable formats (PDF/EPUB/TXT)
-        let bestMatch = items.find(item => {
-          const formats = Array.isArray(item.format) ? item.format : [];
-          return formats.some(f => f.toLowerCase().includes('pdf') || f.toLowerCase().includes('epub') || f.toLowerCase().includes('txt'));
+        // Score items to pick the closest title/author match
+        const normalize = (s: string) => s.toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+        const nt = normalize(title);
+        const na = normalize(author);
+
+        type Scored = { item: ArchiveItem; score: number };
+        const scored: Scored[] = items.map((item) => {
+          const it = normalize(item.title || '');
+          const ia = normalize(Array.isArray(item.creator) ? item.creator.join(' ') : (item.creator || ''));
+          let score = 0;
+          if (it === nt) score += 30; else if (it.includes(nt)) score += 12;
+          if (ia.includes(na)) score += 10;
+          // Prefer titles closer in length to avoid picking sequels/subtitles
+          score -= Math.abs(it.length - nt.length);
+          // Small boost for popularity
+          score += Math.min((item.downloads || 0) / 1000, 10);
+          return { item, score };
         });
 
-        // If found, build direct download URLs
-        if (bestMatch) {
-          const formats: Record<string, string> = {}
-          const baseUrl = `https://archive.org/download/${bestMatch.identifier}`
-          const availableFormats = Array.isArray(bestMatch.format) ? bestMatch.format : []
+        const best = scored.sort((a, b) => b.score - a.score)[0]?.item || items[0];
+        const availableFormats = Array.isArray(best.format) ? best.format : [];
+        const hasEpub = availableFormats.some(f => f.toLowerCase().includes('epub'));
+        const hasPdf = availableFormats.some(f => f.toLowerCase().includes('pdf'));
+        const hasTxt = availableFormats.some(f => f.toLowerCase().includes('txt'));
 
-          if (availableFormats.some(f => f.toLowerCase().includes('epub'))) {
-            formats.epub = `${baseUrl}/${bestMatch.identifier}.epub`
-          }
-          if (availableFormats.some(f => f.toLowerCase().includes('pdf'))) {
-            formats.pdf = `${baseUrl}/${bestMatch.identifier}.pdf`
-          }
-          if (availableFormats.some(f => f.toLowerCase().includes('txt'))) {
-            formats.txt = `${baseUrl}/${bestMatch.identifier}.txt`
-          }
+        const formats: Record<string, string> = {};
+        const baseUrl = `https://archive.org/download/${best.identifier}`;
+        if (hasEpub) formats.epub = `${baseUrl}/${best.identifier}.epub`;
+        if (hasPdf) formats.pdf = `${baseUrl}/${best.identifier}.pdf`;
+        if (hasTxt) formats.txt = `${baseUrl}/${best.identifier}.txt`;
 
-          archiveResult = {
-            url: `https://archive.org/details/${bestMatch.identifier}`,
-            id: bestMatch.identifier,
-            formats
-          }
-          console.log(`Found Archive match with direct downloads: ${bestMatch.title}`)
-        } else {
-          // Fallback: Use top item even if borrow-only
-          const top = items[0];
-          archiveResult = {
-            url: `https://archive.org/details/${top.identifier}`,
-            id: top.identifier,
-            formats: {}
-          }
-          console.log(`Found Archive match (borrow-only): ${top.title}`)
-        }
+        archiveResult = {
+          url: `https://archive.org/details/${best.identifier}`,
+          id: best.identifier,
+          formats
+        };
+        console.log(`Selected Archive match: ${best.title} (identifier: ${best.identifier})`);
       }
     } catch (error) {
       console.error('Archive search error:', error)

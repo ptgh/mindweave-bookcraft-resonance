@@ -36,46 +36,85 @@ export const getCachedFreeEbookLink = async (
   isbn?: string
 ): Promise<FreeEbookLink | null> => {
   try {
-    let query = supabase
-      .from('free_ebook_links')
-      .select('*');
-
-    // Try ISBN first if available
+    // Prefer ISBN exact match
     if (isbn) {
-      const { data: isbnResult } = await query.eq('isbn', isbn).single();
+      const { data: isbnResult, error: isbnErr } = await supabase
+        .from('free_ebook_links')
+        .select('*')
+        .eq('isbn', isbn)
+        .maybeSingle();
+      if (isbnErr && isbnErr.code !== 'PGRST116') {
+        console.error('Error fetching by ISBN from cache:', isbnErr);
+      }
       if (isbnResult) {
         return {
           ...isbnResult,
-          formats: typeof isbnResult.formats === 'string' 
-            ? JSON.parse(isbnResult.formats) 
-            : isbnResult.formats || {}
+          formats: typeof (isbnResult as any).formats === 'string'
+            ? JSON.parse((isbnResult as any).formats)
+            : (isbnResult as any).formats || {}
         } as FreeEbookLink;
       }
     }
 
-    // Fallback to title/author search
-    const { data, error } = await query
-      .ilike('book_title', `%${title}%`)
-      .ilike('book_author', `%${author}%`)
-      .order('last_checked', { ascending: false })
-      .limit(1)
-      .single();
+    // Build normalized variants to tolerate punctuation/spacing differences
+    const normalize = (s: string) => s
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
 
-    if (error && error.code !== 'PGRST116') { // Not found is ok
-      console.error('Error fetching cached ebook link:', error);
+    const normTitle = normalize(title);
+    const normAuthor = normalize(author);
+    const authorNoDots = author.replace(/[.]/g, '');
+    const authorTight = author.replace(/\s+/g, '');
+    const titleNoPunct = title.replace(/[^\w\s]/g, ' ').trim();
+
+    // Fetch a small candidate set using broad matching, then score client-side
+    const { data: candidates, error } = await supabase
+      .from('free_ebook_links')
+      .select('*')
+      .or(
+        [
+          `and(book_title.ilike.%${title}%,book_author.ilike.%${author}%)`,
+          `and(book_title.ilike.%${title}%,book_author.ilike.%${authorNoDots}%)`,
+          `and(book_title.ilike.%${titleNoPunct}%,book_author.ilike.%${author}%)`,
+          `and(book_title.ilike.%${titleNoPunct}%,book_author.ilike.%${authorNoDots}%)`,
+          `and(book_title.ilike.%${title}%,book_author.ilike.%${authorTight}%)`
+        ].join(',')
+      )
+      .order('last_checked', { ascending: false })
+      .limit(10);
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching cached candidates:', error);
       return null;
     }
 
-    if (data) {
-      return {
-        ...data,
-        formats: typeof data.formats === 'string' 
-          ? JSON.parse(data.formats) 
-          : data.formats || {}
-      } as FreeEbookLink;
-    }
+    if (!candidates || candidates.length === 0) return null;
 
-    return null;
+    // Score and pick the best candidate
+    const scoreRow = (r: any) => {
+      const rt = normalize(r.book_title || '');
+      const ra = normalize(r.book_author || '');
+      let score = 0;
+      if (rt === normTitle) score += 20; else if (rt.includes(normTitle)) score += 8;
+      if (ra === normAuthor) score += 10; else if (ra.includes(normAuthor)) score += 4;
+      if (r.archive_url || r.gutenberg_url) score += 5; // prefer positive results
+      // Small bonus for recency is already handled by ordering; add tiny bump
+      return score;
+    };
+
+    const best = [...candidates].sort((a, b) => scoreRow(b) - scoreRow(a))[0];
+    if (!best) return null;
+
+    return {
+      ...(best as any),
+      formats: typeof (best as any).formats === 'string'
+        ? JSON.parse((best as any).formats)
+        : (best as any).formats || {}
+    } as FreeEbookLink;
   } catch (error) {
     console.error('Error in getCachedFreeEbookLink:', error);
     return null;
@@ -113,7 +152,7 @@ export const searchFreeEbooks = async (
         const hasPositiveResult = !!(cached.gutenberg_url || cached.archive_url);
         const cacheTTL = hasPositiveResult 
           ? 7 * 24 * 60 * 60 * 1000  // 7 days for positive results
-          : 24 * 60 * 60 * 1000;      // 24 hours for negative results
+          : 60 * 60 * 1000;          // 1 hour for negative results (faster refresh)
         const cacheExpiry = new Date(Date.now() - cacheTTL);
         const age = Date.now() - lastChecked.getTime();
         
@@ -125,8 +164,8 @@ export const searchFreeEbooks = async (
           lastChecked: cached.last_checked
         });
         
-        if (lastChecked > cacheExpiry) {
-          console.log('✅ [FreeEbook] Using cached result');
+        if (lastChecked > cacheExpiry && hasPositiveResult) {
+          console.log('✅ [FreeEbook] Using cached positive result');
           return {
             hasLinks: hasPositiveResult,
             gutenberg: cached.gutenberg_url ? {
@@ -140,8 +179,10 @@ export const searchFreeEbooks = async (
               formats: cached.formats || {}
             } : undefined
           };
+        } else if (lastChecked > cacheExpiry && !hasPositiveResult) {
+          console.log('♻️ [FreeEbook] Cached negative result present; refreshing live to confirm...');
         } else {
-          console.log('⏰ [FreeEbook] Cache expired, refreshing...');
+          console.log('⏰ [FreeEbook] Cache expired or negative; refreshing...');
         }
       } else {
         console.log('❌ [FreeEbook] No cache entry found');
