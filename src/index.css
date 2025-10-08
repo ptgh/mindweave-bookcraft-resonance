@@ -204,6 +204,8 @@
     -webkit-overflow-scrolling: touch;
     background: hsl(var(--background));
   }
+
+  html { background: hsl(var(--background)); }
 }
 
 /* Edge/Chrome-specific optimizations */

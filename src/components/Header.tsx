@@ -1,7 +1,8 @@
-import { BookOpen, LogOut, Instagram } from "lucide-react";
+import { BookOpen, LogOut, Instagram, Menu } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 import { StandardButton } from "./ui/standard-button";
 import { useAuth } from "@/hooks/useAuth";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const location = useLocation();
@@ -128,7 +129,54 @@ const Header = () => {
               </div>
             )}
 
-            {/* Mobile Navigation - Hidden for now */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button 
+                  className="md:hidden inline-flex items-center justify-center rounded p-2 text-foreground/80 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  aria-label="Open navigation menu"
+                  aria-expanded="false"
+                >
+                  <Menu className="w-6 h-6" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align="end" 
+                sideOffset={8} 
+                className="z-[1000] min-w-56 bg-popover text-popover-foreground border border-border shadow-lg"
+              >
+                <DropdownMenuItem asChild>
+                  <Link to="/">Home</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/library">Transmissions</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/book-browser">Signal Archive</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/author-matrix">Author Matrix</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/thread-map">Chrono Thread</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/publisher-resonance">Publisher Resonance</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/test-brain">Neural Map</Link>
+                </DropdownMenuItem>
+                {user && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={signOut}>
+                      Sign Out
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
           </div>
         </div>
       </div>
