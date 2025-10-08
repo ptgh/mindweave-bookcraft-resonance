@@ -12,7 +12,7 @@ interface SearchInputProps {
   onQueryChange?: (value: string) => void;
 }
 
-const SearchInput = ({ onResults, placeholder = "Search authors, books, or your transmissions...", className = "" }: SearchInputProps) => {
+const SearchInput = ({ onResults, placeholder = "Search authors, books, or your transmissions...", className = "", onQueryChange }: SearchInputProps) => {
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
@@ -37,6 +37,11 @@ const SearchInput = ({ onResults, placeholder = "Search authors, books, or your 
     return () => clearTimeout(delayedSearch);
   }, [query, onResults]);
 
+  const handleQueryChange = (value: string) => {
+    setQuery(value);
+    onQueryChange?.(value);
+  };
+
   const clearSearch = () => {
     setQuery("");
     onResults([]);
@@ -49,7 +54,7 @@ const SearchInput = ({ onResults, placeholder = "Search authors, books, or your 
         <Input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => handleQueryChange(e.target.value)}
           placeholder={placeholder}
           className="pl-10 pr-10 bg-slate-800/50 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-blue-400"
         />

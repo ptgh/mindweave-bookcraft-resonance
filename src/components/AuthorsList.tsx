@@ -12,6 +12,7 @@ interface AuthorsListProps {
   loading: boolean;
   currentPage: number;
   totalPages: number;
+  highlightedAuthorId?: string | null;
   onAuthorSelect: (author: ScifiAuthor) => void;
   onPageChange: (page: number) => void;
 }
@@ -22,30 +23,34 @@ const AuthorsList = ({
   loading, 
   currentPage, 
   totalPages, 
+  highlightedAuthorId,
   onAuthorSelect, 
   onPageChange 
 }: AuthorsListProps) => {
-  const authorCardsRef = useRef<HTMLDivElement[]>([]);
+  const authorCardsRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Function to add author card refs
-  const addToAuthorRefs = (el: HTMLDivElement | null) => {
-    if (el && !authorCardsRef.current.includes(el)) {
-      authorCardsRef.current.push(el);
+  const addToAuthorRefs = (authorId: string) => (el: HTMLDivElement | null) => {
+    if (el) {
+      authorCardsRef.current.set(authorId, el);
+    } else {
+      authorCardsRef.current.delete(authorId);
     }
   };
 
   // GSAP animations for author cards
   useEffect(() => {
-    if (authorCardsRef.current.length > 0 && !loading) {
+    const cards = Array.from(authorCardsRef.current.values());
+    if (cards.length > 0 && !loading) {
       // Initial state - hidden
-      gsap.set(authorCardsRef.current, { 
+      gsap.set(cards, { 
         opacity: 0, 
         y: 10 
       });
 
       // Animate in with stagger
-      gsap.to(authorCardsRef.current, {
+      gsap.to(cards, {
         opacity: 1,
         y: 0,
         duration: 0.6,
@@ -55,35 +60,33 @@ const AuthorsList = ({
       });
 
       // Setup hover animations for author cards
-      authorCardsRef.current.forEach((card) => {
-        if (card) {
-          const handleMouseEnter = () => {
-            gsap.to(card, {
-              borderColor: "#89b4fa",
-              boxShadow: "0 0 8px #89b4fa66",
-              duration: 0.3,
-              ease: "power2.inOut"
-            });
-          };
+      cards.forEach((card) => {
+        const handleMouseEnter = () => {
+          gsap.to(card, {
+            borderColor: "#89b4fa",
+            boxShadow: "0 0 8px #89b4fa66",
+            duration: 0.3,
+            ease: "power2.inOut"
+          });
+        };
 
-          const handleMouseLeave = () => {
-            gsap.to(card, {
-              borderColor: "rgba(255, 255, 255, 0.15)",
-              boxShadow: "0 0 0px transparent",
-              duration: 0.3,
-              ease: "power2.inOut"
-            });
-          };
+        const handleMouseLeave = () => {
+          gsap.to(card, {
+            borderColor: "rgba(255, 255, 255, 0.15)",
+            boxShadow: "0 0 0px transparent",
+            duration: 0.3,
+            ease: "power2.inOut"
+          });
+        };
 
-          card.addEventListener('mouseenter', handleMouseEnter);
-          card.addEventListener('mouseleave', handleMouseLeave);
+        card.addEventListener('mouseenter', handleMouseEnter);
+        card.addEventListener('mouseleave', handleMouseLeave);
 
-          // Cleanup function stored on the element
-          (card as any)._cleanupHover = () => {
-            card.removeEventListener('mouseenter', handleMouseEnter);
-            card.removeEventListener('mouseleave', handleMouseLeave);
-          };
-        }
+        // Cleanup function stored on the element
+        (card as any)._cleanupHover = () => {
+          card.removeEventListener('mouseenter', handleMouseEnter);
+          card.removeEventListener('mouseleave', handleMouseLeave);
+        };
       });
     }
 
@@ -94,9 +97,18 @@ const AuthorsList = ({
           (card as any)._cleanupHover();
         }
       });
-      authorCardsRef.current = [];
     };
   }, [authors, loading]);
+
+  // Scroll to highlighted author
+  useEffect(() => {
+    if (highlightedAuthorId && containerRef.current) {
+      const highlightedCard = authorCardsRef.current.get(highlightedAuthorId);
+      if (highlightedCard) {
+        highlightedCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [highlightedAuthorId]);
 
   if (loading) {
     return <LoadingSkeleton type="author-card" count={10} />;
@@ -105,8 +117,12 @@ const AuthorsList = ({
   return (
     <>
       <div ref={containerRef} className="space-y-2 max-h-80 sm:max-h-96 overflow-y-auto scrollbar-hide">
-        {authors.map((author, index) => (
-          <div key={author.id} ref={addToAuthorRefs}>
+        {authors.map((author) => (
+          <div 
+            key={author.id} 
+            ref={addToAuthorRefs(author.id)}
+            className={highlightedAuthorId === author.id ? 'ring-2 ring-blue-400 rounded-lg' : ''}
+          >
             <AuthorCard
               author={author}
               isSelected={selectedAuthor?.id === author.id}

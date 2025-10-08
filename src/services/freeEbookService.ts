@@ -88,7 +88,8 @@ export const getCachedFreeEbookLink = async (
 export const searchFreeEbooks = async (
   title: string,
   author: string,
-  isbn?: string
+  isbn?: string,
+  options: { forceRefresh?: boolean } = {}
 ): Promise<EbookSearchResult> => {
   const startTime = Date.now();
   const searchKey = `${title}-${author}-${isbn || 'no-isbn'}`;
@@ -101,42 +102,52 @@ export const searchFreeEbooks = async (
   });
 
   try {
-    // First check cache with detailed logging
-    console.log('📦 [FreeEbook] Checking cache...');
-    const cached = await getCachedFreeEbookLink(title, author, isbn);
-    
-    // If cached and recent (within 7 days), use it
-    if (cached) {
-      const lastChecked = new Date(cached.last_checked);
-      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      const age = Date.now() - lastChecked.getTime();
+    // Check cache unless force refresh
+    if (!options.forceRefresh) {
+      console.log('📦 [FreeEbook] Checking cache...');
+      const cached = await getCachedFreeEbookLink(title, author, isbn);
       
-      console.log(`💾 [FreeEbook] Cache entry found, age: ${Math.round(age / (1000 * 60 * 60))}h`, {
-        hasGutenberg: !!cached.gutenberg_url,
-        hasArchive: !!cached.archive_url,
-        lastChecked: cached.last_checked
-      });
-      
-      if (lastChecked > weekAgo) {
-        console.log('✅ [FreeEbook] Using cached result');
-        return {
-          hasLinks: !!(cached.gutenberg_url || cached.archive_url),
-          gutenberg: cached.gutenberg_url ? {
-            url: cached.gutenberg_url,
-            id: cached.gutenberg_id || '',
-            formats: cached.formats || {}
-          } : undefined,
-          archive: cached.archive_url ? {
-            url: cached.archive_url,
-            id: cached.archive_id || '',
-            formats: cached.formats || {}
-          } : undefined
-        };
+      // If cached and recent (within 24 hours for negative, 7 days for positive), use it
+      if (cached) {
+        const lastChecked = new Date(cached.last_checked);
+        const hasPositiveResult = !!(cached.gutenberg_url || cached.archive_url);
+        const cacheTTL = hasPositiveResult 
+          ? 7 * 24 * 60 * 60 * 1000  // 7 days for positive results
+          : 24 * 60 * 60 * 1000;      // 24 hours for negative results
+        const cacheExpiry = new Date(Date.now() - cacheTTL);
+        const age = Date.now() - lastChecked.getTime();
+        
+        console.log(`💾 [FreeEbook] Cache entry found, age: ${Math.round(age / (1000 * 60 * 60))}h`, {
+          hasGutenberg: !!cached.gutenberg_url,
+          hasArchive: !!cached.archive_url,
+          isPositive: hasPositiveResult,
+          ttlHours: cacheTTL / (1000 * 60 * 60),
+          lastChecked: cached.last_checked
+        });
+        
+        if (lastChecked > cacheExpiry) {
+          console.log('✅ [FreeEbook] Using cached result');
+          return {
+            hasLinks: hasPositiveResult,
+            gutenberg: cached.gutenberg_url ? {
+              url: cached.gutenberg_url,
+              id: cached.gutenberg_id || '',
+              formats: cached.formats || {}
+            } : undefined,
+            archive: cached.archive_url ? {
+              url: cached.archive_url,
+              id: cached.archive_id || '',
+              formats: cached.formats || {}
+            } : undefined
+          };
+        } else {
+          console.log('⏰ [FreeEbook] Cache expired, refreshing...');
+        }
       } else {
-        console.log('⏰ [FreeEbook] Cache expired, refreshing...');
+        console.log('❌ [FreeEbook] No cache entry found');
       }
     } else {
-      console.log('❌ [FreeEbook] No cache entry found');
+      console.log('🔄 [FreeEbook] Force refresh requested, bypassing cache');
     }
 
     // Prepare search terms with transliteration for non-English titles

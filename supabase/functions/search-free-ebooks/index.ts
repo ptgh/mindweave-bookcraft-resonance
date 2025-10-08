@@ -97,10 +97,15 @@ serve(async (req) => {
       console.error('Gutenberg search error:', error)
     }
 
-    // Search Internet Archive
+    // Search Internet Archive (enhanced with ISBN and borrow-only fallback)
     try {
-      const archiveQuery = `title:(${title}) AND creator:(${author}) AND mediatype:texts`
-      const archiveUrl = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(archiveQuery)}&fl=identifier,title,creator,format,downloads&rows=5&page=1&output=json`
+      // Build query with ISBN if available for better accuracy
+      let archiveQuery = `title:(${title}) AND creator:(${author}) AND mediatype:texts`
+      if (isbn) {
+        archiveQuery = `(isbn:${isbn} OR (${archiveQuery}))`
+      }
+      
+      const archiveUrl = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(archiveQuery)}&fl=identifier,title,creator,format,downloads&rows=10&page=1&output=json`
       
       const archiveResponse = await fetch(archiveUrl)
       
@@ -108,21 +113,18 @@ serve(async (req) => {
         const archiveData = await archiveResponse.json()
         const items: ArchiveItem[] = archiveData.response?.docs || []
         
-        // Find best match with PDF or EPUB
-        const bestMatch = items.find(item => {
+        // First try: Find match with direct downloadable formats (PDF/EPUB/TXT)
+        let bestMatch = items.find(item => {
           const formats = Array.isArray(item.format) ? item.format : []
-          return formats.some(f => f.toLowerCase().includes('pdf') || f.toLowerCase().includes('epub'))
+          return formats.some(f => f.toLowerCase().includes('pdf') || f.toLowerCase().includes('epub') || f.toLowerCase().includes('txt'))
         })
         
+        // If found, build direct download URLs
         if (bestMatch) {
-          // Build direct download URLs for Internet Archive
           const formats: Record<string, string> = {}
           const baseUrl = `https://archive.org/download/${bestMatch.identifier}`
-          
-          // Check which formats are actually available and build direct download URLs
           const availableFormats = Array.isArray(bestMatch.format) ? bestMatch.format : []
           
-          // Prioritize ePub, then PDF, then TXT
           if (availableFormats.some(f => f.toLowerCase().includes('epub'))) {
             formats.epub = `${baseUrl}/${bestMatch.identifier}.epub`
           }
@@ -138,7 +140,18 @@ serve(async (req) => {
             id: bestMatch.identifier,
             formats
           }
-          console.log(`Found Archive match: ${bestMatch.title}`)
+          console.log(`Found Archive match with direct downloads: ${bestMatch.title}`)
+        } else if (items.length > 0) {
+          // Fallback: Use best match even if borrow-only (no direct download formats)
+          // Return details page URL so users can borrow/read online
+          bestMatch = items[0]
+          
+          archiveResult = {
+            url: `https://archive.org/details/${bestMatch.identifier}`,
+            id: bestMatch.identifier,
+            formats: {} // Empty formats indicates borrow-only
+          }
+          console.log(`Found Archive match (borrow-only): ${bestMatch.title}`)
         }
       }
     } catch (error) {

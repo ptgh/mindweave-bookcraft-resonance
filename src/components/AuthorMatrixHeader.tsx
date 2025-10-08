@@ -6,9 +6,10 @@ interface AuthorMatrixHeaderProps {
   searchResults: SearchResult[];
   onResults: (results: SearchResult[]) => void;
   onResultSelect: (result: SearchResult) => void;
+  onQueryChange?: (query: string) => void;
 }
 
-const AuthorMatrixHeader = ({ searchResults, onResults, onResultSelect }: AuthorMatrixHeaderProps) => {
+const AuthorMatrixHeader = ({ searchResults, onResults, onResultSelect, onQueryChange }: AuthorMatrixHeaderProps) => {
   return (
     <div className="feature-block text-center mb-6 sm:mb-8">
       <h1 className="hero-title text-2xl sm:text-3xl font-light text-slate-200 mb-2 tracking-wider">
@@ -22,6 +23,7 @@ const AuthorMatrixHeader = ({ searchResults, onResults, onResultSelect }: Author
         onResults={onResults}
         onResultSelect={onResultSelect}
         searchResults={searchResults}
+        onQueryChange={onQueryChange}
       />
     </div>
   );

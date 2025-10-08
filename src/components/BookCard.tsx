@@ -8,6 +8,7 @@ import FreeEbookDownloadIcon from "./FreeEbookDownloadIcon";
 import AppleBooksLink from "./AppleBooksLink";
 import { searchAppleBooks } from "@/services/appleBooks";
 import { searchFreeEbooks } from "@/services/freeEbookService";
+import { updateTransmission } from "@/services/transmissionsService";
 interface BookCardProps {
   id: number;
   title: string;
@@ -99,6 +100,14 @@ const BookCard = ({
         const result = await searchAppleBooks(title, author, isbn);
         if (!cancelled && result?.storeUrl) {
           setAppleUrl(result.storeUrl);
+          
+          // Persist found Apple Books link to database
+          console.log(`💾 Persisting Apple Books link for "${title}"`);
+          try {
+            await updateTransmission(id, { apple_link: result.storeUrl });
+          } catch (updateError) {
+            console.error('Failed to persist Apple Books link:', updateError);
+          }
         }
       } catch (_) {
         // silent fail
@@ -106,7 +115,7 @@ const BookCard = ({
     };
     fetchApple();
     return () => { cancelled = true; };
-  }, [apple_link, title, author, isbn]);
+  }, [apple_link, title, author, isbn, id]);
 
   // Observe when card becomes visible, then check free-ebook availability once
   useEffect(() => {

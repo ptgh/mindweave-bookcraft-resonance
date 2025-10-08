@@ -18,10 +18,12 @@ const AuthorMatrix = () => {
     searchResults,
     currentPage,
     totalPages,
+    highlightedAuthorId,
     setCurrentPage,
     handleAuthorSelect,
     handleSearchResults,
     handleSearchResultSelect,
+    handleAuthorQueryChange,
     addToTransmissions
   } = useAuthorMatrix();
 
@@ -38,6 +40,7 @@ const AuthorMatrix = () => {
               searchResults={searchResults}
               onResults={handleSearchResults}
               onResultSelect={handleSearchResultSelect}
+              onQueryChange={handleAuthorQueryChange}
             />
           </div>
 
@@ -56,6 +59,7 @@ const AuthorMatrix = () => {
                 loading={loading}
                 currentPage={currentPage}
                 totalPages={totalPages}
+                highlightedAuthorId={highlightedAuthorId}
                 onAuthorSelect={handleAuthorSelect}
                 onPageChange={setCurrentPage}
               />

@@ -87,7 +87,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
         
         const applePromise = searchAppleBooks(book.title, book.author, book.isbn);
         const freePromise = (async () => {
-          const freeEbookPromise = searchFreeEbooks(book.title, book.author, book.isbn);
+          const freeEbookPromise = searchFreeEbooks(book.title, book.author, book.isbn, { forceRefresh: true });
           const timeoutDuration = Math.max(settings.maxConcurrentRequests * 1000, 15000); // Min 15s timeout
           const timeoutPromise = new Promise<EbookSearchResult | null>(resolve => 
             setTimeout(() => {

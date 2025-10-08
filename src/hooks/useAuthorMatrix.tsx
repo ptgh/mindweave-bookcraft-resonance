@@ -20,6 +20,7 @@ export const useAuthorMatrix = () => {
   const [booksLoading, setBooksLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
+  const [highlightedAuthorId, setHighlightedAuthorId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const totalPages = useMemo(() => Math.ceil(authors.length / AUTHORS_PER_PAGE), [authors.length]);
@@ -193,6 +194,36 @@ export const useAuthorMatrix = () => {
     }
   }, [selectedAuthor, toast]);
 
+  const handleAuthorQueryChange = useCallback((query: string) => {
+    if (!query.trim()) {
+      setHighlightedAuthorId(null);
+      return;
+    }
+
+    const normalized = query.toLowerCase().trim();
+    
+    // Find best match: prefix first, then includes
+    let bestMatch = authors.find(a => a.name.toLowerCase().startsWith(normalized));
+    if (!bestMatch) {
+      bestMatch = authors.find(a => a.name.toLowerCase().includes(normalized));
+    }
+
+    if (bestMatch) {
+      setHighlightedAuthorId(bestMatch.id);
+      
+      // Calculate page and navigate to it
+      const authorIndex = authors.findIndex(a => a.id === bestMatch!.id);
+      if (authorIndex !== -1) {
+        const targetPage = Math.floor(authorIndex / AUTHORS_PER_PAGE);
+        if (targetPage !== currentPage) {
+          setCurrentPage(targetPage);
+        }
+      }
+    } else {
+      setHighlightedAuthorId(null);
+    }
+  }, [authors, currentPage]);
+
   useEffect(() => {
     loadAuthors();
   }, [loadAuthors]);
@@ -216,10 +247,12 @@ export const useAuthorMatrix = () => {
     searchResults,
     currentPage,
     totalPages,
+    highlightedAuthorId,
     setCurrentPage,
     handleAuthorSelect,
     handleSearchResults,
     handleSearchResultSelect,
+    handleAuthorQueryChange,
     addToTransmissions
   };
 };
