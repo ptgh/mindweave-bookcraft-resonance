@@ -30,7 +30,7 @@ interface BookFormData {
 interface BookFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (book: BookFormData) => void;
+  onSubmit: (book: BookFormData) => void | Promise<void>;
   editingBook?: any;
 }
 
@@ -127,10 +127,15 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModal
     setAuthorSearch(book.author);
   }, []);
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
-    onClose();
+    try {
+      await Promise.resolve(onSubmit(formData));
+      onClose();
+    } catch (error) {
+      console.error('BookForm submission failed:', error);
+      // Keep modal open so user can correct issues
+    }
   }, [formData, onSubmit, onClose]);
 
   if (!isOpen) return null;

@@ -15,6 +15,7 @@ import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 import ContributionButton from "@/components/ContributionButton";
 import ContactModal from "@/components/ContactModal";
 import { searchAppleBooks } from "@/services/appleBooks";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [books, setBooks] = useState<Transmission[]>([]);
@@ -32,7 +33,8 @@ const Index = () => {
 
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
-  const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
+const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
+  const navigate = useNavigate();
 
   const loadTransmissions = useCallback(async () => {
     if (!user) {
@@ -114,11 +116,21 @@ const Index = () => {
       setEditingBook(null);
     } catch (error: any) {
       console.error('Error saving transmission:', error);
-      toast({
-        title: "Transmission Error",
-        description: "Failed to save transmission. Please try again.",
-        variant: "destructive",
-      });
+      const message = (error?.message || '').toLowerCase();
+      if (message.includes('user not authenticated')) {
+        toast({
+          title: "Sign in required",
+          description: "Please sign in to log signals.",
+          variant: "destructive",
+        });
+        navigate('/auth');
+      } else {
+        toast({
+          title: "Transmission Error",
+          description: "Failed to save transmission. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   }, [editingBook, toast, loadTransmissions]);
 
