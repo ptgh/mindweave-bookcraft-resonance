@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Edit, Archive, X } from "lucide-react";
 import PublisherResonanceBadge from "./PublisherResonanceBadge";
 import PenguinPublisherBadge from "./PenguinPublisherBadge";
@@ -7,6 +7,7 @@ import EnhancedBookCover from "./EnhancedBookCover";
 import FreeEbookDownloadIcon from "./FreeEbookDownloadIcon";
 import AppleBooksLink from "./AppleBooksLink";
 import { searchAppleBooks } from "@/services/appleBooks";
+import { searchFreeEbooks } from "@/services/freeEbookService";
 interface BookCardProps {
   id: number;
   title: string;
@@ -55,6 +56,8 @@ const BookCard = ({
   const [showActions, setShowActions] = useState(false);
   const [hasFreeEbook, setHasFreeEbook] = useState(false);
   const [appleUrl, setAppleUrl] = useState<string | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -105,8 +108,41 @@ const BookCard = ({
     return () => { cancelled = true; };
   }, [apple_link, title, author, isbn]);
 
+  // Observe when card becomes visible, then check free-ebook availability once
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsInView(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { root: null, threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!isInView) return;
+    (async () => {
+      try {
+        const result = await searchFreeEbooks(title, author, isbn);
+        if (!cancelled) setHasFreeEbook(!!result?.hasLinks);
+      } catch (_) {
+        // silent fail
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isInView, title, author, isbn]);
+
   return (
-    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors h-full flex flex-col">
+    <div ref={rootRef} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors h-full flex flex-col">
       <div className="flex items-start space-x-4 flex-1 mb-4">
         <EnhancedBookCover
           title={title}
@@ -175,16 +211,6 @@ const BookCard = ({
         </div>
       </div>
       
-      {/* Hidden probe to detect free ebook availability without affecting layout */}
-      <div className="hidden">
-        <FreeEbookDownloadIcon 
-          title={title} 
-          author={author} 
-          isbn={isbn}
-          className="hidden"
-          onAvailabilityChange={(has) => setHasFreeEbook(has)}
-        />
-      </div>
 
       {/* External links - subtle row above action buttons */}
       {(apple_link || appleUrl || hasFreeEbook) && (
