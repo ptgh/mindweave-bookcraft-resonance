@@ -344,7 +344,6 @@ const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations
                   
                   <ContributionButton 
                     walletAddress="0xDd966928cC8EA2e61221170490D696BD224866bf"
-                    className="px-3 py-2"
                   />
                 </div>
               </div>
