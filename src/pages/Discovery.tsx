@@ -146,7 +146,9 @@ const Discovery = () => {
             </div>
           </div>
 
-          <FooterActions onContactClick={() => setShowContactModal(true)} />
+          <div className="mt-20">
+            <FooterActions onContactClick={() => setShowContactModal(true)} />
+          </div>
         </main>
 
         <ContactModal
