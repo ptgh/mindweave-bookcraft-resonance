@@ -325,13 +325,13 @@ const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations
           
           <div className="mt-12 pb-8">
             <footer className="text-center">
-              <div className="flex flex-col items-center justify-center space-y-2">
+              <div className="flex flex-col items-center justify-center gap-3">
                 <div className="flex items-center justify-center gap-2 text-slate-400 text-xs">
                   <span className="inline-block w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
                   <span>Quantum resonance stabilized</span>
                   <span aria-hidden="true">•</span>
                 </div>
-                <div className="mt-1 flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-2">
                   <StandardButton
                     onClick={() => setShowContactModal(true)}
                     variant="standard"
@@ -343,7 +343,6 @@ const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations
                   </StandardButton>
                   <ContributionButton 
                     walletAddress="0xDd966928cC8EA2e61221170490D696BD224866bf"
-                    className="inline-block"
                   />
                 </div>
               </div>
