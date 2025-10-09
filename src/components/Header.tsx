@@ -9,7 +9,7 @@ const Header = () => {
   const { user, signOut } = useAuth();
   
   return (
-    <header className="bg-slate-900 border-b border-slate-700">
+    <header className="bg-slate-900">
       <div className="container mx-auto px-4 py-3 md:px-6 md:py-4">
         <div className="flex items-center justify-between">
           <Link 
@@ -141,34 +141,68 @@ const Header = () => {
               <DropdownMenuContent 
                 align="end" 
                 sideOffset={8} 
-                className="z-[9999] min-w-56 bg-slate-900 text-slate-200 border border-slate-700 shadow-xl"
+                className="z-[9999] min-w-56 bg-slate-900/95 backdrop-blur-xl border border-blue-500/20 shadow-2xl shadow-blue-500/10"
               >
                 <DropdownMenuItem asChild>
-                  <Link to="/">Home</Link>
+                  <Link to="/" className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 rounded-md">
+                    <div className="w-2 h-2 rounded-full bg-blue-400/50" />
+                    Home
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/library">Transmissions</Link>
+                  <Link to="/library" className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 rounded-md">
+                    <BookOpen className="w-4 h-4 text-blue-400/70" />
+                    Transmissions
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/book-browser">Signal Archive</Link>
+                  <Link to="/book-browser" className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 rounded-md">
+                    <div className="w-4 h-4 rounded-full border-2 border-dashed border-blue-400/50 flex items-center justify-center">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                    </div>
+                    Signal Archive
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/author-matrix">Author Matrix</Link>
+                  <Link to="/author-matrix" className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 rounded-md">
+                    <div className="w-4 h-4 grid grid-cols-2 gap-0.5">
+                      <div className="w-1.5 h-1.5 rounded-sm bg-blue-400/50" />
+                      <div className="w-1.5 h-1.5 rounded-sm bg-blue-400/70" />
+                      <div className="w-1.5 h-1.5 rounded-sm bg-blue-400/70" />
+                      <div className="w-1.5 h-1.5 rounded-sm bg-blue-400/50" />
+                    </div>
+                    Author Matrix
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/thread-map">Chrono Thread</Link>
+                  <Link to="/thread-map" className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 rounded-md">
+                    <div className="w-4 h-4 flex items-center justify-center">
+                      <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
+                    </div>
+                    Chrono Thread
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/publisher-resonance">Publisher Resonance</Link>
+                  <Link to="/publisher-resonance" className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 rounded-md">
+                    <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-400/30 to-purple-400/30 border border-blue-400/50" />
+                    Publisher Resonance
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <div className="h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent my-2" />
                 <DropdownMenuItem asChild>
-                  <Link to="/test-brain">Neural Map</Link>
+                  <Link to="/test-brain" className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 rounded-md">
+                    <div className="w-4 h-4 relative">
+                      <div className="absolute inset-0 rounded-full bg-blue-400/20 animate-pulse" />
+                      <div className="absolute inset-1 rounded-full bg-blue-400/40" />
+                    </div>
+                    Neural Map
+                  </Link>
                 </DropdownMenuItem>
                 {user && (
                   <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={signOut}>
+                    <div className="h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent my-2" />
+                    <DropdownMenuItem onSelect={signOut} className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 rounded-md">
+                      <LogOut className="w-4 h-4" />
                       Sign Out
                     </DropdownMenuItem>
                   </>
