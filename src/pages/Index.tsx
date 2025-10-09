@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { BookOpen, Search, Eye, Map, Circle, Sparkles } from "lucide-react";
+import { Mail, BookOpen, Search, Eye, Map, Circle, Sparkles } from "lucide-react";
 import Header from "@/components/Header";
 import SignalInFocus from "@/components/SignalInFocus";
 import AddBookModal from "@/components/AddBookModal";
@@ -12,8 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { getTransmissions, saveTransmission, updateTransmission, deleteTransmission, Transmission } from "@/services/transmissionsService";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
+import ContributionButton from "@/components/ContributionButton";
 import ContactModal from "@/components/ContactModal";
-import { FooterActions } from "@/components/FooterActions";
 import { searchAppleBooks } from "@/services/appleBooks";
 import { useNavigate } from "react-router-dom";
 
@@ -324,7 +324,29 @@ const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations
           </div>
           
           <div className="mt-12 pb-8">
-            <FooterActions onContactClick={() => setShowContactModal(true)} />
+            <footer className="text-center">
+              <div className="flex flex-col items-center justify-center gap-3">
+                <div className="flex items-center justify-center gap-2 text-slate-400 text-xs">
+                  <span className="inline-block w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                  <span>Quantum resonance stabilized</span>
+                  <span aria-hidden="true">•</span>
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                  <StandardButton
+                    onClick={() => setShowContactModal(true)}
+                    variant="standard"
+                    size="xs"
+                    className="inline-flex items-center justify-center gap-1 w-36 truncate focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 ring-0 outline-none"
+                  >
+                    <Mail className="w-3 h-3" />
+                    <span>Make Contact</span>
+                  </StandardButton>
+                  <ContributionButton 
+                    walletAddress="0xDd966928cC8EA2e61221170490D696BD224866bf"
+                  />
+                </div>
+              </div>
+            </footer>
           </div>
         </main>
         

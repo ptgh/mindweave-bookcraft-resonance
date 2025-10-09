@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { StandardButton } from "@/components/ui/standard-button";
 import { Brain, BookOpen, Users, Search, Map, Eye, Building, Mail, Heart } from "lucide-react";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
-import { FooterActions } from "@/components/FooterActions";
 import { useState } from "react";
 import ContactModal from "@/components/ContactModal";
+import ContributionButton from "@/components/ContributionButton";
 
 const Discovery = () => {
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
@@ -146,12 +146,32 @@ const Discovery = () => {
             </div>
           </div>
 
-          <div className="mt-20">
-            <FooterActions onContactClick={() => setShowContactModal(true)} />
+          <div className="text-center mt-16">
+            <div className="flex flex-col items-center justify-center gap-3">
+              <div className="flex items-center justify-center gap-2 text-slate-400 text-xs">
+                <span className="inline-block w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                <span>Quantum resonance stabilized</span>
+                <span aria-hidden="true">•</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <StandardButton
+                  onClick={() => setShowContactModal(true)}
+                  variant="standard"
+                  size="xs"
+                  className="inline-flex items-center justify-center gap-1 w-36 truncate focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 ring-0 outline-none"
+                >
+                  <Mail className="w-3 h-3" />
+                  <span>Make Contact</span>
+                </StandardButton>
+                <ContributionButton 
+                  walletAddress="0xDd966928cC8EA2e61221170490D696BD224866bf"
+                />
+              </div>
+            </div>
           </div>
         </main>
 
-        <ContactModal
+        <ContactModal 
           isOpen={showContactModal} 
           onClose={() => setShowContactModal(false)} 
         />
