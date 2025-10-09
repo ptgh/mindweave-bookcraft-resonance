@@ -16,6 +16,7 @@ const standardButtonVariants = cva(
       size: {
         default: "py-1.5 px-3",
         sm: "py-1 px-2",
+        xs: "py-0.5 px-1.5 text-[11px] [&_svg]:size-3",
         lg: "py-2 px-4",
         icon: "h-8 w-8",
       },

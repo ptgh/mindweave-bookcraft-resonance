@@ -35,15 +35,15 @@ const ContributionButton = ({ walletAddress, className = "" }: ContributionButto
       <StandardButton
         onClick={copyToClipboard}
         variant="standard"
-        size="sm"
+        size="xs"
         className="flex items-center space-x-2"
       >
-        <Heart className="w-4 h-4 text-red-400" />
+        <Heart className="w-3 h-3 text-red-400" />
         <span>Support Development</span>
         {copied ? (
-          <Check className="w-4 h-4 text-green-400" />
+          <Check className="w-3 h-3 text-green-400" />
         ) : (
-          <Copy className="w-4 h-4" />
+          <Copy className="w-3 h-3" />
         )}
       </StandardButton>
       
