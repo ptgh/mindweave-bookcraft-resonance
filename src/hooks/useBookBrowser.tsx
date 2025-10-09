@@ -158,6 +158,7 @@ export const useBookBrowser = () => {
 
   useEffect(() => {
     loadRandomBooks();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Optimized visibility animation

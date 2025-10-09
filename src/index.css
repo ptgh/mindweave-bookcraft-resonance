@@ -84,6 +84,7 @@
     @apply bg-background text-foreground;
     overflow-x: hidden;
     max-width: 100vw;
+    background-color: #0f172a;
     /* iOS Safari scroll fixes */
     -webkit-overflow-scrolling: touch;
     touch-action: manipulation;
@@ -191,7 +192,8 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: hsl(var(--background));
+    background: #0f172a;
+    background-color: #0f172a;
   }
   
   #root {
@@ -202,10 +204,14 @@
     bottom: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    background: hsl(var(--background));
+    background: #0f172a;
+    background-color: #0f172a;
   }
 
-  html { background: hsl(var(--background)); }
+  html { 
+    background: #0f172a;
+    background-color: #0f172a;
+  }
 }
 
 /* Edge/Chrome-specific optimizations */

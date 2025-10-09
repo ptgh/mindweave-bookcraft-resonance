@@ -132,9 +132,8 @@ const Header = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button 
-                  className="md:hidden inline-flex items-center justify-center rounded p-2 text-foreground/80 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className="md:hidden inline-flex items-center justify-center rounded p-2 text-slate-300 hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
                   aria-label="Open navigation menu"
-                  aria-expanded="false"
                 >
                   <Menu className="w-6 h-6" />
                 </button>
@@ -142,7 +141,7 @@ const Header = () => {
               <DropdownMenuContent 
                 align="end" 
                 sideOffset={8} 
-                className="z-[1000] min-w-56 bg-popover text-popover-foreground border border-border shadow-lg"
+                className="z-[9999] min-w-56 bg-slate-900 text-slate-200 border border-slate-700 shadow-xl"
               >
                 <DropdownMenuItem asChild>
                   <Link to="/">Home</Link>
