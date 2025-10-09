@@ -14,24 +14,20 @@ export const useBookBrowser = () => {
   const [previouslyShownBooks, setPreviouslyShownBooks] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
-  // More specific sci-fi search terms with broader coverage
+  // Highly specific sci-fi searches for accurate titles and covers
   const searchTerms = useMemo(() => [
-    'science fiction',
-    'cyberpunk',
-    'space opera',
-    'dystopian future',
-    'time travel',
-    'artificial intelligence',
-    'hard science fiction',
-    'biopunk',
-    'steampunk',
-    'alternate history',
-    'post-apocalyptic',
-    'interstellar',
-    'genetic engineering',
-    'first contact aliens',
-    'virtual reality',
-    'robotics fiction'
+    'subject:science fiction space opera',
+    'subject:cyberpunk fiction',
+    'subject:dystopian science fiction',
+    'subject:time travel science fiction',
+    'subject:artificial intelligence fiction',
+    'subject:hard science fiction',
+    'subject:post-apocalyptic science fiction',
+    'subject:space exploration fiction',
+    'subject:first contact science fiction',
+    'subject:virtual reality science fiction',
+    'subject:alien invasion science fiction',
+    'subject:interstellar science fiction'
   ], []);
 
   // Optimized loading function with better sci-fi filtering
