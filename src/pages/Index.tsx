@@ -336,7 +336,7 @@ const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations
                     onClick={() => setShowContactModal(true)}
                     variant="standard"
                     size="xs"
-                    className="flex items-center space-x-2"
+                    className="inline-flex items-center justify-center gap-1 w-36 truncate"
                   >
                     <Mail className="w-3 h-3" />
                     <span>Make Contact</span>

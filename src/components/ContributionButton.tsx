@@ -36,7 +36,7 @@ const ContributionButton = ({ walletAddress, className = "" }: ContributionButto
         onClick={copyToClipboard}
         variant="standard"
         size="xs"
-        className="flex items-center space-x-2"
+        className="inline-flex items-center justify-center gap-1 w-36 truncate" aria-label="Support Development"
       >
         <Heart className="w-3 h-3 text-red-400" />
         <span>Support Development</span>
