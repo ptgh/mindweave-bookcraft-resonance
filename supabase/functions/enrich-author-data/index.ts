@@ -153,7 +153,21 @@ serve(async (req) => {
         let enrichedData: any = {};
         let confidence = 0;
 
-        // First try Gemini AI for richer data
+        // First, get books by this author for context
+        console.log(`Fetching books by ${author.name} for context`);
+        const { data: authorBooks } = await supabaseClient
+          .from('transmissions')
+          .select('title, notes')
+          .ilike('author', `%${author.name}%`)
+          .limit(5);
+
+        const bookContext = authorBooks && authorBooks.length > 0
+          ? `Known books by this author: ${authorBooks.map(b => `"${b.title}"${b.notes ? ` (${b.notes})` : ''}`).join(', ')}`
+          : '';
+
+        console.log('Book context:', bookContext || 'No books found');
+
+        // Try Gemini AI with enhanced search instructions
         const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
         if (lovableApiKey) {
           try {
@@ -169,11 +183,11 @@ serve(async (req) => {
                 messages: [
                   {
                     role: 'system',
-                    content: 'You are a literary expert. Provide concise, factual biographical information about authors. Return data in this exact format: Bio: [2-3 sentence biography] | Birth: [year or "Unknown"] | Death: [year or "Living" or "Unknown"] | Nationality: [country] | Notable Works: [comma-separated list of 3-5 major works]'
+                    content: 'You are a literary research expert with access to comprehensive literary databases, author archives, and publishing records. Search ALL available sources including contemporary sci-fi author databases, poetry collections, independent publishers, small presses, and emerging author platforms. Do NOT just rely on Wikipedia. Return data in this exact format: Bio: [2-3 sentence biography, can include genre focus, writing style, themes] | Birth: [year or "Unknown"] | Death: [year or "Living" or "Unknown"] | Nationality: [country] | Notable Works: [comma-separated list of 3-5 major works]. If you cannot find traditional biographical data, create a brief bio based on their work and themes.'
                   },
                   {
                     role: 'user',
-                    content: `Provide biographical information about the science fiction author: ${author.name}`
+                    content: `Research and provide biographical information about the author: ${author.name}. ${bookContext} Search literary databases, publisher catalogs, author websites, Goodreads, contemporary sci-fi/poetry anthologies, and independent press records. If limited information exists, describe their work and contribution to the genre based on available titles and themes.`
                   }
                 ]
               }),
@@ -295,6 +309,36 @@ serve(async (req) => {
           } catch (wikiError) {
             console.error('Wikipedia fetch error:', wikiError);
           }
+        }
+
+        // Final fallback: Create bio from book descriptions if still no data
+        if (!enrichedData.bio && authorBooks && authorBooks.length > 0) {
+          console.log('Creating bio from book descriptions as fallback');
+          const bookTitles = authorBooks.map(b => `"${b.title}"`).join(', ');
+          const hasNotes = authorBooks.some(b => b.notes);
+          
+          enrichedData.bio = `${author.name} is a contemporary author known for works in science fiction and speculative fiction, including ${bookTitles}.`;
+          
+          if (hasNotes) {
+            const notesDesc = authorBooks.find(b => b.notes)?.notes;
+            if (notesDesc && notesDesc.length > 20) {
+              enrichedData.bio += ` ${notesDesc.substring(0, 150)}${notesDesc.length > 150 ? '...' : ''}`;
+            }
+          }
+          
+          confidence += 20;
+          console.log('Created bio from book context');
+          
+          // Store as synthetic data source
+          await supabaseClient
+            .from('author_data_sources')
+            .insert({
+              author_id: author.id,
+              source_type: 'synthetic_books',
+              source_url: 'internal_database',
+              data_retrieved: { books: authorBooks },
+              confidence_score: 20
+            });
         }
 
         // Update author if we have enriched data
