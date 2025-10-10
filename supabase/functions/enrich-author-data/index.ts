@@ -167,9 +167,65 @@ serve(async (req) => {
 
         console.log('Book context:', bookContext || 'No books found');
 
-        // Try Gemini AI with enhanced search instructions
+        // Try Gemini AI first, then fall back to Wikipedia
         const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
-        if (lovableApiKey) {
+        
+        // Always try Wikipedia first for well-known authors
+        try {
+          const wikipediaUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(author.name)}`;
+          console.log(`Fetching from Wikipedia: ${wikipediaUrl}`);
+          
+          const wikiResponse = await fetch(wikipediaUrl, {
+            headers: {
+              'User-Agent': 'LeafNode-SciFi-DB/1.0 (Author enrichment service)'
+            }
+          });
+          console.log(`Wikipedia response status: ${wikiResponse.status}`);
+          
+          if (wikiResponse.ok) {
+            const wikiData = await wikiResponse.json();
+            console.log('Wikipedia data received:', wikiData.title || 'No title');
+            
+            if (wikiData.extract && wikiData.extract.length > 50) {
+              enrichedData.bio = wikiData.extract;
+              confidence += 40;
+              console.log('Added bio from Wikipedia');
+            }
+
+            // Try to extract birth/death years
+            if (wikiData.extract) {
+              const yearRegex = /\b(18|19|20)\d{2}\b/g;
+              const years = wikiData.extract.match(yearRegex)?.map(y => parseInt(y));
+              
+              if (years && years.length >= 1) {
+                enrichedData.birth_year = Math.min(...years);
+                confidence += 20;
+                console.log('Added birth year from Wikipedia:', enrichedData.birth_year);
+              }
+              if (years && years.length >= 2) {
+                enrichedData.death_year = Math.max(...years);
+                confidence += 20;
+                console.log('Added death year from Wikipedia:', enrichedData.death_year);
+              }
+            }
+
+            // Store Wikipedia data source
+            await supabaseClient
+              .from('author_data_sources')
+              .insert({
+                author_id: author.id,
+                source_type: 'wikipedia',
+                source_url: wikipediaUrl,
+                data_retrieved: wikiData,
+                confidence_score: confidence
+              });
+          }
+        } catch (wikiError) {
+          console.error('Wikipedia fetch error:', wikiError);
+        }
+        
+        // Enhance with Gemini AI if we still need more data
+        if (lovableApiKey && (!enrichedData.bio || !enrichedData.nationality || !enrichedData.notable_works)) {
           try {
             console.log(`Enriching with Gemini AI for: ${author.name}`);
             const geminiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -183,11 +239,11 @@ serve(async (req) => {
                 messages: [
                   {
                     role: 'system',
-                    content: 'You are a literary research expert with access to comprehensive literary databases, author archives, and publishing records. Search ALL available sources including contemporary sci-fi author databases, poetry collections, independent publishers, small presses, and emerging author platforms. Do NOT just rely on Wikipedia. Return data in this exact format: Bio: [2-3 sentence biography, can include genre focus, writing style, themes] | Birth: [year or "Unknown"] | Death: [year or "Living" or "Unknown"] | Nationality: [country] | Notable Works: [comma-separated list of 3-5 major works]. If you cannot find traditional biographical data, create a brief bio based on their work and themes.'
+                    content: 'You are a literary research expert. Provide additional biographical details about authors. Return data in this exact format: Bio: [2-3 sentence biography] | Birth: [year or "Unknown"] | Death: [year or "Living" or "Unknown"] | Nationality: [country] | Notable Works: [comma-separated list of 3-5 major works]'
                   },
                   {
                     role: 'user',
-                    content: `Research and provide biographical information about the author: ${author.name}. ${bookContext} Search literary databases, publisher catalogs, author websites, Goodreads, contemporary sci-fi/poetry anthologies, and independent press records. If limited information exists, describe their work and contribution to the genre based on available titles and themes.`
+                    content: `Provide additional biographical information about ${author.name}. ${bookContext} Focus on nationality and notable works if not already known.`
                   }
                 ]
               }),
@@ -200,44 +256,26 @@ serve(async (req) => {
               if (content) {
                 console.log('Gemini response received:', content);
                 
-                // Parse the structured response
-                const bioMatch = content.match(/Bio:\s*([^|]+)/i);
-                const birthMatch = content.match(/Birth:\s*(\d{4}|Unknown)/i);
-                const deathMatch = content.match(/Death:\s*(\d{4}|Living|Unknown)/i);
-                const nationalityMatch = content.match(/Nationality:\s*([^|]+)/i);
-                const worksMatch = content.match(/Notable Works:\s*([^|]+)/i);
-                
-                if (bioMatch && bioMatch[1].trim() && bioMatch[1].trim() !== 'Unknown') {
-                  enrichedData.bio = bioMatch[1].trim();
-                  confidence += 40;
-                  console.log('Added bio from Gemini');
+                // Parse the structured response - only fill in missing data
+                if (!enrichedData.nationality) {
+                  const nationalityMatch = content.match(/Nationality:\s*([^|]+)/i);
+                  if (nationalityMatch && nationalityMatch[1].trim()) {
+                    enrichedData.nationality = nationalityMatch[1].trim();
+                    confidence += 10;
+                    console.log('Added nationality from Gemini');
+                  }
                 }
                 
-                if (birthMatch && birthMatch[1] !== 'Unknown') {
-                  enrichedData.birth_year = parseInt(birthMatch[1]);
-                  confidence += 20;
-                  console.log('Added birth year from Gemini:', enrichedData.birth_year);
-                }
-                
-                if (deathMatch && deathMatch[1] !== 'Unknown' && deathMatch[1] !== 'Living') {
-                  enrichedData.death_year = parseInt(deathMatch[1]);
-                  confidence += 20;
-                  console.log('Added death year from Gemini:', enrichedData.death_year);
-                }
-                
-                if (nationalityMatch && nationalityMatch[1].trim()) {
-                  enrichedData.nationality = nationalityMatch[1].trim();
-                  confidence += 10;
-                  console.log('Added nationality from Gemini');
-                }
-                
-                if (worksMatch && worksMatch[1].trim()) {
-                  enrichedData.notable_works = worksMatch[1].trim()
-                    .split(',')
-                    .map(w => w.trim())
-                    .filter(w => w.length > 0);
-                  confidence += 10;
-                  console.log('Added notable works from Gemini');
+                if (!enrichedData.notable_works) {
+                  const worksMatch = content.match(/Notable Works:\s*([^|]+)/i);
+                  if (worksMatch && worksMatch[1].trim()) {
+                    enrichedData.notable_works = worksMatch[1].trim()
+                      .split(',')
+                      .map(w => w.trim())
+                      .filter(w => w.length > 0);
+                    confidence += 10;
+                    console.log('Added notable works from Gemini');
+                  }
                 }
 
                 // Store Gemini data source
@@ -257,58 +295,34 @@ serve(async (req) => {
           }
         }
 
-        // Fallback to Wikipedia if no bio found
-        if (!enrichedData.bio) {
-          try {
-            const wikipediaUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(author.name)}`;
-            console.log(`Fetching from Wikipedia: ${wikipediaUrl}`);
-            
-            const wikiResponse = await fetch(wikipediaUrl);
-            console.log(`Wikipedia response status: ${wikiResponse.status}`);
-            
-            if (wikiResponse.ok) {
-              const wikiData = await wikiResponse.json();
-              console.log('Wikipedia data received:', Object.keys(wikiData));
-              
-              if (wikiData.extract && wikiData.extract.length > 50) {
-                enrichedData.bio = wikiData.extract;
-                confidence += 30;
-                console.log('Added bio from Wikipedia');
-              }
-
-              // Try to extract birth/death years if not already found
-              if (wikiData.extract && (!enrichedData.birth_year || !enrichedData.death_year)) {
-                const yearRegex = /\b(18|19|20)\d{2}\b/g;
-                const years = wikiData.extract.match(yearRegex)?.map(y => parseInt(y));
-                
-                if (years && years.length >= 1) {
-                  if (!enrichedData.birth_year) {
-                    enrichedData.birth_year = Math.min(...years);
-                    confidence += 20;
-                    console.log('Added birth year from Wikipedia:', enrichedData.birth_year);
-                  }
-                  if (!enrichedData.death_year && years.length >= 2) {
-                    enrichedData.death_year = Math.max(...years);
-                    confidence += 20;
-                    console.log('Added death year from Wikipedia:', enrichedData.death_year);
-                  }
-                }
-              }
-
-              // Store Wikipedia data source
-              await supabaseClient
-                .from('author_data_sources')
-                .insert({
-                  author_id: author.id,
-                  source_type: 'wikipedia',
-                  source_url: wikipediaUrl,
-                  data_retrieved: wikiData,
-                  confidence_score: confidence
-                });
+        // Absolute final fallback: Create bio from book descriptions if still no data
+        if (!enrichedData.bio && authorBooks && authorBooks.length > 0) {
+          console.log('Creating bio from book descriptions as fallback');
+          const bookTitles = authorBooks.map(b => `"${b.title}"`).join(', ');
+          const hasNotes = authorBooks.some(b => b.notes);
+          
+          enrichedData.bio = `${author.name} is a contemporary author known for works in science fiction and speculative fiction, including ${bookTitles}.`;
+          
+          if (hasNotes) {
+            const notesDesc = authorBooks.find(b => b.notes)?.notes;
+            if (notesDesc && notesDesc.length > 20) {
+              enrichedData.bio += ` ${notesDesc.substring(0, 150)}${notesDesc.length > 150 ? '...' : ''}`;
             }
-          } catch (wikiError) {
-            console.error('Wikipedia fetch error:', wikiError);
           }
+          
+          confidence += 20;
+          console.log('Created bio from book context');
+          
+          // Store as synthetic data source
+          await supabaseClient
+            .from('author_data_sources')
+            .insert({
+              author_id: author.id,
+              source_type: 'synthetic_books',
+              source_url: 'internal_database',
+              data_retrieved: { books: authorBooks },
+              confidence_score: 20
+            });
         }
 
         // Final fallback: Create bio from book descriptions if still no data
