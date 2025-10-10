@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import Header from "@/components/Header";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
@@ -6,8 +7,10 @@ import BookBrowserHeader from "@/components/BookBrowserHeader";
 import BookGrid from "@/components/BookGrid";
 import BookBrowserEmpty from "@/components/BookBrowserEmpty";
 import BookBrowserStatus from "@/components/BookBrowserStatus";
+import { AuthorPopup } from "@/components/AuthorPopup";
 import { useBookBrowser } from "@/hooks/useBookBrowser";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
+import { getAuthorByName, findOrCreateAuthor, ScifiAuthor } from "@/services/scifiAuthorsService";
 
 const BookBrowser = () => {
   const {
@@ -20,6 +23,29 @@ const BookBrowser = () => {
   } = useBookBrowser();
 
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
+  const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
+  const [authorPopupVisible, setAuthorPopupVisible] = useState(false);
+
+  const handleAuthorClick = async (authorName: string) => {
+    console.log('Author clicked:', authorName);
+    let author = await getAuthorByName(authorName);
+    
+    if (!author) {
+      const authorId = await findOrCreateAuthor(authorName);
+      if (authorId) {
+        author = await getAuthorByName(authorName);
+      }
+    }
+    
+    if (author) {
+      setSelectedAuthor(author);
+      setAuthorPopupVisible(true);
+    }
+  };
+
+  const closeAuthorPopup = () => {
+    setAuthorPopupVisible(false);
+  };
 
   return (
     <AuthWrapper fallback={<Auth />}>
@@ -47,6 +73,7 @@ const BookBrowser = () => {
                 books={books}
                 visibleBooks={visibleBooks}
                 onAddToTransmissions={addToTransmissions}
+                onAuthorClick={handleAuthorClick}
               />
             </div>
           ) : (
@@ -62,6 +89,13 @@ const BookBrowser = () => {
             />
           </div>
         </main>
+
+        <AuthorPopup
+          author={selectedAuthor}
+          isVisible={authorPopupVisible}
+          onClose={closeAuthorPopup}
+          onAuthorUpdate={setSelectedAuthor}
+        />
       </div>
     </AuthWrapper>
   );

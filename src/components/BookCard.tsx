@@ -173,9 +173,24 @@ const BookCard = ({
               {onAuthorClick ? (
                 <button
                   onClick={() => onAuthorClick(author)}
-                  className="text-slate-400 text-xs mb-1 hover:text-blue-400 transition-colors duration-200 underline decoration-dotted underline-offset-2 text-left"
+                  className="author-name-hover text-slate-400 text-xs mb-1 text-left relative group"
+                  style={{ 
+                    transition: 'color 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = '#60a5fa';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = 'rgb(148, 163, 184)';
+                  }}
                 >
-                  {author}
+                  <span className="relative">
+                    {author}
+                    <span 
+                      className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300 ease-out"
+                      style={{ transformOrigin: 'left' }}
+                    />
+                  </span>
                 </button>
               ) : (
                 <p className="text-slate-400 text-xs mb-1">{author}</p>

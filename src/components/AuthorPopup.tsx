@@ -228,7 +228,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
       {/* Content */}
       <Card
         ref={contentRef}
-        className="relative w-full max-w-md bg-slate-800/95 border-slate-600/50 shadow-2xl backdrop-blur-sm overflow-hidden"
+        className="relative w-full max-w-md bg-slate-900/95 border-slate-700 shadow-2xl backdrop-blur-md overflow-hidden"
       >
         {/* Close button */}
         <Button
@@ -242,8 +242,8 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
 
         <CardHeader className="pb-4">
           <div className="flex items-start gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-              <User className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-blue-500/30 rounded-full flex items-center justify-center">
+              <User className="w-6 h-6 text-blue-400" />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
@@ -271,7 +271,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
 
         <CardContent className="space-y-4">
           {/* Bio */}
-          <div className="bg-slate-700/50 rounded-lg p-3 border border-slate-600/30">
+          <div className="bg-slate-800/70 rounded-lg p-4 border border-slate-700/50">
             {currentAuthor.bio ? (
               <p className="text-sm text-slate-200 leading-relaxed">
                 {currentAuthor.bio.length > 150 
@@ -299,7 +299,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
 
           {/* Notable Works */}
           {currentAuthor.notable_works && currentAuthor.notable_works.length > 0 && (
-            <div className="bg-slate-700/50 rounded-lg p-3 border border-slate-600/30">
+            <div className="bg-slate-800/70 rounded-lg p-4 border border-slate-700/50">
               <div className="flex items-center gap-2 mb-2">
                 <BookOpen className="w-4 h-4 text-blue-400" />
                 <span className="text-sm font-medium text-blue-300">Notable Works</span>
@@ -321,7 +321,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
 
           {/* Data Source Info */}
           {currentAuthor.data_source && (
-            <div className="text-xs text-slate-400 border-t pt-2">
+            <div className="text-xs text-slate-400 border-t border-slate-700/50 pt-3">
               <div className="flex items-center justify-between">
                 <span>Source: {currentAuthor.data_source}</span>
                 {currentAuthor.last_enriched && (
@@ -335,7 +335,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
           <Button
             variant="outline"
             size="sm"
-            className="w-full bg-purple-500/20 border-purple-400/30 text-purple-300 hover:bg-purple-500/30"
+            className="w-full bg-blue-500/10 border-blue-400/30 text-blue-300 hover:bg-blue-500/20 transition-all duration-300"
             onClick={() => {
               const wikipediaUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(currentAuthor.name.replace(/ /g, '_'))}`;
               window.open(wikipediaUrl, '_blank');

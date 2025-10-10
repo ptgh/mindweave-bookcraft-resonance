@@ -628,9 +628,22 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                     <User className="w-4 h-4" />
                     <button
                       onClick={() => handleAuthorClick(node.transmission.author || '')}
-                      className="hover:text-blue-400 transition-colors duration-200 underline decoration-dotted underline-offset-2"
+                      className="text-left relative group"
+                      style={{ transition: 'color 0.3s ease' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = '#60a5fa';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = 'rgb(203, 213, 225)';
+                      }}
                     >
-                      {node.transmission.author}
+                      <span className="relative">
+                        {node.transmission.author}
+                        <span 
+                          className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300 ease-out"
+                          style={{ transformOrigin: 'left' }}
+                        />
+                      </span>
                     </button>
                   </div>
                 </CardHeader>

@@ -13,9 +13,10 @@ interface BookGridProps {
   books: EnhancedBookSuggestion[];
   visibleBooks: Set<number>;
   onAddToTransmissions: (book: EnhancedBookSuggestion) => void;
+  onAuthorClick?: (authorName: string) => void;
 }
 
-const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridProps) => {
+const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClick }: BookGridProps) => {
   const { getDeepLink } = useDeepLinking();
   const previewButtonsRef = useRef<HTMLButtonElement[]>([]);
   const addButtonsRef = useRef<HTMLButtonElement[]>([]);
@@ -161,7 +162,29 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions }: BookGridPr
                         <h3 className="text-slate-200 font-medium text-sm leading-tight line-clamp-2 mb-1">
                           {book.title}
                         </h3>
-                        <p className="text-slate-400 text-xs mb-1">{book.author || 'Unknown Author'}</p>
+                        {onAuthorClick ? (
+                          <button
+                            onClick={() => onAuthorClick(book.author)}
+                            className="text-slate-400 text-xs mb-1 text-left relative group"
+                            style={{ transition: 'color 0.3s ease' }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = '#60a5fa';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = 'rgb(148, 163, 184)';
+                            }}
+                          >
+                            <span className="relative">
+                              {book.author || 'Unknown Author'}
+                              <span 
+                                className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300 ease-out"
+                                style={{ transformOrigin: 'left' }}
+                              />
+                            </span>
+                          </button>
+                        ) : (
+                          <p className="text-slate-400 text-xs mb-1">{book.author || 'Unknown Author'}</p>
+                        )}
                       </div>
                       <div className="w-3 h-3 rounded-full border-2 border-slate-500 bg-slate-500/10 flex-shrink-0" />
                     </div>
