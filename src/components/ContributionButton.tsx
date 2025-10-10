@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Heart, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { StandardButton } from "@/components/ui/standard-button";
+import { useResponsive } from "@/hooks/useResponsive";
 
 interface ContributionButtonProps {
   walletAddress: string;
@@ -11,6 +12,7 @@ interface ContributionButtonProps {
 const ContributionButton = ({ walletAddress, className = "" }: ContributionButtonProps) => {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+  const { isMobile } = useResponsive();
 
   const copyToClipboard = async () => {
     try {
@@ -36,7 +38,8 @@ const ContributionButton = ({ walletAddress, className = "" }: ContributionButto
         onClick={copyToClipboard}
         variant="standard"
         size="xs"
-        className="inline-flex items-center justify-center gap-1 w-44 truncate focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 ring-0 outline-none" aria-label="Support Development"
+        className={`inline-flex items-center justify-center gap-1 truncate focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 ring-0 outline-none ${isMobile ? 'w-auto px-2' : 'w-44'}`}
+        aria-label="Support Development"
       >
         <Heart className="w-3 h-3 text-red-400" />
         <span>Support Development</span>
