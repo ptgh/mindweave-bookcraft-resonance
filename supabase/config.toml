@@ -24,7 +24,10 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.enrich-author-data]
-verify_jwt = true
+verify_jwt = false
 
 [functions.contact-form]
+verify_jwt = false
+
+[functions.queue-author-enrichment]
 verify_jwt = false

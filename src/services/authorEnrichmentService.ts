@@ -62,41 +62,23 @@ export const getAuthorDataSources = async (authorId: string): Promise<AuthorData
 };
 
 export const queueAuthorForEnrichment = async (authorId: string): Promise<void> => {
-  console.log('Queueing author for enrichment:', authorId);
-  
+  console.log('Queueing author for enrichment via edge function:', authorId);
   try {
-    // Check if already queued and pending
-    const { data: existing } = await supabase
-      .from('author_enrichment_queue')
-      .select('id, status')
-      .eq('author_id', authorId)
-      .eq('status', 'pending')
-      .single();
-    
-    if (existing) {
-      console.log('Author already queued for enrichment');
-      return;
-    }
-    
-    // Queue the author
-    const { error } = await supabase
-      .from('author_enrichment_queue')
-      .insert({
-        author_id: authorId,
-        enrichment_type: 'full',
-        priority: 8, // High priority for manual requests
-        status: 'pending'
-      });
-    
+    const { data, error } = await supabase.functions.invoke('queue-author-enrichment', {
+      body: { authorId, priority: 9 }
+    });
+
     if (error) {
-      console.error('Error queueing author for enrichment:', error);
+      console.error('queue-author-enrichment error:', error);
       throw error;
     }
-    
-    console.log('Successfully queued author for enrichment');
-  } catch (error) {
-    console.error('Failed to queue author for enrichment:', error);
-    throw error;
+    if (!data?.success) {
+      throw new Error(data?.message || 'Failed to queue author');
+    }
+    console.log('Successfully queued author:', data);
+  } catch (err) {
+    console.error('Failed to queue author for enrichment:', err);
+    throw err;
   }
 };
 
