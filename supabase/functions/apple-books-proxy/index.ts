@@ -35,53 +35,75 @@ const cleanSearchTerm = (term: string): string => {
     .trim();
 };
 
-// Simple string similarity calculation
+// Improved string similarity calculation with exact match priority
 const calculateSimilarity = (str1: string, str2: string): number => {
-  if (str1 === str2) return 1;
+  if (str1 === str2) return 1.0;
   if (str1.length === 0 || str2.length === 0) return 0;
   
-  // Check if one string contains the other
-  if (str1.includes(str2) || str2.includes(str1)) return 0.8;
+  // Normalize for comparison
+  const s1 = str1.toLowerCase().trim();
+  const s2 = str2.toLowerCase().trim();
   
-  // Basic Levenshtein-inspired similarity
-  const longer = str1.length > str2.length ? str1 : str2;
-  const shorter = str1.length > str2.length ? str2 : str1;
+  // Exact match after normalization
+  if (s1 === s2) return 0.98;
   
-  if (longer.length === 0) return 1;
+  // Check if one string contains the other (substring match)
+  if (s1.includes(s2)) return 0.85 + (s2.length / s1.length) * 0.1;
+  if (s2.includes(s1)) return 0.85 + (s1.length / s2.length) * 0.1;
   
+  // Word overlap scoring
+  const words1 = s1.split(/\s+/);
+  const words2 = s2.split(/\s+/);
+  const commonWords = words1.filter(w => words2.includes(w)).length;
+  const maxWords = Math.max(words1.length, words2.length);
+  
+  if (commonWords > 0) {
+    return (commonWords / maxWords) * 0.7;
+  }
+  
+  // Character-based similarity as last resort
+  const longer = s1.length > s2.length ? s1 : s2;
+  const shorter = s1.length > s2.length ? s2 : s1;
   const matches = shorter.split('').filter(char => longer.includes(char)).length;
-  return matches / longer.length;
+  return (matches / longer.length) * 0.5;
 };
 
-// Helper function to find the best match from results
+// Helper function to find the best match from results with improved scoring
 const findBestMatch = (results: any[], targetTitle: string, targetAuthor: string): any | null => {
-  const normalizeString = (str: string) => str.toLowerCase().replace(/[^\w\s]/g, '').trim();
+  const normalizeString = (str: string) => str.toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
   const normalizedTargetTitle = normalizeString(targetTitle);
   const normalizedTargetAuthor = normalizeString(targetAuthor);
   
   let bestMatch = null;
   let bestScore = 0;
   
+  console.log(`🔍 Finding best match for: "${targetTitle}" by ${targetAuthor}`);
+  
   for (const result of results) {
     const resultTitle = normalizeString(result.trackName || '');
     const resultAuthor = normalizeString(result.artistName || '');
+    
+    console.log(`  Comparing with: "${result.trackName}" by ${result.artistName}`);
     
     // Calculate similarity scores
     const titleScore = calculateSimilarity(normalizedTargetTitle, resultTitle);
     const authorScore = calculateSimilarity(normalizedTargetAuthor, resultAuthor);
     
-    // Combined score (weight title more heavily)
-    const combinedScore = (titleScore * 0.7) + (authorScore * 0.3);
+    console.log(`    Title: ${titleScore.toFixed(2)}, Author: ${authorScore.toFixed(2)}`);
     
-    // Require minimum thresholds
-    if (titleScore > 0.6 && authorScore > 0.4 && combinedScore > bestScore) {
+    // Combined score - weight title MUCH more heavily since it's more specific
+    const combinedScore = (titleScore * 0.85) + (authorScore * 0.15);
+    
+    // Require strong title match (0.7+) and decent author match (0.3+)
+    if (titleScore >= 0.7 && authorScore >= 0.3 && combinedScore > bestScore) {
       bestScore = combinedScore;
       bestMatch = result;
+      console.log(`    ✅ New best match! Score: ${combinedScore.toFixed(2)}`);
     }
   }
   
-  console.log(`🎯 Best match score: ${bestScore.toFixed(2)} for "${targetTitle}" by ${targetAuthor}`);
-  return bestScore > 0.6 ? bestMatch : null;
+  console.log(`🎯 Final best match score: ${bestScore.toFixed(2)}`);
+  return bestScore >= 0.7 ? bestMatch : null;
 };
 
 // Helper function to try multiple search strategies
