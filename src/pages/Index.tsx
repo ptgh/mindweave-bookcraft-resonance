@@ -16,6 +16,8 @@ import ContributionButton from "@/components/ContributionButton";
 import ContactModal from "@/components/ContactModal";
 import { searchAppleBooks } from "@/services/appleBooks";
 import { useNavigate } from "react-router-dom";
+import { AuthorPopup } from "@/components/AuthorPopup";
+import { getAuthorByName, ScifiAuthor, findOrCreateAuthor } from "@/services/scifiAuthorsService";
 
 const Index = () => {
   const [books, setBooks] = useState<Transmission[]>([]);
@@ -24,6 +26,8 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
+  const [authorPopupVisible, setAuthorPopupVisible] = useState(false);
 
   // Memoize static data to prevent unnecessary re-renders
   const currentSignal = useMemo(() => ({
@@ -175,6 +179,51 @@ const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations
     loadTransmissions();
   }, [loadTransmissions]);
 
+  const handleAuthorClick = async (authorName: string) => {
+    console.log('Author clicked:', authorName);
+    try {
+      let authorData = await getAuthorByName(authorName);
+      
+      if (!authorData) {
+        console.log('Author not found, creating new record:', authorName);
+        const newAuthorId = await findOrCreateAuthor(authorName);
+        if (newAuthorId) {
+          authorData = await getAuthorByName(authorName);
+        }
+      }
+      
+      if (authorData) {
+        setSelectedAuthor(authorData);
+        setAuthorPopupVisible(true);
+      } else {
+        const fallbackAuthor: ScifiAuthor = {
+          id: crypto.randomUUID(),
+          name: authorName,
+          bio: undefined,
+          notable_works: [],
+          needs_enrichment: true,
+          data_quality_score: 0,
+          birth_year: undefined,
+          death_year: undefined,
+          last_enriched: undefined,
+          enrichment_attempts: 0,
+          nationality: undefined,
+          data_source: 'manual',
+          verification_status: 'pending'
+        };
+        setSelectedAuthor(fallbackAuthor);
+        setAuthorPopupVisible(true);
+      }
+    } catch (error) {
+      console.error('Error fetching author:', error);
+    }
+  };
+
+  const closeAuthorPopup = () => {
+    setAuthorPopupVisible(false);
+    setSelectedAuthor(null);
+  };
+
 
   return (
     <AuthWrapper fallback={<Auth />}>
@@ -221,6 +270,7 @@ const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations
                 onKeep={handleKeepBook}
                 onDiscard={handleDiscardBook}
                 onAddNew={() => setIsAddModalOpen(true)}
+                onAuthorClick={handleAuthorClick}
               />
             )}
           </div>
@@ -262,6 +312,15 @@ const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations
         <ContactModal 
           isOpen={showContactModal} 
           onClose={() => setShowContactModal(false)} 
+        />
+
+        <AuthorPopup
+          author={selectedAuthor}
+          isVisible={authorPopupVisible}
+          onClose={closeAuthorPopup}
+          onAuthorUpdate={(updatedAuthor) => {
+            setSelectedAuthor(updatedAuthor);
+          }}
         />
       </div>
     </AuthWrapper>

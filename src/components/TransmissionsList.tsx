@@ -12,6 +12,7 @@ interface TransmissionsListProps {
   onKeep: (book: Transmission) => void;
   onDiscard: (book: Transmission) => void;
   onAddNew: () => void;
+  onAuthorClick?: (authorName: string) => void;
 }
 
 const TransmissionsList = memo(({ 
@@ -20,7 +21,8 @@ const TransmissionsList = memo(({
   onEdit, 
   onKeep, 
   onDiscard, 
-  onAddNew 
+  onAddNew,
+  onAuthorClick
 }: TransmissionsListProps) => {
   const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
   const [optimisticTransmissions, setOptimisticTransmissions] = useState<Transmission[]>([]);
@@ -112,6 +114,7 @@ const TransmissionsList = memo(({
             onEdit={() => onEdit(book)}
             onKeep={() => onKeep(book)}
             onDiscard={() => handleDiscard(book)}
+            onAuthorClick={onAuthorClick}
           />
         </div>
       ))}

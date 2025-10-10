@@ -36,6 +36,7 @@ interface BookCardProps {
   onEdit?: () => void;
   onKeep?: () => void;
   onDiscard?: () => void;
+  onAuthorClick?: (authorName: string) => void;
 }
 
 const BookCard = ({ 
@@ -52,7 +53,8 @@ const BookCard = ({
   open_count,
   onEdit,
   onKeep,
-  onDiscard
+  onDiscard,
+  onAuthorClick
 }: BookCardProps) => {
   const [showActions, setShowActions] = useState(false);
   const [hasFreeEbook, setHasFreeEbook] = useState(false);
@@ -168,7 +170,16 @@ const BookCard = ({
               <h3 className="text-slate-200 font-medium text-sm leading-tight line-clamp-2 mb-1">
                 {title}
               </h3>
-              <p className="text-slate-400 text-xs mb-1">{author}</p>
+              {onAuthorClick ? (
+                <button
+                  onClick={() => onAuthorClick(author)}
+                  className="text-slate-400 text-xs mb-1 hover:text-blue-400 transition-colors duration-200 underline decoration-dotted underline-offset-2 text-left"
+                >
+                  {author}
+                </button>
+              ) : (
+                <p className="text-slate-400 text-xs mb-1">{author}</p>
+              )}
               {open_count && open_count > 0 && (
                 <p className="text-slate-500 text-xs">Opened {open_count} time{open_count !== 1 ? 's' : ''}</p>
               )}
