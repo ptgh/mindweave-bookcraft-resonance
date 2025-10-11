@@ -977,7 +977,7 @@ const TestBrain = () => {
               transform: 'translateX(-50%)'
             }}
           >
-            <div className="bg-slate-800/95 backdrop-blur-sm border border-cyan-400/50 rounded-lg p-4 max-w-xs shadow-2xl shadow-black/50">
+            <div className="bg-slate-900/60 backdrop-blur-lg border border-slate-700/30 rounded-lg p-4 max-w-xs shadow-2xl shadow-slate-900/20">
               <div className="flex items-start space-x-4">
                 {tooltip.node.coverUrl && (
                   <div className="w-12 h-16 bg-slate-700 rounded border border-slate-600 overflow-hidden flex-shrink-0">
