@@ -935,82 +935,81 @@ const TestBrain = () => {
   }
 
   return (
-    <div ref={mainContainerRef} className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div ref={mainContainerRef} className="fixed inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
       <Header />
-      <div className="container mx-auto px-6 py-8">
-        <NeuralMapHeader
-          nodeCount={nodes.length}
-          linkCount={links.length}
-          activeFilters={activeFilters}
-          allTags={allTags}
-          onTagFilter={handleTagFilter}
-          onClearFilters={handleClearFilters}
-          chatHighlights={chatHighlights}
+      
+      <NeuralMapHeader
+        nodeCount={nodes.length}
+        linkCount={links.length}
+        activeFilters={activeFilters}
+        allTags={allTags}
+        onTagFilter={handleTagFilter}
+        onClearFilters={handleClearFilters}
+        chatHighlights={chatHighlights}
+      />
+      
+      <div className="fixed inset-0 pt-48">
+        <div 
+          ref={canvasRef}
+          className="brain-canvas absolute inset-0 w-full h-full"
+          style={{ zIndex: 1 }}
         />
         
-        <div className="relative max-w-5xl mx-auto rounded-lg border border-slate-700/50 shadow-2xl shadow-black/30 overflow-hidden" style={{ height: 'calc(100vh - 450px)', minHeight: '500px', maxHeight: '600px' }}>
-          <div 
-            ref={canvasRef}
-            className="brain-canvas absolute inset-0 w-full h-full bg-slate-900/30"
-            style={{ zIndex: 1 }}
-          />
-          
-          <svg ref={svgRef} className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 2 }} />
+        <svg ref={svgRef} className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 2 }} />
 
-          {remappingActive && (
-            <div className="absolute top-4 right-4 z-20">
-              <div className="bg-slate-800/95 backdrop-blur-sm border border-cyan-400/50 rounded-lg px-4 py-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
-                  <span className="text-cyan-300 text-xs">Remapping connections...</span>
-                </div>
+        {remappingActive && (
+          <div className="absolute top-52 left-1/2 -translate-x-1/2 z-20">
+            <div className="bg-slate-800/95 backdrop-blur-sm border border-cyan-400/50 rounded-lg px-4 py-2">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+                <span className="text-cyan-300 text-xs">Remapping connections...</span>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {tooltip && (
-            <div 
-              className="absolute z-30 pointer-events-none"
-              style={{ 
-                left: tooltip.x - 100, 
-                top: tooltip.y,
-                transform: 'translateX(-50%)'
-              }}
-            >
-              <div className="bg-slate-800/95 backdrop-blur-sm border border-cyan-400/50 rounded-lg p-4 max-w-xs shadow-2xl shadow-black/50">
-                <div className="flex items-start space-x-4">
-                  {tooltip.node.coverUrl && (
-                    <div className="w-12 h-16 bg-slate-700 rounded border border-slate-600 overflow-hidden flex-shrink-0">
-                      <img 
-                        src={tooltip.node.coverUrl} 
-                        alt={tooltip.node.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
+        {tooltip && (
+          <div 
+            className="absolute z-30 pointer-events-none"
+            style={{ 
+              left: tooltip.x - 100, 
+              top: tooltip.y,
+              transform: 'translateX(-50%)'
+            }}
+          >
+            <div className="bg-slate-800/95 backdrop-blur-sm border border-cyan-400/50 rounded-lg p-4 max-w-xs shadow-2xl shadow-black/50">
+              <div className="flex items-start space-x-4">
+                {tooltip.node.coverUrl && (
+                  <div className="w-12 h-16 bg-slate-700 rounded border border-slate-600 overflow-hidden flex-shrink-0">
+                    <img 
+                      src={tooltip.node.coverUrl} 
+                      alt={tooltip.node.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-cyan-400 text-sm mb-1 leading-tight">{tooltip.node.title}</h4>
+                  <p className="text-xs text-slate-300 mb-2">{tooltip.node.author}</p>
                   
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-cyan-400 text-sm mb-1 leading-tight">{tooltip.node.title}</h4>
-                    <p className="text-xs text-slate-300 mb-2">{tooltip.node.author}</p>
-                    
-                    <div className="text-xs text-cyan-300/70">
-                      {links.filter(link => link.fromId === tooltip.node.id || link.toId === tooltip.node.id).length} connections
-                    </div>
+                  <div className="text-xs text-cyan-300/70">
+                    {links.filter(link => link.fromId === tooltip.node.id || link.toId === tooltip.node.id).length} connections
                   </div>
                 </div>
               </div>
             </div>
-          )}
-
-          {/* Chat Interface */}
-          <BrainChatInterface
-            nodes={nodes}
-            links={links}
-            activeFilters={activeFilters}
-            onHighlight={handleChatHighlight}
-          />
-        </div>
+          </div>
+        )}
       </div>
+
+      {/* Chat Interface */}
+      <BrainChatInterface
+        nodes={nodes}
+        links={links}
+        activeFilters={activeFilters}
+        onHighlight={handleChatHighlight}
+      />
     </div>
   );
 };
