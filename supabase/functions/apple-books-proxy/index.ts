@@ -232,7 +232,70 @@ const searchByTitleAuthor = async (title: string, author: string) => {
     } else {
       console.error('Error searching Apple Books:', error);
     }
-    return { error: error.message };
+    return { error: (error as Error).message };
+  }
+};
+
+// Lookup by Apple track ID and verify it matches the requested title/author
+const lookupById = async (id: string, title: string, author: string) => {
+  if (!rateLimiter.canMakeRequest()) {
+    console.warn('Rate limit reached for Apple Books API');
+    return { error: 'Rate limit reached' };
+  }
+  
+  try {
+    rateLimiter.recordRequest();
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
+    const params = new URLSearchParams({
+      id,
+      entity: 'ebook',
+      country: COUNTRY_CODE,
+      limit: '1'
+    });
+
+    const url = `${ITUNES_LOOKUP_BASE_URL}?${params}`;
+    console.log('🌐 Apple Books ID lookup request to:', url);
+
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: { 'Accept': 'application/json' }
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      return { error: `HTTP ${response.status}` };
+    }
+
+    const data = await response.json();
+    if (!data?.results || data.results.length === 0) {
+      return { error: 'Not found' };
+    }
+
+    const result = data.results[0];
+
+    // Verify against requested title/author
+    const titleScore = calculateSimilarity(title, result.trackName || '');
+    const authorScore = calculateSimilarity(author, result.artistName || '');
+    const combined = (titleScore * 0.85) + (authorScore * 0.15);
+
+    console.log(`🔎 ID verify scores — Title: ${titleScore.toFixed(2)}, Author: ${authorScore.toFixed(2)}, Combined: ${combined.toFixed(2)}`);
+
+    if (titleScore >= 0.7 && authorScore >= 0.5) {
+      return { ...data, results: [result] };
+    }
+
+    return { error: 'mismatch', scores: { titleScore, authorScore } };
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.warn('Apple Books API request timed out for ID:', id);
+    } else {
+      console.error('Error in Apple Books ID lookup:', error);
+    }
+    return { error: (error as Error).message };
   }
 };
 
@@ -253,6 +316,13 @@ serve(async (req) => {
       result = await searchByISBN(isbn);
     } else if (searchType === 'titleAuthor' && title && author) {
       result = await searchByTitleAuthor(title, author);
+    } else if (searchType === 'lookupId') {
+      const { id } = await req.json(); // id may already be parsed, but safe re-parse
+      if (id && title && author) {
+        result = await lookupById(String(id), title, author);
+      } else {
+        result = { error: 'Missing id/title/author for lookupId' };
+      }
     } else {
       return new Response(
         JSON.stringify({ error: 'Invalid request parameters' }),
