@@ -948,7 +948,7 @@ const TestBrain = () => {
         chatHighlights={chatHighlights}
       />
       
-      <div className="fixed inset-0 pt-48">
+      <div className="fixed top-[60px] left-0 right-0 bottom-0">
         <div 
           ref={canvasRef}
           className="brain-canvas absolute inset-0 w-full h-full"
@@ -958,11 +958,11 @@ const TestBrain = () => {
         <svg ref={svgRef} className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 2 }} />
 
         {remappingActive && (
-          <div className="absolute top-52 left-1/2 -translate-x-1/2 z-20">
-            <div className="bg-slate-800/95 backdrop-blur-sm border border-cyan-400/50 rounded-lg px-4 py-2">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
-                <span className="text-cyan-300 text-xs">Remapping connections...</span>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+            <div className="bg-slate-800/95 backdrop-blur-sm border border-cyan-400/50 rounded-lg px-6 py-3 shadow-2xl">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse"></div>
+                <span className="text-cyan-300 text-sm font-medium">Remapping neural connections...</span>
               </div>
             </div>
           </div>
