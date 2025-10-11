@@ -153,7 +153,7 @@ const BookCard = ({
   }, [isInView, title, author, isbn]);
 
   return (
-    <div ref={rootRef} className="bg-slate-900/60 backdrop-blur-lg border border-slate-700/30 rounded-lg p-4 hover:bg-slate-900/80 transition-colors h-full flex flex-col">
+    <div ref={rootRef} className="bg-slate-900/70 backdrop-blur-lg border border-cyan-400/20 rounded-lg p-4 hover:bg-slate-900/85 hover:border-cyan-400/40 transition-all h-full flex flex-col">
       <div className="flex items-start space-x-4 flex-1 mb-4">
         <EnhancedBookCover
           title={title}
