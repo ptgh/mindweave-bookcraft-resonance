@@ -144,12 +144,17 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
 
   const getDataQualityBadge = () => {
     const score = currentAuthor.data_quality_score || 0;
-    if (score >= 80) {
+    const hasWiki = !!currentAuthor.wikipedia_url;
+    const hasNotableWorks = currentAuthor.notable_works && currentAuthor.notable_works.length > 0;
+    const hasBio = !!currentAuthor.bio;
+    
+    // Consider data complete only if score is high AND key fields exist
+    if (score >= 80 && hasWiki && hasNotableWorks && hasBio) {
       return <Badge variant="default" className="text-xs bg-green-500/20 text-green-300 border-green-400/30"><CheckCircle className="w-3 h-3 mr-1" />Complete</Badge>;
-    } else if (score >= 50) {
-      return <Badge variant="secondary" className="text-xs bg-yellow-500/20 text-yellow-300 border-yellow-400/30"><Clock className="w-3 h-3 mr-1" />Partial</Badge>;
     } else if (isEnriching) {
       return <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-300 border-blue-400/30"><RefreshCw className="w-3 h-3 mr-1 animate-spin" />Processing...</Badge>;
+    } else if (hasBio || score >= 30) {
+      return <Badge variant="secondary" className="text-xs bg-yellow-500/20 text-yellow-300 border-yellow-400/30 cursor-pointer hover:bg-yellow-500/30"><Clock className="w-3 h-3 mr-1" />Enrich Data</Badge>;
     } else {
       return <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-300 border-blue-400/30 cursor-pointer hover:bg-blue-500/30"><AlertTriangle className="w-3 h-3 mr-1" />Enrich Data</Badge>;
     }
@@ -167,22 +172,32 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
       await queueAuthorForEnrichment(currentAuthor.id);
       setEnrichmentStatus('queued');
       
+      // Trigger enrichment immediately and keep re-triggering
       let triggerCount = 0;
-      const triggerOnce = async () => {
-        console.log('Author queued, triggering enrichment job...');
-        const result = await triggerEnrichmentJob();
+      const maxTriggers = 8;
+      
+      const triggerJob = async () => {
+        if (triggerCount >= maxTriggers) return;
         triggerCount++;
-        if (!result.success) throw new Error('Enrichment job failed to start');
-        setEnrichmentStatus('processing');
+        console.log(`Triggering enrichment job (attempt ${triggerCount})...`);
+        try {
+          await triggerEnrichmentJob();
+          setEnrichmentStatus('processing');
+        } catch (e) {
+          console.error('Trigger error:', e);
+        }
       };
 
-      await triggerOnce();
+      // Initial trigger
+      await triggerJob();
 
-      // Check status periodically and re-trigger if stuck pending/processing
+      // Check status every 3 seconds and re-trigger if needed
       let elapsed = 0;
       const checkInterval = setInterval(async () => {
         try {
           const status = await checkEnrichmentStatus(currentAuthor.id);
+          console.log('Enrichment status check:', status?.status);
+          
           if (status?.status === 'completed') {
             clearInterval(checkInterval);
             setIsEnriching(false);
@@ -193,25 +208,26 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
             setEnrichmentStatus('failed');
             console.error('Enrichment failed:', status.error_message);
           } else {
-            // pending or processing: try nudging the worker every 6s (max 5 times)
-            elapsed += 2;
-            if (elapsed % 6 === 0 && triggerCount < 5) {
-              try { await triggerOnce(); } catch (e) { /* ignore */ }
+            // Still pending/processing: nudge the worker every 9s
+            elapsed += 3;
+            if (elapsed % 9 === 0) {
+              await triggerJob();
             }
           }
         } catch (error) {
           console.error('Error checking enrichment status:', error);
         }
-      }, 2000);
+      }, 3000);
       
-      // Stop checking after 45 seconds
+      // Stop checking after 60 seconds
       setTimeout(() => {
         clearInterval(checkInterval);
         if (isEnriching) {
           setIsEnriching(false);
           setEnrichmentStatus('timeout');
+          console.log('Enrichment timeout - check back later');
         }
-      }, 45000);
+      }, 60000);
       
     } catch (error) {
       console.error('Failed to trigger enrichment:', error);

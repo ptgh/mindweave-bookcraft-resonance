@@ -210,24 +210,8 @@ serve(async (req) => {
               console.log('Added bio and Wikipedia URL');
             }
 
-            // Try to extract birth/death years
-            if (wikiData.extract) {
-              const yearRegex = /\b(18|19|20)\d{2}\b/g;
-              const years = wikiData.extract.match(yearRegex)?.map(y => parseInt(y));
-              
-              if (years && years.length >= 1) {
-                const sortedYears = years.sort((a, b) => a - b);
-                enrichedData.birth_year = sortedYears[0];
-                confidence += 20;
-                console.log('Added birth year from Wikipedia:', enrichedData.birth_year);
-              }
-              if (years && years.length >= 2) {
-                const sortedYears = years.sort((a, b) => a - b);
-                enrichedData.death_year = sortedYears[sortedYears.length - 1];
-                confidence += 20;
-                console.log('Added death year from Wikipedia:', enrichedData.death_year);
-              }
-            }
+            // Don't extract years from Wikipedia text - too error-prone
+            // Let Gemini AI handle birth/death years from multiple sources
 
             // Store Wikipedia data source
             await supabaseClient
@@ -276,53 +260,45 @@ serve(async (req) => {
               if (content) {
                 console.log('Gemini response received:', content);
                 
-                // Parse and fill in ALL missing data
-                if (!enrichedData.bio) {
-                  const bioMatch = content.match(/Bio:\s*([^|]+)/i);
-                  if (bioMatch && bioMatch[1].trim()) {
-                    enrichedData.bio = bioMatch[1].trim();
-                    confidence += 35;
-                    console.log('Added bio from Gemini');
-                  }
+                // Parse and fill/override with Gemini data (more comprehensive)
+                const bioMatch = content.match(/Bio:\s*([^|]+)/i);
+                if (bioMatch && bioMatch[1].trim()) {
+                  enrichedData.bio = bioMatch[1].trim();
+                  confidence += 35;
+                  console.log('Added bio from Gemini');
                 }
                 
-                if (!enrichedData.birth_year) {
-                  const birthMatch = content.match(/Birth:\s*(\d{4})/i);
-                  if (birthMatch) {
-                    enrichedData.birth_year = parseInt(birthMatch[1]);
-                    confidence += 15;
-                    console.log('Added birth year from Gemini:', enrichedData.birth_year);
-                  }
+                // Birth year - Gemini overrides Wikipedia if present
+                const birthMatch = content.match(/Birth:\s*(\d{4})/i);
+                if (birthMatch) {
+                  enrichedData.birth_year = parseInt(birthMatch[1]);
+                  confidence += 15;
+                  console.log('Added birth year from Gemini:', enrichedData.birth_year);
                 }
                 
-                if (!enrichedData.death_year) {
-                  const deathMatch = content.match(/Death:\s*(\d{4})/i);
-                  if (deathMatch) {
-                    enrichedData.death_year = parseInt(deathMatch[1]);
-                    confidence += 15;
-                    console.log('Added death year from Gemini:', enrichedData.death_year);
-                  }
+                // Death year - only if year found (not "Living" or "Unknown")
+                const deathMatch = content.match(/Death:\s*(\d{4})/i);
+                if (deathMatch) {
+                  enrichedData.death_year = parseInt(deathMatch[1]);
+                  confidence += 15;
+                  console.log('Added death year from Gemini:', enrichedData.death_year);
                 }
                 
-                if (!enrichedData.nationality) {
-                  const nationalityMatch = content.match(/Nationality:\s*([^|]+)/i);
-                  if (nationalityMatch && nationalityMatch[1].trim()) {
-                    enrichedData.nationality = nationalityMatch[1].trim();
-                    confidence += 10;
-                    console.log('Added nationality from Gemini');
-                  }
+                const nationalityMatch = content.match(/Nationality:\s*([^|]+)/i);
+                if (nationalityMatch && nationalityMatch[1].trim()) {
+                  enrichedData.nationality = nationalityMatch[1].trim();
+                  confidence += 10;
+                  console.log('Added nationality from Gemini');
                 }
                 
-                if (!enrichedData.notable_works) {
-                  const worksMatch = content.match(/Notable Works:\s*([^|]+)/i);
-                  if (worksMatch && worksMatch[1].trim()) {
-                    enrichedData.notable_works = worksMatch[1].trim()
-                      .split(',')
-                      .map(w => w.trim())
-                      .filter(w => w.length > 0);
-                    confidence += 10;
-                    console.log('Added notable works from Gemini');
-                  }
+                const worksMatch = content.match(/Notable Works:\s*([^|]+)/i);
+                if (worksMatch && worksMatch[1].trim()) {
+                  enrichedData.notable_works = worksMatch[1].trim()
+                    .split(',')
+                    .map(w => w.trim())
+                    .filter(w => w.length > 0);
+                  confidence += 10;
+                  console.log('Added notable works from Gemini');
                 }
 
                 // Store Gemini data source
@@ -380,8 +356,8 @@ serve(async (req) => {
           const newQualityScore = Math.min(100, 
             (enrichedData.bio || author.bio ? 40 : 0) + 
             (enrichedData.birth_year || author.birth_year ? 20 : 0) + 
-            (enrichedData.death_year || author.death_year ? 20 : 0) + 
-            (author.notable_works?.length > 0 ? 20 : 0)
+            (enrichedData.notable_works?.length > 0 || author.notable_works?.length > 0 ? 20 : 0) +
+            (enrichedData.wikipedia_url || author.wikipedia_url ? 20 : 0)
           );
 
           const updateData = {
