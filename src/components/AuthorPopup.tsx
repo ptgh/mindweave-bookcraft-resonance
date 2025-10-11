@@ -271,13 +271,10 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
 
         <CardContent className="space-y-4">
           {/* Bio */}
-          <div className="bg-slate-800/70 rounded-lg p-4 border border-slate-700/50">
+          <div className="bg-slate-800/70 rounded-lg p-4 border border-slate-700/50 max-h-48 overflow-y-auto">
             {currentAuthor.bio ? (
               <p className="text-sm text-slate-200 leading-relaxed">
-                {currentAuthor.bio.length > 150 
-                  ? `${currentAuthor.bio.substring(0, 150)}...` 
-                  : currentAuthor.bio
-                }
+                {currentAuthor.bio}
               </p>
             ) : (
               <div className="space-y-2">
@@ -290,7 +287,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
                 {isEnriching && (
                   <div className="flex items-center gap-2 text-xs text-blue-300">
                     <RefreshCw className="w-3 h-3 animate-spin" />
-                    <span>Searching Wikipedia and other sources...</span>
+                    <span>Searching multiple sources via Gemini AI...</span>
                   </div>
                 )}
               </div>

@@ -204,9 +204,10 @@ serve(async (req) => {
             
             if (wikiData.extract && wikiData.extract.length > 50) {
               enrichedData.bio = wikiData.extract;
+              enrichedData.wikipedia_url = wikipediaUrl.replace('/api/rest_v1/page/summary/', '/wiki/');
               confidence += 40;
               wikiSuccess = true;
-              console.log('Added bio from Wikipedia');
+              console.log('Added bio and Wikipedia URL');
             }
 
             // Try to extract birth/death years
@@ -243,10 +244,10 @@ serve(async (req) => {
           console.error('Wikipedia fetch error:', wikiError);
         }
         
-        // Use Gemini AI to fill gaps or when Wikipedia fails completely
-        if (lovableApiKey && (!wikiSuccess || !enrichedData.nationality || !enrichedData.notable_works)) {
+        // Use Gemini AI to comprehensively search multiple sources
+        if (lovableApiKey) {
           try {
-            console.log(`Enriching with Gemini AI for: ${author.name}`);
+            console.log(`Using Gemini AI to search multiple sources for: ${author.name}`);
             const geminiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
               method: 'POST',
               headers: {
@@ -258,11 +259,11 @@ serve(async (req) => {
                 messages: [
                   {
                     role: 'system',
-                    content: 'You are a literary research expert specializing in science fiction authors. Provide comprehensive biographical details. Return data in this exact format: Bio: [2-3 sentence biography] | Birth: [year or "Unknown"] | Death: [year or "Living" or "Unknown"] | Nationality: [country] | Notable Works: [comma-separated list of 3-5 major works]'
+                    content: 'You are a literary research expert with access to comprehensive databases of science fiction authors. Research and compile biographical information from ALL available sources including: literary databases, publisher websites, author official sites, book databases, interviews, and academic sources. Provide the MOST COMPLETE information possible. Return data in this exact format: Bio: [comprehensive 2-4 sentence biography] | Birth: [year or "Unknown"] | Death: [year or "Living" or "Unknown"] | Nationality: [country] | Notable Works: [comma-separated list of 3-5 major works]'
                   },
                   {
                     role: 'user',
-                    content: `Research and provide biographical information about science fiction author ${author.name}. ${bookContext || 'Search all available sources including literary databases, publisher information, and author websites.'} Provide complete information even if some sources are limited.`
+                    content: `Research and provide complete biographical information about science fiction author "${author.name}". ${bookContext || 'Search all available literary sources, publisher information, and databases.'} Provide comprehensive details even if Wikipedia is unavailable. Search multiple sources to compile the most accurate and complete profile.`
                   }
                 ]
               }),
@@ -275,7 +276,7 @@ serve(async (req) => {
               if (content) {
                 console.log('Gemini response received:', content);
                 
-                // Parse the structured response - fill in ALL missing data
+                // Parse and fill in ALL missing data
                 if (!enrichedData.bio) {
                   const bioMatch = content.match(/Bio:\s*([^|]+)/i);
                   if (bioMatch && bioMatch[1].trim()) {
@@ -329,7 +330,7 @@ serve(async (req) => {
                   .from('author_data_sources')
                   .insert({
                     author_id: author.id,
-                    source_type: 'ai_gemini',
+                    source_type: 'ai_gemini_comprehensive',
                     source_url: 'https://ai.gateway.lovable.dev',
                     data_retrieved: { content, parsed: enrichedData },
                     confidence_score: confidence
