@@ -948,7 +948,7 @@ const TestBrain = () => {
           chatHighlights={chatHighlights}
         />
         
-        <div className="relative rounded-lg border border-slate-700/50 shadow-2xl shadow-black/30 overflow-hidden" style={{ height: 'calc(100vh - 400px)', minHeight: '500px' }}>
+        <div className="relative max-w-5xl mx-auto rounded-lg border border-slate-700/50 shadow-2xl shadow-black/30 overflow-hidden" style={{ height: 'calc(100vh - 450px)', minHeight: '500px', maxHeight: '600px' }}>
           <div 
             ref={canvasRef}
             className="brain-canvas absolute inset-0 w-full h-full bg-slate-900/30"

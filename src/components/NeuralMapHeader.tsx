@@ -58,7 +58,7 @@ const NeuralMapHeader = ({
 
       {/* Tag Filters */}
       {allTags.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-3 max-w-5xl mx-auto">
           <div className="flex items-center justify-center gap-3">
             <span className="text-slate-400 text-sm">Filter by Theme:</span>
             {activeFilters.length > 0 && (
@@ -70,15 +70,15 @@ const NeuralMapHeader = ({
               </button>
             )}
           </div>
-          <div className="flex flex-wrap gap-2 justify-center max-w-3xl mx-auto">
+          <div className="grid grid-cols-7 gap-2 max-h-[4.5rem] overflow-hidden">
             {allTags.map(tag => (
               <Badge
                 key={tag}
                 variant={activeFilters.includes(tag) ? "default" : "outline"}
-                className={`cursor-pointer text-xs transition-all ${
+                className={`cursor-pointer text-xs transition-all text-center justify-center ${
                   activeFilters.includes(tag) 
-                    ? 'bg-cyan-400/20 text-cyan-300 border-cyan-400 hover:bg-cyan-400/30' 
-                    : 'border-slate-600 text-slate-400 hover:border-cyan-400 hover:text-cyan-400'
+                    ? 'bg-slate-700/60 text-slate-200 border-slate-600 hover:bg-slate-700/80' 
+                    : 'border-slate-600 text-slate-400 hover:border-cyan-400/60 hover:text-cyan-400'
                 } ${chatHighlights.tags.includes(tag) ? 'border-red-400 text-red-400 animate-pulse' : ''}`}
                 onClick={() => onTagFilter(tag)}
               >
