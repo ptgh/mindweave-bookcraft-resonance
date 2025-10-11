@@ -167,43 +167,51 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
       await queueAuthorForEnrichment(currentAuthor.id);
       setEnrichmentStatus('queued');
       
-      console.log('Author queued, triggering enrichment job...');
-      const result = await triggerEnrichmentJob();
-      
-      if (result.success) {
+      let triggerCount = 0;
+      const triggerOnce = async () => {
+        console.log('Author queued, triggering enrichment job...');
+        const result = await triggerEnrichmentJob();
+        triggerCount++;
+        if (!result.success) throw new Error('Enrichment job failed to start');
         setEnrichmentStatus('processing');
-        console.log('Enrichment job triggered successfully:', result);
-        
-        // Check status periodically
-        const checkInterval = setInterval(async () => {
-          try {
-            const status = await checkEnrichmentStatus(currentAuthor.id);
-            if (status?.status === 'completed') {
-              clearInterval(checkInterval);
-              setIsEnriching(false);
-              setEnrichmentStatus('completed');
-            } else if (status?.status === 'failed') {
-              clearInterval(checkInterval);
-              setIsEnriching(false);
-              setEnrichmentStatus('failed');
-              console.error('Enrichment failed:', status.error_message);
-            }
-          } catch (error) {
-            console.error('Error checking enrichment status:', error);
-          }
-        }, 2000);
-        
-        // Stop checking after 30 seconds
-        setTimeout(() => {
-          clearInterval(checkInterval);
-          if (isEnriching) {
+      };
+
+      await triggerOnce();
+
+      // Check status periodically and re-trigger if stuck pending/processing
+      let elapsed = 0;
+      const checkInterval = setInterval(async () => {
+        try {
+          const status = await checkEnrichmentStatus(currentAuthor.id);
+          if (status?.status === 'completed') {
+            clearInterval(checkInterval);
             setIsEnriching(false);
-            setEnrichmentStatus('timeout');
+            setEnrichmentStatus('completed');
+          } else if (status?.status === 'failed') {
+            clearInterval(checkInterval);
+            setIsEnriching(false);
+            setEnrichmentStatus('failed');
+            console.error('Enrichment failed:', status.error_message);
+          } else {
+            // pending or processing: try nudging the worker every 6s (max 5 times)
+            elapsed += 2;
+            if (elapsed % 6 === 0 && triggerCount < 5) {
+              try { await triggerOnce(); } catch (e) { /* ignore */ }
+            }
           }
-        }, 30000);
-      } else {
-        throw new Error('Enrichment job failed');
-      }
+        } catch (error) {
+          console.error('Error checking enrichment status:', error);
+        }
+      }, 2000);
+      
+      // Stop checking after 45 seconds
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        if (isEnriching) {
+          setIsEnriching(false);
+          setEnrichmentStatus('timeout');
+        }
+      }, 45000);
       
     } catch (error) {
       console.error('Failed to trigger enrichment:', error);
@@ -328,30 +336,39 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
             </div>
           )}
 
-          {/* External Link - Only show if Wikipedia URL exists OR show alternative button */}
-          {currentAuthor.wikipedia_url ? (
+          {/* External Links */}
+          <div className="grid grid-cols-1 gap-2">
             <Button
               variant="outline"
               size="sm"
               className="w-full bg-blue-500/10 border-blue-400/30 text-blue-300 hover:bg-blue-500/20 transition-all duration-300"
               onClick={() => {
-                window.open(currentAuthor.wikipedia_url!, '_blank');
+                const url = currentAuthor.wikipedia_url
+                  ? currentAuthor.wikipedia_url
+                  : `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(currentAuthor.name)}`;
+                window.open(url, '_blank');
               }}
             >
               <ExternalLink className="w-4 h-4 mr-2" />
               Learn More
             </Button>
-          ) : currentAuthor.bio && !isEnriching && (
+
+            {/* "Find More Sources" should open reputable alternatives (not trigger enrichment) */}
             <Button
               variant="outline"
               size="sm"
               className="w-full bg-purple-500/10 border-purple-400/30 text-purple-300 hover:bg-purple-500/20 transition-all duration-300"
-              onClick={handleEnrichment}
+              onClick={() => {
+                const altQuery = encodeURIComponent(`${currentAuthor.name} site:sf-encyclopedia.com OR site:isfdb.org OR site:britannica.com`);
+                const altUrl = `https://www.google.com/search?q=${altQuery}`;
+                window.open(altUrl, '_blank');
+              }}
+              disabled={isEnriching}
             >
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <ExternalLink className="w-4 h-4 mr-2" />
               Find More Sources
             </Button>
-          )}
+          </div>
         </CardContent>
       </Card>
     </div>

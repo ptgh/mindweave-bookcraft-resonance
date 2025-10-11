@@ -84,7 +84,29 @@ export const searchAppleBooksByTitleAuthor = async (title: string, author: strin
       return null;
     }
     
-    const book = transformAppleBookData(data.results[0]);
+    // Strictly verify the top result by ID before accepting it
+    const candidate = data.results[0];
+    const { data: verifyData, error: verifyError } = await supabase.functions.invoke('apple-books-proxy', {
+      body: {
+        searchType: 'lookupId',
+        id: candidate.trackId,
+        title,
+        author
+      }
+    });
+
+    if (verifyError || verifyData?.error) {
+      console.warn('Apple Books verification failed:', verifyError || verifyData?.error);
+      appleBooksCache.set(cacheKey, null);
+      return null;
+    }
+
+    if (!verifyData?.results || verifyData.results.length === 0) {
+      appleBooksCache.set(cacheKey, null);
+      return null;
+    }
+
+    const book = transformAppleBookData(verifyData.results[0]);
     appleBooksCache.set(cacheKey, book);
     return book;
     
