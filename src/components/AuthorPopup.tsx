@@ -8,6 +8,7 @@ import { User, BookOpen, Calendar, X, ExternalLink, CheckCircle, Clock, AlertTri
 import { ScifiAuthor } from '@/services/scifiAuthorsService';
 import { supabase } from '@/integrations/supabase/client';
 import { queueAuthorForEnrichment, triggerEnrichmentJob, checkEnrichmentStatus } from '@/services/authorEnrichmentService';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuthorPopupProps {
   author: ScifiAuthor | null;
@@ -31,6 +32,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
   const [isEnriching, setIsEnriching] = useState(false);
   const [enrichmentStatus, setEnrichmentStatus] = useState<string>('');
   const [fallbackWorks, setFallbackWorks] = useState<string[]>([]);
+  const { toast } = useToast();
 
   // Update current author when prop changes
   useEffect(() => {
@@ -61,6 +63,10 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
           if (updatedAuthor.data_quality_score && updatedAuthor.data_quality_score >= 50) {
             setIsEnriching(false);
             setEnrichmentStatus('completed');
+            toast({
+              title: "Enrichment Complete",
+              description: "Author data has been successfully updated.",
+            });
           }
         }
       )
@@ -192,6 +198,11 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
     setIsEnriching(true);
     setEnrichmentStatus('queuing');
     
+    toast({
+      title: "Starting Enrichment",
+      description: "Gathering author data from multiple sources...",
+    });
+    
     try {
       // First queue the author for enrichment
       await queueAuthorForEnrichment(currentAuthor.id);
@@ -199,7 +210,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
       
       // Trigger enrichment immediately and keep re-triggering
       let triggerCount = 0;
-      const maxTriggers = 8;
+      const maxTriggers = 12;
       
       const triggerJob = async () => {
         if (triggerCount >= maxTriggers) return;
@@ -216,7 +227,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
       // Initial trigger
       await triggerJob();
 
-      // Check status every 3 seconds and re-trigger if needed
+      // Check status every 1.5 seconds (faster polling)
       let elapsed = 0;
       const checkInterval = setInterval(async () => {
         try {
@@ -227,37 +238,67 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
             clearInterval(checkInterval);
             setIsEnriching(false);
             setEnrichmentStatus('completed');
+            
+            // Force immediate DB refresh
+            const { data: refreshedAuthor } = await supabase
+              .from('scifi_authors')
+              .select('*')
+              .eq('id', currentAuthor.id)
+              .single();
+            
+            if (refreshedAuthor) {
+              setCurrentAuthor(refreshedAuthor as ScifiAuthor);
+              onAuthorUpdate?.(refreshedAuthor as ScifiAuthor);
+            }
+            
+            toast({
+              title: "Enrichment Complete",
+              description: "Author data successfully updated!",
+            });
           } else if (status?.status === 'failed') {
             clearInterval(checkInterval);
             setIsEnriching(false);
             setEnrichmentStatus('failed');
             console.error('Enrichment failed:', status.error_message);
+            toast({
+              title: "Enrichment Failed",
+              description: "Unable to gather author data. Please try again.",
+              variant: "destructive",
+            });
           } else {
-            // Still pending/processing: nudge the worker every 9s
-            elapsed += 3;
-            if (elapsed % 9 === 0) {
+            // Still pending/processing: nudge the worker every 6s
+            elapsed += 1.5;
+            if (elapsed % 6 === 0) {
               await triggerJob();
             }
           }
         } catch (error) {
           console.error('Error checking enrichment status:', error);
         }
-      }, 3000);
+      }, 1500);
       
-      // Stop checking after 60 seconds
+      // Stop checking after 45 seconds
       setTimeout(() => {
         clearInterval(checkInterval);
         if (isEnriching) {
           setIsEnriching(false);
           setEnrichmentStatus('timeout');
-          console.log('Enrichment timeout - check back later');
+          toast({
+            title: "Enrichment In Progress",
+            description: "This may take a moment. Data will update automatically.",
+          });
         }
-      }, 60000);
+      }, 45000);
       
     } catch (error) {
       console.error('Failed to trigger enrichment:', error);
       setIsEnriching(false);
       setEnrichmentStatus('error');
+      toast({
+        title: "Error",
+        description: "Failed to start enrichment process.",
+        variant: "destructive",
+      });
     }
   };
 
