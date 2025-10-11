@@ -15,6 +15,7 @@ export interface ScifiAuthor {
   data_quality_score?: number;
   enrichment_attempts?: number;
   needs_enrichment?: boolean;
+  wikipedia_url?: string;
 }
 
 export interface AuthorBook {

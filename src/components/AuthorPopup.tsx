@@ -331,19 +331,20 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
             </div>
           )}
 
-          {/* External Link */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full bg-blue-500/10 border-blue-400/30 text-blue-300 hover:bg-blue-500/20 transition-all duration-300"
-            onClick={() => {
-              const wikipediaUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(currentAuthor.name.replace(/ /g, '_'))}`;
-              window.open(wikipediaUrl, '_blank');
-            }}
-          >
-            <ExternalLink className="w-4 h-4 mr-2" />
-            Learn More
-          </Button>
+          {/* External Link - Only show if Wikipedia URL exists */}
+          {currentAuthor.wikipedia_url && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full bg-blue-500/10 border-blue-400/30 text-blue-300 hover:bg-blue-500/20 transition-all duration-300"
+              onClick={() => {
+                window.open(currentAuthor.wikipedia_url!, '_blank');
+              }}
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Learn More
+            </Button>
+          )}
         </CardContent>
       </Card>
     </div>
