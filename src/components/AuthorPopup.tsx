@@ -279,7 +279,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
 
         <CardContent className="space-y-4">
           {/* Bio */}
-          <div className="bg-slate-800/70 rounded-lg p-4 border border-slate-700/50 max-h-48 overflow-y-auto">
+          <div className="bg-slate-800/70 rounded-lg p-4 border border-slate-700/50 max-h-48 overflow-y-auto scrollbar-hide">
             {currentAuthor.bio ? (
               <p className="text-sm text-slate-200 leading-relaxed">
                 {currentAuthor.bio}
@@ -304,7 +304,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
 
           {/* Notable Works */}
           {currentAuthor.notable_works && currentAuthor.notable_works.length > 0 && (
-            <div className="bg-slate-800/70 rounded-lg p-4 border border-slate-700/50">
+            <div className="bg-slate-800/70 rounded-lg p-4 border border-slate-700/50 max-h-48 overflow-y-auto scrollbar-hide">
               <div className="flex items-center gap-2 mb-2">
                 <BookOpen className="w-4 h-4 text-blue-400" />
                 <span className="text-sm font-medium text-blue-300">Notable Works</span>
@@ -337,38 +337,21 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
           )}
 
           {/* External Links */}
-          <div className="grid grid-cols-1 gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full bg-blue-500/10 border-blue-400/30 text-blue-300 hover:bg-blue-500/20 transition-all duration-300"
-              onClick={() => {
-                const url = currentAuthor.wikipedia_url
-                  ? currentAuthor.wikipedia_url
-                  : `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(currentAuthor.name)}`;
-                window.open(url, '_blank');
-              }}
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Learn More
-            </Button>
-
-            {/* "Find More Sources" should open reputable alternatives (not trigger enrichment) */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full bg-purple-500/10 border-purple-400/30 text-purple-300 hover:bg-purple-500/20 transition-all duration-300"
-              onClick={() => {
-                const altQuery = encodeURIComponent(`${currentAuthor.name} site:sf-encyclopedia.com OR site:isfdb.org OR site:britannica.com`);
-                const altUrl = `https://www.google.com/search?q=${altQuery}`;
-                window.open(altUrl, '_blank');
-              }}
-              disabled={isEnriching}
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Find More Sources
-            </Button>
-          </div>
+          {currentAuthor.wikipedia_url && (
+            <div className="grid grid-cols-1 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full bg-blue-500/10 border-blue-400/30 text-blue-300 hover:bg-blue-500/20 transition-all duration-300"
+                onClick={() => {
+                  window.open(currentAuthor.wikipedia_url, '_blank');
+                }}
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Learn More
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
