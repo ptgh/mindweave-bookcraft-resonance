@@ -328,8 +328,8 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
             </div>
           )}
 
-          {/* External Link - Only show if Wikipedia URL exists */}
-          {currentAuthor.wikipedia_url && (
+          {/* External Link - Only show if Wikipedia URL exists OR show alternative button */}
+          {currentAuthor.wikipedia_url ? (
             <Button
               variant="outline"
               size="sm"
@@ -340,6 +340,16 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
             >
               <ExternalLink className="w-4 h-4 mr-2" />
               Learn More
+            </Button>
+          ) : currentAuthor.bio && !isEnriching && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full bg-purple-500/10 border-purple-400/30 text-purple-300 hover:bg-purple-500/20 transition-all duration-300"
+              onClick={handleEnrichment}
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Find More Sources
             </Button>
           )}
         </CardContent>

@@ -91,11 +91,12 @@ const findBestMatch = (results: any[], targetTitle: string, targetAuthor: string
     
     console.log(`    Title: ${titleScore.toFixed(2)}, Author: ${authorScore.toFixed(2)}`);
     
-    // Combined score - weight title MUCH more heavily since it's more specific
+    // Combined score - weight title heavily but REQUIRE good author match
     const combinedScore = (titleScore * 0.85) + (authorScore * 0.15);
     
-    // Require strong title match (0.7+) and decent author match (0.3+)
-    if (titleScore >= 0.7 && authorScore >= 0.3 && combinedScore > bestScore) {
+    // Require strong title match (0.7+) AND strong author match (0.5+) to prevent wrong books
+    // This ensures we don't match "Metamorphosis and Place" by Mohamed Bakari with "Metamorphosis" by James Blaylock
+    if (titleScore >= 0.7 && authorScore >= 0.5 && combinedScore > bestScore) {
       bestScore = combinedScore;
       bestMatch = result;
       console.log(`    ✅ New best match! Score: ${combinedScore.toFixed(2)}`);
