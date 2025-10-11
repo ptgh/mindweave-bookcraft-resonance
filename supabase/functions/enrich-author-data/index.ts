@@ -33,6 +33,16 @@ serve(async (req) => {
     
     console.log('Environment check - URL exists:', !!supabaseUrl, 'Key exists:', !!serviceRoleKey);
     
+    // Optional: target a specific authorId for faster UX
+    let targetAuthorId: string | null = null;
+    try {
+      const body = await req.json();
+      targetAuthorId = body?.authorId ?? null;
+      if (targetAuthorId) console.log('Targeting specific authorId:', targetAuthorId);
+    } catch (_e) {
+      // no body provided; process general queue
+    }
+    
     if (!supabaseUrl || !serviceRoleKey) {
       console.error('Missing Supabase environment variables');
       throw new Error('Missing Supabase environment variables');

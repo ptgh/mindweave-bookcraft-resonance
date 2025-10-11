@@ -82,12 +82,12 @@ export const queueAuthorForEnrichment = async (authorId: string): Promise<void> 
   }
 };
 
-export const triggerEnrichmentJob = async (): Promise<{ success: boolean; message: string; results?: any }> => {
-  console.log('Triggering author enrichment job...');
+export const triggerEnrichmentJob = async (authorId?: string): Promise<{ success: boolean; message: string; results?: any }> => {
+  console.log('Triggering author enrichment job...', authorId ? `(authorId: ${authorId})` : '');
   
   try {
     const { data, error } = await supabase.functions.invoke('enrich-author-data', {
-      body: {}
+      body: authorId ? { authorId } : {}
     });
     
     if (error) {

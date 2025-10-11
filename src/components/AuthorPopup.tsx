@@ -30,6 +30,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
   const [currentAuthor, setCurrentAuthor] = useState<ScifiAuthor | null>(author);
   const [isEnriching, setIsEnriching] = useState(false);
   const [enrichmentStatus, setEnrichmentStatus] = useState<string>('');
+  const [fallbackWorks, setFallbackWorks] = useState<string[]>([]);
 
   // Update current author when prop changes
   useEffect(() => {
@@ -69,6 +70,30 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
       supabase.removeChannel(channel);
     };
   }, [currentAuthor?.id, onAuthorUpdate]);
+  
+  // Load fallback notable works from transmissions if needed
+  useEffect(() => {
+    const loadFallback = async () => {
+      if (!currentAuthor?.id) return;
+      const hasWorks = currentAuthor?.notable_works && currentAuthor.notable_works.length > 0;
+      if (hasWorks) {
+        setFallbackWorks([]);
+        return;
+      }
+      try {
+        const { data } = await supabase
+          .from('transmissions')
+          .select('title')
+          .ilike('author', `%${currentAuthor.name}%`)
+          .limit(5);
+        const titles = Array.from(new Set((data || []).map((d: any) => d.title).filter(Boolean)));
+        setFallbackWorks(titles as string[]);
+      } catch (e) {
+        console.warn('Failed loading fallback works:', e);
+      }
+    };
+    loadFallback();
+  }, [currentAuthor?.id, currentAuthor?.name, currentAuthor?.notable_works]);
 
   // GSAP animation for popup
   useEffect(() => {
@@ -181,7 +206,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
         triggerCount++;
         console.log(`Triggering enrichment job (attempt ${triggerCount})...`);
         try {
-          await triggerEnrichmentJob();
+          await triggerEnrichmentJob(currentAuthor.id);
           setEnrichmentStatus('processing');
         } catch (e) {
           console.error('Trigger error:', e);
@@ -319,26 +344,28 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
           </div>
 
           {/* Notable Works */}
-          {currentAuthor.notable_works && currentAuthor.notable_works.length > 0 && (
+          {(currentAuthor.notable_works && currentAuthor.notable_works.length > 0) || fallbackWorks.length > 0 ? (
             <div className="bg-slate-800/70 rounded-lg p-4 border border-slate-700/50 max-h-48 overflow-y-auto scrollbar-hide">
               <div className="flex items-center gap-2 mb-2">
                 <BookOpen className="w-4 h-4 text-blue-400" />
                 <span className="text-sm font-medium text-blue-300">Notable Works</span>
               </div>
               <div className="space-y-1">
-                {currentAuthor.notable_works.slice(0, 4).map((work, index) => (
-                  <div key={index} className="text-sm text-slate-300">
-                    • {work}
-                  </div>
-                ))}
-                {currentAuthor.notable_works.length > 4 && (
+                {(currentAuthor.notable_works && currentAuthor.notable_works.length > 0 ? currentAuthor.notable_works : fallbackWorks)
+                  .slice(0, 4)
+                  .map((work, index) => (
+                    <div key={index} className="text-sm text-slate-300">
+                      • {work}
+                    </div>
+                  ))}
+                {((currentAuthor.notable_works?.length || fallbackWorks.length) > 4) && (
                   <div className="text-sm text-slate-400 italic">
-                    ...and {currentAuthor.notable_works.length - 4} more works
+                    ...and {(currentAuthor.notable_works?.length || fallbackWorks.length) - 4} more works
                   </div>
                 )}
               </div>
             </div>
-          )}
+          ) : null}
 
           {/* Data Source Info */}
           {currentAuthor.data_source && (
@@ -353,21 +380,20 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
           )}
 
           {/* External Links */}
-          {currentAuthor.wikipedia_url && (
-            <div className="grid grid-cols-1 gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full bg-blue-500/10 border-blue-400/30 text-blue-300 hover:bg-blue-500/20 transition-all duration-300"
-                onClick={() => {
-                  window.open(currentAuthor.wikipedia_url, '_blank');
-                }}
-              >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Learn More
-              </Button>
-            </div>
-          )}
+          <div className="grid grid-cols-1 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full bg-blue-500/10 border-blue-400/30 text-blue-300 hover:bg-blue-500/20 transition-all duration-300"
+              onClick={() => {
+                const wikiUrl = currentAuthor.wikipedia_url || `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(currentAuthor.name)}`;
+                window.open(wikiUrl, '_blank');
+              }}
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Learn More
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
