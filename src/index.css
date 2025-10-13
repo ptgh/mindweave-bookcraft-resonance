@@ -220,3 +220,27 @@
     color: color(display-p3 0.8 0.85 0.96);
   }
 }
+
+/* Safe area insets for iOS */
+@layer utilities {
+  .safe-area-inset {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .pb-safe {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Prevent iOS zoom on input focus */
+input[type="text"],
+textarea {
+  font-size: 16px !important;
+}
+
+@media (min-width: 768px) {
+  input[type="text"],
+  textarea {
+    font-size: 0.75rem !important;
+  }
+}

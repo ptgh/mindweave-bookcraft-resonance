@@ -87,10 +87,17 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Focus input when opened
+  // Focus input when opened (only on desktop, not mobile)
   useEffect(() => {
     if (isOpen && inputRef.current) {
-      inputRef.current.focus();
+      // Check if it's a mobile device
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (!isMobile) {
+        // Small delay to ensure animation completes
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 300);
+      }
     }
   }, [isOpen]);
 
@@ -379,9 +386,9 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
   }
 
   return (
-    <div className="fixed bottom-20 right-12 z-30 w-96 h-[600px] flex flex-col">
+    <div className="fixed bottom-20 right-4 md:right-12 z-30 w-[calc(100vw-2rem)] md:w-96 h-[calc(100vh-10rem)] md:h-[600px] flex flex-col animate-slide-up">
       
-      <Card className="bg-slate-900/60 border-slate-700/30 backdrop-blur-lg h-full flex flex-col shadow-2xl shadow-slate-900/20">
+      <Card className="bg-slate-900/95 md:bg-slate-900/60 border-slate-700/30 backdrop-blur-lg h-full flex flex-col shadow-2xl shadow-slate-900/20 safe-area-inset">
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b border-slate-700/30 bg-slate-800/40">
           <div className="flex items-center gap-2">
@@ -477,7 +484,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         </div>
 
         {/* Input */}
-        <div className="p-3 border-t border-slate-700/30 bg-slate-800/40">
+        <div className="p-3 pb-safe border-t border-slate-700/30 bg-slate-800/40">
           <div className="flex gap-2">
             <input
               ref={inputRef}
@@ -486,8 +493,12 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
               onChange={(e) => setInputText(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Ask about your reading network..."
-              className="flex-1 bg-slate-900/50 border border-slate-700/40 rounded-lg px-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-400/50 focus:ring-1 focus:ring-cyan-400/50"
+              className="flex-1 bg-slate-900/50 border border-slate-700/40 rounded-lg px-3 py-2 text-xs md:text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-400/50 focus:ring-1 focus:ring-cyan-400/50 touch-manipulation"
               disabled={isLoading}
+              inputMode="text"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="sentences"
             />
             <Button
               onClick={handleSendMessage}
