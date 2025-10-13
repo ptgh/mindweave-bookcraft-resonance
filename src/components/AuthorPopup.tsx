@@ -427,7 +427,9 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
               size="sm"
               className="w-full bg-blue-500/10 border-blue-400/30 text-blue-300 hover:bg-blue-500/20 transition-all duration-300"
               onClick={() => {
-                const wikiUrl = currentAuthor.wikipedia_url || `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(currentAuthor.name)}`;
+                // Try to construct direct Wikipedia URL, fallback to stored URL or search
+                const wikiUrl = currentAuthor.wikipedia_url || 
+                  `https://en.wikipedia.org/wiki/${encodeURIComponent(currentAuthor.name.replace(/ /g, '_'))}`;
                 window.open(wikiUrl, '_blank');
               }}
             >

@@ -25,40 +25,40 @@ const NeuralMapHeader = ({
 }: NeuralMapHeaderProps) => {
   return (
     <>
-      {/* Consolidated Footer Bar */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-slate-900/50 backdrop-blur-lg border border-slate-700/20 rounded-full px-4 py-2 shadow-2xl max-w-7xl">
-        <div className="flex items-center gap-4">
-          {/* Consciousness Network Title */}
-          <div className="flex items-center gap-2 px-2 border-r border-slate-700/30">
+      {/* Consolidated Footer Bar - Mobile Responsive */}
+      <div className="fixed bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 z-40 bg-slate-900/60 backdrop-blur-lg border border-slate-700/30 rounded-full px-2 sm:px-4 py-1.5 sm:py-2 shadow-2xl shadow-slate-900/20 max-w-[95vw] sm:max-w-7xl">
+        <div className="flex items-center gap-2 sm:gap-4 flex-wrap sm:flex-nowrap justify-center">
+          {/* Consciousness Network Title - Hidden on mobile */}
+          <div className="hidden sm:flex items-center gap-2 px-2 border-r border-slate-700/30">
             <h1 className="text-[11px] font-light text-slate-300 tracking-wide whitespace-nowrap">
               Consciousness Network
             </h1>
           </div>
 
-          {/* Statistics */}
-          <div className="flex items-center gap-3 px-2 border-r border-slate-700/30">
-            <div className="flex items-center gap-1">
+          {/* Statistics - Compact on mobile */}
+          <div className="flex items-center gap-1.5 sm:gap-3 px-1 sm:px-2 border-r border-slate-700/30">
+            <div className="flex items-center gap-0.5 sm:gap-1">
               <div className="w-1 h-1 bg-cyan-400 rounded-full animate-pulse"></div>
-              <span className="text-slate-400 text-[9px]">Signals</span>
-              <span className="text-slate-200 text-[10px] font-semibold">{nodeCount}</span>
+              <span className="text-slate-400 text-[8px] sm:text-[9px] hidden sm:inline">Signals</span>
+              <span className="text-slate-200 text-[9px] sm:text-[10px] font-semibold">{nodeCount}</span>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5 sm:gap-1">
               <div className="w-1 h-1 bg-cyan-400/50 rounded-full animate-pulse"></div>
-              <span className="text-slate-400 text-[9px]">Links</span>
-              <span className="text-slate-200 text-[10px] font-semibold">{linkCount}</span>
+              <span className="text-slate-400 text-[8px] sm:text-[9px] hidden sm:inline">Links</span>
+              <span className="text-slate-200 text-[9px] sm:text-[10px] font-semibold">{linkCount}</span>
             </div>
           </div>
 
-          {/* Theme Filters */}
+          {/* Theme Filters - Scrollable on mobile */}
           {allTags.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-slate-400 text-[9px] font-medium tracking-wide whitespace-nowrap">THEMES</span>
-              <div className="flex flex-wrap gap-1 max-w-4xl">
+            <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
+              <span className="text-slate-400 text-[8px] sm:text-[9px] font-medium tracking-wide whitespace-nowrap hidden sm:inline">THEMES</span>
+              <div className="flex flex-wrap sm:flex-nowrap gap-1 max-w-full overflow-x-auto scrollbar-hide">
                 {allTags.map(tag => (
                   <Badge
                     key={tag}
                     variant={activeFilters.includes(tag) ? "default" : "outline"}
-                    className={`cursor-pointer text-[9px] px-2 py-0 h-5 transition-all ${
+                    className={`cursor-pointer text-[8px] sm:text-[9px] px-1.5 sm:px-2 py-0 h-4 sm:h-5 transition-all flex-shrink-0 ${
                       activeFilters.includes(tag) 
                         ? 'bg-slate-700/40 text-slate-200 border-slate-600/50 hover:bg-slate-700/60' 
                         : 'border-slate-600/40 text-slate-400 hover:border-cyan-400/60 hover:text-cyan-300 hover:bg-slate-800/30'
@@ -72,7 +72,7 @@ const NeuralMapHeader = ({
               {activeFilters.length > 0 && (
                 <button
                   onClick={onClearFilters}
-                  className="text-[8px] text-cyan-400 hover:text-cyan-300 transition-colors px-1.5 py-0.5 bg-cyan-400/10 rounded-full ml-1 whitespace-nowrap"
+                  className="text-[7px] sm:text-[8px] text-cyan-400 hover:text-cyan-300 transition-colors px-1 sm:px-1.5 py-0.5 bg-cyan-400/10 rounded-full whitespace-nowrap flex-shrink-0"
                 >
                   Clear
                 </button>
