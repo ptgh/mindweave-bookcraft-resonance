@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { useToast } from './use-toast';
+import { useEnhancedToast } from './use-enhanced-toast';
 
 export interface ReadingSession {
   id: string;
@@ -29,7 +29,7 @@ export interface ReadingStats {
 
 export const useReadingSessions = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
+  const { toast } = useEnhancedToast();
   const [sessions, setSessions] = useState<ReadingSession[]>([]);
   const [activeSession, setActiveSession] = useState<ReadingSession | null>(null);
   const [stats, setStats] = useState<ReadingStats | null>(null);
@@ -228,6 +228,7 @@ export const useReadingSessions = () => {
       toast({
         title: "Reading session started",
         description: `Started reading "${bookTitle}"`,
+        variant: "success"
       });
 
       return data.id;
@@ -271,6 +272,7 @@ export const useReadingSessions = () => {
       toast({
         title: "Reading session ended",
         description: `Recorded ${pagesRead} pages read.`,
+        variant: "success"
       });
 
       return true;
@@ -331,6 +333,7 @@ export const useReadingSessions = () => {
       toast({
         title: "Session deleted",
         description: "Reading session has been deleted.",
+        variant: "success"
       });
 
       return true;

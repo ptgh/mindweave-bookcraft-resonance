@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
-import { useToast } from "@/hooks/use-toast";
+import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { useAuth } from "@/hooks/useAuth";
 import EmptyState from "@/components/EmptyState";
 import EnhancedBookPreviewModal from "@/components/EnhancedBookPreviewModal";
@@ -31,7 +31,7 @@ const PublisherResonance = () => {
   const [publisherSeries, setPublisherSeries] = useState<PublisherSeries[]>([]);
   const [books, setBooks] = useState<EnrichedPublisherBook[]>([]);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const { toast } = useEnhancedToast();
   const { user, loading: authLoading } = useAuth();
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
 
@@ -118,6 +118,7 @@ const PublisherResonance = () => {
     toast({
       title: "Signal Added",
       description: `"${book.title}" has been added to your transmissions.`,
+      variant: "success"
     });
     setShowPreviewModal(false);
   }, [toast]);

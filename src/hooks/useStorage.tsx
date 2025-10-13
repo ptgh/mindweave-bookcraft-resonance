@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { useToast } from './use-toast';
+import { useEnhancedToast } from './use-enhanced-toast';
 
 export const useStorage = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
+  const { toast } = useEnhancedToast();
   const [uploading, setUploading] = useState(false);
 
   const uploadAvatar = async (file: File): Promise<string | null> => {
@@ -41,6 +41,7 @@ export const useStorage = () => {
       toast({
         title: "Avatar uploaded",
         description: "Your avatar has been successfully uploaded.",
+        variant: "success"
       });
 
       return data.publicUrl;
@@ -123,6 +124,7 @@ export const useStorage = () => {
       toast({
         title: "File uploaded",
         description: "Your file has been successfully uploaded.",
+        variant: "success"
       });
 
       return data.publicUrl;
@@ -152,6 +154,7 @@ export const useStorage = () => {
       toast({
         title: "File deleted",
         description: "File has been successfully deleted.",
+        variant: "success"
       });
 
       return true;

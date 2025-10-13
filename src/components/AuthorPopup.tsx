@@ -8,7 +8,7 @@ import { User, BookOpen, Calendar, X, ExternalLink, CheckCircle, Clock, AlertTri
 import { ScifiAuthor } from '@/services/scifiAuthorsService';
 import { supabase } from '@/integrations/supabase/client';
 import { queueAuthorForEnrichment, triggerEnrichmentJob, checkEnrichmentStatus } from '@/services/authorEnrichmentService';
-import { useToast } from '@/hooks/use-toast';
+import { useEnhancedToast } from '@/hooks/use-enhanced-toast';
 
 interface AuthorPopupProps {
   author: ScifiAuthor | null;
@@ -32,7 +32,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
   const [isEnriching, setIsEnriching] = useState(false);
   const [enrichmentStatus, setEnrichmentStatus] = useState<string>('');
   const [fallbackWorks, setFallbackWorks] = useState<string[]>([]);
-  const { toast } = useToast();
+  const { toast } = useEnhancedToast();
 
   // Update current author when prop changes
   useEffect(() => {
@@ -66,6 +66,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
             toast({
               title: "Enrichment Complete",
               description: "Author data has been successfully updated.",
+              variant: "success"
             });
           }
         }
@@ -254,6 +255,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
             toast({
               title: "Enrichment Complete",
               description: "Author data successfully updated!",
+              variant: "success"
             });
           } else if (status?.status === 'failed') {
             clearInterval(checkInterval);

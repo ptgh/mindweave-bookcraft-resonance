@@ -1,5 +1,4 @@
 
-import { Toaster } from "@/components/ui/toaster";
 import { EnhancedToaster } from "@/components/ui/enhanced-toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -68,7 +67,6 @@ const AppRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
       <EnhancedToaster />
       <Sonner />
       <BrowserRouter>

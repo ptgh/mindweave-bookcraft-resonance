@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { getScifiAuthors, getAuthorBooks, ScifiAuthor, AuthorBook } from "@/services/scifiAuthorsService";
 import { saveTransmission } from "@/services/transmissionsService";
 import { SearchResult } from "@/services/searchService";
@@ -21,7 +21,7 @@ export const useAuthorMatrix = () => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [highlightedAuthorId, setHighlightedAuthorId] = useState<string | null>(null);
-  const { toast } = useToast();
+  const { toast } = useEnhancedToast();
 
   const totalPages = useMemo(() => Math.ceil(authors.length / AUTHORS_PER_PAGE), [authors.length]);
   const paginatedAuthors = useMemo(() => 
@@ -184,6 +184,7 @@ export const useAuthorMatrix = () => {
       toast({
         title: "Signal Logged",
         description: `"${book.title}" has been added to your transmissions.`,
+        variant: "success"
       });
     } catch (error: any) {
       toast({

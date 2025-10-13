@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
+import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { 
   getEnrichmentStats, 
   bulkProcessAllPending 
@@ -11,7 +11,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PlayCircle, RefreshCw, CheckCircle, XCircle, Clock } from "lucide-react";
 
 export const AdminEnrichmentPanel = () => {
-  const { toast } = useToast();
+  const { toast } = useEnhancedToast();
   const queryClient = useQueryClient();
   const [progress, setProgress] = useState({ current: 0, total: 0 });
 
@@ -31,6 +31,7 @@ export const AdminEnrichmentPanel = () => {
       toast({
         title: "Bulk Processing Complete",
         description: `Processed ${result.processed} authors. ${result.successful} successful, ${result.failed} failed.`,
+        variant: "success"
       });
       queryClient.invalidateQueries({ queryKey: ['enrichment-stats'] });
       setProgress({ current: 0, total: 0 });

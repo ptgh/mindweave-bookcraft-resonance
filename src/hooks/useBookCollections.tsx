@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { useToast } from './use-toast';
+import { useEnhancedToast } from './use-enhanced-toast';
 
 export interface BookCollection {
   id: string;
@@ -32,7 +32,7 @@ export interface CollectionWithBooks extends BookCollection {
 
 export const useBookCollections = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
+  const { toast } = useEnhancedToast();
   const [collections, setCollections] = useState<CollectionWithBooks[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -147,6 +147,7 @@ export const useBookCollections = () => {
       toast({
         title: "Collection created",
         description: `"${name}" has been created successfully.`,
+        variant: "success"
       });
 
       return data.id;
@@ -182,6 +183,7 @@ export const useBookCollections = () => {
       toast({
         title: "Collection updated",
         description: "Your collection has been updated successfully.",
+        variant: "success"
       });
 
       return true;
@@ -211,6 +213,7 @@ export const useBookCollections = () => {
       toast({
         title: "Collection deleted",
         description: "The collection has been deleted successfully.",
+        variant: "success"
       });
 
       return true;
@@ -254,6 +257,7 @@ export const useBookCollections = () => {
       toast({
         title: "Book added to collection",
         description: `"${book.title}" has been added to your collection.`,
+        variant: "success"
       });
 
       return true;
@@ -282,6 +286,7 @@ export const useBookCollections = () => {
       toast({
         title: "Book removed",
         description: "The book has been removed from your collection.",
+        variant: "success"
       });
 
       return true;

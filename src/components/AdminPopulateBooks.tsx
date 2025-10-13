@@ -2,13 +2,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { Loader2, Database, CheckCircle2 } from "lucide-react";
 
 export const AdminPopulateBooks = () => {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<any>(null);
-  const { toast } = useToast();
+  const { toast } = useEnhancedToast();
 
   const handlePopulate = async () => {
     setLoading(true);
@@ -30,6 +30,7 @@ export const AdminPopulateBooks = () => {
         title: "Population complete!",
         description: `Added ${data.stats.booksAdded} books. Skipped ${data.stats.booksSkipped} duplicates.`,
         duration: 5000,
+        variant: "success"
       });
     } catch (error: any) {
       console.error('Error populating books:', error);

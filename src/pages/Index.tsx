@@ -8,7 +8,7 @@ import AuthWrapper from "@/components/AuthWrapper";
 import TransmissionsList from "@/components/TransmissionsList";
 import Auth from "./Auth";
 import { StandardButton } from "@/components/ui/standard-button";
-import { useToast } from "@/hooks/use-toast";
+import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { getTransmissions, saveTransmission, updateTransmission, deleteTransmission, Transmission } from "@/services/transmissionsService";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
@@ -35,7 +35,7 @@ const Index = () => {
     author: "Awaiting Transmission"
   }), []);
 
-  const { toast } = useToast();
+  const { toast } = useEnhancedToast();
   const { user, loading: authLoading } = useAuth();
 const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
   const navigate = useNavigate();
@@ -108,12 +108,14 @@ const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations
         toast({
           title: "Signal Updated",
           description: "Your transmission has been successfully modified.",
+          variant: "success"
         });
       } else {
         await saveTransmission(enriched);
         toast({
           title: "Signal Logged",
           description: "New transmission added to your consciousness record.",
+          variant: "success"
         });
       }
       await loadTransmissions();
@@ -158,6 +160,7 @@ const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations
       toast({
         title: "Signal Discarded",
         description: `"${book.title}" has been removed from your transmissions.`,
+        variant: "success"
       });
     } catch (error: any) {
       console.error('Error deleting transmission:', error);

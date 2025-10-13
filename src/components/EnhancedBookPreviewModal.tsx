@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { EnrichedPublisherBook } from "@/services/publisherService";
 import { AppleBook, searchAppleBooks, generateAppleBooksWebUrl, generateAppleBooksDeepLink, canOpenAppleBooksApp } from "@/services/appleBooks";
 import { searchGoogleBooks } from "@/services/googleBooks";
-import { useToast } from "@/hooks/use-toast";
+import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { searchFreeEbooks, EbookSearchResult } from "@/services/freeEbookService";
 import { gsap } from "gsap";
 import { analyticsService } from "@/services/analyticsService";
@@ -23,7 +23,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   const [freeEbooks, setFreeEbooks] = useState<EbookSearchResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
+  const { toast } = useEnhancedToast();
   const digitalCopyButtonRef = useRef<HTMLButtonElement>(null);
 
   // GSAP hover animations for digital copy button

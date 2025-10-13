@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { searchBooksEnhanced, EnhancedBookSuggestion } from "@/services/googleBooksApi";
 import { saveTransmission } from "@/services/transmissionsService";
 import { searchAppleBooks } from "@/services/appleBooks";
@@ -15,7 +15,7 @@ export const useBookBrowser = () => {
   const [visibleBooks, setVisibleBooks] = useState<Set<number>>(new Set());
   const [previouslyShownBooks, setPreviouslyShownBooks] = useState<Set<string>>(new Set());
   const [rotationCount, setRotationCount] = useState(0);
-  const { toast } = useToast();
+  const { toast } = useEnhancedToast();
 
   // Highly specific sci-fi searches for accurate titles and covers
   const searchTerms = useMemo(() => [
@@ -143,6 +143,7 @@ export const useBookBrowser = () => {
             toast({
               title: "Refreshing Collection",
               description: "Cleared viewing history to show fresh sci-fi recommendations.",
+              variant: "success"
             });
             // Trigger reload after clearing
             setTimeout(() => {
@@ -204,6 +205,7 @@ export const useBookBrowser = () => {
       toast({
         title: "Signal Logged",
         description: `"${book.title}" has been added to your transmissions.`,
+        variant: "success"
       });
     } catch (error: any) {
       console.error('Error adding to transmissions:', error);

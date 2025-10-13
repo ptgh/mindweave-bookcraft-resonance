@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import AuthForm from "@/components/AuthForm";
 import EmailConfirmationView from "@/components/EmailConfirmationView";
 import StatusIndicator from "@/components/StatusIndicator";
@@ -15,7 +15,7 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
-  const { toast } = useToast();
+  const { toast } = useEnhancedToast();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +48,7 @@ const Auth = () => {
           toast({
             title: "Confirmation email sent",
             description: "Please check your email and click the confirmation link to complete your registration.",
+            variant: "success"
           });
         }
       } else {
@@ -109,6 +110,7 @@ const Auth = () => {
       toast({
         title: "Confirmation email resent",
         description: "Please check your email for the new confirmation link.",
+        variant: "success"
       });
     } catch (error: any) {
       toast({

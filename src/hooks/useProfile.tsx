@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { useToast } from './use-toast';
+import { useEnhancedToast } from './use-enhanced-toast';
 
 export interface UserProfile {
   id: string;
@@ -34,7 +34,7 @@ export interface UserRole {
 
 export const useProfile = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
+  const { toast } = useEnhancedToast();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
@@ -144,6 +144,7 @@ export const useProfile = () => {
       toast({
         title: "Profile updated",
         description: "Your profile has been successfully updated.",
+        variant: "success"
       });
 
       // Optimistically update local state

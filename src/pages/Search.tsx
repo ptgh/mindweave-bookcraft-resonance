@@ -6,13 +6,13 @@ import SearchResults from "@/components/SearchResults";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
 import { SearchResult } from "@/services/searchService";
-import { useToast } from "@/hooks/use-toast";
+import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 
 const Search = () => {
   const [results, setResults] = useState<SearchResult[]>([]);
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast } = useEnhancedToast();
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
 
   const handleSelectResult = (result: SearchResult) => {
