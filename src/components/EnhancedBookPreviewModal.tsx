@@ -26,6 +26,24 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   const { toast } = useEnhancedToast();
   const digitalCopyButtonRef = useRef<HTMLButtonElement>(null);
 
+  // Prevent background scroll when modal is open (mobile Safari safe)
+  useEffect(() => {
+    const body = document.body;
+    const scrollY = window.scrollY;
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.width = '100%';
+    body.style.overflow = 'hidden';
+
+    return () => {
+      body.style.position = '';
+      body.style.top = '';
+      body.style.width = '';
+      body.style.overflow = '';
+      window.scrollTo(0, scrollY);
+    };
+  }, []);
+
   // GSAP hover animations for digital copy button
   useEffect(() => {
     const button = digitalCopyButtonRef.current;
@@ -342,7 +360,12 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   const hasDigitalCopy = !!(appleBook || freeEbooks?.archive?.url || freeEbooks?.gutenberg?.url);
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" style={{ overflow: 'hidden' }}>
+    <div
+      className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/50 backdrop-blur-sm overscroll-none"
+      style={{ height: '100dvh', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="bg-slate-800/50 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl flex flex-col" style={{ maxHeight: 'min(90vh, calc(100dvh - 2rem))' }}>
         <div className="overflow-y-auto scrollbar-hide flex-1">
         {/* Header */}
