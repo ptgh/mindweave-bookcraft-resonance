@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
 import { ChronoTimeline } from "@/components/ChronoTimeline";
-import { Button } from "@/components/ui/button";
+import GSAPButtonGroup from "@/components/GSAPButtonGroup";
 import { Calendar, Clock, BookOpen, TrendingUp, Brain } from "lucide-react";
 import { getTransmissions } from "@/services/transmissionsService";
 
@@ -105,21 +105,15 @@ const ThreadMap = () => {
 
           <div className="mb-6 flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
             <span className="text-slate-300 text-sm">Temporal Scope:</span>
-            <div className="flex space-x-2">
-              {(['month', 'year', 'all'] as const).map((period) => (
-                <button
-                  key={period}
-                  onClick={() => setTimeframe(period)}
-                  className={`bg-transparent border text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-200 flex items-center space-x-1 ${
-                    timeframe === period 
-                      ? "border-[#89b4fa] text-[#89b4fa] shadow-[0_0_10px_rgba(137,180,250,0.3)]" 
-                      : "border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)]"
-                  }`}
-                >
-                  <span>{period === 'all' ? 'All Time' : period.charAt(0).toUpperCase() + period.slice(1)}</span>
-                </button>
-              ))}
-            </div>
+            <GSAPButtonGroup
+              buttons={[
+                { id: 'month', label: 'Month' },
+                { id: 'year', label: 'Year' },
+                { id: 'all', label: 'All Time' }
+              ]}
+              selected={timeframe}
+              onSelect={(id) => setTimeframe(id as 'month' | 'year' | 'all')}
+            />
           </div>
 
           <div className="grid gap-8 xl:grid-cols-3">

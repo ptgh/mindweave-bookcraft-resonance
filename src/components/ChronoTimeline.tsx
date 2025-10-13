@@ -3,6 +3,7 @@ import { gsap } from 'gsap';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import GSAPButtonGroup from '@/components/GSAPButtonGroup';
 import { ChevronDown, ChevronUp, User, BookOpen, Globe, Tag, Calendar, Clock, TrendingUp, RefreshCw, Sparkles } from 'lucide-react';
 import { Transmission } from '@/services/transmissionsService';
 import { getTransmissions } from '@/services/transmissionsService';
@@ -452,57 +453,38 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
     <div className="space-y-8">
       {/* Controls */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-slate-800/30 p-4 rounded-lg border border-slate-600/30">
-        <div className="flex flex-wrap gap-2">
-          <Button
-            onClick={() => setViewMode('publication')}
-            variant={viewMode === 'publication' ? 'default' : 'ghost'}
-            size="sm"
-            className="text-slate-300 hover:text-white hover:bg-slate-700"
-          >
-            Publication
-          </Button>
-          <Button
-            onClick={() => setViewMode('narrative')}
-            variant={viewMode === 'narrative' ? 'default' : 'ghost'}
-            size="sm"
-            className="text-slate-300 hover:text-white hover:bg-slate-700"
-          >
-            Narrative
-          </Button>
-          <Button
-            onClick={() => setViewMode('reading')}
-            variant={viewMode === 'reading' ? 'default' : 'ghost'}
-            size="sm"
-            className="text-slate-300 hover:text-white hover:bg-slate-700"
-          >
-            Reading
-          </Button>
-          <Button 
-            onClick={enrichTimelineData}
-            disabled={isEnriching}
-            size="sm"
-            className="bg-amber-600 hover:bg-amber-700 text-white border-amber-600"
-          >
-            {isEnriching ? 'Enhancing...' : 'Enhance Data'}
-          </Button>
-        </div>
+        <GSAPButtonGroup
+          buttons={[
+            { id: 'publication', label: 'Publication' },
+            { id: 'narrative', label: 'Narrative' },
+            { id: 'reading', label: 'Reading' },
+            { 
+              id: 'enhance', 
+              label: isEnriching ? 'Enhancing...' : 'Enhance Data',
+              icon: isEnriching ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />
+            }
+          ]}
+          selected={viewMode === 'publication' ? 'publication' : viewMode === 'narrative' ? 'narrative' : viewMode === 'reading' ? 'reading' : 'publication'}
+          onSelect={(id) => {
+            if (id === 'enhance') {
+              enrichTimelineData();
+            } else {
+              setViewMode(id as 'publication' | 'narrative' | 'reading');
+            }
+          }}
+          disabled={isEnriching}
+        />
 
         <div className="flex items-center gap-4 text-sm">
           <span className="text-slate-400">Temporal Scope:</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-slate-300 hover:text-white px-2 py-1 h-auto"
-          >
-            Year
-          </Button>
-          <Button
-            variant="ghost" 
-            size="sm"
-            className="text-slate-300 hover:text-white px-2 py-1 h-auto"
-          >
-            All Time
-          </Button>
+          <GSAPButtonGroup
+            buttons={[
+              { id: 'year', label: 'Year' },
+              { id: 'all', label: 'All Time' }
+            ]}
+            selected="year"
+            onSelect={(id) => console.log('Temporal scope:', id)}
+          />
         </div>
       </div>
       
