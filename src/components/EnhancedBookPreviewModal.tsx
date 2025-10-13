@@ -342,8 +342,9 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   const hasDigitalCopy = !!(appleBook || freeEbooks?.archive?.url || freeEbooks?.gutenberg?.url);
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-800/50 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto scrollbar-hide">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-slate-800/50 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl overflow-hidden my-auto" style={{ maxHeight: 'calc(100dvh - 2rem)' }}>
+        <div className="overflow-y-auto scrollbar-hide" style={{ maxHeight: 'calc(100dvh - 2rem)' }}>
         {/* Header */}
         <div className="p-3 border-b border-slate-700">
           <div className="flex items-center justify-between">
@@ -514,6 +515,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
             <Plus className="w-3 h-3 mr-2" />
             Add Signal
           </button>
+        </div>
         </div>
       </div>
     </div>
