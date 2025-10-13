@@ -1004,31 +1004,70 @@ const TestBrain = () => {
 
         {tooltip && (
           <div 
-            className="absolute z-30 pointer-events-none"
+            className="absolute z-30 pointer-events-none animate-[float_4s_ease-in-out_infinite]"
             style={{ 
               left: tooltip.x - 100, 
               top: tooltip.y,
-              transform: 'translateX(-50%)'
+              transform: 'translateX(-50%)',
+              animation: 'float 4s ease-in-out infinite'
             }}
           >
-            <div className="bg-slate-900/60 backdrop-blur-lg border border-slate-700/30 rounded-lg p-4 max-w-xs shadow-2xl shadow-slate-900/20">
-              <div className="flex items-start space-x-4">
-                {tooltip.node.coverUrl && (
-                  <div className="w-12 h-16 bg-slate-700 rounded border border-slate-600 overflow-hidden flex-shrink-0">
-                    <img 
-                      src={tooltip.node.coverUrl} 
-                      alt={tooltip.node.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
+            {/* Energy particles */}
+            <div className="absolute -inset-8 pointer-events-none">
+              <div className="absolute top-0 left-1/4 w-1 h-1 bg-cyan-400 rounded-full animate-[ping_3s_ease-in-out_infinite]" style={{ animationDelay: '0s' }}></div>
+              <div className="absolute top-1/3 right-1/4 w-1 h-1 bg-blue-400 rounded-full animate-[ping_3s_ease-in-out_infinite]" style={{ animationDelay: '1s' }}></div>
+              <div className="absolute bottom-1/4 left-1/3 w-1 h-1 bg-cyan-300 rounded-full animate-[ping_3s_ease-in-out_infinite]" style={{ animationDelay: '2s' }}></div>
+            </div>
+
+            {/* Main card with holographic glass effect */}
+            <div className="relative group">
+              {/* Animated gradient border glow */}
+              <div className="absolute -inset-[2px] bg-gradient-to-r from-cyan-400/40 via-blue-500/40 to-cyan-400/40 rounded-2xl blur-sm animate-[pulse_3s_ease-in-out_infinite]"></div>
+              
+              {/* Outer glow layer */}
+              <div className="absolute -inset-[4px] bg-cyan-400/10 rounded-2xl blur-md"></div>
+              
+              {/* Card content */}
+              <div className="relative bg-slate-900/10 backdrop-blur-2xl border-2 border-cyan-400/30 rounded-2xl p-4 max-w-xs shadow-[0_0_30px_rgba(34,211,238,0.2),0_0_60px_rgba(34,211,238,0.1)] overflow-hidden">
+                {/* Scan line effect */}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-400/5 to-transparent animate-[slide-down_3s_ease-in-out_infinite] pointer-events-none"></div>
                 
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-cyan-400 text-sm mb-1 leading-tight">{tooltip.node.title}</h4>
-                  <p className="text-xs text-slate-300 mb-2">{tooltip.node.author}</p>
+                {/* Inner glow */}
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/5 via-transparent to-blue-500/5 rounded-2xl"></div>
+                
+                <div className="flex items-start space-x-4 relative">
+                  {tooltip.node.coverUrl && (
+                    <div className="relative w-12 h-16 flex-shrink-0 group/cover">
+                      {/* Cover glow effect */}
+                      <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400/40 to-blue-500/40 rounded-lg blur-md animate-[pulse_2s_ease-in-out_infinite]"></div>
+                      
+                      {/* Cover container with holographic border */}
+                      <div className="relative w-full h-full rounded-lg overflow-hidden border-2 border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.4)]">
+                        <img 
+                          src={tooltip.node.coverUrl} 
+                          alt={tooltip.node.title}
+                          className="w-full h-full object-cover"
+                        />
+                        {/* Shimmer overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-cyan-400/20 to-transparent animate-[shimmer_2s_ease-in-out_infinite]"></div>
+                      </div>
+                    </div>
+                  )}
                   
-                  <div className="text-xs text-cyan-300/70">
-                    {links.filter(link => link.fromId === tooltip.node.id || link.toId === tooltip.node.id).length} connections
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-cyan-300 text-sm mb-1 leading-tight tracking-wide drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
+                      {tooltip.node.title}
+                    </h4>
+                    <p className="text-xs text-cyan-400/60 mb-2 tracking-wider">
+                      {tooltip.node.author}
+                    </p>
+                    
+                    <div className="flex items-center gap-2 text-xs text-cyan-300 animate-pulse">
+                      <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full shadow-[0_0_6px_rgba(34,211,238,0.8)]"></div>
+                      <span className="drop-shadow-[0_0_4px_rgba(34,211,238,0.4)]">
+                        {links.filter(link => link.fromId === tooltip.node.id || link.toId === tooltip.node.id).length} connections
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
