@@ -386,7 +386,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
   }
 
   return (
-    <div className="fixed bottom-20 right-4 md:right-12 z-30 w-[calc(100vw-2rem)] md:w-96 h-[calc(100vh-10rem)] md:h-[600px] flex flex-col animate-slide-up">
+    <div className="fixed top-[13rem] md:top-auto md:bottom-20 right-4 md:right-12 z-30 w-[calc(100vw-2rem)] md:w-96 h-[calc(100vh-14rem)] md:h-[600px] flex flex-col animate-slide-up">
       
       <Card className="bg-slate-900/95 md:bg-slate-900/60 border-slate-700/30 backdrop-blur-lg h-full flex flex-col shadow-2xl shadow-slate-900/20 safe-area-inset">
         {/* Header */}
