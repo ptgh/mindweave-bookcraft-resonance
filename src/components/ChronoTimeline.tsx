@@ -7,9 +7,9 @@ import GSAPButtonGroup from '@/components/GSAPButtonGroup';
 import { ChevronDown, ChevronUp, User, BookOpen, Globe, Tag, Calendar, Clock, TrendingUp, RefreshCw, Sparkles } from 'lucide-react';
 import { Transmission } from '@/services/transmissionsService';
 import { getTransmissions } from '@/services/transmissionsService';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useEnhancedToast } from '@/hooks/use-enhanced-toast';
 import { AuthorPopup } from '@/components/AuthorPopup';
 import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
 import { EnrichedPublisherBook } from '@/services/publisherService';
@@ -53,7 +53,8 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
   const timelineRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const bookTitleRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const { toast } = useToast();
+  const { toast } = useEnhancedToast();
+  const queryClient = useQueryClient();
 
   // Get year based on view mode with better narrative parsing
   function getYearForMode(transmission: Transmission, mode: string): number | null {
@@ -213,6 +214,7 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
       toast({
         title: "Enhancing Timeline Data",
         description: "Using AI to extract publication years, narrative periods, and historical context from book metadata...",
+        variant: "default"
       });
 
       const { data, error } = await supabase.functions.invoke('enrich-timeline-data');
@@ -222,10 +224,11 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
       toast({
         title: "Enhancement Complete",
         description: `Successfully enriched ${data.processed || 0} books with temporal metadata and context.`,
+        variant: "success"
       });
       
-      // Trigger a refresh of the data
-      setTimeout(() => window.location.reload(), 2000);
+      // Refresh the data without page reload
+      queryClient.invalidateQueries({ queryKey: ['transmissions'] });
     } catch (error) {
       console.error('Enhancement error:', error);
       toast({
@@ -361,6 +364,7 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
     toast({
       title: "Signal Added",
       description: `"${book.title}" has been added to your transmissions.`,
+      variant: "success"
     });
     setShowBookPreview(false);
   };
