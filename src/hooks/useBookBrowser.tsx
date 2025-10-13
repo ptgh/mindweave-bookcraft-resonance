@@ -7,6 +7,7 @@ import { searchAppleBooks } from "@/services/appleBooks";
 import { imageService } from "@/services/image-service";
 import { debounce } from "@/utils/performance";
 import { getRandomCuratedBooks, CuratedBook } from "@/services/curatedSciFiLists";
+import { getAllAuthorBooks, AuthorBook } from "@/services/scifiAuthorsService";
 
 export const useBookBrowser = () => {
   const [books, setBooks] = useState<EnhancedBookSuggestion[]>([]);
@@ -42,11 +43,42 @@ export const useBookBrowser = () => {
       try {
         let allBooks: EnhancedBookSuggestion[] = [];
         
-        // Mix in curated books every rotation
+        // 1. Load books from author_books database table
+        try {
+          const dbBooks = await getAllAuthorBooks(50);
+          console.log(`Found ${dbBooks.length} books in author_books table`);
+          
+          const transformedDbBooks: EnhancedBookSuggestion[] = dbBooks
+            .filter(book => !previouslyShownBooks.has(book.google_books_id || book.id))
+            .map((book: AuthorBook) => ({
+              id: book.google_books_id || book.id,
+              title: book.title,
+              author: '', // We'll need to fetch author name if needed
+              coverUrl: book.cover_url || '',
+              thumbnailUrl: book.cover_url || '',
+              smallThumbnailUrl: book.cover_url || '',
+              subtitle: book.subtitle,
+              description: book.description,
+              publishedDate: book.published_date,
+              pageCount: book.page_count,
+              categories: book.categories,
+              rating: book.rating,
+              ratingsCount: book.ratings_count,
+              previewLink: book.preview_link,
+              infoLink: book.info_link
+            }));
+          
+          allBooks.push(...transformedDbBooks);
+          console.log(`Added ${transformedDbBooks.length} database books to pool`);
+        } catch (dbError) {
+          console.error('Error loading database books:', dbError);
+        }
+        
+        // 2. Mix in curated books every rotation
         const curatedBooks = getRandomCuratedBooks(6);
         console.log(`Including ${curatedBooks.length} curated books`);
         
-        // Search for curated books first
+        // 3. Search for curated books
         for (const curated of curatedBooks) {
           try {
             const searchQuery = `intitle:"${curated.title}" inauthor:"${curated.author}"`;
@@ -59,7 +91,7 @@ export const useBookBrowser = () => {
           }
         }
         
-        // Fill remaining with search results
+        // 4. Fill remaining with Google Books search results if needed
         let attempts = 0;
         const maxAttempts = 8;
         

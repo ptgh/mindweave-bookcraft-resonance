@@ -138,3 +138,21 @@ export const triggerAuthorEnrichment = async (authorId: string): Promise<void> =
     console.warn('Author enrichment trigger failed:', error);
   }
 };
+
+export const getAllAuthorBooks = async (limit: number = 100): Promise<AuthorBook[]> => {
+  console.log('Fetching all author books from database...');
+  
+  const { data, error } = await supabase
+    .from('author_books')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  
+  if (error) {
+    console.error('Error fetching all author books:', error);
+    throw error;
+  }
+  
+  console.log('Successfully fetched author books:', data?.length || 0);
+  return data || [];
+};
