@@ -10,7 +10,7 @@ const Header = () => {
   
   return (
     <header className="bg-slate-900">
-      <div className="container mx-auto px-4 py-2 md:px-6 md:py-2.5">
+      <div className="container mx-auto px-4 py-2 md:px-6 md:py-2">
         <div className="flex items-center justify-between">
           <Link 
             to="/" 
@@ -39,10 +39,10 @@ const Header = () => {
               <Instagram className="w-4 h-4" />
             </a>
             
-            <nav className="hidden md:flex items-center space-x-4" role="navigation" aria-label="Main navigation">
+            <nav className="hidden lg:flex items-center space-x-3 xl:space-x-4" role="navigation" aria-label="Main navigation">
               <Link
                 to="/"
-                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
                   location.pathname === '/' 
                     ? 'text-blue-400' 
                     : 'text-slate-300 hover:text-blue-400'
@@ -52,7 +52,7 @@ const Header = () => {
               </Link>
               <Link
                 to="/library"
-                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
                   location.pathname === '/library' 
                     ? 'text-blue-400' 
                     : 'text-slate-300 hover:text-blue-400'
@@ -62,7 +62,7 @@ const Header = () => {
               </Link>
               <Link
                 to="/book-browser"
-                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
                   location.pathname === '/book-browser' 
                     ? 'text-blue-400' 
                     : 'text-slate-300 hover:text-blue-400'
@@ -72,7 +72,7 @@ const Header = () => {
               </Link>
               <Link
                 to="/author-matrix"
-                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
                   location.pathname === '/author-matrix' 
                     ? 'text-blue-400' 
                     : 'text-slate-300 hover:text-blue-400'
@@ -82,7 +82,7 @@ const Header = () => {
               </Link>
               <Link
                 to="/thread-map"
-                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
                   location.pathname === '/thread-map' 
                     ? 'text-blue-400' 
                     : 'text-slate-300 hover:text-blue-400'
@@ -92,7 +92,7 @@ const Header = () => {
               </Link>
               <Link
                 to="/publisher-resonance"
-                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
                   location.pathname === '/publisher-resonance' 
                     ? 'text-blue-400' 
                     : 'text-slate-300 hover:text-blue-400'
@@ -102,7 +102,7 @@ const Header = () => {
               </Link>
               <Link
                 to="/test-brain"
-                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
                   location.pathname === '/test-brain' 
                     ? 'text-blue-400' 
                     : 'text-slate-300 hover:text-blue-400'
@@ -132,7 +132,7 @@ const Header = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button 
-                  className="md:hidden inline-flex items-center justify-center rounded p-2 text-slate-300 hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                  className="lg:hidden inline-flex items-center justify-center rounded p-2 text-slate-300 hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
                   aria-label="Open navigation menu"
                 >
                   <Menu className="w-6 h-6" />
