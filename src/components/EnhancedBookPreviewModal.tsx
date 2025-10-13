@@ -342,9 +342,9 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   const hasDigitalCopy = !!(appleBook || freeEbooks?.archive?.url || freeEbooks?.gutenberg?.url);
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-slate-800/50 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl overflow-hidden my-auto" style={{ maxHeight: 'calc(100dvh - 2rem)' }}>
-        <div className="overflow-y-auto scrollbar-hide" style={{ maxHeight: 'calc(100dvh - 2rem)' }}>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" style={{ overflow: 'hidden' }}>
+      <div className="bg-slate-800/50 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl flex flex-col" style={{ maxHeight: 'min(90vh, calc(100dvh - 2rem))' }}>
+        <div className="overflow-y-auto scrollbar-hide flex-1">
         {/* Header */}
         <div className="p-3 border-b border-slate-700">
           <div className="flex items-center justify-between">
