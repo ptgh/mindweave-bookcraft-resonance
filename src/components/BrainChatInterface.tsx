@@ -389,10 +389,10 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
 
   return (
     <div
-      className="fixed top-24 md:top-auto md:bottom-20 right-4 md:right-12 z-30 w-[calc(100vw-2rem)] md:w-96 h-[calc(100vh-12rem)] md:h-[600px] flex flex-col animate-slide-up"
+      className="fixed top-20 md:top-auto md:bottom-20 right-4 md:right-12 z-30 w-[calc(100vw-2rem)] md:w-96 h-[calc(100vh-11rem)] md:h-[600px] flex flex-col animate-slide-up"
       style={isMobile ? {
-        top: 'calc(env(safe-area-inset-top) + 72px)',
-        height: 'calc(100dvh - (env(safe-area-inset-top) + env(safe-area-inset-bottom) + 96px))'
+        top: 'calc(env(safe-area-inset-top) + 64px)',
+        height: 'calc(100dvh - (env(safe-area-inset-top) + env(safe-area-inset-bottom) + 88px))'
       } : undefined}
     >
       

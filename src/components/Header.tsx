@@ -10,7 +10,7 @@ const Header = () => {
   
   return (
     <header className="bg-slate-900">
-      <div className="container mx-auto px-4 py-3 md:px-6 md:py-4">
+      <div className="container mx-auto px-4 py-2 md:px-6 md:py-2.5">
         <div className="flex items-center justify-between">
           <Link 
             to="/" 
@@ -39,7 +39,7 @@ const Header = () => {
               <Instagram className="w-4 h-4" />
             </a>
             
-            <nav className="hidden md:flex items-center space-x-6" role="navigation" aria-label="Main navigation">
+            <nav className="hidden md:flex items-center space-x-4" role="navigation" aria-label="Main navigation">
               <Link
                 to="/"
                 className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1 ${
