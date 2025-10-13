@@ -29,17 +29,28 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   // Prevent background scroll when modal is open (mobile Safari safe)
   useEffect(() => {
     const body = document.body;
+    const html = document.documentElement;
     const scrollY = window.scrollY;
+
+    // Lock root and body to fully prevent background scroll and hide scrollbar
+    const prevHtmlOverflow = html.style.overflow;
+    const prevBodyPosition = body.style.position;
+    const prevBodyTop = body.style.top;
+    const prevBodyWidth = body.style.width;
+    const prevBodyOverflow = body.style.overflow;
+
+    html.style.overflow = 'hidden';
     body.style.position = 'fixed';
     body.style.top = `-${scrollY}px`;
     body.style.width = '100%';
     body.style.overflow = 'hidden';
 
     return () => {
-      body.style.position = '';
-      body.style.top = '';
-      body.style.width = '';
-      body.style.overflow = '';
+      html.style.overflow = prevHtmlOverflow || '';
+      body.style.position = prevBodyPosition || '';
+      body.style.top = prevBodyTop || '';
+      body.style.width = prevBodyWidth || '';
+      body.style.overflow = prevBodyOverflow || '';
       window.scrollTo(0, scrollY);
     };
   }, []);
@@ -361,13 +372,13 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/50 backdrop-blur-sm overscroll-none"
-      style={{ height: '100dvh', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overscroll-none overflow-hidden"
+      style={{ height: '100svh', minHeight: '100dvh' }}
       role="dialog"
       aria-modal="true"
     >
       <div className="bg-slate-800/50 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl flex flex-col" style={{ maxHeight: 'min(90vh, calc(100dvh - 2rem))' }}>
-        <div className="overflow-y-auto scrollbar-hide flex-1">
+        <div className="overflow-y-auto scrollbar-hide overscroll-contain flex-1" style={{ WebkitOverflowScrolling: 'touch' }}>
         {/* Header */}
         <div className="p-3 border-b border-slate-700">
           <div className="flex items-center justify-between">
