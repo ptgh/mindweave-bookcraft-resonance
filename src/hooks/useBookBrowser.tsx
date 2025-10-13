@@ -6,12 +6,14 @@ import { saveTransmission } from "@/services/transmissionsService";
 import { searchAppleBooks } from "@/services/appleBooks";
 import { imageService } from "@/services/image-service";
 import { debounce } from "@/utils/performance";
+import { getRandomCuratedBooks, CuratedBook } from "@/services/curatedSciFiLists";
 
 export const useBookBrowser = () => {
   const [books, setBooks] = useState<EnhancedBookSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [visibleBooks, setVisibleBooks] = useState<Set<number>>(new Set());
   const [previouslyShownBooks, setPreviouslyShownBooks] = useState<Set<string>>(new Set());
+  const [rotationCount, setRotationCount] = useState(0);
   const { toast } = useToast();
 
   // Highly specific sci-fi searches for accurate titles and covers
@@ -30,17 +32,36 @@ export const useBookBrowser = () => {
     'subject:interstellar science fiction'
   ], []);
 
-  // Optimized loading function with better sci-fi filtering
+  // Enhanced loading with curated books mixed in
   const debouncedLoadBooks = useMemo(
     () => debounce(async () => {
-      console.log('Loading sci-fi books...');
+      console.log('Loading sci-fi books...', 'Rotation:', rotationCount);
       setLoading(true);
       setVisibleBooks(new Set());
       
       try {
         let allBooks: EnhancedBookSuggestion[] = [];
+        
+        // Mix in curated books every rotation
+        const curatedBooks = getRandomCuratedBooks(6);
+        console.log(`Including ${curatedBooks.length} curated books`);
+        
+        // Search for curated books first
+        for (const curated of curatedBooks) {
+          try {
+            const searchQuery = `intitle:"${curated.title}" inauthor:"${curated.author}"`;
+            const results = await searchBooksEnhanced(searchQuery, 1, 0);
+            if (results.length > 0 && !previouslyShownBooks.has(results[0].id)) {
+              allBooks.push(results[0]);
+            }
+          } catch (e) {
+            console.warn(`Failed to find curated book: ${curated.title}`, e);
+          }
+        }
+        
+        // Fill remaining with search results
         let attempts = 0;
-        const maxAttempts = 8; // Increased to get more results after filtering
+        const maxAttempts = 8;
         
         while (allBooks.length < 18 && attempts < maxAttempts) {
           const termIndex = attempts % searchTerms.length;
@@ -49,7 +70,7 @@ export const useBookBrowser = () => {
           
           try {
             console.log(`Searching for: "${term}" (attempt ${attempts + 1})`);
-            const results = await searchBooksEnhanced(term, 15, startIndex); // Increased count
+            const results = await searchBooksEnhanced(term, 15, startIndex);
             
             if (results.length > 0) {
               const newBooks = results.filter(book => 
@@ -66,7 +87,6 @@ export const useBookBrowser = () => {
           }
           
           attempts++;
-          // Reduced delay for better performance
           await new Promise(resolve => setTimeout(resolve, 50));
         }
         
@@ -79,16 +99,23 @@ export const useBookBrowser = () => {
           
           const newBookIds = new Set(shuffled.map(book => book.id));
           setPreviouslyShownBooks(prev => new Set([...prev, ...newBookIds]));
+          setRotationCount(prev => prev + 1);
           
-          console.log(`Loaded ${shuffled.length} sci-fi books`);
+          console.log(`Loaded ${shuffled.length} sci-fi books (rotation ${rotationCount + 1})`);
         } else {
+          // Auto-clear and reload when out of books
           if (previouslyShownBooks.size > 0) {
+            console.log('Clearing history and reloading...');
             setPreviouslyShownBooks(new Set());
-        toast({
-          title: "Refreshing Collection",
+            setRotationCount(0);
+            toast({
+              title: "Refreshing Collection",
               description: "Cleared viewing history to show fresh sci-fi recommendations.",
             });
-            setBooks([]);
+            // Trigger reload after clearing
+            setTimeout(() => {
+              debouncedLoadBooks();
+            }, 500);
           } else {
             setBooks([]);
             toast({
@@ -110,7 +137,7 @@ export const useBookBrowser = () => {
         setLoading(false);
       }
     }, 300),
-    [previouslyShownBooks, toast, searchTerms]
+    [previouslyShownBooks, toast, searchTerms, rotationCount]
   );
 
   const loadRandomBooks = useCallback(() => {
