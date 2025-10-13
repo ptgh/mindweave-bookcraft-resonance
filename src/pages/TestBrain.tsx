@@ -959,10 +959,44 @@ const TestBrain = () => {
 
         {remappingActive && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-            <div className="bg-slate-800/95 backdrop-blur-sm border border-cyan-400/50 rounded-lg px-6 py-3 shadow-2xl">
+            {/* Neural network animation background */}
+            <svg className="absolute -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2 w-48 h-48" viewBox="0 0 200 200">
+              {/* Animated nodes */}
+              <circle cx="100" cy="50" r="3" fill="#22d3ee" opacity="0.8">
+                <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite" />
+              </circle>
+              <circle cx="70" cy="100" r="3" fill="#22d3ee" opacity="0.6">
+                <animate attributeName="opacity" values="0.3;0.9;0.3" dur="2.5s" repeatCount="indefinite" />
+              </circle>
+              <circle cx="130" cy="100" r="3" fill="#22d3ee" opacity="0.7">
+                <animate attributeName="opacity" values="0.35;0.95;0.35" dur="2.2s" repeatCount="indefinite" />
+              </circle>
+              <circle cx="100" cy="150" r="3" fill="#22d3ee" opacity="0.8">
+                <animate attributeName="opacity" values="0.4;1;0.4" dur="1.8s" repeatCount="indefinite" />
+              </circle>
+              
+              {/* Animated connecting lines */}
+              <line x1="100" y1="50" x2="70" y2="100" stroke="#22d3ee" strokeWidth="1" opacity="0.3">
+                <animate attributeName="opacity" values="0.1;0.5;0.1" dur="2s" repeatCount="indefinite" />
+              </line>
+              <line x1="100" y1="50" x2="130" y2="100" stroke="#22d3ee" strokeWidth="1" opacity="0.3">
+                <animate attributeName="opacity" values="0.1;0.5;0.1" dur="2.3s" repeatCount="indefinite" />
+              </line>
+              <line x1="70" y1="100" x2="130" y2="100" stroke="#22d3ee" strokeWidth="1" opacity="0.3">
+                <animate attributeName="opacity" values="0.15;0.6;0.15" dur="2.5s" repeatCount="indefinite" />
+              </line>
+              <line x1="70" y1="100" x2="100" y2="150" stroke="#22d3ee" strokeWidth="1" opacity="0.3">
+                <animate attributeName="opacity" values="0.1;0.5;0.1" dur="1.9s" repeatCount="indefinite" />
+              </line>
+              <line x1="130" y1="100" x2="100" y2="150" stroke="#22d3ee" strokeWidth="1" opacity="0.3">
+                <animate attributeName="opacity" values="0.1;0.5;0.1" dur="2.1s" repeatCount="indefinite" />
+              </line>
+            </svg>
+            
+            <div className="bg-slate-800/95 backdrop-blur-sm border border-cyan-400/50 rounded-lg px-6 py-3 shadow-2xl relative z-10">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse"></div>
-                <span className="text-cyan-300 text-sm font-medium">Remapping neural connections...</span>
+                <span className="text-cyan-300 text-sm font-medium">Remapping</span>
               </div>
             </div>
           </div>

@@ -51,9 +51,9 @@ const NeuralMapHeader = ({
 
           {/* Theme Filters - Scrollable on mobile */}
           {allTags.length > 0 && (
-            <div className="flex items-center gap-0.5 sm:gap-2 flex-1 min-w-0 overflow-hidden">
+            <div className="flex items-center gap-0.5 sm:gap-2 flex-1 min-w-0 overflow-hidden pr-1">
               <span className="text-slate-400 text-[7px] sm:text-[9px] font-medium tracking-wide whitespace-nowrap hidden sm:inline">THEMES</span>
-              <div className="flex gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide">
+              <div className="flex gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide flex-1">
                 {allTags.map(tag => (
                   <Badge
                     key={tag}
@@ -72,7 +72,7 @@ const NeuralMapHeader = ({
               {activeFilters.length > 0 && (
                 <button
                   onClick={onClearFilters}
-                  className="text-[6px] sm:text-[8px] text-cyan-400 hover:text-cyan-300 transition-colors px-0.5 sm:px-1.5 py-0.5 bg-cyan-400/10 rounded-full whitespace-nowrap flex-shrink-0"
+                  className="text-[7px] sm:text-[9px] text-cyan-400 hover:text-cyan-300 transition-colors px-1 sm:px-2 py-0.5 sm:py-1 bg-cyan-400/10 rounded-full whitespace-nowrap flex-shrink-0 ml-1"
                 >
                   Clear
                 </button>
