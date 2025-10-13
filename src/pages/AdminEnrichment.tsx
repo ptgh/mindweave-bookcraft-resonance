@@ -1,4 +1,5 @@
 import { AdminEnrichmentPanel } from "@/components/AdminEnrichmentPanel";
+import { AdminPopulateBooks } from "@/components/AdminPopulateBooks";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ProtectedAdminRoute } from "@/components/ProtectedAdminRoute";
@@ -19,7 +20,10 @@ const AdminEnrichment = () => {
             </p>
           </div>
           
-          <AdminEnrichmentPanel />
+          <div className="space-y-6">
+            <AdminPopulateBooks />
+            <AdminEnrichmentPanel />
+          </div>
         </main>
         
         <Footer />

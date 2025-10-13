@@ -31,3 +31,6 @@ verify_jwt = false
 
 [functions.queue-author-enrichment]
 verify_jwt = false
+
+[functions.populate-curated-books]
+verify_jwt = false

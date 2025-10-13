@@ -21,6 +21,33 @@ export const curatedSciFiBooks: CuratedBook[] = [
   { title: "The Handmaid's Tale", author: "Margaret Atwood", category: "Dystopian", reason: "Dystopian social commentary" },
   { title: "Fahrenheit 451", author: "Ray Bradbury", category: "Dystopian", reason: "Censorship and literature" },
   
+  // Wikipedia 100 Best Additions
+  { title: "The Stars My Destination", author: "Alfred Bester", category: "Space Opera", reason: "Teleportation revenge saga" },
+  { title: "A Canticle for Leibowitz", author: "Walter M. Miller Jr.", category: "Post-Apocalyptic", reason: "Cyclical civilization" },
+  { title: "Flowers for Algernon", author: "Daniel Keyes", category: "Social Science Fiction", reason: "Intelligence and humanity" },
+  { title: "Do Androids Dream of Electric Sheep?", author: "Philip K. Dick", category: "Dystopian", reason: "What makes us human" },
+  { title: "The Dispossessed", author: "Ursula K. Le Guin", category: "Anarchist Science Fiction", reason: "Anarchist utopia exploration" },
+  { title: "Stand on Zanzibar", author: "John Brunner", category: "Dystopian", reason: "Overpopulation masterpiece" },
+  { title: "A Clockwork Orange", author: "Anthony Burgess", category: "Dystopian", reason: "Free will and violence" },
+  { title: "The Man in the High Castle", author: "Philip K. Dick", category: "Alternate History", reason: "Axis victory alternate history" },
+  { title: "Cat's Cradle", author: "Kurt Vonnegut", category: "Satire", reason: "Science and religion satire" },
+  { title: "The Female Man", author: "Joanna Russ", category: "Feminist Science Fiction", reason: "Parallel worlds feminism" },
+  { title: "Tau Zero", author: "Poul Anderson", category: "Hard Science Fiction", reason: "Relativistic space travel" },
+  { title: "Riddley Walker", author: "Russell Hoban", category: "Post-Apocalyptic", reason: "Linguistic post-apocalypse" },
+  { title: "The Shadow of the Torturer", author: "Gene Wolfe", category: "Dying Earth", reason: "Literary dying earth" },
+  { title: "Wild Seed", author: "Octavia E. Butler", category: "Science Fantasy", reason: "Immortality and power" },
+  { title: "Timescape", author: "Gregory Benford", category: "Hard Science Fiction", reason: "Time communication physics" },
+  { title: "The End of Eternity", author: "Isaac Asimov", category: "Time Travel", reason: "Time manipulation paradox" },
+  { title: "The Sirens of Titan", author: "Kurt Vonnegut", category: "Space Opera", reason: "Cosmic purposelessness" },
+  { title: "Way Station", author: "Clifford D. Simak", category: "First Contact", reason: "Rural alien waystation" },
+  { title: "The Drowned World", author: "J. G. Ballard", category: "Climate Fiction", reason: "Climate catastrophe vision" },
+  { title: "Crash", author: "J. G. Ballard", category: "New Wave", reason: "Technology and sexuality" },
+  { title: "High Rise", author: "J. G. Ballard", category: "Social Science Fiction", reason: "Class warfare architecture" },
+  { title: "The Crystal World", author: "J. G. Ballard", category: "New Wave", reason: "Crystallization apocalypse" },
+  { title: "The Wanderer", author: "Fritz Leiber", category: "Space Opera", reason: "Rogue planet disaster" },
+  { title: "Nova", author: "Samuel R. Delany", category: "Space Opera", reason: "Quest in far future" },
+  { title: "Engine Summer", author: "John Crowley", category: "Post-Apocalyptic", reason: "Pastoral post-collapse" },
+  
   // Contemporary Excellence
   { title: "The Three-Body Problem", author: "Liu Cixin", category: "Hard Science Fiction", reason: "Chinese sci-fi breakthrough" },
   { title: "Ancillary Justice", author: "Ann Leckie", category: "Space Opera", reason: "AI consciousness exploration" },
@@ -35,11 +62,8 @@ export const curatedSciFiBooks: CuratedBook[] = [
   
   // Mind-Bending & Philosophical
   { title: "Solaris", author: "Stanisław Lem", category: "Philosophical Science Fiction", reason: "Alien consciousness mystery" },
-  { title: "The Dispossessed", author: "Ursula K. Le Guin", category: "Anarchist Science Fiction", reason: "Anarchist utopia exploration" },
   { title: "Permutation City", author: "Greg Egan", category: "Hard Science Fiction", reason: "Digital consciousness" },
   { title: "Diaspora", author: "Greg Egan", category: "Hard Science Fiction", reason: "Post-human civilization" },
-  { title: "The Stars My Destination", author: "Alfred Bester", category: "Space Opera", reason: "Teleportation revenge saga" },
-  { title: "A Canticle for Leibowitz", author: "Walter M. Miller Jr.", category: "Post-Apocalyptic", reason: "Cyclical civilization" },
   { title: "The Book of the New Sun", author: "Gene Wolfe", category: "Dying Earth", reason: "Literary dying earth" },
   { title: "Embassytown", author: "China Miéville", category: "Linguistic Science Fiction", reason: "Language and reality" },
   
