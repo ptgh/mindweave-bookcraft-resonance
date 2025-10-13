@@ -11,6 +11,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AuthorPopup } from '@/components/AuthorPopup';
+import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
+import { EnrichedPublisherBook } from '@/services/publisherService';
 import { getAuthorByName, ScifiAuthor, findOrCreateAuthor } from '@/services/scifiAuthorsService';
 
 gsap.registerPlugin();
@@ -45,9 +47,12 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
   const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set());
   const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
   const [authorPopupVisible, setAuthorPopupVisible] = useState(false);
+  const [selectedBook, setSelectedBook] = useState<EnrichedPublisherBook | null>(null);
+  const [showBookPreview, setShowBookPreview] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const bookTitleRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const { toast } = useToast();
 
   // Get year based on view mode with better narrative parsing
@@ -328,6 +333,38 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
     setSelectedAuthor(null);
   };
 
+  const handleBookClick = (transmission: Transmission) => {
+    // Transform Transmission to EnrichedPublisherBook format
+    const bookData: EnrichedPublisherBook = {
+      id: transmission.id.toString(),
+      series_id: transmission.publisher_series_id || '',
+      title: transmission.title || '',
+      author: transmission.author || '',
+      isbn: transmission.isbn || null,
+      cover_url: transmission.cover_url || null,
+      editorial_note: transmission.notes || null,
+      penguin_url: null,
+      publisher_link: null,
+      google_cover_url: null,
+      created_at: transmission.created_at || new Date().toISOString()
+    };
+    setSelectedBook(bookData);
+    setShowBookPreview(true);
+  };
+
+  const closeBookPreview = () => {
+    setShowBookPreview(false);
+    setSelectedBook(null);
+  };
+
+  const handleAddBook = (book: EnrichedPublisherBook) => {
+    toast({
+      title: "Signal Added",
+      description: `"${book.title}" has been added to your transmissions.`,
+    });
+    setShowBookPreview(false);
+  };
+
   // Mock author data - in a real app, this would come from an API
   const getAuthorInfo = (authorName: string) => {
     const mockAuthors: Record<string, any> = {
@@ -603,9 +640,33 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                     </Button>
                   </div>
                   
-                  <h3 className="text-lg font-semibold text-slate-100 mb-2 leading-tight">
-                    {node.transmission.title}
-                  </h3>
+                  <button
+                    ref={(el) => (bookTitleRefs.current[index] = el)}
+                    onClick={() => handleBookClick(node.transmission)}
+                    className="text-lg font-semibold text-slate-100 mb-2 leading-tight text-left relative group w-full hover:text-blue-400 transition-colors duration-300"
+                    onMouseEnter={(e) => {
+                      gsap.to(e.currentTarget, {
+                        color: '#60a5fa',
+                        duration: 0.3,
+                        ease: 'power2.out'
+                      });
+                    }}
+                    onMouseLeave={(e) => {
+                      gsap.to(e.currentTarget, {
+                        color: 'rgb(241, 245, 249)',
+                        duration: 0.3,
+                        ease: 'power2.out'
+                      });
+                    }}
+                  >
+                    <span className="relative">
+                      {node.transmission.title}
+                      <span 
+                        className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300 ease-out"
+                        style={{ transformOrigin: 'left' }}
+                      />
+                    </span>
+                  </button>
                   <div className="flex items-center gap-2 text-slate-300 text-sm">
                     <User className="w-4 h-4" />
                     <button
@@ -731,6 +792,15 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
           setSelectedAuthor(updatedAuthor);
         }}
       />
+
+      {/* Book Preview Modal */}
+      {selectedBook && showBookPreview && (
+        <EnhancedBookPreviewModal
+          book={selectedBook}
+          onClose={closeBookPreview}
+          onAddBook={handleAddBook}
+        />
+      )}
     </div>
   );
 }
