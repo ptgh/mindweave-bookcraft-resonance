@@ -370,7 +370,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-12 z-30 bg-slate-900/60 hover:bg-slate-900/80 border border-slate-700/30 backdrop-blur-lg text-cyan-400 shadow-lg shadow-slate-900/20 rounded-full p-4 transition-all duration-300 hover:scale-110 hover:border-cyan-400/50"
+        className="fixed bottom-20 right-12 z-30 bg-slate-900/60 hover:bg-slate-900/80 border border-slate-700/30 backdrop-blur-lg text-cyan-400 shadow-lg shadow-slate-900/20 rounded-full p-4 transition-all duration-300 hover:scale-110 hover:border-cyan-400/50"
         size="icon"
       >
         <MessageCircle className="w-6 h-6" />
@@ -379,7 +379,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
   }
 
   return (
-    <div className="fixed bottom-6 right-12 z-30 w-96 h-[600px] flex flex-col">
+    <div className="fixed bottom-20 right-12 z-30 w-96 h-[600px] flex flex-col">
       
       <Card className="bg-slate-900/60 border-slate-700/30 backdrop-blur-lg h-full flex flex-col shadow-2xl shadow-slate-900/20">
         {/* Header */}
