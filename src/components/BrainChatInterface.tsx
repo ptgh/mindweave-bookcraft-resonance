@@ -6,6 +6,7 @@ import { MessageCircle, Send, X, Sparkles, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { BrainNode, BookLink } from '@/pages/TestBrain';
 import { BrainContextService } from '@/services/brainContextService';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Message {
   id: string;
@@ -42,6 +43,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
 
   // Initialize or retrieve conversation when chat opens
   useEffect(() => {
@@ -386,7 +388,13 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
   }
 
   return (
-    <div className="fixed top-[13rem] md:top-auto md:bottom-20 right-4 md:right-12 z-30 w-[calc(100vw-2rem)] md:w-96 h-[calc(100vh-14rem)] md:h-[600px] flex flex-col animate-slide-up">
+    <div
+      className="fixed top-24 md:top-auto md:bottom-20 right-4 md:right-12 z-30 w-[calc(100vw-2rem)] md:w-96 h-[calc(100vh-12rem)] md:h-[600px] flex flex-col animate-slide-up"
+      style={isMobile ? {
+        top: 'calc(env(safe-area-inset-top) + 72px)',
+        height: 'calc(100dvh - (env(safe-area-inset-top) + env(safe-area-inset-bottom) + 96px))'
+      } : undefined}
+    >
       
       <Card className="bg-slate-900/95 md:bg-slate-900/60 border-slate-700/30 backdrop-blur-lg h-full flex flex-col shadow-2xl shadow-slate-900/20 safe-area-inset">
         {/* Header */}
