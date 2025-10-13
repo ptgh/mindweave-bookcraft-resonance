@@ -5,12 +5,12 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
-import { StandardButton } from "@/components/ui/standard-button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import EmptyState from "@/components/EmptyState";
 import EnhancedBookPreviewModal from "@/components/EnhancedBookPreviewModal";
 import PublisherBookCard from "@/components/PublisherBookCard";
+import PublisherSelector from "@/components/PublisherSelector";
 import { EnrichedPublisherBook } from "@/services/publisherService";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 import { supabase } from "@/integrations/supabase/client";
@@ -159,22 +159,14 @@ const PublisherResonance = () => {
               <p className="text-slate-300 max-w-2xl mx-auto leading-relaxed mb-6">
                 Discover your next science fiction transmission through the quantum field of possibilities
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <StandardButton
-                  onClick={() => handlePublisherClick('Penguin')}
-                  variant={selectedPublisher === 'Penguin' ? 'primary' : 'ghost'}
-                  className="touch-manipulation active:scale-95"
-                >
-                  Penguin Scan Signal Collection
-                </StandardButton>
-                <StandardButton
-                  onClick={() => handlePublisherClick('Gollancz')}
-                  variant={selectedPublisher === 'Gollancz' ? 'primary' : 'ghost'}
-                  className="touch-manipulation active:scale-95"
-                >
-                  Gollancz SF Scan Signal Collection
-                </StandardButton>
-              </div>
+              <PublisherSelector
+                publishers={[
+                  { id: 'Penguin', label: 'Penguin Scan Signal Collection' },
+                  { id: 'Gollancz', label: 'Gollancz SF Scan Signal Collection' }
+                ]}
+                selected={selectedPublisher}
+                onSelect={handlePublisherClick}
+              />
             </div>
           </div>
           
