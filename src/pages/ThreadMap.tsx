@@ -6,9 +6,8 @@ import AuthWrapper from "@/components/AuthWrapper";
 import Auth from "./Auth";
 import { ChronoTimeline } from "@/components/ChronoTimeline";
 import GSAPButtonGroup from "@/components/GSAPButtonGroup";
-import { Calendar, Clock, BookOpen, TrendingUp, Brain, Sparkles } from "lucide-react";
+import { Calendar, Clock, BookOpen, TrendingUp, Brain } from "lucide-react";
 import { getTransmissions } from "@/services/transmissionsService";
-import { useHistoricalContext } from "@/hooks/useHistoricalContext";
 
 const ThreadMap = () => {
   const [timeframe, setTimeframe] = useState<'month' | 'year' | 'all'>('year');
@@ -17,8 +16,6 @@ const ThreadMap = () => {
     queryKey: ['transmissions'],
     queryFn: getTransmissions,
   });
-
-  const historical = useHistoricalContext(transmissions);
 
   // Filter transmissions based on timeframe
   const filteredTransmissions = transmissions.filter(transmission => {
@@ -226,23 +223,6 @@ const ThreadMap = () => {
                         <div className="text-slate-300 line-clamp-1">
                           {jump.from.title} → {jump.to.title}
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {historical.hasData && historical.insights.length > 0 && (
-                <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
-                  <div className="flex items-center space-x-2 mb-6">
-                    <Sparkles className="w-5 h-5 text-purple-400" />
-                    <h2 className="text-lg font-medium text-slate-200">Historical Insights</h2>
-                  </div>
-                  <div className="space-y-2">
-                    {historical.insights.map((insight, index) => (
-                      <div key={index} className="flex items-start space-x-2 text-xs text-slate-300">
-                        <span className="text-purple-400 mt-0.5">•</span>
-                        <span>{insight}</span>
                       </div>
                     ))}
                   </div>

@@ -49,8 +49,8 @@ const AppRoutes = () => {
   // If user is authenticated, show all routes including test-brain
   return (
     <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/discovery" element={<Discovery />} />
+      <Route path="/" element={<Discovery />} />
+      <Route path="/library" element={<Index />} />
       <Route path="/thread-map" element={<ThreadMap />} />
       <Route path="/author-matrix" element={<AuthorMatrix />} />
       <Route path="/search" element={<Search />} />
