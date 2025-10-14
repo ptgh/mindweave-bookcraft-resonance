@@ -2,26 +2,10 @@
 import { GoogleBook, GoogleBooksApiResponse } from "./types";
 import { googleBooksCache } from "./cache";
 import { transformGoogleBookData } from "./transformer";
+import { googleBooksRateLimiter } from "./rateLimit";
 
 const BASE_URL = "https://www.googleapis.com/books/v1/volumes";
-const REQUEST_TIMEOUT = 8000; // 8 seconds for Apple platforms
-
-// Rate limiting
-const rateLimiter = {
-  requests: [] as number[],
-  maxRequests: 10,
-  timeWindow: 10000, // 10 seconds
-  
-  canMakeRequest(): boolean {
-    const now = Date.now();
-    this.requests = this.requests.filter(time => now - time < this.timeWindow);
-    return this.requests.length < this.maxRequests;
-  },
-  
-  recordRequest(): void {
-    this.requests.push(Date.now());
-  }
-};
+const REQUEST_TIMEOUT = 8000;
 
 export const searchGoogleBooks = async (query: string, maxResults = 10): Promise<GoogleBook[]> => {
   if (!query.trim()) return [];
@@ -33,13 +17,9 @@ export const searchGoogleBooks = async (query: string, maxResults = 10): Promise
     return cached;
   }
   
-  if (!rateLimiter.canMakeRequest()) {
-    console.warn('Rate limit reached for Google Books API');
-    return [];
-  }
-  
-  try {
-    rateLimiter.recordRequest();
+  // Use advanced rate limiter with queue and retry
+  return googleBooksRateLimiter.enqueue(async () => {
+    try {
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
@@ -77,15 +57,16 @@ export const searchGoogleBooks = async (query: string, maxResults = 10): Promise
     
     googleBooksCache.set(cacheKey, books);
     return books;
-    
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      console.warn(`Google Books API request timed out for: ${query}`);
-    } else {
-      console.error(`Error searching Google Books for "${query}":`, error);
+      
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.warn(`Google Books API request timed out for: ${query}`);
+      } else {
+        console.error(`Error searching Google Books for "${query}":`, error);
+      }
+      throw error; // Let rate limiter handle retry
     }
-    return [];
-  }
+  });
 };
 
 export const getBookByISBN = async (isbn: string): Promise<GoogleBook | null> => {

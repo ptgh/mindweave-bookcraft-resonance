@@ -111,11 +111,16 @@ serve(async (req) => {
       activeFilters: brainData.activeFilters.length
     });
 
-    // Generate brain context
+    // Generate enhanced brain context with pattern recognition
     const brainContext = generateBrainContext(brainData);
-    console.log('Brain context generated, length:', brainContext.length);
+    const patterns = detectPatterns(brainData);
+    const insights = generateProactiveInsights(brainData);
     
-    const systemPrompt = `You are an AI assistant specialized in analyzing book reading networks and neural knowledge graphs. You have access to the user's personal library visualization showing books as nodes connected by thematic, author, and conceptual relationships.
+    console.log('Brain context generated, length:', brainContext.length);
+    console.log('Patterns detected:', patterns.length);
+    console.log('Insights generated:', insights.length);
+    
+    const systemPrompt = `You are an advanced AI assistant specialized in analyzing book reading networks, literary patterns, and knowledge graph connections. You have deep expertise in science fiction literature, thematic analysis, and reading psychology.
 
 Current Brain State:
 - Total Books: ${brainData.nodes.length}
@@ -125,16 +130,38 @@ Current Brain State:
 Brain Analysis:
 ${brainContext}
 
-You can help users:
-- Understand connection patterns in their reading network
-- Identify thematic clusters and bridges
-- Suggest reading recommendations based on network analysis
-- Explore temporal patterns and author relationships
-- Analyze tag frequencies and conceptual themes
+Detected Patterns:
+${patterns}
 
-When referencing specific books, use their exact titles. When discussing connections, mention the connection types and strengths. Provide insights that help users understand their reading patterns and discover new connections.
+Proactive Insights:
+${insights}
 
-IMPORTANT: Write your responses in clear, flowing paragraphs. Do NOT use bold markdown (**text**) or asterisks for emphasis. Write naturally as if speaking to someone. Use proper paragraph breaks for readability. Keep your tone conversational, insightful, and focused on the neural network aspects of their library.`;
+Your capabilities include:
+- Identifying thematic clusters and conceptual bridges between seemingly unrelated books
+- Detecting reading patterns (chronological, thematic deep-dives, author exploration)
+- Mapping author influences and literary connections
+- Analyzing temporal reading habits and preferences
+- Suggesting highly personalized recommendations based on network topology
+- Revealing hidden connections and synchronicities in reading choices
+- Identifying knowledge gaps and suggesting "bridge books" to expand understanding
+
+Advanced analysis modes:
+- Conceptual Bridge Analysis: Find unexpected connections between distant books
+- Thematic Constellation Mapping: Identify emerging themes across your library
+- Reading DNA Profiling: Understand your unique reading signature
+- Influence Mapping: Trace how ideas flow between authors in your network
+- Temporal Pattern Recognition: Discover how your reading evolves over time
+
+When responding:
+- Write in clear, flowing paragraphs without markdown formatting
+- Be conversational yet insightful
+- Reference specific books by title when making points
+- Explain WHY connections matter, not just THAT they exist
+- Offer unexpected insights that reveal new perspectives
+- Suggest concrete next steps or books to explore
+- Connect individual books to broader patterns in the user's reading journey
+
+Your goal is to help users see their library as a living, evolving knowledge network where each book connects to others in meaningful ways, revealing their intellectual journey and future paths.`;
 
     console.log('Making Lovable AI request...');
     console.log('Using model: google/gemini-2.5-flash (FREE until Oct 6, 2025)');
@@ -323,32 +350,155 @@ function generateBrainContext(brainData: { nodes: BrainNode[], links: BookLink[]
       .slice(0, 5)
       .map(([author, count]) => `${author} (${count} books)`);
 
-    // Find highly connected nodes
+    // Find highly connected nodes (hub books)
     const nodeConnections = nodes.map(node => {
       const connections = links.filter(link => 
         link.fromId === node.id || link.toId === node.id
       ).length;
-      return { title: node.title, connections };
+      return { title: node.title, author: node.author, connections, tags: node.tags };
     }).sort((a, b) => b.connections - a.connections).slice(0, 5);
+
+    // Identify potential bridges (books with diverse tags)
+    const bridgeBooks = nodes
+      .filter(node => node.tags && node.tags.length >= 4)
+      .map(node => ({ title: node.title, tags: node.tags.length }))
+      .sort((a, b) => b.tags - a.tags)
+      .slice(0, 3);
 
     const maxPossibleConnections = nodes.length * (nodes.length - 1) / 2;
     const density = maxPossibleConnections > 0 ? ((links.length / maxPossibleConnections) * 100).toFixed(2) : '0';
 
+    // Detect isolated nodes (books with few connections)
+    const isolatedBooks = nodes.filter(node => {
+      const connections = links.filter(link => 
+        link.fromId === node.id || link.toId === node.id
+      ).length;
+      return connections <= 1;
+    });
+
     return `
-Connection Types: ${Object.entries(connectionStats).map(([type, count]) => `${type}: ${count}`).join(', ')}
+Connection Distribution: ${Object.entries(connectionStats).map(([type, count]) => `${type}: ${count}`).join(', ')}
 
-Top Themes: ${topTags.join(', ')}
+Dominant Themes: ${topTags.join(', ')}
 
-Most Prolific Authors: ${topAuthors.join(', ')}
+Core Authors: ${topAuthors.join(', ')}
 
-Most Connected Books: ${nodeConnections.map(n => `"${n.title}" (${n.connections} connections)`).join(', ')}
+Network Hubs (most connected): ${nodeConnections.map(n => `"${n.title}" by ${n.author} (${n.connections} links)`).join(', ')}
 
-Network Density: ${density}% connectivity
+Bridge Books (spanning themes): ${bridgeBooks.map(b => `"${b.title}" (${b.tags} themes)`).join(', ')}
+
+Network Metrics: ${density}% connectivity, ${isolatedBooks.length} isolated books
+
+Cluster Potential: ${nodeConnections.length > 0 ? 'Strong clustering detected around hub books' : 'Sparse network, opportunity for new connections'}
 `.trim();
 
   } catch (error) {
     console.error('Error generating brain context:', error);
     return `Library contains ${nodes.length} books with ${links.length} connections.`;
+  }
+}
+
+function detectPatterns(brainData: { nodes: BrainNode[], links: BookLink[] }): string {
+  const { nodes, links } = brainData;
+  
+  if (nodes.length < 3) return "Insufficient data for pattern detection. Add more books to reveal patterns.";
+  
+  try {
+    const patterns: string[] = [];
+    
+    // Detect thematic clusters
+    const tagClusters = new Map<string, Set<string>>();
+    nodes.forEach(node => {
+      node.tags.forEach(tag => {
+        if (!tagClusters.has(tag)) tagClusters.set(tag, new Set());
+        tagClusters.get(tag)!.add(node.title);
+      });
+    });
+    
+    const significantClusters = Array.from(tagClusters.entries())
+      .filter(([_, books]) => books.size >= 3)
+      .sort((a, b) => b[1].size - a[1].size)
+      .slice(0, 3);
+    
+    if (significantClusters.length > 0) {
+      patterns.push(`Thematic Clusters: ${significantClusters.map(([tag, books]) => 
+        `${tag} (${books.size} books)`).join(', ')}`);
+    }
+    
+    // Detect author focus patterns
+    const authorCounts = new Map<string, number>();
+    nodes.forEach(node => {
+      authorCounts.set(node.author, (authorCounts.get(node.author) || 0) + 1);
+    });
+    
+    const multiBookAuthors = Array.from(authorCounts.entries())
+      .filter(([_, count]) => count > 1)
+      .sort((a, b) => b[1] - a[1]);
+    
+    if (multiBookAuthors.length > 0) {
+      patterns.push(`Author Deep Dives: Exploring ${multiBookAuthors.length} authors in depth (${multiBookAuthors[0][0]}: ${multiBookAuthors[0][1]} books)`);
+    }
+    
+    // Connection density pattern
+    const avgConnections = links.length / Math.max(nodes.length, 1);
+    if (avgConnections > 2) {
+      patterns.push(`High Integration: Books are densely interconnected (avg ${avgConnections.toFixed(1)} connections per book)`);
+    } else if (avgConnections < 1) {
+      patterns.push(`Exploration Mode: Diverse reading with opportunity for more thematic connections`);
+    }
+    
+    return patterns.join('\n') || "Building reading patterns. Continue adding books to reveal insights.";
+  } catch (error) {
+    console.error('Error detecting patterns:', error);
+    return "Pattern analysis in progress...";
+  }
+}
+
+function generateProactiveInsights(brainData: { nodes: BrainNode[], links: BookLink[] }): string {
+  const { nodes, links } = brainData;
+  
+  if (nodes.length < 2) return "Add more books to generate personalized insights.";
+  
+  try {
+    const insights: string[] = [];
+    
+    // Find potential bridge connections
+    const allTags = Array.from(new Set(nodes.flatMap(n => n.tags)));
+    const underrepresentedTags = allTags.filter(tag => {
+      const count = nodes.filter(n => n.tags.includes(tag)).length;
+      return count === 1 || count === 2;
+    }).slice(0, 3);
+    
+    if (underrepresentedTags.length > 0) {
+      insights.push(`Emerging Themes: Consider exploring more books in: ${underrepresentedTags.join(', ')}`);
+    }
+    
+    // Identify isolated books that could connect better
+    const isolatedBooks = nodes.filter(node => {
+      const connections = links.filter(link => 
+        link.fromId === node.id || link.toId === node.id
+      ).length;
+      return connections === 0;
+    });
+    
+    if (isolatedBooks.length > 0 && isolatedBooks.length < nodes.length * 0.3) {
+      insights.push(`Connection Opportunity: ${isolatedBooks.length} books awaiting thematic bridges. Adding tags could reveal hidden connections.`);
+    }
+    
+    // Author network opportunities
+    const singleBookAuthors = new Set(
+      nodes.filter(node => nodes.filter(n => n.author === node.author).length === 1)
+        .map(n => n.author)
+    );
+    
+    if (singleBookAuthors.size > nodes.length * 0.7) {
+      insights.push(`Wide Author Exploration: You're sampling many authors. Consider deep-diving into one author's complete works to build stronger author networks.`);
+    }
+    
+    return insights.join('\n\n') || "Your reading network is developing nicely. Keep adding books to unlock deeper insights.";
+  } catch (error) {
+    console.error('Error generating insights:', error);
+    return "Analyzing reading network...";
   }
 }
 
