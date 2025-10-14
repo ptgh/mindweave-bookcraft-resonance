@@ -41,6 +41,42 @@ export interface InfluenceMap {
   }>;
 }
 
+export interface ReadingVelocity {
+  booksPerMonth: number;
+  trend: 'accelerating' | 'steady' | 'decelerating';
+  peakPeriod?: { start: Date; end: Date; count: number };
+  averageTimeBetweenBooks: number; // in days
+  momentum: number; // 0-1 score
+}
+
+export interface ClusterHealth {
+  clusterId: string;
+  name: string;
+  bookCount: number;
+  diversity: number; // 0-1, based on author diversity
+  recency: number; // 0-1, how recently books were added
+  growth: 'expanding' | 'stable' | 'dormant';
+  healthScore: number; // 0-1 overall health
+}
+
+export interface ThematicConstellation {
+  name: string;
+  centralThemes: string[];
+  satellites: string[]; // Related but peripheral themes
+  books: Transmission[];
+  density: number; // How tightly interconnected
+  uniqueness: number; // How distinct from other constellations
+}
+
+export interface ReadingDNA {
+  genreProfile: { genre: string; percentage: number }[];
+  temporalPreference: 'classic' | 'modern' | 'mixed' | 'contemporary';
+  diversityScore: number; // 0-1
+  explorationScore: number; // 0-1, willingness to try new things
+  consistencyScore: number; // 0-1, sticking to favorites
+  signature: string; // A unique descriptor
+}
+
 export class PatternRecognitionService {
   
   // Detect thematic clusters using tag co-occurrence and semantic similarity
@@ -327,6 +363,201 @@ export class PatternRecognitionService {
       }))
       .filter(inf => inf.strength > 0.2)
       .sort((a, b) => b.strength - a.strength);
+  }
+
+  // Enhanced Pattern Recognition Features
+
+  calculateReadingVelocity(transmissions: Transmission[]): ReadingVelocity | null {
+    if (transmissions.length < 2) return null;
+
+    const sortedBooks = [...transmissions].sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+
+    const firstDate = new Date(sortedBooks[0].created_at);
+    const lastDate = new Date(sortedBooks[sortedBooks.length - 1].created_at);
+    const daysDiff = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24);
+    const monthsDiff = daysDiff / 30;
+
+    const booksPerMonth = transmissions.length / Math.max(monthsDiff, 0.1);
+
+    // Calculate recent vs older velocity to determine trend
+    const midpoint = Math.floor(sortedBooks.length / 2);
+    const recentBooks = sortedBooks.slice(midpoint);
+    const olderBooks = sortedBooks.slice(0, midpoint);
+
+    const recentVelocity = recentBooks.length / Math.max(
+      (new Date(recentBooks[recentBooks.length - 1].created_at).getTime() - 
+       new Date(recentBooks[0].created_at).getTime()) / (1000 * 60 * 60 * 24 * 30), 
+      0.1
+    );
+
+    const olderVelocity = olderBooks.length / Math.max(
+      (new Date(olderBooks[olderBooks.length - 1].created_at).getTime() - 
+       new Date(olderBooks[0].created_at).getTime()) / (1000 * 60 * 60 * 24 * 30), 
+      0.1
+    );
+
+    const trend = recentVelocity > olderVelocity * 1.2 ? 'accelerating' : 
+                  recentVelocity < olderVelocity * 0.8 ? 'decelerating' : 'steady';
+
+    const averageTimeBetweenBooks = daysDiff / (transmissions.length - 1);
+    
+    // Momentum based on recency and velocity
+    const recentActivity = transmissions.filter(t => 
+      (Date.now() - new Date(t.created_at).getTime()) < 30 * 24 * 60 * 60 * 1000
+    ).length;
+    const momentum = Math.min(recentActivity / 5, 1); // Cap at 1
+
+    return {
+      booksPerMonth: Number(booksPerMonth.toFixed(2)),
+      trend,
+      averageTimeBetweenBooks: Number(averageTimeBetweenBooks.toFixed(1)),
+      momentum: Number(momentum.toFixed(2))
+    };
+  }
+
+  analyzeClusterHealth(clusters: ThematicCluster[]): ClusterHealth[] {
+    return clusters.map(cluster => {
+      const uniqueAuthors = new Set(cluster.books.map(b => b.author)).size;
+      const diversity = uniqueAuthors / cluster.books.length;
+
+      const recentBooks = cluster.books.filter(b => 
+        (Date.now() - new Date(b.created_at).getTime()) < 90 * 24 * 60 * 60 * 1000
+      );
+      const recency = recentBooks.length / cluster.books.length;
+
+      const sortedByDate = [...cluster.books].sort((a, b) => 
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+      
+      const midpoint = Math.floor(sortedByDate.length / 2);
+      const recentHalf = sortedByDate.slice(midpoint);
+      const olderHalf = sortedByDate.slice(0, midpoint);
+      
+      const growth: 'expanding' | 'stable' | 'dormant' = 
+        recentHalf.length > olderHalf.length * 1.3 ? 'expanding' :
+        recentHalf.length < olderHalf.length * 0.7 ? 'dormant' : 'stable';
+
+      const healthScore = (diversity * 0.3 + recency * 0.4 + cluster.strength * 0.3);
+
+      return {
+        clusterId: cluster.name.toLowerCase().replace(/\s+/g, '_'),
+        name: cluster.name,
+        bookCount: cluster.books.length,
+        diversity: Number(diversity.toFixed(2)),
+        recency: Number(recency.toFixed(2)),
+        growth,
+        healthScore: Number(healthScore.toFixed(2))
+      };
+    }).sort((a, b) => b.healthScore - a.healthScore);
+  }
+
+  mapThematicConstellations(transmissions: Transmission[]): ThematicConstellation[] {
+    const tagFrequency = new Map<string, number>();
+    transmissions.forEach(t => {
+      t.tags.forEach(tag => {
+        tagFrequency.set(tag, (tagFrequency.get(tag) || 0) + 1);
+      });
+    });
+
+    const coreThemes = Array.from(tagFrequency.entries())
+      .filter(([_, count]) => count >= 3)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([tag]) => tag);
+
+    const constellations: ThematicConstellation[] = [];
+
+    coreThemes.forEach(coreTheme => {
+      const coreBooks = transmissions.filter(t => t.tags.includes(coreTheme));
+      
+      const relatedTags = new Map<string, number>();
+      coreBooks.forEach(book => {
+        book.tags.forEach(tag => {
+          if (tag !== coreTheme) {
+            relatedTags.set(tag, (relatedTags.get(tag) || 0) + 1);
+          }
+        });
+      });
+
+      const satellites = Array.from(relatedTags.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([tag]) => tag);
+
+      const constellationBooks = transmissions.filter(t => 
+        t.tags.includes(coreTheme) || satellites.some(sat => t.tags.includes(sat))
+      );
+
+      const density = constellationBooks.length / transmissions.length;
+      const uniqueness = 1 - (satellites.filter(s => coreThemes.includes(s)).length / satellites.length);
+
+      constellations.push({
+        name: coreTheme,
+        centralThemes: [coreTheme],
+        satellites,
+        books: constellationBooks,
+        density: Number(density.toFixed(2)),
+        uniqueness: Number(uniqueness.toFixed(2))
+      });
+    });
+
+    return constellations.sort((a, b) => b.books.length - a.books.length);
+  }
+
+  generateReadingDNA(transmissions: Transmission[]): ReadingDNA | null {
+    if (transmissions.length < 5) return null;
+
+    // Genre distribution
+    const genreCount = new Map<string, number>();
+    transmissions.forEach(t => {
+      t.tags.forEach(tag => {
+        genreCount.set(tag, (genreCount.get(tag) || 0) + 1);
+      });
+    });
+
+    const totalTags = Array.from(genreCount.values()).reduce((a, b) => a + b, 0);
+    const genreProfile = Array.from(genreCount.entries())
+      .map(([genre, count]) => ({
+        genre,
+        percentage: Number(((count / totalTags) * 100).toFixed(1))
+      }))
+      .sort((a, b) => b.percentage - a.percentage)
+      .slice(0, 5);
+
+    // Temporal preference
+    const years = transmissions
+      .filter(t => t.publication_year)
+      .map(t => t.publication_year!);
+    
+    const avgYear = years.reduce((a, b) => a + b, 0) / years.length;
+    const temporalPreference = 
+      avgYear < 1970 ? 'classic' :
+      avgYear < 2000 ? 'modern' :
+      avgYear < 2015 ? 'contemporary' : 'mixed';
+
+    // Diversity score
+    const uniqueAuthors = new Set(transmissions.map(t => t.author)).size;
+    const diversityScore = Math.min(uniqueAuthors / transmissions.length, 1);
+
+    // Exploration vs consistency
+    const topGenreCount = Math.max(...Array.from(genreCount.values()));
+    const consistencyScore = topGenreCount / transmissions.length;
+    const explorationScore = 1 - consistencyScore;
+
+    // Generate signature
+    const topGenres = genreProfile.slice(0, 3).map(g => g.genre);
+    const signature = `${temporalPreference}-${topGenres.join('-')}-explorer`.toLowerCase();
+
+    return {
+      genreProfile,
+      temporalPreference,
+      diversityScore: Number(diversityScore.toFixed(2)),
+      explorationScore: Number(explorationScore.toFixed(2)),
+      consistencyScore: Number(consistencyScore.toFixed(2)),
+      signature
+    };
   }
 }
 

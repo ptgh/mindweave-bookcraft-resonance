@@ -5,7 +5,11 @@ import {
   ThematicCluster,
   ConceptualBridge,
   ReadingPattern,
-  InfluenceMap
+  InfluenceMap,
+  ReadingVelocity,
+  ClusterHealth,
+  ThematicConstellation,
+  ReadingDNA
 } from '@/services/patternRecognition';
 
 export const usePatternRecognition = (transmissions: Transmission[]) => {
@@ -27,6 +31,26 @@ export const usePatternRecognition = (transmissions: Transmission[]) => {
   const influences = useMemo(() => {
     if (!transmissions || transmissions.length < 3) return [];
     return patternRecognitionService.mapAuthorInfluences(transmissions);
+  }, [transmissions]);
+
+  const velocity = useMemo(() => {
+    if (!transmissions || transmissions.length < 2) return null;
+    return patternRecognitionService.calculateReadingVelocity(transmissions);
+  }, [transmissions]);
+
+  const clusterHealth = useMemo(() => {
+    if (!clusters || clusters.length === 0) return [];
+    return patternRecognitionService.analyzeClusterHealth(clusters);
+  }, [clusters]);
+
+  const constellations = useMemo(() => {
+    if (!transmissions || transmissions.length < 5) return [];
+    return patternRecognitionService.mapThematicConstellations(transmissions);
+  }, [transmissions]);
+
+  const readingDNA = useMemo(() => {
+    if (!transmissions || transmissions.length < 5) return null;
+    return patternRecognitionService.generateReadingDNA(transmissions);
   }, [transmissions]);
 
   const insights = useMemo(() => {
@@ -72,6 +96,10 @@ export const usePatternRecognition = (transmissions: Transmission[]) => {
     patterns,
     influences,
     insights,
+    velocity,
+    clusterHealth,
+    constellations,
+    readingDNA,
     hasData: transmissions.length >= 2
   };
 };
