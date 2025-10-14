@@ -9,10 +9,9 @@ import AppleBooksLink from "./AppleBooksLink";
 import { searchAppleBooks } from "@/services/appleBooks";
 import { searchFreeEbooks } from "@/services/freeEbookService";
 import { updateTransmission } from "@/services/transmissionsService";
-import { ClusterBadge } from "./ClusterBadge";
 import { BridgeBadge } from "./BridgeBadge";
 import { HistoricalBadge } from "./HistoricalBadge";
-import { ThematicCluster, ConceptualBridge } from "@/services/patternRecognition";
+import { ConceptualBridge } from "@/services/patternRecognition";
 
 interface BookCardProps {
   id: number;
@@ -42,7 +41,6 @@ interface BookCardProps {
   onKeep?: () => void;
   onDiscard?: () => void;
   onAuthorClick?: (authorName: string) => void;
-  clusters?: ThematicCluster[];
   bridges?: ConceptualBridge[];
   publicationYear?: number;
 }
@@ -63,7 +61,6 @@ const BookCard = ({
   onKeep,
   onDiscard,
   onAuthorClick,
-  clusters = [],
   bridges = [],
   publicationYear
 }: BookCardProps) => {
@@ -243,16 +240,9 @@ const BookCard = ({
           )}
           
           {/* Pattern Recognition Badges - Subtle Intelligence */}
-          {(clusters.length > 0 || bridges.length > 0 || publicationYear) && (
+          {(bridges.length > 0 || publicationYear) && (
             <div className="flex flex-wrap gap-1 mt-2">
               {publicationYear && <HistoricalBadge year={publicationYear} />}
-              {clusters.slice(0, 2).map((cluster) => (
-                <ClusterBadge 
-                  key={cluster.id}
-                  theme={cluster.theme}
-                  bookCount={cluster.books.length}
-                />
-              ))}
               {bridges.length > 0 && (
                 <BridgeBadge 
                   bridgeCount={bridges.length}

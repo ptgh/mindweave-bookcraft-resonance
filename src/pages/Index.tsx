@@ -42,7 +42,7 @@ const Index = () => {
   const navigate = useNavigate();
   
   // Pattern recognition for subtle intelligence
-  const { getBookClusters, getBookBridges } = usePatternRecognition(books);
+  const { getBookBridges } = usePatternRecognition(books);
 
   const loadTransmissions = useCallback(async () => {
     if (!user) {
@@ -278,7 +278,6 @@ const Index = () => {
                 onDiscard={handleDiscardBook}
                 onAddNew={() => setIsAddModalOpen(true)}
                 onAuthorClick={handleAuthorClick}
-                getBookClusters={getBookClusters}
                 getBookBridges={getBookBridges}
               />
             )}

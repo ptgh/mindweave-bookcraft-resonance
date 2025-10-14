@@ -4,7 +4,7 @@ import EmptyState from "./EmptyState";
 import { StandardButton } from "./ui/standard-button";
 import { Transmission } from "@/services/transmissionsService";
 import { getOptimizedSettings } from "@/utils/performance";
-import { ThematicCluster, ConceptualBridge } from "@/services/patternRecognition";
+import { ConceptualBridge } from "@/services/patternRecognition";
 
 interface TransmissionsListProps {
   transmissions: Transmission[];
@@ -14,7 +14,6 @@ interface TransmissionsListProps {
   onDiscard: (book: Transmission) => void;
   onAddNew: () => void;
   onAuthorClick?: (authorName: string) => void;
-  getBookClusters?: (bookId: string) => ThematicCluster[];
   getBookBridges?: (bookId: string) => ConceptualBridge[];
 }
 
@@ -26,7 +25,6 @@ const TransmissionsList = memo(({
   onDiscard, 
   onAddNew,
   onAuthorClick,
-  getBookClusters,
   getBookBridges
 }: TransmissionsListProps) => {
   const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
@@ -99,7 +97,6 @@ const TransmissionsList = memo(({
   return (
     <div className={gridClasses}>
       {optimisticTransmissions.map(book => {
-        const clusters = getBookClusters ? getBookClusters(book.id.toString()) : [];
         const bridges = getBookBridges ? getBookBridges(book.id.toString()) : [];
         
         return (
@@ -124,7 +121,6 @@ const TransmissionsList = memo(({
               onKeep={() => onKeep(book)}
               onDiscard={() => handleDiscard(book)}
               onAuthorClick={onAuthorClick}
-              clusters={clusters}
               bridges={bridges}
               publicationYear={book.publication_year}
             />

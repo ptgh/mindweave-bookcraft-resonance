@@ -7,6 +7,16 @@ interface ConceptualTagsSectionProps {
 }
 
 const conceptualTags = [
+  // Sci-Fi Genres & Movements
+  "Cyberpunk",
+  "Post-Cyberpunk",
+  "Space Opera",
+  "Hard Science Fiction",
+  "Biopunk",
+  "Climate Fiction",
+  "New Wave",
+  "Golden Age",
+  
   // Temporal Themes
   "Block Universe Compatible",
   "Time Dilation",
