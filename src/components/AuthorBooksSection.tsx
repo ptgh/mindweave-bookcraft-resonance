@@ -181,23 +181,23 @@ const AuthorBooksSection = memo(({
                 
                 return (
                   <div key={book.id}>
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors h-full flex flex-col">
-                      <div className="flex items-start space-x-4 flex-1 mb-4">
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3 sm:p-4 hover:bg-slate-800/70 transition-colors h-full flex flex-col">
+                      <div className="flex items-start space-x-3 sm:space-x-4 flex-1 mb-3 sm:mb-4">
                         <EnhancedBookCover
                           title={book.title}
                           author={selectedAuthor?.name}
                           coverUrl={book.cover_url}
-                          className="w-12 h-16 flex-shrink-0"
+                          className="w-12 h-16 sm:w-12 sm:h-16 flex-shrink-0"
                           lazy={true}
                         />
                         
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <h3 className="text-slate-200 font-medium text-sm leading-tight line-clamp-2 mb-1">
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-slate-200 font-medium text-sm sm:text-sm leading-tight mb-1 break-words">
                                 {book.title}
                               </h3>
-                              <p className="text-slate-400 text-xs mb-1">{selectedAuthor?.name || 'Unknown Author'}</p>
+                              <p className="text-slate-400 text-xs mb-1 truncate">{selectedAuthor?.name || 'Unknown Author'}</p>
                             </div>
                             <div className="w-3 h-3 rounded-full border-2 border-slate-500 bg-slate-500/10 flex-shrink-0" />
                           </div>
