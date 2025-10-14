@@ -1,22 +1,26 @@
-
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Transmission } from '@/services/transmissionsService';
+import { usePatternRecognition } from '@/hooks/usePatternRecognition';
 
 interface MindMapProps {
   transmissions: Transmission[];
 }
 
 const MindMap: React.FC<MindMapProps> = ({ transmissions }) => {
-  // Group transmissions by tags to create clusters
-  const tagClusters = transmissions.reduce((clusters, transmission) => {
-    transmission.tags.forEach(tag => {
-      if (!clusters[tag]) {
-        clusters[tag] = [];
-      }
-      clusters[tag].push(transmission);
-    });
-    return clusters;
-  }, {} as Record<string, Transmission[]>);
+  const patterns = usePatternRecognition(transmissions);
+
+  // Group transmissions by tags to create clusters, enhanced with pattern data
+  const tagClusters = useMemo(() => {
+    return transmissions.reduce((clusters, transmission) => {
+      transmission.tags.forEach(tag => {
+        if (!clusters[tag]) {
+          clusters[tag] = [];
+        }
+        clusters[tag].push(transmission);
+      });
+      return clusters;
+    }, {} as Record<string, Transmission[]>);
+  }, [transmissions]);
 
   // Create a central node position (smaller dimensions)
   const centerX = 300;
@@ -127,8 +131,8 @@ const MindMap: React.FC<MindMapProps> = ({ transmissions }) => {
         </div>
       ))}
 
-      {/* Legend - kept but simplified */}
-      <div className="absolute bottom-4 left-4 bg-slate-900/80 rounded-lg p-3 text-xs text-slate-300">
+      {/* Legend with pattern insights */}
+      <div className="absolute bottom-4 left-4 bg-slate-900/80 rounded-lg p-3 text-xs text-slate-300 max-w-[200px]">
         <div className="space-y-1">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
@@ -142,6 +146,16 @@ const MindMap: React.FC<MindMapProps> = ({ transmissions }) => {
             <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
             <span>Individual Transmissions</span>
           </div>
+          {patterns.clusters.length > 0 && (
+            <div className="pt-2 mt-2 border-t border-slate-700">
+              <span className="text-purple-400 font-medium">{patterns.clusters.length} thematic clusters</span>
+            </div>
+          )}
+          {patterns.bridges.length > 0 && (
+            <div className="text-purple-400 font-medium">
+              {patterns.bridges.length} conceptual bridges
+            </div>
+          )}
         </div>
       </div>
     </div>
