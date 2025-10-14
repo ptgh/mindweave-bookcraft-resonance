@@ -10,6 +10,7 @@ import Header from '@/components/Header';
 import NeuralMapHeader from '@/components/NeuralMapHeader';
 import { useGSAPAnimations } from '@/hooks/useGSAPAnimations';
 import { usePatternRecognition } from '@/hooks/usePatternRecognition';
+import { filterConceptualTags } from '@/constants/conceptualTags';
 
 // Register GSAP plugins
 gsap.registerPlugin(MotionPathPlugin);
@@ -96,7 +97,7 @@ const TestBrain = () => {
           id: `transmission-${transmission.id}`,
           title: transmission.title || 'Unknown Title',
           author: transmission.author || 'Unknown Author',
-          tags: Array.isArray(transmission.tags) ? transmission.tags : [],
+          tags: filterConceptualTags(Array.isArray(transmission.tags) ? transmission.tags : []),
           x: Math.random() * (window.innerWidth - 300) + 150,
           y: Math.random() * (window.innerHeight - 300) + 150,
           coverUrl: transmission.cover_url,

@@ -1,53 +1,18 @@
 
 import { Label } from "@/components/ui/label";
+import { CONCEPTUAL_TAGS } from "@/constants/conceptualTags";
 
 interface ConceptualTagsSectionProps {
   selectedTags: string[];
   onTagToggle: (tag: string) => void;
 }
 
-const conceptualTags = [
-  // Sci-Fi Genres & Movements
-  "Cyberpunk",
-  "Post-Cyberpunk",
-  "Space Opera",
-  "Hard Science Fiction",
-  "Biopunk",
-  "Climate Fiction",
-  "New Wave",
-  "Golden Age",
-  
-  // Temporal Themes
-  "Block Universe Compatible",
-  "Time Dilation",
-  "Chrono Loops",
-  "Technological Shamanism",
-  
-  // World Structures
-  "Utopian Collapse",
-  "Mega-Corporate Systems",
-  "Off-Earth Civilisations",
-  "Dystopian Systems",
-  
-  // Narrative Form
-  "Nonlinear Structure",
-  "Dream Logic",
-  "Archive-Based",
-  "Memory Distortion",
-  
-  // Sci-Fi Elements
-  "Cybernetic Enhancement",
-  "Quantum Consciousness",
-  "Neural Interface",
-  "Posthuman Evolution"
-];
-
 const ConceptualTagsSection = ({ selectedTags, onTagToggle }: ConceptualTagsSectionProps) => {
   return (
     <div>
       <Label className="text-slate-300 text-sm mb-3 block">Conceptual Tags</Label>
       <div className="grid grid-cols-2 gap-2">
-        {conceptualTags.map(tag => (
+        {CONCEPTUAL_TAGS.map(tag => (
           <button
             key={tag}
             type="button"

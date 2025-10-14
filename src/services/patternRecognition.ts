@@ -1,4 +1,5 @@
 import { Transmission } from '@/services/transmissionsService';
+import { filterConceptualTags } from '@/constants/conceptualTags';
 
 export interface ThematicCluster {
   id: string;
@@ -39,7 +40,8 @@ export class PatternRecognitionService {
     const clusters: Map<string, ThematicCluster> = new Map();
     
     transmissions.forEach(book => {
-      const tags = book.tags || [];
+      // Only use conceptual tags for clustering
+      const tags = filterConceptualTags(book.tags || []);
       
       tags.forEach(tag => {
         if (!tag || !tag.trim()) return;
@@ -77,8 +79,9 @@ export class PatternRecognitionService {
         const book1 = transmissions[i];
         const book2 = transmissions[j];
         
-        const tags1 = new Set(book1.tags || []);
-        const tags2 = new Set(book2.tags || []);
+        // Only use conceptual tags for bridges
+        const tags1 = new Set(filterConceptualTags(book1.tags || []));
+        const tags2 = new Set(filterConceptualTags(book2.tags || []));
         
         const commonTags = Array.from(tags1).filter(tag => tags2.has(tag));
         
@@ -105,7 +108,8 @@ export class PatternRecognitionService {
     const themeActivity: Map<string, Date[]> = new Map();
     
     transmissions.forEach(book => {
-      const tags = book.tags || [];
+      // Only use conceptual tags for velocity
+      const tags = filterConceptualTags(book.tags || []);
       tags.forEach(tag => {
         if (!tag || !tag.trim()) return;
         if (!themeActivity.has(tag)) {
@@ -167,8 +171,9 @@ export class PatternRecognitionService {
     const networks: InfluenceNetwork[] = [];
     
     authorBooks.forEach((books, author) => {
+      // Only use conceptual tags for influence mapping
       const authorTags = new Set(
-        books.flatMap(b => b.tags || [])
+        books.flatMap(b => filterConceptualTags(b.tags || []))
       );
       
       const influences: InfluenceNetwork['influences'] = [];
@@ -176,8 +181,9 @@ export class PatternRecognitionService {
       authorBooks.forEach((otherBooks, otherAuthor) => {
         if (author === otherAuthor) return;
         
+        // Only use conceptual tags for comparison
         const otherTags = new Set(
-          otherBooks.flatMap(b => b.tags || [])
+          otherBooks.flatMap(b => filterConceptualTags(b.tags || []))
         );
         
         const commonTags = Array.from(authorTags).filter(tag => otherTags.has(tag));

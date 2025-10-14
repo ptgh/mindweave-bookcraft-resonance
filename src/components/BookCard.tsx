@@ -12,6 +12,7 @@ import { updateTransmission } from "@/services/transmissionsService";
 import { BridgeBadge } from "./BridgeBadge";
 import { HistoricalBadge } from "./HistoricalBadge";
 import { ConceptualBridge } from "@/services/patternRecognition";
+import { filterConceptualTags } from "@/constants/conceptualTags";
 
 interface BookCardProps {
   id: number;
@@ -221,23 +222,26 @@ const BookCard = ({
             </div>
           )}
           
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {tags.slice(0, 2).map((tag, index) => (
-                <span
-                  key={index}
-                  className="px-2 py-0.5 bg-slate-700/40 border border-slate-600/40 text-slate-300 text-[10px] rounded-full"
-                >
-                  {tag}
-                </span>
-              ))}
-              {tags.length > 2 && (
-                <span className="text-slate-400 text-[10px] px-2 py-0.5">
-                  +{tags.length - 2}
-                </span>
-              )}
-            </div>
-          )}
+          {(() => {
+            const conceptualTags = filterConceptualTags(tags);
+            return conceptualTags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {conceptualTags.slice(0, 2).map((tag, index) => (
+                  <span
+                    key={index}
+                    className="px-2 py-0.5 bg-slate-700/40 border border-slate-600/40 text-slate-300 text-[10px] rounded-full"
+                  >
+                    {tag}
+                  </span>
+                ))}
+                {conceptualTags.length > 2 && (
+                  <span className="text-slate-400 text-[10px] px-2 py-0.5">
+                    +{conceptualTags.length - 2}
+                  </span>
+                )}
+              </div>
+            );
+          })()}
           
           {/* Pattern Recognition Badges - Subtle Intelligence */}
           {(bridges.length > 0 || publicationYear) && (
