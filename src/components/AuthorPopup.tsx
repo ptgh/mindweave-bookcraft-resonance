@@ -279,18 +279,18 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
         }
       }, 1500);
       
-      // Stop checking after 45 seconds
+      // Stop checking after 30 seconds and reset state
       setTimeout(() => {
         clearInterval(checkInterval);
-        if (isEnriching) {
-          setIsEnriching(false);
-          setEnrichmentStatus('timeout');
-          toast({
-            title: "Enrichment In Progress",
-            description: "This may take a moment. Data will update automatically.",
-          });
-        }
-      }, 45000);
+        setIsEnriching(false);
+        setEnrichmentStatus('');
+        
+        toast({
+          title: "Still Processing",
+          description: "Enrichment is taking longer than usual. Data will update when complete.",
+          variant: "default"
+        });
+      }, 30000);
       
     } catch (error) {
       console.error('Failed to trigger enrichment:', error);
