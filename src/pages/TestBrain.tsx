@@ -10,7 +10,7 @@ import Header from '@/components/Header';
 import NeuralMapHeader from '@/components/NeuralMapHeader';
 import { useGSAPAnimations } from '@/hooks/useGSAPAnimations';
 import { usePatternRecognition } from '@/hooks/usePatternRecognition';
-import { filterConceptualTags } from '@/constants/conceptualTags';
+import { filterConceptualTags, CONCEPTUAL_TAGS } from '@/constants/conceptualTags';
 
 // Register GSAP plugins
 gsap.registerPlugin(MotionPathPlugin);
@@ -108,10 +108,8 @@ const TestBrain = () => {
         console.log('Created nodes:', userNodes);
         setNodes(userNodes);
 
-        const uniqueTags = Array.from(new Set(
-          userNodes.flatMap(node => node.tags)
-        )).filter(tag => tag && tag.trim() !== '').slice(0, 20);
-        setAllTags(uniqueTags);
+        // Show ALL conceptual tags in the footer, not just ones used in books
+        setAllTags([...CONCEPTUAL_TAGS]);
 
         const connections = generateOrganicConnections(userNodes);
         setLinks(connections);
