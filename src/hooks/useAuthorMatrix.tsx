@@ -54,8 +54,9 @@ export const useAuthorMatrix = () => {
       setBooksLoading(true);
       
       const dbBooks = await getAuthorBooks(author.id);
+      console.log(`Loaded ${dbBooks.length} books for ${author.name} from database`);
       
-      // Always start with DB books (author-curated) and then augment with Google Books
+      // Always start with DB books (author-curated)
       setAuthorBooks(dbBooks);
       
       const dbImageUrls = dbBooks.map(book => book.cover_url).filter(Boolean) as string[];
@@ -63,17 +64,24 @@ export const useAuthorMatrix = () => {
         imageService.preloadImages(dbImageUrls);
       }
       
-      // Fetch additional titles from Google Books for the selected author and merge
+      // Stop loading indicator after DB books are shown
+      setBooksLoading(false);
+      
+      // Try to fetch additional titles from Google Books in background
       const searchKey = `author_books_${author.id}_${Date.now()}`;
       
       searchDebouncer.search(
         searchKey,
         () => {
-          // Use dedicated author filter to restrict results strictly to this author
           return searchBooksEnhanced(author.name, 30, 0, author.name);
         },
         (googleBooks: EnhancedBookSuggestion[]) => {
-          // Convert Google results to AuthorBook and merge with DB, de-duplicating by title
+          // Handle empty results (e.g., from API failures)
+          if (!googleBooks || googleBooks.length === 0) {
+            console.log('No additional books from Google Books API, showing database books only');
+            return;
+          }
+          
           const apiBooks: AuthorBook[] = googleBooks.map(book => ({
             id: book.id,
             author_id: author.id,
@@ -94,7 +102,6 @@ export const useAuthorMatrix = () => {
           }));
           
           const byTitle = new Map<string, AuthorBook>();
-          // Prefer DB entries when titles collide
           dbBooks.forEach(b => byTitle.set((b.title || '').toLowerCase(), b));
           apiBooks.forEach(b => {
             const key = (b.title || '').toLowerCase();
@@ -102,6 +109,7 @@ export const useAuthorMatrix = () => {
           });
           
           const merged = Array.from(byTitle.values());
+          console.log(`Merged ${merged.length} total books (${dbBooks.length} from DB, ${apiBooks.length} from API)`);
           setAuthorBooks(merged);
           
           const imageUrls = merged
@@ -114,13 +122,12 @@ export const useAuthorMatrix = () => {
       );
     } catch (error: any) {
       console.error('Error loading books:', error);
+      setBooksLoading(false);
       toast({
         title: "Error Loading Books",
-        description: error.message,
+        description: "Unable to load books. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setBooksLoading(false);
     }
   }, [setSearchParams, toast]);
 

@@ -191,10 +191,10 @@ const AuthorBooksSection = memo(({
                           lazy={true}
                         />
                         
-                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <div className="flex-1 min-w-0 overflow-hidden">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
-                              <h3 className="text-slate-200 font-medium text-sm sm:text-sm leading-tight mb-1 break-words">
+                              <h3 className="text-slate-200 font-medium text-sm leading-tight mb-1 break-words line-clamp-3">
                                 {book.title}
                               </h3>
                               <p className="text-slate-400 text-xs mb-1 truncate">{selectedAuthor?.name || 'Unknown Author'}</p>

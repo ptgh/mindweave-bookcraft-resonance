@@ -114,8 +114,13 @@ export const useBookBrowser = () => {
               console.log(`Found ${newBooks.length} new sci-fi books for "${term}"`);
               allBooks.push(...newBooks);
             }
-          } catch (searchError) {
+          } catch (searchError: any) {
             console.error(`Search failed for "${term}":`, searchError);
+            // If it's a rate limit error, stop trying
+            if (searchError?.message?.includes('429') || searchError?.message?.includes('rate limit')) {
+              console.warn('Rate limit reached for Google Books API');
+              break;
+            }
           }
           
           attempts++;
@@ -142,19 +147,18 @@ export const useBookBrowser = () => {
             setRotationCount(0);
             toast({
               title: "Refreshing Collection",
-              description: "Cleared viewing history to show fresh sci-fi recommendations.",
+              description: "Cleared viewing history to show fresh recommendations.",
               variant: "success"
             });
-            // Trigger reload after clearing
             setTimeout(() => {
               debouncedLoadBooks();
             }, 500);
           } else {
             setBooks([]);
             toast({
-              title: "No Sci-Fi Books Found",
-              description: "Unable to load sci-fi books. Please try again.",
-              variant: "destructive",
+              title: "Limited Books Available",
+              description: "Showing available books from database. External book service may be temporarily unavailable.",
+              variant: "default",
             });
           }
         }
