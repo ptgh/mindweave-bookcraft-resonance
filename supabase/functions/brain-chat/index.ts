@@ -126,11 +126,18 @@ Brain Analysis:
 ${brainContext}
 
 You can help users:
-- Understand connection patterns in their reading network
-- Identify thematic clusters and bridges
-- Suggest reading recommendations based on network analysis
+- Identify thematic clusters (groups of 2+ books exploring the same theme)
+- Detect conceptual bridges (books that connect multiple themes)
+- Understand connection patterns and reading velocity trends
+- Suggest recommendations based on cluster gaps and bridge opportunities
 - Explore temporal patterns and author relationships
-- Analyze tag frequencies and conceptual themes
+- Analyze influence networks between authors
+
+PATTERN RECOGNITION INSIGHTS:
+- Proactively mention detected clusters when relevant (e.g., "I notice you have a strong AI Consciousness cluster with 4 books")
+- Point out bridge books that connect disparate themes (e.g., "This book bridges your Cyberpunk and Philosophy clusters")
+- Identify reading velocities and acceleration patterns in themes
+- Suggest books that would strengthen weak clusters or create new bridges
 
 When referencing specific books, use their exact titles. When discussing connections, mention the connection types and strengths. Provide insights that help users understand their reading patterns and discover new connections.
 
@@ -293,7 +300,7 @@ function generateBrainContext(brainData: { nodes: BrainNode[], links: BookLink[]
       return acc;
     }, {} as Record<string, number>);
 
-    // Analyze tag frequencies
+    // Analyze tag frequencies for thematic clusters
     const tagFrequency = nodes.reduce((acc, node) => {
       if (node.tags && Array.isArray(node.tags)) {
         node.tags.forEach(tag => {
@@ -309,6 +316,34 @@ function generateBrainContext(brainData: { nodes: BrainNode[], links: BookLink[]
       .sort(([,a], [,b]) => b - a)
       .slice(0, 10)
       .map(([tag, count]) => `${tag} (${count})`);
+
+    // Detect thematic clusters (2+ books with same tag)
+    const clusters = Object.entries(tagFrequency)
+      .filter(([, count]) => count >= 2)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([tag, count]) => `"${tag}" cluster (${count} books)`);
+
+    // Detect conceptual bridges (books connecting multiple themes)
+    const bridgeBooks = nodes.map(node => {
+      if (!node.tags || node.tags.length < 2) return null;
+      
+      // Count how many other books share each tag
+      const tagConnections = node.tags.map(tag => {
+        const othersWithTag = nodes.filter(n => 
+          n.id !== node.id && n.tags?.includes(tag)
+        ).length;
+        return { tag, connections: othersWithTag };
+      }).filter(t => t.connections > 0);
+      
+      if (tagConnections.length >= 2) {
+        return {
+          title: node.title,
+          bridgingThemes: tagConnections.map(t => t.tag).slice(0, 3)
+        };
+      }
+      return null;
+    }).filter(Boolean).slice(0, 3);
 
     // Analyze author networks
     const authorBooks = nodes.reduce((acc, node) => {
@@ -334,7 +369,7 @@ function generateBrainContext(brainData: { nodes: BrainNode[], links: BookLink[]
     const maxPossibleConnections = nodes.length * (nodes.length - 1) / 2;
     const density = maxPossibleConnections > 0 ? ((links.length / maxPossibleConnections) * 100).toFixed(2) : '0';
 
-    return `
+    let context = `
 Connection Types: ${Object.entries(connectionStats).map(([type, count]) => `${type}: ${count}`).join(', ')}
 
 Top Themes: ${topTags.join(', ')}
@@ -343,8 +378,20 @@ Most Prolific Authors: ${topAuthors.join(', ')}
 
 Most Connected Books: ${nodeConnections.map(n => `"${n.title}" (${n.connections} connections)`).join(', ')}
 
-Network Density: ${density}% connectivity
-`.trim();
+Network Density: ${density}% connectivity`;
+
+    // Add pattern recognition insights
+    if (clusters.length > 0) {
+      context += `\n\nThematic Clusters Detected: ${clusters.join(', ')}`;
+    }
+
+    if (bridgeBooks.length > 0) {
+      context += `\n\nConceptual Bridge Books: ${bridgeBooks.map(b => 
+        `"${b.title}" (bridges: ${b.bridgingThemes.join(', ')})`
+      ).join(', ')}`;
+    }
+
+    return context.trim();
 
   } catch (error) {
     console.error('Error generating brain context:', error);
