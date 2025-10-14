@@ -9,8 +9,6 @@ import AppleBooksLink from "./AppleBooksLink";
 import { searchAppleBooks } from "@/services/appleBooks";
 import { searchFreeEbooks } from "@/services/freeEbookService";
 import { updateTransmission } from "@/services/transmissionsService";
-import { BridgeBadge } from "./BridgeBadge";
-import { HistoricalBadge } from "./HistoricalBadge";
 import { ConceptualBridge } from "@/services/patternRecognition";
 import { filterConceptualTags } from "@/constants/conceptualTags";
 
@@ -244,17 +242,6 @@ const BookCard = ({
           })()}
           
           {/* Pattern Recognition Badges - Subtle Intelligence */}
-          {(bridges.length > 0 || publicationYear) && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {publicationYear && <HistoricalBadge year={publicationYear} />}
-              {bridges.length > 0 && (
-                <BridgeBadge 
-                  bridgeCount={bridges.length}
-                  topConcept={bridges[0]?.bridgeConcept}
-                />
-              )}
-            </div>
-          )}
           
           {resonanceLabels.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
