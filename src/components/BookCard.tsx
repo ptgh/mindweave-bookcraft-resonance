@@ -9,6 +9,11 @@ import AppleBooksLink from "./AppleBooksLink";
 import { searchAppleBooks } from "@/services/appleBooks";
 import { searchFreeEbooks } from "@/services/freeEbookService";
 import { updateTransmission } from "@/services/transmissionsService";
+import { ClusterBadge } from "./ClusterBadge";
+import { BridgeBadge } from "./BridgeBadge";
+import { HistoricalBadge } from "./HistoricalBadge";
+import { ThematicCluster, ConceptualBridge } from "@/services/patternRecognition";
+
 interface BookCardProps {
   id: number;
   title: string;
@@ -37,6 +42,9 @@ interface BookCardProps {
   onKeep?: () => void;
   onDiscard?: () => void;
   onAuthorClick?: (authorName: string) => void;
+  clusters?: ThematicCluster[];
+  bridges?: ConceptualBridge[];
+  publicationYear?: number;
 }
 
 const BookCard = ({ 
@@ -54,7 +62,10 @@ const BookCard = ({
   onEdit,
   onKeep,
   onDiscard,
-  onAuthorClick
+  onAuthorClick,
+  clusters = [],
+  bridges = [],
+  publicationYear
 }: BookCardProps) => {
   const [showActions, setShowActions] = useState(false);
   const [hasFreeEbook, setHasFreeEbook] = useState(false);
@@ -227,6 +238,26 @@ const BookCard = ({
                 <span className="text-slate-400 text-[10px] px-2 py-0.5">
                   +{tags.length - 2}
                 </span>
+              )}
+            </div>
+          )}
+          
+          {/* Pattern Recognition Badges - Subtle Intelligence */}
+          {(clusters.length > 0 || bridges.length > 0 || publicationYear) && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {publicationYear && <HistoricalBadge year={publicationYear} />}
+              {clusters.slice(0, 2).map((cluster) => (
+                <ClusterBadge 
+                  key={cluster.id}
+                  theme={cluster.theme}
+                  bookCount={cluster.books.length}
+                />
+              ))}
+              {bridges.length > 0 && (
+                <BridgeBadge 
+                  bridgeCount={bridges.length}
+                  topConcept={bridges[0]?.bridgeConcept}
+                />
               )}
             </div>
           )}

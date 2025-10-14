@@ -18,6 +18,7 @@ import { searchAppleBooks } from "@/services/appleBooks";
 import { useNavigate } from "react-router-dom";
 import { AuthorPopup } from "@/components/AuthorPopup";
 import { getAuthorByName, ScifiAuthor, findOrCreateAuthor } from "@/services/scifiAuthorsService";
+import { usePatternRecognition } from "@/hooks/usePatternRecognition";
 
 const Index = () => {
   const [books, setBooks] = useState<Transmission[]>([]);
@@ -37,8 +38,11 @@ const Index = () => {
 
   const { toast } = useEnhancedToast();
   const { user, loading: authLoading } = useAuth();
-const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
+  const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
   const navigate = useNavigate();
+  
+  // Pattern recognition for subtle intelligence
+  const { getBookClusters, getBookBridges } = usePatternRecognition(books);
 
   const loadTransmissions = useCallback(async () => {
     if (!user) {
@@ -274,6 +278,8 @@ const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations
                 onDiscard={handleDiscardBook}
                 onAddNew={() => setIsAddModalOpen(true)}
                 onAuthorClick={handleAuthorClick}
+                getBookClusters={getBookClusters}
+                getBookBridges={getBookBridges}
               />
             )}
           </div>

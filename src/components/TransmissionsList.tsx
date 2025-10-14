@@ -4,6 +4,7 @@ import EmptyState from "./EmptyState";
 import { StandardButton } from "./ui/standard-button";
 import { Transmission } from "@/services/transmissionsService";
 import { getOptimizedSettings } from "@/utils/performance";
+import { ThematicCluster, ConceptualBridge } from "@/services/patternRecognition";
 
 interface TransmissionsListProps {
   transmissions: Transmission[];
@@ -13,6 +14,8 @@ interface TransmissionsListProps {
   onDiscard: (book: Transmission) => void;
   onAddNew: () => void;
   onAuthorClick?: (authorName: string) => void;
+  getBookClusters?: (bookId: string) => ThematicCluster[];
+  getBookBridges?: (bookId: string) => ConceptualBridge[];
 }
 
 const TransmissionsList = memo(({ 
@@ -22,7 +25,9 @@ const TransmissionsList = memo(({
   onKeep, 
   onDiscard, 
   onAddNew,
-  onAuthorClick
+  onAuthorClick,
+  getBookClusters,
+  getBookBridges
 }: TransmissionsListProps) => {
   const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
   const [optimisticTransmissions, setOptimisticTransmissions] = useState<Transmission[]>([]);
@@ -93,31 +98,39 @@ const TransmissionsList = memo(({
 
   return (
     <div className={gridClasses}>
-      {optimisticTransmissions.map(book => (
-        <div 
-          key={book.id}
-          className={`transition-all ${optimizedSettings.reduceAnimations ? 'duration-150' : 'duration-300'} ${
-            deletingIds.has(book.id) ? 'opacity-0 scale-95 pointer-events-none' : ''
-          }`}
-        >
-          <BookCard
-            id={book.id}
-            title={book.title}
-            author={book.author}
-            status={book.status}
-            tags={book.tags}
-            rating={book.rating}
-            coverUrl={book.cover_url}
-            publisher_series={book.publisher_series}
-            isbn={book.isbn}
-            apple_link={book.apple_link}
-            onEdit={() => onEdit(book)}
-            onKeep={() => onKeep(book)}
-            onDiscard={() => handleDiscard(book)}
-            onAuthorClick={onAuthorClick}
-          />
-        </div>
-      ))}
+      {optimisticTransmissions.map(book => {
+        const clusters = getBookClusters ? getBookClusters(book.id.toString()) : [];
+        const bridges = getBookBridges ? getBookBridges(book.id.toString()) : [];
+        
+        return (
+          <div 
+            key={book.id}
+            className={`transition-all ${optimizedSettings.reduceAnimations ? 'duration-150' : 'duration-300'} ${
+              deletingIds.has(book.id) ? 'opacity-0 scale-95 pointer-events-none' : ''
+            }`}
+          >
+            <BookCard
+              id={book.id}
+              title={book.title}
+              author={book.author}
+              status={book.status}
+              tags={book.tags}
+              rating={book.rating}
+              coverUrl={book.cover_url}
+              publisher_series={book.publisher_series}
+              isbn={book.isbn}
+              apple_link={book.apple_link}
+              onEdit={() => onEdit(book)}
+              onKeep={() => onKeep(book)}
+              onDiscard={() => handleDiscard(book)}
+              onAuthorClick={onAuthorClick}
+              clusters={clusters}
+              bridges={bridges}
+              publicationYear={book.publication_year}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 });
