@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { searchBooksEnhanced, EnhancedBookSuggestion } from "@/services/googleBooksApi";
-import { saveTransmission } from "@/services/transmissionsService";
+import { saveTransmission, getTransmissions } from "@/services/transmissionsService";
 import { searchAppleBooks } from "@/services/appleBooks";
 import { imageService } from "@/services/image-service";
 import { debounce } from "@/utils/performance";
@@ -15,7 +15,25 @@ export const useBookBrowser = () => {
   const [visibleBooks, setVisibleBooks] = useState<Set<number>>(new Set());
   const [previouslyShownBooks, setPreviouslyShownBooks] = useState<Set<string>>(new Set());
   const [rotationCount, setRotationCount] = useState(0);
+  const [userTransmissionTitles, setUserTransmissionTitles] = useState<Set<string>>(new Set());
   const { toast } = useEnhancedToast();
+
+  // Load user's transmission titles on mount to filter them out
+  useEffect(() => {
+    const loadUserTransmissions = async () => {
+      try {
+        const transmissions = await getTransmissions();
+        const titles = new Set(
+          transmissions.map(t => t.title.toLowerCase().trim())
+        );
+        setUserTransmissionTitles(titles);
+        console.log(`Loaded ${titles.size} user transmission titles for filtering`);
+      } catch (error) {
+        console.error('Error loading user transmissions:', error);
+      }
+    };
+    loadUserTransmissions();
+  }, []);
 
   // Highly specific sci-fi searches for accurate titles and covers
   const searchTerms = useMemo(() => [
@@ -128,7 +146,14 @@ export const useBookBrowser = () => {
         }
         
         if (allBooks.length > 0) {
-          const shuffled = allBooks
+          // Filter out books already in user's transmissions
+          const filteredBooks = allBooks.filter(book => 
+            !userTransmissionTitles.has(book.title.toLowerCase().trim())
+          );
+          
+          console.log(`Filtered ${allBooks.length - filteredBooks.length} books already in transmissions`);
+          
+          const shuffled = filteredBooks
             .sort(() => Math.random() - 0.5)
             .slice(0, 18);
             
@@ -174,7 +199,7 @@ export const useBookBrowser = () => {
         setLoading(false);
       }
     }, 300),
-    [previouslyShownBooks, toast, searchTerms, rotationCount]
+    [previouslyShownBooks, toast, searchTerms, rotationCount, userTransmissionTitles]
   );
 
   const loadRandomBooks = useCallback(() => {
@@ -198,13 +223,16 @@ export const useBookBrowser = () => {
         title: book.title,
         author: book.author || 'Unknown',
         cover_url: book.coverUrl || book.thumbnailUrl || book.smallThumbnailUrl || '',
-        tags: book.categories || [],
+        tags: [], // No tags until user adds conceptual tags manually
         rating: {},
         notes: book.description || '',
         status: 'want-to-read',
         apple_link: appleLink,
         open_count: 0
       });
+      
+      // Add to user transmission titles set to filter it out immediately
+      setUserTransmissionTitles(prev => new Set([...prev, book.title.toLowerCase().trim()]));
       
       toast({
         title: "Signal Logged",

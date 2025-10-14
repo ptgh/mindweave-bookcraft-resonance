@@ -195,24 +195,6 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClic
                         <PenguinPublisherBadge size="sm" />
                       </div>
                     )}
-                    
-                    {book.categories && book.categories.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {book.categories.slice(0, 2).map((category, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-1 bg-slate-700/50 text-slate-300 text-xs rounded-full"
-                          >
-                            {category}
-                          </span>
-                        ))}
-                        {book.categories.length > 2 && (
-                          <span className="text-slate-400 text-xs px-2 py-1">
-                            +{book.categories.length - 2}
-                          </span>
-                        )}
-                      </div>
-                    )}
                   </div>
                 </div>
                 
