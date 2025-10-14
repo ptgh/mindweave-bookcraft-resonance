@@ -13,6 +13,8 @@ import { getTransmissions } from "@/services/transmissionsService";
 import { usePatternRecognition } from "@/hooks/usePatternRecognition";
 import { useHistoricalContext } from "@/hooks/useHistoricalContext";
 import ConceptualBridges from "@/components/ConceptualBridges";
+import { ReadingVelocityIndicator } from "@/components/ReadingVelocityIndicator";
+import { ThematicConstellationBadge } from "@/components/ThematicConstellationBadge";
 
 const Discovery = () => {
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
@@ -106,11 +108,14 @@ const Discovery = () => {
           {!isLoading && patterns.hasData && (
             <div ref={addFeatureBlockRef} className="feature-block mb-12">
               <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
-                <div className="flex items-center space-x-2 mb-4">
-                  <Sparkles className="w-5 h-5 text-purple-400" />
-                  <h2 className="text-lg font-medium text-slate-200">Pattern Insights</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <Sparkles className="w-5 h-5 text-purple-400" />
+                    <h2 className="text-lg font-medium text-slate-200">Pattern Insights</h2>
+                  </div>
+                  {patterns.velocity && <ReadingVelocityIndicator velocity={patterns.velocity} compact />}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 mb-4">
                   {patterns.insights.map((insight, index) => (
                     <div key={index} className="flex items-start space-x-2 text-sm text-slate-300">
                       <span className="text-purple-400 mt-0.5">•</span>
@@ -118,6 +123,20 @@ const Discovery = () => {
                     </div>
                   ))}
                 </div>
+                {patterns.constellations.length > 0 && (
+                  <div className="pt-4 border-t border-slate-700">
+                    <h3 className="text-sm font-medium text-slate-200 mb-3">Thematic Constellations</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {patterns.constellations.slice(0, 5).map((constellation) => (
+                        <ThematicConstellationBadge
+                          key={constellation.id}
+                          constellation={constellation}
+                          showSatellites
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

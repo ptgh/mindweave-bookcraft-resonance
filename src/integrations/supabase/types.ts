@@ -756,14 +756,17 @@ export type Database = {
           historical_context_tags: string[] | null
           id: number
           isbn: string | null
+          last_analytics_update: string | null
           narrative_time_period: string | null
           notes: string | null
           open_count: number | null
           profile_id: string | null
           publication_year: number | null
           publisher_series_id: string | null
+          reading_velocity_score: number | null
           resonance_labels: string | null
           tags: string | null
+          thematic_constellation: string | null
           title: string | null
           user_id: string | null
         }
@@ -775,14 +778,17 @@ export type Database = {
           historical_context_tags?: string[] | null
           id?: number
           isbn?: string | null
+          last_analytics_update?: string | null
           narrative_time_period?: string | null
           notes?: string | null
           open_count?: number | null
           profile_id?: string | null
           publication_year?: number | null
           publisher_series_id?: string | null
+          reading_velocity_score?: number | null
           resonance_labels?: string | null
           tags?: string | null
+          thematic_constellation?: string | null
           title?: string | null
           user_id?: string | null
         }
@@ -794,14 +800,17 @@ export type Database = {
           historical_context_tags?: string[] | null
           id?: number
           isbn?: string | null
+          last_analytics_update?: string | null
           narrative_time_period?: string | null
           notes?: string | null
           open_count?: number | null
           profile_id?: string | null
           publication_year?: number | null
           publisher_series_id?: string | null
+          reading_velocity_score?: number | null
           resonance_labels?: string | null
           tags?: string | null
+          thematic_constellation?: string | null
           title?: string | null
           user_id?: string | null
         }
@@ -814,6 +823,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_reading_patterns: {
+        Row: {
+          confidence: number
+          description: string | null
+          detected_at: string | null
+          evidence: Json | null
+          id: string
+          pattern_type: string
+          user_id: string
+        }
+        Insert: {
+          confidence: number
+          description?: string | null
+          detected_at?: string | null
+          evidence?: Json | null
+          id?: string
+          pattern_type: string
+          user_id: string
+        }
+        Update: {
+          confidence?: number
+          description?: string | null
+          detected_at?: string | null
+          evidence?: Json | null
+          id?: string
+          pattern_type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -841,7 +880,20 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      reading_analytics: {
+        Row: {
+          avg_publication_year: number | null
+          books_per_day: number | null
+          first_transmission: string | null
+          latest_transmission: string | null
+          reading_span_days: number | null
+          total_books: number | null
+          unique_authors: number | null
+          unique_tags: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       find_or_create_scifi_author: {
@@ -851,6 +903,20 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_user_reading_analytics: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avg_publication_year: number
+          books_per_day: number
+          first_transmission: string
+          latest_transmission: string
+          reading_span_days: number
+          total_books: number
+          unique_authors: number
+          unique_tags: number
+          user_id: string
+        }[]
       }
       has_role: {
         Args: {
@@ -888,6 +954,10 @@ export type Database = {
           p_user_agent?: string
         }
         Returns: string
+      }
+      refresh_reading_analytics: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {
