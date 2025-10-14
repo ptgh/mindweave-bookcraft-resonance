@@ -108,8 +108,11 @@ const TestBrain = () => {
         console.log('Created nodes:', userNodes);
         setNodes(userNodes);
 
-        // Show ALL conceptual tags in the footer, not just ones used in books
-        setAllTags([...CONCEPTUAL_TAGS]);
+        // Show only conceptual tags that are actually used in books
+        const uniqueTags = Array.from(new Set(
+          userNodes.flatMap(node => node.tags)
+        )).filter(tag => tag && tag.trim() !== '');
+        setAllTags(uniqueTags);
 
         const connections = generateOrganicConnections(userNodes);
         setLinks(connections);
