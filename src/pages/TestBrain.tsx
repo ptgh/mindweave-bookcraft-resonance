@@ -564,45 +564,6 @@ const TestBrain = () => {
       }
     });
 
-    // Add cluster labels (floating in background)
-    canvas.querySelectorAll('.cluster-label').forEach(el => el.remove());
-    
-    if (clusters.length > 0) {
-      clusters.slice(0, 5).forEach((cluster, index) => {
-        const angle = (index * 2 * Math.PI) / Math.min(clusters.length, 5);
-        const radius = Math.min(window.innerWidth, window.innerHeight) * 0.35;
-        const x = window.innerWidth / 2 + radius * Math.cos(angle);
-        const y = window.innerHeight / 2 + radius * Math.sin(angle);
-        
-        const label = document.createElement('div');
-        label.className = 'cluster-label';
-        label.style.cssText = `
-          position: absolute;
-          left: ${x}px;
-          top: ${y}px;
-          color: rgba(100, 200, 255, 0.15);
-          font-size: 48px;
-          font-weight: 700;
-          pointer-events: none;
-          z-index: 1;
-          transform: translate(-50%, -50%);
-          white-space: nowrap;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-        `;
-        label.textContent = cluster.theme;
-        canvas.appendChild(label);
-        
-        gsap.from(label, {
-          opacity: 0,
-          scale: 0.8,
-          duration: 2,
-          delay: index * 0.3,
-          ease: 'power2.out'
-        });
-      });
-    }
-
     // Draw enhanced neural pathways
     drawLivingConnections(svg, nodes, links);
 
@@ -758,10 +719,6 @@ const TestBrain = () => {
       path.setAttribute('filter', `url(#${style.filter})`);
       path.setAttribute('stroke-linecap', 'round');
       
-      // Add dotted line style for conceptual bridges (subtle distinction)
-      if (connection.type === 'tag_shared' && connection.sharedTags.length > 0) {
-        path.setAttribute('stroke-dasharray', '2,3');
-      }
       svg.appendChild(path);
 
       // Enhanced appearance with organic timing
