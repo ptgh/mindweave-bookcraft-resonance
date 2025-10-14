@@ -9,9 +9,6 @@ import GSAPButtonGroup from "@/components/GSAPButtonGroup";
 import { Calendar, Clock, BookOpen, TrendingUp, Brain, Sparkles } from "lucide-react";
 import { getTransmissions } from "@/services/transmissionsService";
 import { useHistoricalContext } from "@/hooks/useHistoricalContext";
-import { usePatternRecognition } from "@/hooks/usePatternRecognition";
-import { ReadingVelocityIndicator } from "@/components/ReadingVelocityIndicator";
-import { ThematicConstellationBadge } from "@/components/ThematicConstellationBadge";
 
 const ThreadMap = () => {
   const [timeframe, setTimeframe] = useState<'month' | 'year' | 'all'>('year');
@@ -22,7 +19,6 @@ const ThreadMap = () => {
   });
 
   const historical = useHistoricalContext(transmissions);
-  const patterns = usePatternRecognition(transmissions);
 
   // Filter transmissions based on timeframe
   const filteredTransmissions = transmissions.filter(transmission => {
@@ -103,16 +99,11 @@ const ThreadMap = () => {
         
         <main className="container mx-auto px-4 sm:px-6 py-8">
           <div className="mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center space-x-3 mb-2">
-                  <Brain className="w-8 h-8 text-blue-400" />
-                  <h1 className="text-2xl sm:text-3xl font-light text-slate-200">Chrono Thread</h1>
-                </div>
-                <p className="text-slate-400 text-sm sm:text-base">Temporal navigation • Literary chronology through your transmission timeline</p>
-              </div>
-              {patterns.velocity && <ReadingVelocityIndicator velocity={patterns.velocity} />}
+            <div className="flex items-center space-x-3 mb-2">
+              <Brain className="w-8 h-8 text-blue-400" />
+              <h1 className="text-2xl sm:text-3xl font-light text-slate-200">Chrono Thread</h1>
             </div>
+            <p className="text-slate-400 text-sm sm:text-base">Temporal navigation • Literary chronology through your transmission timeline</p>
           </div>
 
           <div className="mb-6 flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
@@ -245,33 +236,15 @@ const ThreadMap = () => {
                 <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
                   <div className="flex items-center space-x-2 mb-6">
                     <Sparkles className="w-5 h-5 text-purple-400" />
-                    <h2 className="text-lg font-medium text-slate-200">Insights</h2>
+                    <h2 className="text-lg font-medium text-slate-200">Historical Insights</h2>
                   </div>
-                  <div className="space-y-4">
-                    {historical.insights.length > 0 && (
-                      <div className="space-y-2">
-                        {historical.insights.map((insight, index) => (
-                          <div key={index} className="flex items-start space-x-2 text-xs text-slate-300">
-                            <span className="text-purple-400 mt-0.5">•</span>
-                            <span>{insight}</span>
-                          </div>
-                        ))}
+                  <div className="space-y-2">
+                    {historical.insights.map((insight, index) => (
+                      <div key={index} className="flex items-start space-x-2 text-xs text-slate-300">
+                        <span className="text-purple-400 mt-0.5">•</span>
+                        <span>{insight}</span>
                       </div>
-                    )}
-                    {patterns.constellations.length > 0 && (
-                      <div className="pt-4 border-t border-slate-700">
-                        <h3 className="text-xs font-medium text-slate-200 mb-2">Active Constellations</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {patterns.constellations.slice(0, 3).map((constellation) => (
-                            <ThematicConstellationBadge
-                              key={constellation.id}
-                              constellation={constellation}
-                              showSatellites
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    ))}
                   </div>
                 </div>
               )}

@@ -41,32 +41,6 @@ export interface InfluenceMap {
   }>;
 }
 
-export interface ReadingVelocity {
-  booksPerMonth: number;
-  trend: 'accelerating' | 'steady' | 'slowing';
-  momentum: number; // 0-1 score
-  projection: {
-    nextMonthEstimate: number;
-    confidence: number;
-  };
-}
-
-export interface ClusterHealth {
-  clusterId: string;
-  vitality: number; // 0-1 score
-  diversity: number; // 0-1 score
-  connectivity: number; // average bridges per book
-  growthPotential: string[];
-}
-
-export interface ThematicConstellation {
-  id: string;
-  centralTheme: string;
-  satellites: string[]; // related themes
-  intensity: number; // how strongly clustered
-  evolution: 'emerging' | 'stable' | 'declining';
-}
-
 export class PatternRecognitionService {
   
   // Detect thematic clusters using tag co-occurrence and semantic similarity
@@ -353,97 +327,6 @@ export class PatternRecognitionService {
       }))
       .filter(inf => inf.strength > 0.2)
       .sort((a, b) => b.strength - a.strength);
-  }
-  
-  // Advanced analytics methods
-  
-  calculateReadingVelocity(transmissions: Transmission[]): ReadingVelocity {
-    if (transmissions.length < 2) {
-      return {
-        booksPerMonth: 0,
-        trend: 'steady',
-        momentum: 0,
-        projection: { nextMonthEstimate: 0, confidence: 0 }
-      };
-    }
-    
-    const sorted = [...transmissions].sort((a, b) => 
-      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    );
-    
-    const firstDate = new Date(sorted[0].created_at);
-    const lastDate = new Date(sorted[sorted.length - 1].created_at);
-    const monthsSpan = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
-    
-    const booksPerMonth = monthsSpan > 0 ? transmissions.length / monthsSpan : 0;
-    
-    // Calculate trend by comparing first half vs second half
-    const midpoint = Math.floor(transmissions.length / 2);
-    const firstHalfRate = midpoint / ((new Date(sorted[midpoint].created_at).getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-    const secondHalfRate = (transmissions.length - midpoint) / ((lastDate.getTime() - new Date(sorted[midpoint].created_at).getTime()) / (1000 * 60 * 60 * 24 * 30));
-    
-    let trend: 'accelerating' | 'steady' | 'slowing' = 'steady';
-    if (secondHalfRate > firstHalfRate * 1.2) trend = 'accelerating';
-    else if (secondHalfRate < firstHalfRate * 0.8) trend = 'slowing';
-    
-    const momentum = Math.min(secondHalfRate / (firstHalfRate || 1), 2) / 2;
-    
-    return {
-      booksPerMonth: Math.round(booksPerMonth * 10) / 10,
-      trend,
-      momentum,
-      projection: {
-        nextMonthEstimate: Math.round(secondHalfRate * 10) / 10,
-        confidence: transmissions.length >= 10 ? 0.8 : 0.5
-      }
-    };
-  }
-  
-  analyzeClusterHealth(clusters: ThematicCluster[]): ClusterHealth[] {
-    return clusters.map(cluster => {
-      const vitality = Math.min(cluster.books.length / 10, 1);
-      const diversity = cluster.centralThemes.length / 5;
-      const connectivity = cluster.bridgeBooks.length / cluster.books.length;
-      
-      const growthPotential: string[] = [];
-      if (vitality > 0.6) growthPotential.push('Strong thematic foundation');
-      if (diversity > 0.5) growthPotential.push('Rich conceptual space');
-      if (connectivity > 0.3) growthPotential.push('Well-connected to other themes');
-      
-      return {
-        clusterId: cluster.id,
-        vitality,
-        diversity,
-        connectivity,
-        growthPotential
-      };
-    });
-  }
-  
-  mapThematicConstellations(transmissions: Transmission[]): ThematicConstellation[] {
-    const clusters = this.detectThematicClusters(transmissions);
-    const constellations: ThematicConstellation[] = [];
-    
-    clusters.forEach(cluster => {
-      const recentBooks = cluster.books.filter(b => {
-        const monthsAgo = (Date.now() - new Date(b.created_at).getTime()) / (1000 * 60 * 60 * 24 * 30);
-        return monthsAgo < 6;
-      });
-      
-      let evolution: 'emerging' | 'stable' | 'declining' = 'stable';
-      if (recentBooks.length > cluster.books.length * 0.6) evolution = 'emerging';
-      else if (recentBooks.length < cluster.books.length * 0.2) evolution = 'declining';
-      
-      constellations.push({
-        id: cluster.id,
-        centralTheme: cluster.name,
-        satellites: cluster.centralThemes.slice(1),
-        intensity: cluster.strength,
-        evolution
-      });
-    });
-    
-    return constellations.sort((a, b) => b.intensity - a.intensity);
   }
 }
 
