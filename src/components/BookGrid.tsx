@@ -4,6 +4,8 @@ import { EnhancedBookSuggestion } from "@/services/googleBooksApi";
 import EnhancedBookCover from "./EnhancedBookCover";
 import EnhancedBookPreviewModal from "./EnhancedBookPreviewModal";
 import PenguinPublisherBadge from "./PenguinPublisherBadge";
+import AppleBooksLink from "./AppleBooksLink";
+import FreeEbookDownloadIcon from "./FreeEbookDownloadIcon";
 import { Button } from "./ui/button";
 import { Plus } from "lucide-react";
 import { useDeepLinking } from "@/hooks/useDeepLinking";
@@ -196,6 +198,20 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClic
                       </div>
                     )}
                   </div>
+                </div>
+                
+                {/* External links - subtle row above action buttons */}
+                <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-700/30">
+                  <AppleBooksLink 
+                    appleLink={book.infoLink || ''} 
+                    title={book.title}
+                  />
+                  <FreeEbookDownloadIcon 
+                    title={book.title} 
+                    author={book.author || 'Unknown Author'} 
+                    isbn={undefined}
+                    className="flex-shrink-0"
+                  />
                 </div>
                 
                 <div className="flex flex-row space-x-2">
