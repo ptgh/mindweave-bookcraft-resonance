@@ -95,7 +95,15 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
       return year && year > 1800 && year < 12000; // Extended range for sci-fi
     });
 
-    const nodes: TimelineNode[] = filteredTransmissions.map(transmission => {
+    // Deduplicate by title + author (keep first occurrence)
+    const deduplicatedTransmissions = filteredTransmissions.filter((transmission, index, self) => {
+      const key = `${transmission.title?.toLowerCase()}-${transmission.author?.toLowerCase()}`;
+      return index === self.findIndex(t => 
+        `${t.title?.toLowerCase()}-${t.author?.toLowerCase()}` === key
+      );
+    });
+
+    const nodes: TimelineNode[] = deduplicatedTransmissions.map(transmission => {
       const year = getYearForMode(transmission, viewMode) || new Date().getFullYear();
       const decade = `${Math.floor(year / 10) * 10}s`;
       const era = getEraForYear(year);
