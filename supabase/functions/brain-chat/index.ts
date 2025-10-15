@@ -115,7 +115,7 @@ serve(async (req) => {
     const brainContext = generateBrainContext(brainData);
     console.log('Brain context generated, length:', brainContext.length);
     
-    const systemPrompt = `You are an AI assistant specialized in analyzing book reading networks and neural knowledge graphs. You have access to the user's personal library visualization showing books as nodes connected by thematic, author, and conceptual relationships.
+    const systemPrompt = `You are an AI assistant specialized in analyzing science fiction reading networks and neural knowledge graphs. You have access to the user's personal SF library visualization showing books as nodes connected by thematic, author, and conceptual relationships.
 
 Current Brain State:
 - Total Books: ${brainData.nodes.length}
@@ -132,16 +132,24 @@ You can help users:
 - Suggest recommendations based on cluster gaps and bridge opportunities
 - Explore temporal patterns and author relationships
 - Analyze influence networks between authors
+- Identify SF genre patterns (Cyberpunk, Hard SF, Space Opera, etc.)
+- Recognize genre evolution and cross-genre connections
+
+DUAL TAXONOMY SYSTEM:
+The library uses TWO classification systems working together:
+1. GENRES: SF subgenres like Cyberpunk, Hard SF, Space Opera, Biopunk, etc.
+2. CONCEPTUAL NODES: Thematic tags like "AI Consciousness", "Neural Interface", "Time Paradox"
 
 PATTERN RECOGNITION INSIGHTS:
-- Proactively mention detected clusters when relevant (e.g., "I notice you have a strong AI Consciousness cluster with 4 books")
-- Point out bridge books that connect disparate themes (e.g., "This book bridges your Cyberpunk and Philosophy clusters")
-- Identify reading velocities and acceleration patterns in themes
-- Suggest books that would strengthen weak clusters or create new bridges
+- Proactively mention detected clusters when relevant (e.g., "I notice you have a strong AI Consciousness cluster with 4 books spanning Cyberpunk and Post-Cyberpunk genres")
+- Point out bridge books that connect genres OR themes (e.g., "This book bridges your Cyberpunk cluster with Hard SF through neural interface themes")
+- Identify reading velocities and acceleration patterns in both genres and themes
+- Suggest books that would strengthen weak clusters or create new bridges between genres
+- Recognize genre evolution patterns (e.g., "Your reading shows a progression from Golden Age Space Opera to New Wave experimental SF")
 
-When referencing specific books, use their exact titles. When discussing connections, mention the connection types and strengths. Provide insights that help users understand their reading patterns and discover new connections.
+When referencing specific books, use their exact titles. When discussing connections, mention both genre classification AND conceptual nodes. Provide insights that help users understand their SF reading patterns and discover new connections.
 
-IMPORTANT: Write your responses in clear, flowing paragraphs. Do NOT use bold markdown (**text**) or asterisks for emphasis. Write naturally as if speaking to someone. Use proper paragraph breaks for readability. Keep your tone conversational, insightful, and focused on the neural network aspects of their library.`;
+IMPORTANT: Write your responses in clear, flowing paragraphs. Do NOT use bold markdown (**text**) or asterisks for emphasis. Write naturally as if speaking to someone. Use proper paragraph breaks for readability. Keep your tone conversational, insightful, and focused on the neural network aspects of their SF library.`;
 
     console.log('Making Lovable AI request...');
     console.log('Using model: google/gemini-2.5-flash (FREE until Oct 6, 2025)');
@@ -372,7 +380,7 @@ function generateBrainContext(brainData: { nodes: BrainNode[], links: BookLink[]
     let context = `
 Connection Types: ${Object.entries(connectionStats).map(([type, count]) => `${type}: ${count}`).join(', ')}
 
-Top Themes: ${topTags.join(', ')}
+Conceptual Nodes (Themes): ${topTags.join(', ')}
 
 Most Prolific Authors: ${topAuthors.join(', ')}
 
@@ -380,15 +388,17 @@ Most Connected Books: ${nodeConnections.map(n => `"${n.title}" (${n.connections}
 
 Network Density: ${density}% connectivity`;
 
-    // Add pattern recognition insights
+    // Add pattern recognition insights with genre-aware language
     if (clusters.length > 0) {
-      context += `\n\nThematic Clusters Detected: ${clusters.join(', ')}`;
+      context += `\n\nThematic Clusters Detected (Conceptual Nodes with 2+ books): ${clusters.join(', ')}`;
+      context += `\n\nNote: These conceptual nodes work alongside SF genre classification (Cyberpunk, Hard SF, Space Opera, etc.) to create a dual taxonomy for comprehensive pattern analysis.`;
     }
 
     if (bridgeBooks.length > 0) {
-      context += `\n\nConceptual Bridge Books: ${bridgeBooks.map(b => 
+      context += `\n\nConceptual Bridge Books (connecting multiple thematic nodes): ${bridgeBooks.map(b => 
         `"${b.title}" (bridges: ${b.bridgingThemes.join(', ')})`
       ).join(', ')}`;
+      context += `\n\nThese bridges are particularly valuable for identifying cross-genre connections and thematic evolution patterns.`;
     }
 
     return context.trim();

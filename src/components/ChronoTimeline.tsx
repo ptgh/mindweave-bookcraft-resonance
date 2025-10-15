@@ -15,6 +15,8 @@ import { AuthorPopup } from '@/components/AuthorPopup';
 import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
 import { EnrichedPublisherBook } from '@/services/publisherService';
 import { getAuthorByName, ScifiAuthor, findOrCreateAuthor } from '@/services/scifiAuthorsService';
+import { GenreInferenceService } from '@/services/genreInferenceService';
+import { SciFiGenre, getEraForYear } from '@/constants/scifiGenres';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -28,6 +30,7 @@ interface TimelineNode {
   year: number;
   decade: string;
   era: string;
+  genre: SciFiGenre | null;
   expanded: boolean;
 }
 
@@ -95,7 +98,17 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
     const nodes: TimelineNode[] = filteredTransmissions.map(transmission => {
       const year = getYearForMode(transmission, viewMode) || new Date().getFullYear();
       const decade = `${Math.floor(year / 10) * 10}s`;
-      const era = getEra(year);
+      const era = getEraForYear(year);
+      
+      // Infer genre from book metadata
+      const genre = GenreInferenceService.inferGenre({
+        title: transmission.title,
+        author: transmission.author,
+        tags: Array.isArray(transmission.tags) ? transmission.tags : (transmission.tags ? [transmission.tags] : []),
+        conceptualNodes: [], // Will add thematic constellation when field is added to schema
+        publicationYear: transmission.publication_year || year,
+        notes: transmission.notes
+      });
       
       return {
         transmission,
@@ -103,6 +116,7 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
         year,
         decade,
         era,
+        genre,
         expanded: false
       };
     });
@@ -409,15 +423,7 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
   };
 
 
-  function getEra(year: number): string {
-    if (year >= 2100) return "Far Future";
-    if (year >= 2050) return "Near Future";
-    if (year >= 2000) return "Contemporary";
-    if (year >= 1950) return "Space Age";
-    if (year >= 1900) return "Industrial";
-    if (year >= 1800) return "Classical";
-    return "Ancient";
-  }
+  // Era function removed - now using getEraForYear from scifiGenres.ts
 
   function getEraDescription(era: string): string {
     const descriptions = {
@@ -621,13 +627,22 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
               >
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 font-medium px-2 py-1">
                         {node.year}
                       </Badge>
-                      <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-400/30 font-medium px-2 py-1">
-                        {node.era}
-                      </Badge>
+                      {node.genre && (
+                        <Badge 
+                          className="font-medium px-2 py-1"
+                          style={{
+                            backgroundColor: `${node.genre.color.replace('hsl', 'hsla').replace(')', ', 0.2)')}`,
+                            borderColor: `${node.genre.color.replace('hsl', 'hsla').replace(')', ', 0.3)')}`,
+                            color: node.genre.color
+                          }}
+                        >
+                          {node.genre.emoji} {node.genre.name}
+                        </Badge>
+                      )}
                     </div>
                     <Button
                       variant="ghost"

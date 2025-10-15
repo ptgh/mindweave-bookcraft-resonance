@@ -188,17 +188,7 @@ export class HistoricalContextService {
    * Get the movement badge label
    */
   static getMovementBadge(year: number): string {
-    const movement = this.getLiteraryMovement(year);
-    if (!movement) return '';
-    
-    const shortNames: Record<string, string> = {
-      'Golden Age SF': 'Golden Age',
-      'New Wave SF': 'New Wave',
-      'Cyberpunk': 'Cyberpunk',
-      'Post-Cyberpunk': 'Post-CP',
-      'Contemporary SF': 'Contemporary'
-    };
-    
-    return shortNames[movement.name] || movement.name;
+    // Badges now handled by SF genre system
+    return '';
   }
 }
