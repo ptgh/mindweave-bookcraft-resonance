@@ -735,7 +735,7 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                       </div>
                     )}
 
-                    {/* Synopsis - Short like wiki example (max 120 chars) */}
+                    {/* Synopsis - Short and concise (max 200 chars) */}
                     {node.transmission.notes && (
                       <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600/30">
                         <div className="flex items-center gap-2 mb-2">
@@ -745,11 +745,11 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                         <div className="text-sm text-slate-200 leading-relaxed">
                           {expandedNotes.has(node.transmission.id) 
                             ? node.transmission.notes
-                            : node.transmission.notes.length > 120 
-                              ? node.transmission.notes.substring(0, 120) + '...'
+                            : node.transmission.notes.length > 200 
+                              ? node.transmission.notes.substring(0, 200) + '...'
                               : node.transmission.notes
                           }
-                          {node.transmission.notes.length > 120 && (
+                          {node.transmission.notes.length > 200 && (
                             <button
                               onClick={() => toggleNotes(node.transmission.id)}
                               className="ml-2 text-blue-400 hover:text-blue-300 text-xs underline font-medium"
