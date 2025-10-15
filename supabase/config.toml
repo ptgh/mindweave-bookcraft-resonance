@@ -34,3 +34,6 @@ verify_jwt = false
 
 [functions.populate-curated-books]
 verify_jwt = false
+
+[functions.enrich-book-covers]
+verify_jwt = false
