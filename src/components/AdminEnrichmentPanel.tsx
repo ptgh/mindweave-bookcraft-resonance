@@ -7,8 +7,12 @@ import {
   getEnrichmentStats, 
   bulkProcessAllPending 
 } from "@/services/authorEnrichmentService";
+import { 
+  getMissingCoverStats, 
+  enrichBookCovers 
+} from "@/services/bookCoverEnrichmentService";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { PlayCircle, RefreshCw, CheckCircle, XCircle, Clock } from "lucide-react";
+import { PlayCircle, RefreshCw, CheckCircle, XCircle, Clock, Image } from "lucide-react";
 
 export const AdminEnrichmentPanel = () => {
   const { toast } = useEnhancedToast();
@@ -19,6 +23,12 @@ export const AdminEnrichmentPanel = () => {
     queryKey: ['enrichment-stats'],
     queryFn: getEnrichmentStats,
     refetchInterval: 5000, // Refresh every 5 seconds
+  });
+
+  const { data: coverStats } = useQuery({
+    queryKey: ['cover-stats'],
+    queryFn: getMissingCoverStats,
+    refetchInterval: 10000,
   });
 
   const bulkProcessMutation = useMutation({
@@ -39,6 +49,31 @@ export const AdminEnrichmentPanel = () => {
     onError: (error: Error) => {
       toast({
         title: "Processing Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      setProgress({ current: 0, total: 0 });
+    },
+  });
+
+  const coverEnrichmentMutation = useMutation({
+    mutationFn: async () => {
+      return await enrichBookCovers((current, total) => {
+        setProgress({ current, total });
+      });
+    },
+    onSuccess: (result) => {
+      toast({
+        title: "Cover Enrichment Complete",
+        description: `Processed ${result.processed} books. ${result.successful} covers added, ${result.failed} failed.`,
+        variant: "success"
+      });
+      queryClient.invalidateQueries({ queryKey: ['cover-stats'] });
+      setProgress({ current: 0, total: 0 });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Cover Enrichment Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -147,6 +182,52 @@ export const AdminEnrichmentPanel = () => {
           <p className="text-xs text-muted-foreground text-center">
             Estimated time: ~{Math.ceil((stats?.pendingJobs || 0) / 10) * 6} seconds
           </p>
+        </div>
+      </Card>
+
+      {/* Book Cover Enrichment */}
+      <Card className="p-6 bg-background/40 backdrop-blur-md border-border/50">
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Book Cover Enrichment</h3>
+            <p className="text-sm text-muted-foreground">
+              Automatically fetch missing book covers from Google Books API.
+            </p>
+            <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+              <Image className="h-4 w-4" />
+              <span>{coverStats?.missingCovers || 0} books missing covers</span>
+            </div>
+          </div>
+
+          {coverEnrichmentMutation.isPending && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Fetching covers...</span>
+                <span>{progress.current} / {progress.total}</span>
+              </div>
+              <Progress value={progressPercentage} className="h-2" />
+            </div>
+          )}
+
+          <Button
+            onClick={() => coverEnrichmentMutation.mutate()}
+            disabled={coverEnrichmentMutation.isPending || (coverStats?.missingCovers || 0) === 0}
+            className="w-full"
+            size="lg"
+            variant="secondary"
+          >
+            {coverEnrichmentMutation.isPending ? (
+              <>
+                <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                Fetching Covers...
+              </>
+            ) : (
+              <>
+                <Image className="h-5 w-5 mr-2" />
+                Fetch Missing Covers ({coverStats?.missingCovers || 0} books)
+              </>
+            )}
+          </Button>
         </div>
       </Card>
 
