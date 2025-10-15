@@ -623,26 +623,77 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
               <Card
                 ref={el => cardsRef.current[index] = el}
                 key={node.transmission.id}
-                className="relative overflow-hidden bg-slate-800/90 border-slate-600/50 shadow-xl backdrop-blur-sm hover:bg-slate-800 transition-all duration-300 w-full max-w-2xl mx-auto"
+                className="relative overflow-hidden bg-slate-800/90 border-slate-600/50 shadow-xl backdrop-blur-sm hover:bg-slate-800 transition-all duration-300 w-full max-w-xl mx-auto"
               >
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-4 mb-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 font-medium px-2 py-1">
-                        {node.year}
-                      </Badge>
-                      {node.genre && (
-                        <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-400/30 font-medium px-2 py-1">
-                          {node.genre.name}
+                <CardHeader className="pb-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex flex-col gap-2 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 font-medium px-2 py-1">
+                          {node.year}
                         </Badge>
-                      )}
+                        {node.genre && (
+                          <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-400/30 font-medium px-2 py-1">
+                            {node.genre.name}
+                          </Badge>
+                        )}
+                      </div>
+                      <button
+                        ref={(el) => (bookTitleRefs.current[index] = el)}
+                        onClick={() => handleBookClick(node.transmission)}
+                        className="text-lg font-semibold text-slate-100 leading-tight text-left relative group hover:text-blue-400 transition-colors duration-300"
+                        onMouseEnter={(e) => {
+                          gsap.to(e.currentTarget, {
+                            color: '#60a5fa',
+                            duration: 0.3,
+                            ease: 'power2.out'
+                          });
+                        }}
+                        onMouseLeave={(e) => {
+                          gsap.to(e.currentTarget, {
+                            color: 'rgb(241, 245, 249)',
+                            duration: 0.3,
+                            ease: 'power2.out'
+                          });
+                        }}
+                      >
+                        <span className="relative">
+                          {node.transmission.title}
+                          <span 
+                            className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300 ease-out"
+                            style={{ transformOrigin: 'left' }}
+                          />
+                        </span>
+                      </button>
+                      <div className="flex items-center gap-2 text-slate-300 text-sm">
+                        <User className="w-4 h-4" />
+                        <button
+                          onClick={() => handleAuthorClick(node.transmission.author || '')}
+                          className="text-left relative group"
+                          style={{ transition: 'color 0.3s ease' }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = '#60a5fa';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = 'rgb(203, 213, 225)';
+                          }}
+                        >
+                          <span className="relative">
+                            {node.transmission.author}
+                            <span 
+                              className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300 ease-out"
+                              style={{ transformOrigin: 'left' }}
+                            />
+                          </span>
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
                       {node.transmission.cover_url && (
                         <img 
                           src={node.transmission.cover_url}
                           alt={`${node.transmission.title} cover`}
-                          className="w-10 h-14 object-cover rounded border border-slate-600/50 shadow-sm"
+                          className="w-12 h-16 object-cover rounded border border-slate-600/50 shadow-sm"
                         />
                       )}
                       <Button
@@ -658,56 +709,6 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                         )}
                       </Button>
                     </div>
-                  </div>
-                  
-                  <button
-                    ref={(el) => (bookTitleRefs.current[index] = el)}
-                    onClick={() => handleBookClick(node.transmission)}
-                    className="text-lg font-semibold text-slate-100 mb-2 leading-tight text-left relative group w-full hover:text-blue-400 transition-colors duration-300"
-                    onMouseEnter={(e) => {
-                      gsap.to(e.currentTarget, {
-                        color: '#60a5fa',
-                        duration: 0.3,
-                        ease: 'power2.out'
-                      });
-                    }}
-                    onMouseLeave={(e) => {
-                      gsap.to(e.currentTarget, {
-                        color: 'rgb(241, 245, 249)',
-                        duration: 0.3,
-                        ease: 'power2.out'
-                      });
-                    }}
-                  >
-                    <span className="relative">
-                      {node.transmission.title}
-                      <span 
-                        className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300 ease-out"
-                        style={{ transformOrigin: 'left' }}
-                      />
-                    </span>
-                  </button>
-                  <div className="flex items-center gap-2 text-slate-300 text-sm">
-                    <User className="w-4 h-4" />
-                    <button
-                      onClick={() => handleAuthorClick(node.transmission.author || '')}
-                      className="text-left relative group"
-                      style={{ transition: 'color 0.3s ease' }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = '#60a5fa';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = 'rgb(203, 213, 225)';
-                      }}
-                    >
-                      <span className="relative">
-                        {node.transmission.author}
-                        <span 
-                          className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300 ease-out"
-                          style={{ transformOrigin: 'left' }}
-                        />
-                      </span>
-                    </button>
                   </div>
                 </CardHeader>
 
