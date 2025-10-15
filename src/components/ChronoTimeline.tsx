@@ -631,19 +631,9 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                       <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 font-medium px-2 py-1">
                         {node.year}
                       </Badge>
-                      <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-400/30 font-medium px-2 py-1">
-                        {node.era}
-                      </Badge>
                       {node.genre && (
-                        <Badge 
-                          className="font-medium px-2 py-1"
-                          style={{
-                            backgroundColor: `${node.genre.color.replace('hsl', 'hsla').replace(')', ', 0.2)')}`,
-                            borderColor: `${node.genre.color.replace('hsl', 'hsla').replace(')', ', 0.3)')}`,
-                            color: node.genre.color
-                          }}
-                        >
-                          {node.genre.emoji} {node.genre.name}
+                        <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-400/30 font-medium px-2 py-1">
+                          {node.genre.name}
                         </Badge>
                       )}
                     </div>
