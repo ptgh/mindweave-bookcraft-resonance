@@ -637,18 +637,27 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                         </Badge>
                       )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleExpanded(node.transmission.id)}
-                      className="text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 p-2"
-                    >
-                      {expandedCards.has(node.transmission.id) ? (
-                        <ChevronUp className="w-4 h-4" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4" />
+                    <div className="flex items-start gap-2">
+                      {node.transmission.cover_url && (
+                        <img 
+                          src={node.transmission.cover_url}
+                          alt={`${node.transmission.title} cover`}
+                          className="w-20 h-28 object-cover rounded border border-slate-600/50 shadow-lg"
+                        />
                       )}
-                    </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleExpanded(node.transmission.id)}
+                        className="text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 p-2"
+                      >
+                        {expandedCards.has(node.transmission.id) ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                   
                   <button
