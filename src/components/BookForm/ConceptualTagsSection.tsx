@@ -10,7 +10,7 @@ interface ConceptualTagsSectionProps {
 const ConceptualTagsSection = ({ selectedTags, onTagToggle }: ConceptualTagsSectionProps) => {
   return (
     <div>
-      <Label className="text-slate-300 text-sm mb-3 block">Conceptual Tags</Label>
+      <Label className="text-slate-300 text-sm mb-3 block">Conceptual Nodes</Label>
       <div className="grid grid-cols-2 gap-2">
         {CONCEPTUAL_TAGS.map(tag => (
           <button

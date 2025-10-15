@@ -52,7 +52,7 @@ const NeuralMapHeader = ({
           {/* Theme Filters - Scrollable on mobile */}
           {allTags.length > 0 && (
             <div className="flex items-center gap-0.5 sm:gap-2 flex-1 min-w-0 overflow-hidden pr-1">
-              <span className="text-slate-400 text-[7px] sm:text-[9px] font-medium tracking-wide whitespace-nowrap hidden sm:inline">THEMES</span>
+              <span className="text-slate-400 text-[7px] sm:text-[9px] font-medium tracking-wide whitespace-nowrap hidden sm:inline">Nodes</span>
               <div className="flex gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide flex-1">
                 {allTags.map(tag => (
                   <Badge
