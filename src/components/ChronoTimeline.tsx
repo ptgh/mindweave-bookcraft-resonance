@@ -637,12 +637,12 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-start gap-2">
+                    <div className="flex items-center gap-1.5">
                       {node.transmission.cover_url && (
                         <img 
                           src={node.transmission.cover_url}
                           alt={`${node.transmission.title} cover`}
-                          className="w-20 h-28 object-cover rounded border border-slate-600/50 shadow-lg"
+                          className="w-12 h-16 object-cover rounded border border-slate-600/50 shadow-sm"
                         />
                       )}
                       <Button
