@@ -626,7 +626,7 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                 className="relative overflow-hidden bg-slate-800/90 border-slate-600/50 shadow-xl backdrop-blur-sm hover:bg-slate-800 transition-all duration-300 w-full max-w-2xl mx-auto"
               >
                 <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-4 mb-3">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge className="bg-blue-500/20 text-blue-300 border-blue-400/30 font-medium px-2 py-1">
                         {node.year}
@@ -637,12 +637,12 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
                       {node.transmission.cover_url && (
                         <img 
                           src={node.transmission.cover_url}
                           alt={`${node.transmission.title} cover`}
-                          className="w-12 h-16 object-cover rounded border border-slate-600/50 shadow-sm"
+                          className="w-10 h-14 object-cover rounded border border-slate-600/50 shadow-sm"
                         />
                       )}
                       <Button
