@@ -20,6 +20,7 @@ export interface BrainNode {
   title: string;
   author: string;
   tags: string[];
+  contextTags: string[];
   x: number;
   y: number;
   coverUrl?: string;
@@ -98,6 +99,7 @@ const TestBrain = () => {
           title: transmission.title || 'Unknown Title',
           author: transmission.author || 'Unknown Author',
           tags: filterConceptualTags(Array.isArray(transmission.tags) ? transmission.tags : []),
+          contextTags: Array.isArray(transmission.historical_context_tags) ? transmission.historical_context_tags : [],
           x: Math.random() * (window.innerWidth - 300) + 150,
           y: Math.random() * (window.innerHeight - 300) + 150,
           coverUrl: transmission.cover_url,
@@ -136,16 +138,40 @@ const TestBrain = () => {
         const node1 = nodes[i];
         const node2 = nodes[j];
         
-        // Tag-based connections (strongest)
-        const sharedTags = node1.tags.filter(tag => node2.tags.includes(tag));
-        if (sharedTags.length > 0) {
+        let totalStrength = 0;
+        let connectionReasons: string[] = [];
+        let allSharedItems: string[] = [];
+        
+        // Conceptual tag connections (highest priority)
+        const sharedConceptualTags = node1.tags.filter(tag => node2.tags.includes(tag));
+        if (sharedConceptualTags.length > 0) {
+          totalStrength += sharedConceptualTags.length * 2.0;
+          allSharedItems.push(...sharedConceptualTags);
+          connectionReasons.push(`Conceptual: ${sharedConceptualTags.slice(0, 2).join(', ')}`);
+        }
+        
+        // Context tag connections (medium priority)
+        const sharedContextTags = node1.contextTags.filter(tag => node2.contextTags.includes(tag));
+        if (sharedContextTags.length > 0) {
+          totalStrength += sharedContextTags.length * 1.5;
+          allSharedItems.push(...sharedContextTags);
+          connectionReasons.push(`Context: ${sharedContextTags.slice(0, 2).join(', ')}`);
+        }
+        
+        // Cross-taxonomy bonus
+        if (sharedConceptualTags.length > 0 && sharedContextTags.length > 0) {
+          totalStrength += 0.5;
+        }
+        
+        // Create connection if taxonomies match
+        if (totalStrength > 0) {
           connections.push({
             fromId: node1.id,
             toId: node2.id,
             type: 'tag_shared',
-            strength: sharedTags.length * 2,
-            sharedTags,
-            connectionReason: `Shared themes: ${sharedTags.join(', ')}`
+            strength: totalStrength,
+            sharedTags: allSharedItems,
+            connectionReason: connectionReasons.join(' • ')
           });
         }
         

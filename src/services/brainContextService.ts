@@ -6,10 +6,12 @@ export interface BrainAnalysis {
   totalLinks: number;
   connectionDensity: number;
   topTags: Array<{ tag: string; count: number }>;
+  topContextTags: Array<{ tag: string; count: number }>;
   topAuthors: Array<{ author: string; count: number }>;
   mostConnectedBooks: Array<{ title: string; connections: number; id: string }>;
   connectionTypes: Record<string, number>;
   clusterAnalysis: Array<{ theme: string; nodeIds: string[]; strength: number }>;
+  crossTaxonomyClusters: Array<{ conceptual: string; context: string; nodeCount: number }>;
 }
 
 export class BrainContextService {
@@ -18,7 +20,7 @@ export class BrainContextService {
     const maxPossibleConnections = nodes.length * (nodes.length - 1) / 2;
     const connectionDensity = maxPossibleConnections > 0 ? (links.length / maxPossibleConnections) * 100 : 0;
 
-    // Analyze tag frequencies
+    // Analyze conceptual tag frequencies
     const tagFrequency = new Map<string, number>();
     nodes.forEach(node => {
       node.tags.forEach(tag => {
@@ -29,6 +31,23 @@ export class BrainContextService {
     });
 
     const topTags = Array.from(tagFrequency.entries())
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    // Analyze context tag frequencies
+    const contextTagFrequency = new Map<string, number>();
+    nodes.forEach(node => {
+      if (node.contextTags) {
+        node.contextTags.forEach(tag => {
+          if (tag && tag.trim() !== '') {
+            contextTagFrequency.set(tag, (contextTagFrequency.get(tag) || 0) + 1);
+          }
+        });
+      }
+    });
+
+    const topContextTags = Array.from(contextTagFrequency.entries())
       .map(([tag, count]) => ({ tag, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
@@ -71,15 +90,20 @@ export class BrainContextService {
     // Identify thematic clusters
     const clusterAnalysis = this.identifyThematicClusters(nodes, links, topTags.slice(0, 5));
 
+    // Identify cross-taxonomy clusters
+    const crossTaxonomyClusters = this.identifyCrossTaxonomyClusters(nodes, topTags.slice(0, 3), topContextTags.slice(0, 3));
+
     return {
       totalNodes: nodes.length,
       totalLinks: links.length,
       connectionDensity,
       topTags,
+      topContextTags,
       topAuthors,
       mostConnectedBooks,
       connectionTypes,
-      clusterAnalysis
+      clusterAnalysis,
+      crossTaxonomyClusters
     };
   }
 
@@ -108,6 +132,33 @@ export class BrainContextService {
     }).filter(cluster => cluster.nodeIds.length > 1);
   }
 
+  private static identifyCrossTaxonomyClusters(
+    nodes: BrainNode[],
+    topConceptualTags: Array<{ tag: string; count: number }>,
+    topContextTags: Array<{ tag: string; count: number }>
+  ): Array<{ conceptual: string; context: string; nodeCount: number }> {
+    const crossClusters: Array<{ conceptual: string; context: string; nodeCount: number }> = [];
+    
+    topConceptualTags.forEach(({ tag: conceptualTag }) => {
+      topContextTags.forEach(({ tag: contextTag }) => {
+        const matchingNodes = nodes.filter(node => 
+          node.tags.some(t => t.toLowerCase() === conceptualTag.toLowerCase()) &&
+          node.contextTags && node.contextTags.some(ct => ct.toLowerCase() === contextTag.toLowerCase())
+        );
+        
+        if (matchingNodes.length >= 2) {
+          crossClusters.push({
+            conceptual: conceptualTag,
+            context: contextTag,
+            nodeCount: matchingNodes.length
+          });
+        }
+      });
+    });
+    
+    return crossClusters.sort((a, b) => b.nodeCount - a.nodeCount).slice(0, 5);
+  }
+
   static generateQuerySuggestions(analysis: BrainAnalysis): string[] {
     const suggestions = [
       "What are the strongest thematic connections in my reading network?",
@@ -120,6 +171,15 @@ export class BrainContextService {
 
     if (analysis.topTags.length > 0) {
       suggestions.push(`Explore the ${analysis.topTags[0].tag} theme in my library`);
+    }
+
+    if (analysis.topContextTags.length > 0) {
+      suggestions.push(`How does ${analysis.topContextTags[0].tag} appear across my reading?`);
+    }
+
+    if (analysis.crossTaxonomyClusters.length > 0) {
+      const cluster = analysis.crossTaxonomyClusters[0];
+      suggestions.push(`Show me the intersection of ${cluster.conceptual} and ${cluster.context}`);
     }
 
     if (analysis.mostConnectedBooks.length > 0) {

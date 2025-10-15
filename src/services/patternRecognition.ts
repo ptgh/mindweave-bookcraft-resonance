@@ -35,15 +35,18 @@ export interface InfluenceNetwork {
 export class PatternRecognitionService {
   /**
    * Detect thematic clusters in a collection of books
+   * Includes conceptual tags and context tags
    */
   static detectThematicClusters(transmissions: Transmission[]): ThematicCluster[] {
     const clusters: Map<string, ThematicCluster> = new Map();
     
     transmissions.forEach(book => {
-      // Only use conceptual tags for clustering
-      const tags = filterConceptualTags(book.tags || []);
+      // Use both conceptual tags and context tags for clustering
+      const conceptualTags = filterConceptualTags(book.tags || []);
+      const contextTags = book.historical_context_tags || [];
+      const allTags = [...conceptualTags, ...contextTags];
       
-      tags.forEach(tag => {
+      allTags.forEach(tag => {
         if (!tag || !tag.trim()) return;
         
         if (!clusters.has(tag)) {
@@ -70,6 +73,7 @@ export class PatternRecognitionService {
 
   /**
    * Find conceptual bridges between seemingly disparate books
+   * Includes cross-taxonomy bridges
    */
   static findConceptualBridges(transmissions: Transmission[]): ConceptualBridge[] {
     const bridges: ConceptualBridge[] = [];
@@ -79,20 +83,43 @@ export class PatternRecognitionService {
         const book1 = transmissions[i];
         const book2 = transmissions[j];
         
-        // Only use conceptual tags for bridges
-        const tags1 = new Set(filterConceptualTags(book1.tags || []));
-        const tags2 = new Set(filterConceptualTags(book2.tags || []));
+        // Check conceptual tag bridges
+        const conceptualTags1 = new Set(filterConceptualTags(book1.tags || []));
+        const conceptualTags2 = new Set(filterConceptualTags(book2.tags || []));
+        const commonConceptual = Array.from(conceptualTags1).filter(tag => conceptualTags2.has(tag));
         
-        const commonTags = Array.from(tags1).filter(tag => tags2.has(tag));
+        // Check context tag bridges
+        const contextTags1 = new Set(book1.historical_context_tags || []);
+        const contextTags2 = new Set(book2.historical_context_tags || []);
+        const commonContext = Array.from(contextTags1).filter(tag => contextTags2.has(tag));
         
-        if (commonTags.length > 0) {
-          commonTags.forEach(bridgeConcept => {
-            bridges.push({
-              bookId1: book1.id.toString(),
-              bookId2: book2.id.toString(),
-              bridgeConcept,
-              strength: 1
-            });
+        // Create bridges for conceptual tags
+        commonConceptual.forEach(bridgeConcept => {
+          bridges.push({
+            bookId1: book1.id.toString(),
+            bookId2: book2.id.toString(),
+            bridgeConcept: `[Conceptual] ${bridgeConcept}`,
+            strength: 2
+          });
+        });
+        
+        // Create bridges for context tags
+        commonContext.forEach(bridgeConcept => {
+          bridges.push({
+            bookId1: book1.id.toString(),
+            bookId2: book2.id.toString(),
+            bridgeConcept: `[Context] ${bridgeConcept}`,
+            strength: 1.5
+          });
+        });
+        
+        // Cross-taxonomy bridge: stronger connection if books share both types
+        if (commonConceptual.length > 0 && commonContext.length > 0) {
+          bridges.push({
+            bookId1: book1.id.toString(),
+            bookId2: book2.id.toString(),
+            bridgeConcept: `[Cross-Taxonomy] ${commonConceptual[0]} + ${commonContext[0]}`,
+            strength: 3
           });
         }
       }
@@ -103,14 +130,18 @@ export class PatternRecognitionService {
 
   /**
    * Calculate reading velocity by theme
+   * Includes all three taxonomies
    */
   static calculateReadingVelocity(transmissions: Transmission[]): ReadingVelocity[] {
     const themeActivity: Map<string, Date[]> = new Map();
     
     transmissions.forEach(book => {
-      // Only use conceptual tags for velocity
-      const tags = filterConceptualTags(book.tags || []);
-      tags.forEach(tag => {
+      // Use conceptual tags, context tags, and genres
+      const conceptualTags = filterConceptualTags(book.tags || []);
+      const contextTags = book.historical_context_tags || [];
+      const allThemes = [...conceptualTags, ...contextTags];
+      
+      allThemes.forEach(tag => {
         if (!tag || !tag.trim()) return;
         if (!themeActivity.has(tag)) {
           themeActivity.set(tag, []);
@@ -156,6 +187,7 @@ export class PatternRecognitionService {
 
   /**
    * Map influence networks between authors
+   * Uses all three taxonomies for richer connections
    */
   static mapInfluenceNetwork(transmissions: Transmission[]): InfluenceNetwork[] {
     const authorBooks: Map<string, Transmission[]> = new Map();
@@ -171,9 +203,12 @@ export class PatternRecognitionService {
     const networks: InfluenceNetwork[] = [];
     
     authorBooks.forEach((books, author) => {
-      // Only use conceptual tags for influence mapping
-      const authorTags = new Set(
+      // Use all three taxonomies for influence mapping
+      const authorConceptualTags = new Set(
         books.flatMap(b => filterConceptualTags(b.tags || []))
+      );
+      const authorContextTags = new Set(
+        books.flatMap(b => b.historical_context_tags || [])
       );
       
       const influences: InfluenceNetwork['influences'] = [];
@@ -181,18 +216,28 @@ export class PatternRecognitionService {
       authorBooks.forEach((otherBooks, otherAuthor) => {
         if (author === otherAuthor) return;
         
-        // Only use conceptual tags for comparison
-        const otherTags = new Set(
+        const otherConceptualTags = new Set(
           otherBooks.flatMap(b => filterConceptualTags(b.tags || []))
         );
+        const otherContextTags = new Set(
+          otherBooks.flatMap(b => b.historical_context_tags || [])
+        );
         
-        const commonTags = Array.from(authorTags).filter(tag => otherTags.has(tag));
+        const commonConceptual = Array.from(authorConceptualTags).filter(tag => otherConceptualTags.has(tag));
+        const commonContext = Array.from(authorContextTags).filter(tag => otherContextTags.has(tag));
         
-        if (commonTags.length > 0) {
+        const totalStrength = (commonConceptual.length * 2) + (commonContext.length * 1.5);
+        
+        if (totalStrength > 0) {
+          const linkDescription = [
+            commonConceptual.length > 0 ? commonConceptual[0] : null,
+            commonContext.length > 0 ? commonContext[0] : null
+          ].filter(Boolean).join(' + ');
+          
           influences.push({
             targetAuthor: otherAuthor,
-            strength: commonTags.length,
-            conceptualLink: commonTags[0]
+            strength: totalStrength,
+            conceptualLink: linkDescription || 'Shared themes'
           });
         }
       });

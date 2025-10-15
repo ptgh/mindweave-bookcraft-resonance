@@ -13,6 +13,7 @@ interface BrainNode {
   title: string;
   author: string;
   tags: string[];
+  contextTags: string[];
   transmissionId: number;
 }
 
@@ -135,19 +136,23 @@ You can help users:
 - Identify SF genre patterns (Cyberpunk, Hard SF, Space Opera, etc.)
 - Recognize genre evolution and cross-genre connections
 
-DUAL TAXONOMY SYSTEM:
-The library uses TWO classification systems working together:
+TRIPLE TAXONOMY SYSTEM:
+The library uses THREE classification systems working together:
 1. GENRES: SF subgenres like Cyberpunk, Hard SF, Space Opera, Biopunk, etc.
-2. CONCEPTUAL NODES: Thematic tags like "AI Consciousness", "Neural Interface", "Time Paradox"
+2. CONCEPTUAL NODES: Thematic sci-fi tags like "AI Consciousness", "Neural Interface", "Time Paradox"
+3. CONTEXT TAGS: Broader intellectual themes like "Mathematics", "Philosophy", "Social hierarchy", "Ethics"
+
+These three taxonomies create a rich multi-dimensional framework for understanding books. Use all three when analyzing patterns.
 
 PATTERN RECOGNITION INSIGHTS:
-- Proactively mention detected clusters when relevant (e.g., "I notice you have a strong AI Consciousness cluster with 4 books spanning Cyberpunk and Post-Cyberpunk genres")
-- Point out bridge books that connect genres OR themes (e.g., "This book bridges your Cyberpunk cluster with Hard SF through neural interface themes")
-- Identify reading velocities and acceleration patterns in both genres and themes
-- Suggest books that would strengthen weak clusters or create new bridges between genres
-- Recognize genre evolution patterns (e.g., "Your reading shows a progression from Golden Age Space Opera to New Wave experimental SF")
+- Proactively mention detected clusters when relevant (e.g., "I notice you have a strong AI Consciousness cluster with 4 books spanning Cyberpunk and Post-Cyberpunk genres, many exploring Philosophy and Ethics")
+- Point out bridge books that connect genres, themes, OR contexts (e.g., "This book bridges your Cyberpunk cluster with Hard SF through neural interface themes, while also exploring Mathematics")
+- Identify reading velocities and acceleration patterns across all three taxonomies
+- Suggest books that would strengthen weak clusters or create new bridges between taxonomies
+- Recognize cross-taxonomy patterns (e.g., "Your Cyberpunk books strongly correlate with Philosophy and Social hierarchy themes")
+- Detect multi-dimensional connections (e.g., "Hard SF + Mathematics + AI Consciousness forms a powerful cluster")
 
-When referencing specific books, use their exact titles. When discussing connections, mention both genre classification AND conceptual nodes. Provide insights that help users understand their SF reading patterns and discover new connections.
+When referencing specific books, use their exact titles. When discussing connections, mention all relevant taxonomies (genre, conceptual nodes, context tags). Provide insights that help users understand their SF reading patterns across multiple dimensions and discover new connections.
 
 IMPORTANT: Write your responses in clear, flowing paragraphs. Do NOT use bold markdown (**text**) or asterisks for emphasis. Write naturally as if speaking to someone. Use proper paragraph breaks for readability. Keep your tone conversational, insightful, and focused on the neural network aspects of their SF library.`;
 
@@ -308,8 +313,8 @@ function generateBrainContext(brainData: { nodes: BrainNode[], links: BookLink[]
       return acc;
     }, {} as Record<string, number>);
 
-    // Analyze tag frequencies for thematic clusters
-    const tagFrequency = nodes.reduce((acc, node) => {
+    // Analyze conceptual tag frequencies
+    const conceptualTagFrequency = nodes.reduce((acc, node) => {
       if (node.tags && Array.isArray(node.tags)) {
         node.tags.forEach(tag => {
           if (tag && tag.trim() !== '') {
@@ -320,9 +325,26 @@ function generateBrainContext(brainData: { nodes: BrainNode[], links: BookLink[]
       return acc;
     }, {} as Record<string, number>);
 
-    const topTags = Object.entries(tagFrequency)
+    const topConceptualTags = Object.entries(conceptualTagFrequency)
       .sort(([,a], [,b]) => b - a)
       .slice(0, 10)
+      .map(([tag, count]) => `${tag} (${count})`);
+
+    // Analyze context tag frequencies
+    const contextTagFrequency = nodes.reduce((acc, node) => {
+      if (node.contextTags && Array.isArray(node.contextTags)) {
+        node.contextTags.forEach(tag => {
+          if (tag && tag.trim() !== '') {
+            acc[tag] = (acc[tag] || 0) + 1;
+          }
+        });
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    const topContextTags = Object.entries(contextTagFrequency)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 8)
       .map(([tag, count]) => `${tag} (${count})`);
 
     // Detect thematic clusters (2+ books with same tag)
@@ -380,7 +402,9 @@ function generateBrainContext(brainData: { nodes: BrainNode[], links: BookLink[]
     let context = `
 Connection Types: ${Object.entries(connectionStats).map(([type, count]) => `${type}: ${count}`).join(', ')}
 
-Conceptual Nodes (Themes): ${topTags.join(', ')}
+Conceptual Nodes (SF Themes): ${topConceptualTags.join(', ')}
+
+Context Tags (Broader Themes): ${topContextTags.length > 0 ? topContextTags.join(', ') : 'None yet'}
 
 Most Prolific Authors: ${topAuthors.join(', ')}
 
@@ -388,17 +412,23 @@ Most Connected Books: ${nodeConnections.map(n => `"${n.title}" (${n.connections}
 
 Network Density: ${density}% connectivity`;
 
-    // Add pattern recognition insights with genre-aware language
+    // Add pattern recognition insights with triple-taxonomy awareness
     if (clusters.length > 0) {
-      context += `\n\nThematic Clusters Detected (Conceptual Nodes with 2+ books): ${clusters.join(', ')}`;
-      context += `\n\nNote: These conceptual nodes work alongside SF genre classification (Cyberpunk, Hard SF, Space Opera, etc.) to create a dual taxonomy for comprehensive pattern analysis.`;
+      context += `\n\nThematic Clusters Detected (2+ books): ${clusters.join(', ')}`;
+      context += `\n\nNote: These clusters combine Conceptual Nodes (SF themes), Context Tags (broader intellectual themes), and SF genre classification (Cyberpunk, Hard SF, Space Opera, etc.) to create a triple taxonomy for comprehensive multi-dimensional pattern analysis.`;
     }
 
     if (bridgeBooks.length > 0) {
-      context += `\n\nConceptual Bridge Books (connecting multiple thematic nodes): ${bridgeBooks.map(b => 
+      context += `\n\nBridge Books (connecting multiple themes across taxonomies): ${bridgeBooks.map(b => 
         `"${b.title}" (bridges: ${b.bridgingThemes.join(', ')})`
       ).join(', ')}`;
-      context += `\n\nThese bridges are particularly valuable for identifying cross-genre connections and thematic evolution patterns.`;
+      context += `\n\nThese bridges are particularly valuable for identifying cross-taxonomy connections, genre evolution, and thematic intersections across multiple conceptual dimensions.`;
+    }
+
+    // Add cross-taxonomy pattern insights
+    const crossPatterns = detectCrossTaxonomyPatterns(nodes);
+    if (crossPatterns.length > 0) {
+      context += `\n\nCross-Taxonomy Patterns: ${crossPatterns.join(', ')}`;
     }
 
     return context.trim();
@@ -431,6 +461,28 @@ function formatAIResponse(response: string): string {
   }
 }
 
+function detectCrossTaxonomyPatterns(nodes: BrainNode[]): string[] {
+  const patterns: string[] = [];
+  const conceptualTags = new Set(nodes.flatMap(n => n.tags || []));
+  const contextTags = new Set(nodes.flatMap(n => n.contextTags || []));
+  
+  // Find books with both strong conceptual and context tag presence
+  conceptualTags.forEach(conceptualTag => {
+    contextTags.forEach(contextTag => {
+      const matchingBooks = nodes.filter(node => 
+        (node.tags || []).includes(conceptualTag) && 
+        (node.contextTags || []).includes(contextTag)
+      );
+      
+      if (matchingBooks.length >= 2) {
+        patterns.push(`${conceptualTag} + ${contextTag} (${matchingBooks.length} books)`);
+      }
+    });
+  });
+  
+  return patterns.slice(0, 5);
+}
+
 function extractHighlights(response: string, brainData: { nodes: BrainNode[], links: BookLink[] }): { nodeIds: string[], linkIds: string[], tags: string[] } {
   const highlights = {
     nodeIds: [] as string[],
@@ -446,9 +498,17 @@ function extractHighlights(response: string, brainData: { nodes: BrainNode[], li
       }
     });
 
-    // Extract tags mentioned in response
-    const allTags = Array.from(new Set(brainData.nodes.flatMap(node => node.tags || [])));
-    allTags.forEach(tag => {
+    // Extract conceptual tags mentioned in response
+    const allConceptualTags = Array.from(new Set(brainData.nodes.flatMap(node => node.tags || [])));
+    allConceptualTags.forEach(tag => {
+      if (tag && response.toLowerCase().includes(tag.toLowerCase())) {
+        highlights.tags.push(tag);
+      }
+    });
+
+    // Extract context tags mentioned in response
+    const allContextTags = Array.from(new Set(brainData.nodes.flatMap(node => node.contextTags || [])));
+    allContextTags.forEach(tag => {
       if (tag && response.toLowerCase().includes(tag.toLowerCase())) {
         highlights.tags.push(tag);
       }

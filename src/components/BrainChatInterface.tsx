@@ -116,6 +116,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
           title: String(node.title || ''),
           author: String(node.author || ''),
           tags: Array.isArray(node.tags) ? node.tags.filter(tag => typeof tag === 'string') : [],
+          contextTags: Array.isArray(node.contextTags) ? node.contextTags.filter(tag => typeof tag === 'string') : [],
           transmissionId: node.transmissionId ? Number(node.transmissionId) : undefined,
           x: typeof node.x === 'number' ? node.x : undefined,
           y: typeof node.y === 'number' ? node.y : undefined,
