@@ -25,29 +25,6 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClic
   const previewButtonsRef = useRef<HTMLButtonElement[]>([]);
   const addButtonsRef = useRef<HTMLButtonElement[]>([]);
   const [selectedBookForPreview, setSelectedBookForPreview] = useState<any>(null);
-  const [appleLinks, setAppleLinks] = useState<Map<string, string>>(new Map());
-
-  // Fetch Apple Books links for all books
-  useEffect(() => {
-    const fetchAppleLinks = async () => {
-      const newLinks = new Map<string, string>();
-      
-      for (const book of books) {
-        try {
-          const result = await searchAppleBooks(book.title, book.author, undefined);
-          if (result?.storeUrl) {
-            newLinks.set(book.id, result.storeUrl);
-          }
-        } catch (error) {
-          // Silent fail for individual books
-        }
-      }
-      
-      setAppleLinks(newLinks);
-    };
-
-    fetchAppleLinks();
-  }, [books]);
 
   // Add buttons to refs array
   const addToRefs = (el: HTMLButtonElement | null) => {
@@ -163,8 +140,101 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClic
           const isVisible = visibleBooks.has(index);
           const deepLink = getDeepLink(book);
           const showPenguinBadge = isPenguinBook(book);
-          
+
           return (
+            <BookGridItem
+              key={book.id}
+              book={book}
+              isVisible={isVisible}
+              deepLink={deepLink}
+              showPenguinBadge={showPenguinBadge}
+              onAddToTransmissions={onAddToTransmissions}
+              onAuthorClick={onAuthorClick}
+              onPreview={handleBookPreview}
+              addToRefs={addToRefs}
+              addToAddRefs={addToAddRefs}
+            />
+          );
+        })}
+      </div>
+
+      {selectedBookForPreview && (
+        <EnhancedBookPreviewModal
+          book={selectedBookForPreview}
+          onClose={closePreview}
+          onAddBook={(book) => {
+            // Convert back to EnhancedBookSuggestion format
+            const enhancedBook: EnhancedBookSuggestion = {
+              id: book.id,
+              title: book.title,
+              author: book.author,
+              coverUrl: book.cover_url,
+              thumbnailUrl: book.cover_url,
+              smallThumbnailUrl: book.cover_url,
+              categories: [],
+              description: book.editorial_note,
+              subtitle: '',
+              publishedDate: '',
+              pageCount: 0,
+              rating: 0,
+              ratingsCount: 0,
+              previewLink: '',
+              infoLink: ''
+            };
+            onAddToTransmissions(enhancedBook);
+          }}
+        />
+      )}
+    </>
+  );
+});
+
+BookGrid.displayName = 'BookGrid';
+
+// Individual book item component with its own Apple Books fetching
+interface BookGridItemProps {
+  book: EnhancedBookSuggestion;
+  isVisible: boolean;
+  deepLink: any;
+  showPenguinBadge: boolean;
+  onAddToTransmissions: (book: EnhancedBookSuggestion) => void;
+  onAuthorClick?: (authorName: string) => void;
+  onPreview: (book: EnhancedBookSuggestion) => void;
+  addToRefs: (el: HTMLButtonElement | null) => void;
+  addToAddRefs: (el: HTMLButtonElement | null) => void;
+}
+
+const BookGridItem = memo(({
+  book,
+  isVisible,
+  deepLink,
+  showPenguinBadge,
+  onAddToTransmissions,
+  onAuthorClick,
+  onPreview,
+  addToRefs,
+  addToAddRefs
+}: BookGridItemProps) => {
+  const [appleUrl, setAppleUrl] = useState<string | null>(null);
+
+  // Fetch Apple Books link individually for this book
+  useEffect(() => {
+    let cancelled = false;
+    const fetchApple = async () => {
+      try {
+        const result = await searchAppleBooks(book.title, book.author, undefined);
+        if (!cancelled && result?.storeUrl) {
+          setAppleUrl(result.storeUrl);
+        }
+      } catch (_) {
+        // silent fail
+      }
+    };
+    fetchApple();
+    return () => { cancelled = true; };
+  }, [book.title, book.author]);
+
+  return (
             <div
               key={book.id}
               className={`transition-all duration-500 ${
@@ -225,92 +295,60 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClic
                   </div>
                 </div>
                 
-                {/* External links - subtle row above action buttons */}
-                <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-700/30">
-                  <AppleBooksLink 
-                    appleLink={appleLinks.get(book.id) || ''} 
-                    title={book.title}
-                  />
-                  <GoogleBooksLink
-                    googleLink={book.infoLink || book.previewLink || ''}
-                    title={book.title}
-                  />
-                  <FreeEbookDownloadIcon 
-                    title={book.title} 
-                    author={book.author || 'Unknown Author'} 
-                    isbn={undefined}
-                    className="flex-shrink-0"
-                  />
-                </div>
+              {/* External links - subtle row above action buttons */}
+              <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-700/30">
+                <AppleBooksLink 
+                  appleLink={appleUrl || ''} 
+                  title={book.title}
+                />
+                <GoogleBooksLink
+                  googleLink={book.infoLink || book.previewLink || ''}
+                  title={book.title}
+                />
+                <FreeEbookDownloadIcon 
+                  title={book.title} 
+                  author={book.author || 'Unknown Author'} 
+                  isbn={undefined}
+                  className="flex-shrink-0"
+                />
+              </div>
                 
-                <div className="flex flex-row space-x-2">
+              <div className="flex flex-row space-x-2">
+                <button
+                  ref={addToAddRefs}
+                  onClick={() => onAddToTransmissions(book)}
+                  className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+                  style={{
+                    boxShadow: "0 0 0px transparent"
+                  }}
+                >
+                  <Plus className="w-3 h-3 mr-2 inline" />
+                  Log Signal
+                </button>
+                
+                {deepLink && (
                   <button
-                    ref={addToAddRefs}
-                    onClick={() => onAddToTransmissions(book)}
+                    ref={addToRefs}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onPreview(book);
+                    }}
                     className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+                    title="Preview book"
                     style={{
                       boxShadow: "0 0 0px transparent"
                     }}
                   >
-                    <Plus className="w-3 h-3 mr-2 inline" />
-                    Log Signal
+                    Preview
                   </button>
-                  
-                  {deepLink && (
-                    <button
-                      ref={addToRefs}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleBookPreview(book);
-                      }}
-                      className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
-                      title="Preview book"
-                      style={{
-                        boxShadow: "0 0 0px transparent"
-                      }}
-                    >
-                      Preview
-                    </button>
-                  )}
-                </div>
+                )}
               </div>
             </div>
-          );
-        })}
-      </div>
-
-      {selectedBookForPreview && (
-        <EnhancedBookPreviewModal
-          book={selectedBookForPreview}
-          onClose={closePreview}
-          onAddBook={(book) => {
-            // Convert back to EnhancedBookSuggestion format
-            const enhancedBook: EnhancedBookSuggestion = {
-              id: book.id,
-              title: book.title,
-              author: book.author,
-              coverUrl: book.cover_url,
-              thumbnailUrl: book.cover_url,
-              smallThumbnailUrl: book.cover_url,
-              categories: [],
-              description: book.editorial_note,
-              subtitle: '',
-              publishedDate: '',
-              pageCount: 0,
-              rating: 0,
-              ratingsCount: 0,
-              previewLink: '',
-              infoLink: ''
-            };
-            onAddToTransmissions(enhancedBook);
-          }}
-        />
-      )}
-    </>
+          </div>
   );
 });
 
-BookGrid.displayName = 'BookGrid';
+BookGridItem.displayName = 'BookGridItem';
 
 export default BookGrid;
