@@ -164,7 +164,7 @@ export const useAuthorMatrix = () => {
     }
   }, [authors, handleAuthorSelect]);
 
-  const addToTransmissions = useCallback(async (book: AuthorBook, conceptualTags?: string[]) => {
+  const addToTransmissions = useCallback(async (book: AuthorBook) => {
     try {
       // Try to enrich with Apple Books link (cached)
       let appleLink: string | undefined;
@@ -181,20 +181,16 @@ export const useAuthorMatrix = () => {
         title: book.title,
         author: selectedAuthor?.name || 'Unknown',
         cover_url: book.cover_url || '',
-        tags: conceptualTags || [],
+        tags: book.categories || [],
         rating: {},
         notes: book.description || '',
         status: 'want-to-read',
         apple_link: appleLink
       });
       
-      const tagText = conceptualTags && conceptualTags.length > 0 
-        ? ` • Tags: ${conceptualTags.join(', ')}` 
-        : '';
-      
       toast({
         title: "Signal Logged",
-        description: `"${book.title}" has been added to your transmissions${tagText}`,
+        description: `"${book.title}" has been added to your transmissions.`,
         variant: "success"
       });
     } catch (error: any) {

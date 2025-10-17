@@ -10,13 +10,12 @@ import { useDeepLinking } from "@/hooks/useDeepLinking";
 import { gsap } from "gsap";
 import EnhancedBookPreviewModal from "./EnhancedBookPreviewModal";
 import EnhancedBookCover from "./EnhancedBookCover";
-import AuthorBookTagSelector from "./AuthorBookTagSelector";
 
 interface AuthorBooksSectionProps {
   selectedAuthor: ScifiAuthor | null;
   authorBooks: AuthorBook[];
   booksLoading: boolean;
-  onAddToTransmissions: (book: AuthorBook, tags?: string[]) => void;
+  onAddToTransmissions: (book: AuthorBook) => void;
 }
 
 const AuthorBooksSection = memo(({ 
@@ -29,7 +28,6 @@ const AuthorBooksSection = memo(({
   const previewButtonsRef = useRef<HTMLButtonElement[]>([]);
   const addButtonsRef = useRef<HTMLButtonElement[]>([]);
   const [selectedBookForPreview, setSelectedBookForPreview] = useState<any>(null);
-  const [bookTags, setBookTags] = useState<Record<string, string[]>>({});
 
   // Add buttons to refs array
   const addToRefs = (el: HTMLButtonElement | null) => {
@@ -110,24 +108,6 @@ const AuthorBooksSection = memo(({
       addButtonsRef.current = [];
     };
   }, [authorBooks]);
-
-  useEffect(() => {
-    // Initialize tags from existing book data
-    const initialTags: Record<string, string[]> = {};
-    authorBooks.forEach((book) => {
-      initialTags[book.id] = book.conceptual_tags || [];
-    });
-    setBookTags(initialTags);
-  }, [authorBooks]);
-
-  const handleTagsChange = (bookId: string, tags: string[]) => {
-    setBookTags((prev) => ({ ...prev, [bookId]: tags }));
-  };
-
-  const handleLogSignal = (book: AuthorBook) => {
-    const tags = bookTags[book.id] || [];
-    onAddToTransmissions(book, tags);
-  };
 
   const handleBookPreview = (book: AuthorBook) => {
     // Convert AuthorBook to EnrichedPublisherBook format
@@ -222,34 +202,38 @@ const AuthorBooksSection = memo(({
                             <div className="w-3 h-3 rounded-full border-2 border-slate-500 bg-slate-500/10 flex-shrink-0" />
                           </div>
                           
-                          <div className="flex flex-wrap gap-1.5 mt-2">
-                            {bookTags[book.id] && bookTags[book.id].length > 0 ? (
-                              bookTags[book.id].map((tag, idx) => (
+                          {book.categories && book.categories.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {book.categories.slice(0, 2).map((category, idx) => (
                                 <span
                                   key={idx}
-                                  className="px-2 py-1 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-full text-xs"
+                                  className="px-2 py-1 bg-slate-700/50 text-slate-300 text-xs rounded-full"
                                 >
-                                  {tag}
+                                  {category}
                                 </span>
-                              ))
-                            ) : (
-                              <span className="px-2 py-1 bg-slate-700/30 text-slate-400 rounded-full text-xs italic">
-                                No tags yet
-                              </span>
-                            )}
-                          </div>
+                              ))}
+                              {book.categories.length > 2 && (
+                                <span className="text-slate-400 text-xs px-2 py-1">
+                                  +{book.categories.length - 2}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                       
                       <div className="flex flex-row space-x-2">
-                        <div ref={addToAddRefs as any}>
-                          <AuthorBookTagSelector
-                            bookTitle={book.title}
-                            selectedTags={bookTags[book.id] || []}
-                            onTagsChange={(tags) => handleTagsChange(book.id, tags)}
-                            onLogSignal={() => handleLogSignal(book)}
-                          />
-                        </div>
+                        <button
+                          ref={addToAddRefs}
+                          onClick={() => onAddToTransmissions(book)}
+                          className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+                          style={{
+                            boxShadow: "0 0 0px transparent"
+                          }}
+                        >
+                          <Plus className="w-3 h-3 mr-2 inline" />
+                          Log Signal
+                        </button>
                         
                         {deepLink && (
                           <button
