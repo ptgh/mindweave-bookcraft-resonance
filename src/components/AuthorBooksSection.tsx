@@ -192,7 +192,7 @@ const AuthorBooksSection = memo(({
                         />
                         
                           <div className="flex-1 min-w-0 overflow-hidden">
-                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <h3 className="text-slate-200 font-medium text-sm leading-tight mb-1 break-words line-clamp-3">
                                 {book.title}
@@ -201,24 +201,6 @@ const AuthorBooksSection = memo(({
                             </div>
                             <div className="w-3 h-3 rounded-full border-2 border-slate-500 bg-slate-500/10 flex-shrink-0" />
                           </div>
-                          
-                          {book.categories && book.categories.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {book.categories.slice(0, 2).map((category, idx) => (
-                                <span
-                                  key={idx}
-                                  className="px-2 py-1 bg-slate-700/50 text-slate-300 text-xs rounded-full"
-                                >
-                                  {category}
-                                </span>
-                              ))}
-                              {book.categories.length > 2 && (
-                                <span className="text-slate-400 text-xs px-2 py-1">
-                                  +{book.categories.length - 2}
-                                </span>
-                              )}
-                            </div>
-                          )}
                         </div>
                       </div>
                       
