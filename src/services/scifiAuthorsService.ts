@@ -27,6 +27,7 @@ export interface AuthorBook {
   description?: string;
   cover_url?: string;
   categories?: string[];
+  conceptual_tags?: string[];
   published_date?: string;
   page_count?: number;
   rating?: number;

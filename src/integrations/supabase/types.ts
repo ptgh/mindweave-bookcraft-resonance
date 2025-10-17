@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           author_id: string | null
           categories: string[] | null
+          conceptual_tags: string[] | null
           cover_url: string | null
           created_at: string
           description: string | null
@@ -36,6 +37,7 @@ export type Database = {
         Insert: {
           author_id?: string | null
           categories?: string[] | null
+          conceptual_tags?: string[] | null
           cover_url?: string | null
           created_at?: string
           description?: string | null
@@ -54,6 +56,7 @@ export type Database = {
         Update: {
           author_id?: string | null
           categories?: string[] | null
+          conceptual_tags?: string[] | null
           cover_url?: string | null
           created_at?: string
           description?: string | null
