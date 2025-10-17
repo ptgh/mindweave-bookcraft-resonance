@@ -274,6 +274,8 @@ const EnhancedBookCover = ({
         height={parseInt(className.match(/h-(\d+)/)?.[1] || '16') * 4}
         fallbackSrc={getPlaceholderImage(title)}
         className="w-full h-full object-cover transition-all duration-300"
+        lazy={lazy}
+        priority={!lazy}
         onError={() => {
           console.error('Image failed to load:', currentSrc);
           setHasError(true);
