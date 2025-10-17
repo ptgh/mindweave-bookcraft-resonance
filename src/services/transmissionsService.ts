@@ -31,6 +31,7 @@ export interface Transmission {
   publication_year?: number;
   narrative_time_period?: string;
   historical_context_tags?: string[];
+  is_favorite?: boolean;
 }
 
 export const saveTransmission = async (transmission: Omit<Transmission, 'id' | 'user_id' | 'created_at'>) => {
@@ -95,6 +96,7 @@ export const updateTransmission = async (id: number, transmission: Partial<Omit<
   if (transmission.publisher_series_id !== undefined) updateData.publisher_series_id = transmission.publisher_series_id;
   if (transmission.isbn !== undefined) updateData.isbn = transmission.isbn;
   if (transmission.apple_link !== undefined) updateData.apple_link = transmission.apple_link;
+  if (transmission.is_favorite !== undefined) updateData.is_favorite = transmission.is_favorite;
   
   // Special handling for open_count increment
   if (transmission.open_count !== undefined) {
@@ -177,7 +179,8 @@ export const getTransmissions = async (): Promise<Transmission[]> => {
       open_count: item.open_count || 0,
       publication_year: item.publication_year,
       narrative_time_period: item.narrative_time_period,
-      historical_context_tags: item.historical_context_tags
+      historical_context_tags: item.historical_context_tags,
+      is_favorite: item.is_favorite || false
     }));
   } catch (error) {
     console.error('Unexpected error in getTransmissions:', error);

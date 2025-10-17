@@ -755,6 +755,7 @@ export type Database = {
           created_at: string
           historical_context_tags: string[] | null
           id: number
+          is_favorite: boolean | null
           isbn: string | null
           last_analytics_update: string | null
           narrative_time_period: string | null
@@ -777,6 +778,7 @@ export type Database = {
           created_at?: string
           historical_context_tags?: string[] | null
           id?: number
+          is_favorite?: boolean | null
           isbn?: string | null
           last_analytics_update?: string | null
           narrative_time_period?: string | null
@@ -799,6 +801,7 @@ export type Database = {
           created_at?: string
           historical_context_tags?: string[] | null
           id?: number
+          is_favorite?: boolean | null
           isbn?: string | null
           last_analytics_update?: string | null
           narrative_time_period?: string | null

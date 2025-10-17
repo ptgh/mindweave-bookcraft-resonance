@@ -106,24 +106,25 @@ const TransmissionsList = memo(({
               deletingIds.has(book.id) ? 'opacity-0 scale-95 pointer-events-none' : ''
             }`}
           >
-            <BookCard
-              id={book.id}
-              title={book.title}
-              author={book.author}
-              status={book.status}
-              tags={book.tags}
-              rating={book.rating}
-              coverUrl={book.cover_url}
-              publisher_series={book.publisher_series}
-              isbn={book.isbn}
-              apple_link={book.apple_link}
-              onEdit={() => onEdit(book)}
-              onKeep={() => onKeep(book)}
-              onDiscard={() => handleDiscard(book)}
-              onAuthorClick={onAuthorClick}
-              bridges={bridges}
-              publicationYear={book.publication_year}
-            />
+              <BookCard
+                id={book.id}
+                title={book.title}
+                author={book.author}
+                status={book.status}
+                tags={book.tags}
+                rating={book.rating}
+                coverUrl={book.cover_url}
+                publisher_series={book.publisher_series}
+                isbn={book.isbn}
+                apple_link={book.apple_link}
+                is_favorite={book.is_favorite}
+                onEdit={() => onEdit(book)}
+                onKeep={() => onKeep(book)}
+                onDiscard={() => handleDiscard(book)}
+                onAuthorClick={onAuthorClick}
+                bridges={bridges}
+                publicationYear={book.publication_year}
+              />
           </div>
         );
       })}

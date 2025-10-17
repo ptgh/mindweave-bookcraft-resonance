@@ -36,6 +36,7 @@ interface BookCardProps {
   isbn?: string;
   apple_link?: string;
   open_count?: number;
+  is_favorite?: boolean;
   onEdit?: () => void;
   onKeep?: () => void;
   onDiscard?: () => void;
@@ -56,6 +57,7 @@ const BookCard = ({
   isbn,
   apple_link,
   open_count,
+  is_favorite = false,
   onEdit,
   onKeep,
   onDiscard,
@@ -160,7 +162,12 @@ const BookCard = ({
   }, [isInView, title, author, isbn]);
 
   return (
-    <div ref={rootRef} className="bg-slate-900/60 backdrop-blur-lg border border-slate-700/30 rounded-lg p-4 shadow-2xl shadow-slate-900/20 transition-all h-full flex flex-col">
+    <div 
+      ref={rootRef} 
+      className={`bg-slate-900/60 backdrop-blur-lg border rounded-lg p-4 shadow-2xl shadow-slate-900/20 transition-all h-full flex flex-col ${
+        is_favorite ? 'border-cyan-500/40 ring-1 ring-cyan-500/20' : 'border-slate-700/30'
+      }`}
+    >
       <div className="flex items-start space-x-4 flex-1 mb-4">
         <EnhancedBookCover
           title={title}
@@ -288,16 +295,22 @@ const BookCard = ({
             <span className="whitespace-nowrap">Edit</span>
           </button>
         )}
-        {onKeep && (
-          <button
-            onClick={onKeep}
-            className="flex items-center justify-center px-3 py-1.5 bg-transparent border border-slate-700/40 text-slate-300 text-[10px] rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300"
-            title="Keep"
-          >
-            <Archive className="w-3 h-3 mr-1.5 flex-shrink-0" />
-            <span className="whitespace-nowrap">Keep</span>
-          </button>
-        )}
+              {onKeep && (
+                <button
+                  onClick={onKeep}
+                  className={`flex items-center justify-center px-3 py-1.5 bg-transparent border text-[10px] rounded-lg transition-all duration-300 ease-in-out ${
+                    is_favorite 
+                      ? 'border-cyan-400/80 bg-cyan-400/20 text-cyan-300' 
+                      : 'border-slate-700/40 text-slate-300 hover:border-cyan-400/60 hover:text-cyan-300'
+                  }`}
+                  title={is_favorite ? "Marked as Kept" : "Keep"}
+                >
+                  <Archive className={`w-3 h-3 mr-1.5 flex-shrink-0 ${is_favorite ? 'fill-cyan-400/50' : ''}`} />
+                  <span className="whitespace-nowrap">
+                    {is_favorite ? "Kept" : "Keep"}
+                  </span>
+                </button>
+              )}
         {onDiscard && (
           <button
             onClick={onDiscard}
