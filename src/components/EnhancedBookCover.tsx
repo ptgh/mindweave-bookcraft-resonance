@@ -161,33 +161,6 @@ const EnhancedBookCover = ({
       setIsLoading(true);
       setHasError(false);
 
-      // Quick check: if no URLs provided at all, skip to Archive.org or placeholder
-      const hasAnyUrl = coverUrl || thumbnailUrl || smallThumbnailUrl;
-      if (!hasAnyUrl) {
-        console.log('No cover URLs provided, trying Archive.org directly...');
-        const archiveCoverUrl = await getArchiveCover(title, author);
-        if (archiveCoverUrl) {
-          try {
-            const validUrl = await imageService.loadImage({ 
-              src: archiveCoverUrl, 
-              timeout: 8000 
-            });
-            console.log('Successfully loaded Archive.org cover:', validUrl);
-            setCurrentSrc(validUrl);
-            setIsLoading(false);
-            await cacheImageUrl(validUrl, title);
-            return;
-          } catch (error) {
-            console.log('Archive.org cover failed:', archiveCoverUrl);
-          }
-        }
-        // No URLs and Archive failed - show placeholder immediately
-        console.log('No cover available, showing placeholder');
-        setIsLoading(false);
-        setHasError(true);
-        return;
-      }
-
       // First check if image service has this URL cached
       const imageServiceCached = imageService.getCachedUrl(coverUrl || '');
       if (imageServiceCached) {
