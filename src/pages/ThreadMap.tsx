@@ -8,6 +8,7 @@ import { ChronoTimeline } from "@/components/ChronoTimeline";
 import GSAPButtonGroup from "@/components/GSAPButtonGroup";
 import { Calendar, Clock, BookOpen, TrendingUp, Brain } from "lucide-react";
 import { getTransmissions } from "@/services/transmissionsService";
+import { SEOHead } from "@/components/SEOHead";
 
 const ThreadMap = () => {
   const [timeframe, setTimeframe] = useState<'month' | 'year' | 'all'>('year');
@@ -91,6 +92,11 @@ const ThreadMap = () => {
 
   return (
     <AuthWrapper fallback={<Auth />}>
+      <SEOHead
+        title="Chrono Thread"
+        description="Explore the temporal patterns and historical context of your science fiction reading journey"
+        keywords={['reading timeline', 'book history', 'publication timeline', 'temporal analysis']}
+      />
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <Header />
         

@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthorPopup } from "@/components/AuthorPopup";
 import { getAuthorByName, ScifiAuthor, findOrCreateAuthor } from "@/services/scifiAuthorsService";
 import { usePatternRecognition } from "@/hooks/usePatternRecognition";
+import { SEOHead } from "@/components/SEOHead";
 
 const Index = () => {
   const [books, setBooks] = useState<Transmission[]>([]);
@@ -234,6 +235,11 @@ const Index = () => {
 
   return (
     <AuthWrapper fallback={<Auth />}>
+      <SEOHead
+        title="Library"
+        description="Your personal sci-fi book collection with transmissions, patterns, and neural connections"
+        keywords={['sci-fi library', 'book tracker', 'reading list', 'science fiction books']}
+      />
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <Header />
         

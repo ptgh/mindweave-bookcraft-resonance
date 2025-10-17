@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { imageService } from "@/services/image-service";
+import { OptimizedImage } from "@/components/OptimizedImage";
 import scifiPlaceholder from "@/assets/book-placeholder-scifi.jpg";
 import classicPlaceholder from "@/assets/book-placeholder-classic.jpg";
 import generalPlaceholder from "@/assets/book-placeholder-general.jpg";
@@ -266,10 +267,12 @@ const EnhancedBookCover = ({
 
   return (
     <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-gradient-to-br from-blue-900/40 to-blue-700/60`}>
-      <img
-        ref={imgRef}
+      <OptimizedImage
         src={currentSrc}
         alt={title}
+        width={parseInt(className.match(/w-(\d+)/)?.[1] || '12') * 4}
+        height={parseInt(className.match(/h-(\d+)/)?.[1] || '16') * 4}
+        fallbackSrc={getPlaceholderImage(title)}
         className="w-full h-full object-cover transition-all duration-300"
         onError={() => {
           console.error('Image failed to load:', currentSrc);
@@ -283,30 +286,31 @@ const EnhancedBookCover = ({
   );
 };
 
-const PlaceholderCover = ({ title, className = "w-12 h-16" }: { title: string; className?: string }) => {
-  const getPlaceholderImage = (title: string) => {
-    const titleLower = title.toLowerCase();
-    if (titleLower.includes('sci-fi') || titleLower.includes('science fiction') || 
-        titleLower.includes('space') || titleLower.includes('robot') || 
-        titleLower.includes('alien') || titleLower.includes('future') ||
-        titleLower.includes('mars') || titleLower.includes('star') ||
-        titleLower.includes('cyber') || titleLower.includes('android')) {
-      return scifiPlaceholder;
-    }
-    if (titleLower.includes('classic') || titleLower.includes('vintage') ||
-        titleLower.includes('victorian') || titleLower.includes('19th') ||
-        titleLower.includes('18th') || titleLower.includes('century')) {
-      return classicPlaceholder;
-    }
-    return generalPlaceholder;
-  };
+const getPlaceholderImage = (title: string) => {
+  const titleLower = title.toLowerCase();
+  if (titleLower.includes('sci-fi') || titleLower.includes('science fiction') || 
+      titleLower.includes('space') || titleLower.includes('robot') || 
+      titleLower.includes('alien') || titleLower.includes('future') ||
+      titleLower.includes('mars') || titleLower.includes('star') ||
+      titleLower.includes('cyber') || titleLower.includes('android')) {
+    return scifiPlaceholder;
+  }
+  if (titleLower.includes('classic') || titleLower.includes('vintage') ||
+      titleLower.includes('victorian') || titleLower.includes('19th') ||
+      titleLower.includes('18th') || titleLower.includes('century')) {
+    return classicPlaceholder;
+  }
+  return generalPlaceholder;
+};
 
+const PlaceholderCover = ({ title, className = "w-12 h-16" }: { title: string; className?: string }) => {
   return (
     <div className={`${className} flex-shrink-0 rounded overflow-hidden relative bg-gradient-to-br from-blue-900/60 to-blue-700/80`}>
-      <img
+      <OptimizedImage
         src={getPlaceholderImage(title)}
         alt={`Placeholder cover for ${title}`}
         className="w-full h-full object-cover opacity-40"
+        priority
       />
       <div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 to-blue-700/60 flex items-center justify-center">
         <div className="text-center p-2">

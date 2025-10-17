@@ -5,9 +5,16 @@ import './utils/prefetch'
 import './services/manualEnrichmentService'
 import { enableIOSScrollFix, ensureTouchTargets } from './utils/accessibility'
 import { reportWebVitals } from './utils/webVitals'
+import { applyReducedMotionCSS, configureGSAPForReducedMotion } from './utils/reducedMotion'
 
 // Apply iOS accessibility fixes on load
 enableIOSScrollFix();
+
+// Apply reduced motion CSS
+applyReducedMotionCSS();
+
+// Configure GSAP for reduced motion
+configureGSAPForReducedMotion();
 
 // Optimize performance on load
 const container = document.getElementById("root")!;

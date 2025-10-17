@@ -10,6 +10,7 @@ import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 import { useState } from "react";
 import ContactModal from "@/components/ContactModal";
 import ContributionButton from "@/components/ContributionButton";
+import { SEOHead } from "@/components/SEOHead";
 
 const Discovery = () => {
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
@@ -17,6 +18,7 @@ const Discovery = () => {
 
   return (
     <AuthWrapper fallback={<Auth />}>
+      <SEOHead />
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <Header />
         
