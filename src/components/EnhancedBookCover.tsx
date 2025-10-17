@@ -155,14 +155,6 @@ const EnhancedBookCover = ({
   };
 
   useEffect(() => {
-    // SPECIAL CASE: "Heads" by Greg Bear - use Internet Archive cover
-    if (title.toLowerCase() === "heads" && author?.toLowerCase() === "greg bear") {
-      const archiveUrl = "https://archive.org/services/img/headsbear00bear";
-      setCurrentSrc(archiveUrl);
-      setIsLoading(false);
-      return;
-    }
-    
     // IMMEDIATE RENDER: If we have any cover URL, display it right away
     const firstAvailableUrl = coverUrl || thumbnailUrl || smallThumbnailUrl;
     
