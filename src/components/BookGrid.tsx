@@ -222,7 +222,7 @@ const BookGridItem = memo(({
     let cancelled = false;
     const fetchApple = async () => {
       try {
-        const result = await searchAppleBooks(book.title, book.author, undefined);
+        const result = await searchAppleBooks(book.title, book.author, book.isbn);
         if (!cancelled && result?.storeUrl) {
           setAppleUrl(result.storeUrl);
         }
@@ -232,7 +232,7 @@ const BookGridItem = memo(({
     };
     fetchApple();
     return () => { cancelled = true; };
-  }, [book.title, book.author]);
+  }, [book.title, book.author, book.isbn]);
 
   return (
             <div

@@ -34,6 +34,7 @@ export interface EnhancedBookSuggestion {
   ratingsCount?: number;
   previewLink?: string;
   infoLink?: string;
+  isbn?: string;
 }
 
 // Memoized search function for better performance
@@ -145,7 +146,8 @@ export const searchBooksEnhanced = async (query: string, maxResults = 10, startI
         rating: book.averageRating,
         ratingsCount: book.ratingsCount,
         previewLink: book.previewLink,
-        infoLink: book.infoLink
+        infoLink: book.infoLink,
+        isbn: book.isbn
       }));
   } catch (error) {
     console.error('Error searching books enhanced:', error);

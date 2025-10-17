@@ -49,6 +49,14 @@ export const transformGoogleBookData = (item: GoogleBooksVolumeInfo): GoogleBook
     return normalizedUrl;
   };
   
+  // Extract ISBN (prefer ISBN_13, fallback to ISBN_10)
+  const getIsbn = () => {
+    const identifiers = volumeInfo.industryIdentifiers || [];
+    const isbn13 = identifiers.find(id => id.type === 'ISBN_13');
+    const isbn10 = identifiers.find(id => id.type === 'ISBN_10');
+    return isbn13?.identifier || isbn10?.identifier;
+  };
+  
   const result = {
     id: item.id,
     title: volumeInfo.title,
@@ -62,7 +70,8 @@ export const transformGoogleBookData = (item: GoogleBooksVolumeInfo): GoogleBook
     averageRating: volumeInfo.averageRating,
     ratingsCount: volumeInfo.ratingsCount,
     previewLink: volumeInfo.previewLink,
-    infoLink: volumeInfo.infoLink
+    infoLink: volumeInfo.infoLink,
+    isbn: getIsbn()
   };
   
   return result;

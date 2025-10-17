@@ -13,6 +13,7 @@ export interface GoogleBook {
   ratingsCount?: number;
   previewLink?: string;
   infoLink?: string;
+  isbn?: string;
 }
 
 export interface GoogleBooksApiResponse {
@@ -42,6 +43,10 @@ export interface GoogleBooksVolumeInfo {
     previewLink?: string;
     infoLink?: string;
     subtitle?: string;
+    industryIdentifiers?: Array<{
+      type: string;
+      identifier: string;
+    }>;
   };
 }
 
