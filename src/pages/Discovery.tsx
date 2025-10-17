@@ -20,7 +20,7 @@ const Discovery = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <Header />
         
-        <main ref={mainContainerRef} className="container mx-auto px-6 py-12">
+        <main id="main-content" ref={mainContainerRef} className="container mx-auto px-6 py-12">
           <div ref={addFeatureBlockRef} className="feature-block text-center mb-16">
             <h1 ref={heroTitleRef} className="text-4xl font-light text-slate-200 mb-4 tracking-wide">
               <span className="text-blue-400">LEAFNODE</span>

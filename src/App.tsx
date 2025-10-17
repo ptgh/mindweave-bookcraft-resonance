@@ -7,6 +7,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { SkipToContent } from "@/components/SkipToContent";
+import { WebsiteStructuredData } from "@/components/StructuredData";
 
 // Lazy load route components for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -88,6 +90,12 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <SkipToContent />
+        <WebsiteStructuredData
+          name="Leafnode"
+          description="Track, discover, and explore science fiction literature with AI-powered insights"
+          url={typeof window !== 'undefined' ? window.location.origin : 'https://leafnode.lovable.app'}
+        />
         <EnhancedToaster />
         <Sonner />
         <BrowserRouter>
