@@ -181,7 +181,7 @@ export const useAuthorMatrix = () => {
         title: book.title,
         author: selectedAuthor?.name || 'Unknown',
         cover_url: book.cover_url || '',
-        tags: [],
+        tags: book.categories || [],
         rating: {},
         notes: book.description || '',
         status: 'want-to-read',
