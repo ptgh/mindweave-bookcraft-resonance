@@ -7,6 +7,8 @@ interface AppleBooksLinkProps {
 }
 
 const AppleBooksLink = ({ appleLink, title, className = "" }: AppleBooksLinkProps) => {
+  if (!appleLink) return null;
+
   const handleClick = () => {
     // If appleLink is just a numeric trackId, convert to full URL
     const url = /^\d+$/.test(appleLink) 

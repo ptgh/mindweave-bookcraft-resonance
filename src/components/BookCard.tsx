@@ -6,7 +6,9 @@ import PenguinPublisherBadge from "./PenguinPublisherBadge";
 import EnhancedBookCover from "./EnhancedBookCover";
 import FreeEbookDownloadIcon from "./FreeEbookDownloadIcon";
 import AppleBooksLink from "./AppleBooksLink";
+import GoogleBooksLink from "./GoogleBooksLink";
 import { searchAppleBooks } from "@/services/appleBooks";
+import { searchGoogleBooks } from "@/services/googleBooks";
 import { searchFreeEbooks } from "@/services/freeEbookService";
 import { updateTransmission } from "@/services/transmissionsService";
 import { ConceptualBridge } from "@/services/patternRecognition";
@@ -68,6 +70,7 @@ const BookCard = ({
   const [showActions, setShowActions] = useState(false);
   const [hasFreeEbook, setHasFreeEbook] = useState(false);
   const [appleUrl, setAppleUrl] = useState<string | null>(null);
+  const [googleUrl, setGoogleUrl] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const [isInView, setIsInView] = useState(false);
 
@@ -127,6 +130,26 @@ const BookCard = ({
     fetchApple();
     return () => { cancelled = true; };
   }, [apple_link, title, author, isbn, id]);
+
+  // Fetch Google Books link
+  useEffect(() => {
+    let cancelled = false;
+    const fetchGoogle = async () => {
+      try {
+        const results = await searchGoogleBooks(`${title} ${author}`, 1);
+        if (!cancelled && results.length > 0) {
+          const googleLink = results[0].previewLink || results[0].infoLink;
+          if (googleLink) {
+            setGoogleUrl(googleLink);
+          }
+        }
+      } catch (_) {
+        // silent fail
+      }
+    };
+    fetchGoogle();
+    return () => { cancelled = true; };
+  }, [title, author]);
 
   // Observe when card becomes visible, then check free-ebook availability once
   useEffect(() => {
@@ -268,12 +291,14 @@ const BookCard = ({
 
       {/* External links - subtle row above action buttons */}
       <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-700/30">
-        {(apple_link || appleUrl) ? (
-          <AppleBooksLink 
-            appleLink={(apple_link || appleUrl)!} 
-            title={title}
-          />
-        ) : null}
+        <AppleBooksLink 
+          appleLink={apple_link || appleUrl || ''} 
+          title={title}
+        />
+        <GoogleBooksLink
+          googleLink={googleUrl || ''}
+          title={title}
+        />
         {/* Internet Archive / Gutenberg icon handles availability internally */}
         <FreeEbookDownloadIcon 
           title={title} 

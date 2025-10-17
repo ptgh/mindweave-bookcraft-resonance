@@ -5,10 +5,12 @@ import EnhancedBookCover from "./EnhancedBookCover";
 import EnhancedBookPreviewModal from "./EnhancedBookPreviewModal";
 import PenguinPublisherBadge from "./PenguinPublisherBadge";
 import AppleBooksLink from "./AppleBooksLink";
+import GoogleBooksLink from "./GoogleBooksLink";
 import FreeEbookDownloadIcon from "./FreeEbookDownloadIcon";
 import { Button } from "./ui/button";
 import { Plus } from "lucide-react";
 import { useDeepLinking } from "@/hooks/useDeepLinking";
+import { searchAppleBooks } from "@/services/appleBooks";
 import { gsap } from "gsap";
 
 interface BookGridProps {
@@ -23,6 +25,29 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClic
   const previewButtonsRef = useRef<HTMLButtonElement[]>([]);
   const addButtonsRef = useRef<HTMLButtonElement[]>([]);
   const [selectedBookForPreview, setSelectedBookForPreview] = useState<any>(null);
+  const [appleLinks, setAppleLinks] = useState<Map<string, string>>(new Map());
+
+  // Fetch Apple Books links for all books
+  useEffect(() => {
+    const fetchAppleLinks = async () => {
+      const newLinks = new Map<string, string>();
+      
+      for (const book of books) {
+        try {
+          const result = await searchAppleBooks(book.title, book.author, undefined);
+          if (result?.storeUrl) {
+            newLinks.set(book.id, result.storeUrl);
+          }
+        } catch (error) {
+          // Silent fail for individual books
+        }
+      }
+      
+      setAppleLinks(newLinks);
+    };
+
+    fetchAppleLinks();
+  }, [books]);
 
   // Add buttons to refs array
   const addToRefs = (el: HTMLButtonElement | null) => {
@@ -203,7 +228,11 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClic
                 {/* External links - subtle row above action buttons */}
                 <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-700/30">
                   <AppleBooksLink 
-                    appleLink={book.infoLink || ''} 
+                    appleLink={appleLinks.get(book.id) || ''} 
+                    title={book.title}
+                  />
+                  <GoogleBooksLink
+                    googleLink={book.infoLink || book.previewLink || ''}
                     title={book.title}
                   />
                   <FreeEbookDownloadIcon 
