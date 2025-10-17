@@ -92,25 +92,36 @@ export function OptimizedImage({
       {isLoading && imageSrc && (
         <div className="absolute inset-0 bg-muted animate-pulse" />
       )}
-      <img
-        ref={imgRef}
-        src={imageSrc || undefined}
-        srcSet={srcSet}
-        sizes={width ? `${width}px` : '100vw'}
-        alt={alt}
-        width={width}
-        height={height}
-        loading={priority ? 'eager' : lazy ? 'lazy' : 'eager'}
-        decoding="async"
-        onLoad={handleLoad}
-        onError={handleError}
-        className={cn(
-          'transition-opacity duration-300',
-          isLoading ? 'opacity-0' : 'opacity-100',
-          error && !fallbackSrc && 'hidden'
-        )}
-        {...props}
-      />
+      {(() => {
+        const { onLoad: userOnLoad, onError: userOnError, ...restProps } = props;
+        return (
+          <img
+            ref={imgRef}
+            src={imageSrc || undefined}
+            srcSet={srcSet}
+            sizes={width ? `${width}px` : '100vw'}
+            alt={alt}
+            width={width}
+            height={height}
+            loading={priority ? 'eager' : lazy ? 'lazy' : 'eager'}
+            decoding="async"
+            onLoad={(e) => {
+              handleLoad();
+              userOnLoad?.(e);
+            }}
+            onError={(e) => {
+              handleError();
+              userOnError?.(e);
+            }}
+            className={cn(
+              'transition-opacity duration-300',
+              isLoading ? 'opacity-0' : 'opacity-100',
+              error && !fallbackSrc && 'hidden'
+            )}
+            {...restProps}
+          />
+        );
+      })()}
       {error && !fallbackSrc && (
         <div className="absolute inset-0 bg-muted flex items-center justify-center">
           <span className="text-xs text-muted-foreground">Image unavailable</span>
