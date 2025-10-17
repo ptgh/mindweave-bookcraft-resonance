@@ -11,6 +11,7 @@ interface BookSearchInputProps {
   onBookSelect: (book: EnhancedBookSuggestion) => void;
   disabled?: boolean;
   authorFilter?: string; // Filter results by author
+  isEditMode?: boolean; // Disable suggestions when editing existing book
 }
 
 const BookSearchInput = ({ 
@@ -19,13 +20,22 @@ const BookSearchInput = ({
   onValueChange, 
   onBookSelect,
   disabled,
-  authorFilter
+  authorFilter,
+  isEditMode = false
 }: BookSearchInputProps) => {
   const [suggestions, setSuggestions] = useState<EnhancedBookSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    // Don't search in edit mode
+    if (isEditMode) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      setIsLoading(false);
+      return;
+    }
+
     if (value.length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
@@ -53,7 +63,7 @@ const BookSearchInput = ({
         setIsLoading(false);
       }
     );
-  }, [value, authorFilter]);
+  }, [value, authorFilter, isEditMode]);
 
   const handleSuggestionClick = (book: EnhancedBookSuggestion) => {
     console.log('Book suggestion clicked:', book);

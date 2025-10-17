@@ -10,6 +10,7 @@ interface AuthorSearchInputProps {
   onValueChange: (value: string) => void;
   onAuthorSelect: (author: ScifiAuthor) => void;
   disabled?: boolean;
+  isEditMode?: boolean; // Disable suggestions when editing existing book
 }
 
 const AuthorSearchInput = ({ 
@@ -17,7 +18,8 @@ const AuthorSearchInput = ({
   value, 
   onValueChange, 
   onAuthorSelect,
-  disabled 
+  disabled,
+  isEditMode = false
 }: AuthorSearchInputProps) => {
   const [suggestions, setSuggestions] = useState<ScifiAuthor[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -42,6 +44,14 @@ const AuthorSearchInput = ({
   // Filter authors based on search input
   useEffect(() => {
     console.log('Author search effect triggered, value:', value, 'length:', value.length, 'justSelected:', justSelected);
+    
+    // Don't search in edit mode
+    if (isEditMode) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      setIsLoading(false);
+      return;
+    }
     
     // If we just selected an author, don't trigger search
     if (justSelected) {
@@ -80,7 +90,7 @@ const AuthorSearchInput = ({
     );
 
     setIsLoading(true);
-  }, [value, allAuthors, justSelected]);
+  }, [value, allAuthors, justSelected, isEditMode]);
 
   const handleSuggestionClick = (author: ScifiAuthor) => {
     console.log('Author selected:', author);

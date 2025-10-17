@@ -205,6 +205,7 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModal
               setSelectedAuthorName(author.name); // Set the selected author for filtering
             }}
             selectedAuthorName={selectedAuthorName}
+            isEditMode={!!editingBook}
           />
           
           {detectedSeries && (

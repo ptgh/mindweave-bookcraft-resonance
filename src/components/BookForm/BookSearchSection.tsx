@@ -15,6 +15,7 @@ interface BookSearchSectionProps {
   onBookSelect: (book: EnhancedBookSuggestion) => void;
   onAuthorSelect?: (author: ScifiAuthor) => void;
   selectedAuthorName?: string; // Track selected author for filtering
+  isEditMode?: boolean; // Disable suggestions when editing existing book
 }
 
 const BookSearchSection = ({
@@ -26,7 +27,8 @@ const BookSearchSection = ({
   onAuthorSearchChange,
   onBookSelect,
   onAuthorSelect,
-  selectedAuthorName
+  selectedAuthorName,
+  isEditMode = false
 }: BookSearchSectionProps) => {
   const handleBookSelection = (book: EnhancedBookSuggestion) => {
     console.log('Book selected in BookSearchSection:', book);
@@ -52,6 +54,7 @@ const BookSearchSection = ({
             onValueChange={onTitleSearchChange}
             onBookSelect={handleBookSelection}
             authorFilter={selectedAuthorName}
+            isEditMode={isEditMode}
           />
         </div>
         <div>
@@ -61,6 +64,7 @@ const BookSearchSection = ({
             value={authorSearch}
             onValueChange={onAuthorSearchChange}
             onAuthorSelect={handleAuthorSelect}
+            isEditMode={isEditMode}
           />
         </div>
       </div>
