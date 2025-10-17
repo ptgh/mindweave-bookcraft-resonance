@@ -18,16 +18,6 @@ import { AuthorPopup } from "@/components/AuthorPopup";
 import { getAuthorByName, ScifiAuthor, findOrCreateAuthor } from "@/services/scifiAuthorsService";
 import { usePatternRecognition } from "@/hooks/usePatternRecognition";
 import { SEOHead } from "@/components/SEOHead";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 const Index = () => {
   const [books, setBooks] = useState<Transmission[]>([]);
@@ -38,8 +28,6 @@ const Index = () => {
   const [showContactModal, setShowContactModal] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
   const [authorPopupVisible, setAuthorPopupVisible] = useState(false);
-  const [bookToDiscard, setBookToDiscard] = useState<Transmission | null>(null);
-  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   // Memoize static data to prevent unnecessary re-renders
   const currentSignal = useMemo(() => ({
@@ -187,18 +175,7 @@ const Index = () => {
     }
   }, [toast, loadTransmissions]);
 
-  const handleDiscardBook = useCallback((book: Transmission) => {
-    // If book is marked as "kept", show confirmation dialog
-    if (book.is_favorite) {
-      setBookToDiscard(book);
-      setShowDiscardConfirm(true);
-    } else {
-      // Normal book - discard immediately
-      confirmDiscard(book);
-    }
-  }, []);
-
-  const confirmDiscard = useCallback(async (book: Transmission) => {
+  const handleDiscardBook = useCallback(async (book: Transmission) => {
     try {
       setError(null);
       await deleteTransmission(book.id);
@@ -215,9 +192,6 @@ const Index = () => {
         description: "Failed to delete transmission. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setShowDiscardConfirm(false);
-      setBookToDiscard(null);
     }
   }, [toast, loadTransmissions]);
 
@@ -380,38 +354,6 @@ const Index = () => {
             setSelectedAuthor(updatedAuthor);
           }}
         />
-
-        {/* Confirmation dialog for discarding kept books */}
-        <AlertDialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
-          <AlertDialogContent className="bg-slate-800 border-slate-700">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-slate-100">
-                Discard Kept Book?
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-slate-300">
-                <span className="font-semibold text-cyan-400">"{bookToDiscard?.title}"</span> was marked to be kept. 
-                Are you sure you want to discard it?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel 
-                onClick={() => {
-                  setShowDiscardConfirm(false);
-                  setBookToDiscard(null);
-                }}
-                className="bg-slate-700 text-slate-100 hover:bg-slate-600"
-              >
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => bookToDiscard && confirmDiscard(bookToDiscard)}
-                className="bg-red-600 text-white hover:bg-red-700"
-              >
-                Yes, Discard It
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </div>
     </>
   );
