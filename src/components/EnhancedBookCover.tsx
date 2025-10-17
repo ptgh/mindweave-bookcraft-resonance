@@ -155,101 +155,54 @@ const EnhancedBookCover = ({
   };
 
   useEffect(() => {
-    const loadImage = async () => {
-      console.log('Loading cover for:', title, { coverUrl, thumbnailUrl, smallThumbnailUrl, author, isbn });
-      
+    // IMMEDIATE RENDER: If we have any cover URL, display it right away
+    const firstAvailableUrl = coverUrl || thumbnailUrl || smallThumbnailUrl;
+    
+    if (firstAvailableUrl) {
+      setCurrentSrc(firstAvailableUrl);
+      setIsLoading(false);
+      return;
+    }
+    
+    // NO URL PROVIDED: Try to recover from cache or Archive.org
+    const tryRecover = async () => {
       setIsLoading(true);
       setHasError(false);
-
-      // First check if image service has this URL cached
-      const imageServiceCached = imageService.getCachedUrl(coverUrl || '');
-      if (imageServiceCached) {
-        console.log('Using image service cache:', imageServiceCached);
-        setCurrentSrc(imageServiceCached);
-        setIsLoading(false);
-        return;
-      }
-
-      // Then check Supabase cache
+      
+      // Check Supabase cache first
       const cachedUrl = await getCachedImageUrl(title);
       if (cachedUrl) {
-        console.log('Using Supabase cached image:', cachedUrl);
         try {
-          const validUrl = await imageService.loadImage({ src: cachedUrl, timeout: 8000 });
-          setCurrentSrc(validUrl);
+          await imageService.loadImage({ src: cachedUrl, timeout: 5000 });
+          setCurrentSrc(cachedUrl);
           setIsLoading(false);
           return;
         } catch (error) {
-          console.log('Cached URL no longer valid:', cachedUrl);
+          console.log('Cached URL no longer valid');
         }
       }
-
-      // Prepare all available URLs with fallbacks
-      const originalUrls = [coverUrl, thumbnailUrl, smallThumbnailUrl].filter(Boolean) as string[];
-      const allUrls = createImageFallbacks(originalUrls);
-
-      console.log('Trying URLs for', title, ':', allUrls);
-
-      // Try each URL with image service
-      for (const url of allUrls) {
-        console.log('Testing URL:', url);
-        try {
-          const validUrl = await imageService.loadImage({ 
-            src: url, 
-            timeout: 8000,
-            fallbacks: []
-          });
-          console.log('Successfully loaded:', validUrl);
-          setCurrentSrc(validUrl);
-          setIsLoading(false);
-          await cacheImageUrl(validUrl, title);
-          return;
-        } catch (error) {
-          console.log('Failed to load:', url);
-          continue;
-        }
-      }
-
-      // As a last resort, let the <img> tag try the raw URL directly
-      if (originalUrls.length > 0) {
-        console.warn('Preload failed; falling back to raw <img> for', originalUrls[0]);
-        setCurrentSrc(originalUrls[0]);
-        setIsLoading(false);
-        return;
-      }
-
-      // Try Archive.org as last resort
-      console.log('All provided URLs failed, trying Archive.org...');
+      
+      // Try Archive.org
       const archiveCoverUrl = await getArchiveCover(title, author);
       if (archiveCoverUrl) {
         try {
-          const validUrl = await imageService.loadImage({ 
-            src: archiveCoverUrl, 
-            timeout: 8000 
-          });
-          console.log('Successfully loaded Archive.org cover:', validUrl);
-          setCurrentSrc(validUrl);
+          await imageService.loadImage({ src: archiveCoverUrl, timeout: 5000 });
+          setCurrentSrc(archiveCoverUrl);
+          await cacheImageUrl(archiveCoverUrl, title);
           setIsLoading(false);
-          await cacheImageUrl(validUrl, title);
           return;
         } catch (error) {
-          console.log('Archive.org cover also failed:', archiveCoverUrl);
+          console.log('Archive.org cover failed');
         }
       }
-
-      // If all URLs fail
-      console.warn('All image URLs failed for', title);
+      
+      // Nothing worked
       setIsLoading(false);
       setHasError(true);
     };
-
-    // Don't reload if we already have a working image
-    if (currentSrc && !hasError) {
-      return;
-    }
-
-    loadImage();
-  }, [coverUrl, thumbnailUrl, smallThumbnailUrl, title, author, isbn]);
+    
+    tryRecover();
+  }, [coverUrl, thumbnailUrl, smallThumbnailUrl, title, author]);
 
   if (isLoading) {
     return (
@@ -277,8 +230,63 @@ const EnhancedBookCover = ({
         lazy={lazy}
         priority={!lazy}
         onError={() => {
-          console.error('Image failed to load:', currentSrc);
-          setHasError(true);
+          console.log('Image failed, attempting recovery:', currentSrc);
+          setIsLoading(true);
+          setHasError(false);
+          
+          const tryRecover = async () => {
+            // Build fallbacks from the original URLs
+            const originalUrls = [coverUrl, thumbnailUrl, smallThumbnailUrl].filter(Boolean) as string[];
+            const allUrls = createImageFallbacks(originalUrls);
+            
+            // Try each variant
+            for (const url of allUrls) {
+              if (url === currentSrc) continue; // Skip the one that just failed
+              try {
+                await imageService.loadImage({ src: url, timeout: 5000 });
+                console.log('Recovery successful:', url);
+                setCurrentSrc(url);
+                await cacheImageUrl(url, title);
+                setIsLoading(false);
+                return;
+              } catch (error) {
+                continue;
+              }
+            }
+            
+            // Try Supabase cache
+            const cachedUrl = await getCachedImageUrl(title);
+            if (cachedUrl && cachedUrl !== currentSrc) {
+              try {
+                await imageService.loadImage({ src: cachedUrl, timeout: 5000 });
+                setCurrentSrc(cachedUrl);
+                setIsLoading(false);
+                return;
+              } catch (error) {
+                console.log('Cached URL failed');
+              }
+            }
+            
+            // Try Archive.org as last resort
+            const archiveCoverUrl = await getArchiveCover(title, author);
+            if (archiveCoverUrl) {
+              try {
+                await imageService.loadImage({ src: archiveCoverUrl, timeout: 5000 });
+                setCurrentSrc(archiveCoverUrl);
+                await cacheImageUrl(archiveCoverUrl, title);
+                setIsLoading(false);
+                return;
+              } catch (error) {
+                console.log('Archive.org recovery failed');
+              }
+            }
+            
+            // All recovery attempts failed
+            setIsLoading(false);
+            setHasError(true);
+          };
+          
+          tryRecover();
         }}
         onLoad={() => {
           console.log('Image loaded successfully:', currentSrc);
