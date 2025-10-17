@@ -1,21 +1,25 @@
 
+import { Suspense, lazy } from "react";
 import { EnhancedToaster } from "@/components/ui/enhanced-toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import Index from "./pages/Index";
-import Discovery from "./pages/Discovery";
-import ThreadMap from "./pages/ThreadMap";
-import AuthorMatrix from "./pages/AuthorMatrix";
-import Search from "./pages/Search";
-import BookBrowser from "./pages/BookBrowser";
-import PublisherResonance from "./pages/PublisherResonance";
-import Auth from "./pages/Auth";
-import TestBrain from "./pages/TestBrain";
-import AdminEnrichment from "./pages/AdminEnrichment";
-import NotFound from "./pages/NotFound";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+
+// Lazy load route components for code splitting
+const Index = lazy(() => import("./pages/Index"));
+const Discovery = lazy(() => import("./pages/Discovery"));
+const ThreadMap = lazy(() => import("./pages/ThreadMap"));
+const AuthorMatrix = lazy(() => import("./pages/AuthorMatrix"));
+const Search = lazy(() => import("./pages/Search"));
+const BookBrowser = lazy(() => import("./pages/BookBrowser"));
+const PublisherResonance = lazy(() => import("./pages/PublisherResonance"));
+const Auth = lazy(() => import("./pages/Auth"));
+const TestBrain = lazy(() => import("./pages/TestBrain"));
+const AdminEnrichment = lazy(() => import("./pages/AdminEnrichment"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -35,45 +39,63 @@ const AppRoutes = () => {
     );
   }
 
+  // Loading fallback for lazy-loaded components
+  const SuspenseFallback = (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center">
+          <div className="w-6 h-6 rounded-full border-2 border-blue-400 animate-pulse" />
+        </div>
+        <p className="text-slate-400">Loading...</p>
+      </div>
+    </div>
+  );
+
   // If user is not authenticated, show auth page and test-brain (for demo)
   if (!user) {
     return (
-      <Routes>
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/test-brain" element={<TestBrain />} />
-        <Route path="*" element={<Navigate to="/auth" replace />} />
-      </Routes>
+      <Suspense fallback={SuspenseFallback}>
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/test-brain" element={<TestBrain />} />
+          <Route path="*" element={<Navigate to="/auth" replace />} />
+        </Routes>
+      </Suspense>
     );
   }
 
   // If user is authenticated, show all routes including test-brain
   return (
-    <Routes>
-      <Route path="/" element={<Discovery />} />
-      <Route path="/library" element={<Index />} />
-      <Route path="/thread-map" element={<ThreadMap />} />
-      <Route path="/author-matrix" element={<AuthorMatrix />} />
-      <Route path="/search" element={<Search />} />
-      <Route path="/book-browser" element={<BookBrowser />} />
-      <Route path="/publisher-resonance" element={<PublisherResonance />} />
-      <Route path="/test-brain" element={<TestBrain />} />
-      <Route path="/admin/enrichment" element={<AdminEnrichment />} />
-      <Route path="/auth" element={<Navigate to="/" replace />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <Suspense fallback={SuspenseFallback}>
+      <Routes>
+        <Route path="/" element={<Discovery />} />
+        <Route path="/library" element={<Index />} />
+        <Route path="/thread-map" element={<ThreadMap />} />
+        <Route path="/author-matrix" element={<AuthorMatrix />} />
+        <Route path="/search" element={<Search />} />
+        <Route path="/book-browser" element={<BookBrowser />} />
+        <Route path="/publisher-resonance" element={<PublisherResonance />} />
+        <Route path="/test-brain" element={<TestBrain />} />
+        <Route path="/admin/enrichment" element={<AdminEnrichment />} />
+        <Route path="/auth" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <EnhancedToaster />
-      <Sonner />
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <EnhancedToaster />
+        <Sonner />
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

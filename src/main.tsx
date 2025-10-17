@@ -4,6 +4,7 @@ import './index.css'
 import './utils/prefetch'
 import './services/manualEnrichmentService'
 import { enableIOSScrollFix, ensureTouchTargets } from './utils/accessibility'
+import { reportWebVitals } from './utils/webVitals'
 
 // Apply iOS accessibility fixes on load
 enableIOSScrollFix();
@@ -19,3 +20,6 @@ root.render(<App />);
 setTimeout(() => {
   ensureTouchTargets();
 }, 100);
+
+// Initialize Web Vitals monitoring
+reportWebVitals();
