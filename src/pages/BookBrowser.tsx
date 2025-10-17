@@ -66,7 +66,7 @@ const BookBrowser = () => {
               <p className="text-slate-400">Scanning the consciousness archive...</p>
             </div>
           ) : books.length > 0 ? (
-            <div ref={addFeatureBlockRef} className="feature-block">
+            <div ref={addFeatureBlockRef} className="feature-block min-h-[60vh]">
               <BookGrid
                 books={books}
                 visibleBooks={visibleBooks}
