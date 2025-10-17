@@ -10,7 +10,6 @@ import { searchFreeEbooks, EbookSearchResult } from "@/services/freeEbookService
 import { gsap } from "gsap";
 import { analyticsService } from "@/services/analyticsService";
 import { getOptimizedSettings } from "@/utils/performance";
-import EnhancedBookCover from "@/components/EnhancedBookCover";
 
 interface EnhancedBookPreviewModalProps {
   book: EnrichedPublisherBook;
@@ -293,16 +292,6 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
       });
       return;
     }
-
-    // Google Books (fallback)
-    if (googleFallback?.previewLink) {
-      window.open(googleFallback.previewLink, '_blank', 'noopener,noreferrer');
-      toast({
-        title: "Opening Google Books",
-        description: "Redirecting to Google Books...",
-      });
-      return;
-    }
   };
 
   const displayData = appleBook || googleFallback || book;
@@ -341,15 +330,6 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
       };
     }
     
-    if (googleFallback?.previewLink) {
-      return {
-        service: 'Google Books',
-        hasPrice: false,
-        buttonText: 'Preview',
-        disabled: false
-      };
-    }
-    
     return {
       service: 'Digital Libraries',
       hasPrice: false,
@@ -359,7 +339,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   };
 
   const digitalCopyInfo = getDigitalCopyInfo();
-  const hasDigitalCopy = !!(appleBook || freeEbooks?.archive?.url || freeEbooks?.gutenberg?.url || googleFallback?.previewLink);
+  const hasDigitalCopy = !!(appleBook || freeEbooks?.archive?.url || freeEbooks?.gutenberg?.url);
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -399,14 +379,26 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
               {/* Book details */}
               <div className="flex space-x-4">
                 {/* Book cover */}
-                <EnhancedBookCover
-                  title={displayData.title}
-                  author={displayData.author}
-                  isbn={book.isbn}
-                  coverUrl={coverUrl}
-                  className="w-24 h-36 flex-shrink-0"
-                  lazy={false}
-                />
+                <div className="flex-shrink-0 w-24 h-36 bg-slate-700/50 border border-slate-600 rounded-lg overflow-hidden relative shadow-lg">
+                  {coverUrl ? (
+                    <img 
+                      src={coverUrl} 
+                      alt={displayData.title} 
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const fallback = target.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <div className={`absolute inset-0 flex items-center justify-center text-slate-400 ${coverUrl ? 'hidden' : ''}`}>
+                    <div className="w-12 h-16 border-2 border-slate-600 rounded flex items-center justify-center">
+                      <div className="w-6 h-8 border border-slate-600 rounded" />
+                    </div>
+                  </div>
+                </div>
                 
                 {/* Book info */}
                 <div className="flex-1 space-y-2">
