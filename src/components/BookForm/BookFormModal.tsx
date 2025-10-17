@@ -10,6 +10,9 @@ import NotesSection from "./NotesSection";
 import PublisherResonanceBadge from "../PublisherResonanceBadge";
 import { BookSuggestion } from "@/services/googleBooksApi";
 import { findMatchingPublisherSeries, PublisherSeries } from "@/services/publisherService";
+import { transmissionSchema } from "@/utils/validation";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
 
 interface BookFormData {
   title: string;
@@ -35,6 +38,7 @@ interface BookFormModalProps {
 }
 
 const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModalProps) => {
+  const { toast } = useToast();
   const [formData, setFormData] = useState<BookFormData>({
     title: "",
     author: "",
@@ -130,13 +134,34 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModal
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Validate using Zod schema
+      transmissionSchema.parse({
+        title: formData.title,
+        author: formData.author,
+        status: formData.status,
+        tags: formData.tags,
+        notes: formData.notes || undefined,
+        cover_url: formData.cover_url || undefined,
+        rating: formData.rating,
+        publisher_series_id: formData.publisher_series_id,
+      });
+
       await Promise.resolve(onSubmit(formData));
       onClose();
     } catch (error) {
-      console.error('BookForm submission failed:', error);
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        toast({
+          title: "Validation Error",
+          description: `${firstError.path.join('.')}: ${firstError.message}`,
+          variant: "destructive",
+        });
+      } else {
+        console.error('BookForm submission failed:', error);
+      }
       // Keep modal open so user can correct issues
     }
-  }, [formData, onSubmit, onClose]);
+  }, [formData, onSubmit, onClose, toast]);
 
   if (!isOpen) return null;
 
