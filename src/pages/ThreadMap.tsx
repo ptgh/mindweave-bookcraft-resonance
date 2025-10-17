@@ -2,8 +2,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
-import AuthWrapper from "@/components/AuthWrapper";
-import Auth from "./Auth";
 import { ChronoTimeline } from "@/components/ChronoTimeline";
 import GSAPButtonGroup from "@/components/GSAPButtonGroup";
 import { Calendar, Clock, BookOpen, TrendingUp, Brain } from "lucide-react";
@@ -91,7 +89,7 @@ const ThreadMap = () => {
   const booksWithTemporalData = filteredTransmissions.filter(t => t.publication_year).length;
 
   return (
-    <AuthWrapper fallback={<Auth />}>
+    <>
       <SEOHead
         title="Chrono Thread"
         description="Explore the temporal patterns and historical context of your science fiction reading journey"
@@ -247,7 +245,7 @@ const ThreadMap = () => {
           </div>
         </main>
       </div>
-    </AuthWrapper>
+    </>
   );
 };
 

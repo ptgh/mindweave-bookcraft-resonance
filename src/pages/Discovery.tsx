@@ -1,7 +1,5 @@
 
 import Header from "@/components/Header";
-import AuthWrapper from "@/components/AuthWrapper";
-import Auth from "./Auth";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { StandardButton } from "@/components/ui/standard-button";
@@ -17,7 +15,7 @@ const Discovery = () => {
   const [showContactModal, setShowContactModal] = useState(false);
 
   return (
-    <AuthWrapper fallback={<Auth />}>
+    <>
       <SEOHead />
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <Header />
@@ -178,7 +176,7 @@ const Discovery = () => {
           onClose={() => setShowContactModal(false)} 
         />
       </div>
-    </AuthWrapper>
+    </>
   );
 };
 

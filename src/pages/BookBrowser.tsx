@@ -1,8 +1,6 @@
 
 import { useState } from "react";
 import Header from "@/components/Header";
-import AuthWrapper from "@/components/AuthWrapper";
-import Auth from "./Auth";
 import BookBrowserHeader from "@/components/BookBrowserHeader";
 import BookGrid from "@/components/BookGrid";
 import BookBrowserEmpty from "@/components/BookBrowserEmpty";
@@ -48,7 +46,7 @@ const BookBrowser = () => {
   };
 
   return (
-    <AuthWrapper fallback={<Auth />}>
+    <>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <Header />
         
@@ -97,7 +95,7 @@ const BookBrowser = () => {
           onAuthorUpdate={setSelectedAuthor}
         />
       </div>
-    </AuthWrapper>
+    </>
   );
 };
 

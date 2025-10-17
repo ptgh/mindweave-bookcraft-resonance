@@ -1,7 +1,5 @@
 
 import Header from "@/components/Header";
-import AuthWrapper from "@/components/AuthWrapper";
-import Auth from "./Auth";
 import AuthorMatrixHeader from "@/components/AuthorMatrixHeader";
 import AuthorsList from "@/components/AuthorsList";
 import AuthorBooksSection from "@/components/AuthorBooksSection";
@@ -30,7 +28,7 @@ const AuthorMatrix = () => {
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
 
   return (
-    <AuthWrapper fallback={<Auth />}>
+    <>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <Header />
         
@@ -83,7 +81,7 @@ const AuthorMatrix = () => {
           </div>
         </main>
       </div>
-    </AuthWrapper>
+    </>
   );
 };
 

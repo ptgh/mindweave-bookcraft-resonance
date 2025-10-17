@@ -4,9 +4,7 @@ import { Mail, BookOpen, Search, Eye, Map, Circle, Sparkles } from "lucide-react
 import Header from "@/components/Header";
 import SignalInFocus from "@/components/SignalInFocus";
 import AddBookModal from "@/components/AddBookModal";
-import AuthWrapper from "@/components/AuthWrapper";
 import TransmissionsList from "@/components/TransmissionsList";
-import Auth from "./Auth";
 import { StandardButton } from "@/components/ui/standard-button";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -234,7 +232,7 @@ const Index = () => {
 
 
   return (
-    <AuthWrapper fallback={<Auth />}>
+    <>
       <SEOHead
         title="Library"
         description="Your personal sci-fi book collection with transmissions, patterns, and neural connections"
@@ -337,7 +335,7 @@ const Index = () => {
           }}
         />
       </div>
-    </AuthWrapper>
+    </>
   );
 };
 

@@ -3,8 +3,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Building, Globe } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import AuthWrapper from "@/components/AuthWrapper";
-import Auth from "./Auth";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { useAuth } from "@/hooks/useAuth";
 import EmptyState from "@/components/EmptyState";
@@ -147,7 +145,7 @@ const PublisherResonance = () => {
   }
 
   return (
-    <AuthWrapper fallback={<Auth />}>
+    <>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <Header />
         
@@ -230,7 +228,7 @@ const PublisherResonance = () => {
         
         <Footer />
       </div>
-    </AuthWrapper>
+    </>
   );
 };
 

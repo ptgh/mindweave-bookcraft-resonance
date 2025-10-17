@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import SearchInput from "@/components/SearchInput";
 import SearchResults from "@/components/SearchResults";
-import AuthWrapper from "@/components/AuthWrapper";
-import Auth from "./Auth";
 import { SearchResult } from "@/services/searchService";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
@@ -33,7 +31,7 @@ const Search = () => {
   };
 
   return (
-    <AuthWrapper fallback={<Auth />}>
+    <>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <Header />
         
@@ -74,7 +72,7 @@ const Search = () => {
           </div>
         </main>
       </div>
-    </AuthWrapper>
+    </>
   );
 };
 
