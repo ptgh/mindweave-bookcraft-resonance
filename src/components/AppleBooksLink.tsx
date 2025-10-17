@@ -7,14 +7,15 @@ interface AppleBooksLinkProps {
 }
 
 const AppleBooksLink = ({ appleLink, title, className = "" }: AppleBooksLinkProps) => {
-  // Detect if this is an Apple Books link or Google Books link
-  const isAppleBooks = appleLink.includes('books.apple.com') || appleLink.includes('itunes.apple.com') || /^\d+$/.test(appleLink);
-  const isGoogleBooks = appleLink.includes('books.google');
-  
   // Don't render if no valid link
-  if (!appleLink || (!isAppleBooks && !isGoogleBooks)) {
+  if (!appleLink) {
     return null;
   }
+
+  // Only show Google Books if it's explicitly a Google Books URL
+  // Everything else defaults to Apple Books (including trackIds, Apple URLs, etc.)
+  const isGoogleBooks = appleLink.includes('books.google');
+  const isAppleBooks = !isGoogleBooks;
 
   const handleClick = () => {
     // If appleLink is just a numeric trackId, convert to full URL
