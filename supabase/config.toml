@@ -37,3 +37,6 @@ verify_jwt = false
 
 [functions.enrich-book-covers]
 verify_jwt = false
+
+[functions.csp-middleware]
+verify_jwt = false
