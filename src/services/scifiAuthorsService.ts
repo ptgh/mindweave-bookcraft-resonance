@@ -58,10 +58,17 @@ export const getScifiAuthors = async (): Promise<ScifiAuthor[]> => {
 export const getAuthorByName = async (authorName: string): Promise<ScifiAuthor | null> => {
   console.log('Fetching author by name:', authorName);
   
+  // Prevent matching empty or invalid author names
+  const trimmedName = authorName?.trim();
+  if (!trimmedName || trimmedName.length < 2) {
+    console.warn('Author name too short or empty, skipping search');
+    return null;
+  }
+  
   const { data, error } = await supabase
     .from('scifi_authors')
     .select('*')
-    .ilike('name', `%${authorName.trim()}%`)
+    .ilike('name', `%${trimmedName}%`)
     .order('data_quality_score', { ascending: false })
     .limit(1)
     .maybeSingle();

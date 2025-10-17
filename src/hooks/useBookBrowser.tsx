@@ -7,7 +7,7 @@ import { searchAppleBooks } from "@/services/appleBooks";
 import { imageService } from "@/services/image-service";
 import { debounce } from "@/utils/performance";
 import { getRandomCuratedBooks, CuratedBook } from "@/services/curatedSciFiLists";
-import { getAllAuthorBooks, AuthorBook } from "@/services/scifiAuthorsService";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useBookBrowser = () => {
   const [books, setBooks] = useState<EnhancedBookSuggestion[]>([]);
@@ -61,17 +61,27 @@ export const useBookBrowser = () => {
       try {
         let allBooks: EnhancedBookSuggestion[] = [];
         
-        // 1. Load books from author_books database table
+        // 1. Load books from author_books database table with author names
         try {
-          const dbBooks = await getAllAuthorBooks(50);
-          console.log(`Found ${dbBooks.length} books in author_books table`);
+          const { data: dbBooksWithAuthors, error: dbError } = await supabase
+            .from('author_books')
+            .select(`
+              *,
+              author:scifi_authors(name)
+            `)
+            .order('created_at', { ascending: false })
+            .limit(50);
           
-          const transformedDbBooks: EnhancedBookSuggestion[] = dbBooks
+          if (dbError) throw dbError;
+          
+          console.log(`Found ${dbBooksWithAuthors?.length || 0} books in author_books table`);
+          
+          const transformedDbBooks: EnhancedBookSuggestion[] = (dbBooksWithAuthors || [])
             .filter(book => !previouslyShownBooks.has(book.google_books_id || book.id))
-            .map((book: AuthorBook) => ({
+            .map((book: any) => ({
               id: book.google_books_id || book.id,
               title: book.title,
-              author: '', // We'll need to fetch author name if needed
+              author: book.author?.name || 'Unknown Author',
               coverUrl: book.cover_url || '',
               thumbnailUrl: book.cover_url || '',
               smallThumbnailUrl: book.cover_url || '',
