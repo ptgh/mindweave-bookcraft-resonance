@@ -32,16 +32,16 @@
 
 ---
 
-### 3. ✅ Reading Journey Narrative Generator
-**Status**: COMPLETE
-**Location**: `/insights` route  
-**Implementation**:
-- Page: `src/pages/ReadingInsights.tsx` ✅
-- Component: `src/components/ReadingNarrative.tsx` ✅
-- Edge function: `supabase/functions/ai-reading-narrative/index.ts` ✅
-- DB table: `reading_insights` ✅
-- Discovery card added ✅
-- Features: Markdown narrative, regenerate button, caching, timeframe support
+### 3. ⏳ Reading Journey Narrative Generator
+**Status**: NOT YET STARTED
+**Location**: New route `/insights`  
+**Planned**:
+- Create new page: `src/pages/ReadingInsights.tsx`
+- Create component: `src/components/ReadingNarrative.tsx`
+- Edge function: `supabase/functions/ai-reading-narrative/index.ts`
+- DB table: `reading_insights` (already exists)
+- Add card to Discovery page
+- Markdown narrative with regenerate capability
 
 ---
 
@@ -106,16 +106,12 @@ All Phase 3 features are planned but not yet started:
 
 ## Next Steps
 
-**Phase 1 Complete! ✅**
-All three foundation features are now live:
-1. ✅ Intelligent Tagging Assistant
-2. ✅ AI-Powered Book Recommendations (Neural ON)
-3. ✅ Reading Journey Narrative Generator
+**Immediate Priority**: Complete Phase 1 Feature 3
+- Implement Reading Insights page
+- Create narrative generator edge function
+- Add Discovery page card
 
-**Ready for Phase 2**: Enhanced Discovery & Context
-- Feature 4: Conversational Book Addition (BrainChat enhancement)
-- Feature 5: Book Synopsis & Theme Extractor (Modal tab)
-- Feature 6: Author Relationship Mapper (AuthorMatrix connections)
+**Then**: Move to Phase 2
 - Start with Conversational Book Addition (most user-friendly)
 - Followed by Book Synopsis & Theme Extractor
 - End with Author Relationship Mapper
