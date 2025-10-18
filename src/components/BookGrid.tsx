@@ -247,7 +247,7 @@ const BookGridItem = memo(({
                   : 'opacity-0 translate-y-4'
               }`}
             >
-              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors h-full flex flex-col">
+              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors h-full flex flex-col relative overflow-visible">
                 <div className="flex items-start space-x-4 flex-1 mb-4">
                   <EnhancedBookCover
                     title={book.title}
@@ -263,29 +263,45 @@ const BookGridItem = memo(({
                         <h3 className="text-slate-200 font-medium text-sm leading-tight line-clamp-2 mb-1">
                           {book.title}
                         </h3>
-                        {onAuthorClick ? (
-                          <button
-                            onClick={() => onAuthorClick(book.author)}
-                            className="text-slate-400 text-xs mb-1 text-left relative group"
-                            style={{ transition: 'color 0.3s ease' }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.color = '#60a5fa';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.color = 'rgb(148, 163, 184)';
-                            }}
-                          >
-                            <span className="relative">
-                              {book.author || 'Unknown Author'}
-                              <span 
-                                className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300 ease-out"
-                                style={{ transformOrigin: 'left' }}
-                              />
-                            </span>
-                          </button>
-                        ) : (
-                          <p className="text-slate-400 text-xs mb-1">{book.author || 'Unknown Author'}</p>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {onAuthorClick ? (
+                            <button
+                              onClick={() => onAuthorClick(book.author)}
+                              className="text-slate-400 text-xs mb-1 text-left relative group"
+                              style={{ transition: 'color 0.3s ease' }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.color = '#60a5fa';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.color = 'rgb(148, 163, 184)';
+                              }}
+                            >
+                              <span className="relative">
+                                {book.author || 'Unknown Author'}
+                                <span 
+                                  className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300 ease-out"
+                                  style={{ transformOrigin: 'left' }}
+                                />
+                              </span>
+                            </button>
+                          ) : (
+                            <p className="text-slate-400 text-xs mb-1">{book.author || 'Unknown Author'}</p>
+                          )}
+                          
+                          {/* AI recommendation badge - inline with author */}
+                          {aiRecommendation && (
+                            <div className="group relative">
+                              <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#89b4fa]/10 border border-[#89b4fa]/20 rounded text-[10px] text-[#89b4fa]">
+                                <span>AI</span>
+                              </div>
+                              {/* Tooltip on hover */}
+                              <div className="absolute left-0 top-full mt-1 w-48 p-3 bg-slate-800/95 backdrop-blur-sm border border-slate-700 rounded text-xs text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[100] shadow-xl">
+                                <div className="font-medium text-[#89b4fa] mb-1">{aiRecommendation.cluster_connection}</div>
+                                <div className="text-slate-400 text-[10px] leading-relaxed">{aiRecommendation.reason}</div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div className="w-3 h-3 rounded-full border-2 border-slate-500 bg-slate-500/10 flex-shrink-0" />
                     </div>
@@ -294,20 +310,6 @@ const BookGridItem = memo(({
                     {showPenguinBadge && (
                       <div className="mt-2">
                         <PenguinPublisherBadge size="sm" />
-                      </div>
-                    )}
-                    
-                    {/* AI recommendation badge */}
-                    {aiRecommendation && (
-                      <div className="mt-2 group relative">
-                        <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#89b4fa]/10 border border-[#89b4fa]/20 rounded text-[10px] text-[#89b4fa]">
-                          <span>AI</span>
-                        </div>
-                        {/* Tooltip on hover */}
-                        <div className="absolute left-0 top-full mt-1 w-48 p-3 bg-slate-800/50 border border-slate-700 rounded text-xs text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                          <div className="font-medium text-[#89b4fa] mb-1">{aiRecommendation.cluster_connection}</div>
-                          <div className="text-slate-400 text-[10px] leading-relaxed">{aiRecommendation.reason}</div>
-                        </div>
                       </div>
                     )}
                   </div>
