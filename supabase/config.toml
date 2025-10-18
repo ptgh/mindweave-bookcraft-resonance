@@ -40,3 +40,12 @@ verify_jwt = false
 
 [functions.csp-middleware]
 verify_jwt = false
+
+[functions.ai-tag-suggestions]
+verify_jwt = true
+
+[functions.ai-book-recommendations]
+verify_jwt = true
+
+[functions.ai-reading-narrative]
+verify_jwt = true

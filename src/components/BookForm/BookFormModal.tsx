@@ -231,6 +231,9 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModal
                 ? prev.tags.filter(t => t !== tag)
                 : [...prev.tags, tag]
             }))}
+            bookTitle={formData.title}
+            bookAuthor={formData.author}
+            bookDescription={titleSearch}
           />
           
           <PersonalResonanceSection

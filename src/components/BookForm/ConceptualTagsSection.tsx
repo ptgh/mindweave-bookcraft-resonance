@@ -1,13 +1,27 @@
 
 import { Label } from "@/components/ui/label";
 import { CONCEPTUAL_TAGS } from "@/constants/conceptualTags";
+import { AITagSuggestions } from "./AITagSuggestions";
 
 interface ConceptualTagsSectionProps {
   selectedTags: string[];
   onTagToggle: (tag: string) => void;
+  bookTitle?: string;
+  bookAuthor?: string;
+  bookDescription?: string;
+  userTaggingPatterns?: string[];
 }
 
-const ConceptualTagsSection = ({ selectedTags, onTagToggle }: ConceptualTagsSectionProps) => {
+const ConceptualTagsSection = ({ 
+  selectedTags, 
+  onTagToggle,
+  bookTitle,
+  bookAuthor,
+  bookDescription,
+  userTaggingPatterns 
+}: ConceptualTagsSectionProps) => {
+  const canShowAISuggestions = bookTitle && bookAuthor && bookTitle.length > 2 && bookAuthor.length > 2;
+
   return (
     <div>
       <Label className="text-slate-300 text-sm mb-3 block">Conceptual Nodes</Label>
@@ -27,6 +41,17 @@ const ConceptualTagsSection = ({ selectedTags, onTagToggle }: ConceptualTagsSect
           </button>
         ))}
       </div>
+      
+      {canShowAISuggestions && (
+        <AITagSuggestions
+          title={bookTitle}
+          author={bookAuthor}
+          description={bookDescription}
+          currentTags={selectedTags}
+          onTagSelect={onTagToggle}
+          userTaggingPatterns={userTaggingPatterns}
+        />
+      )}
     </div>
   );
 };

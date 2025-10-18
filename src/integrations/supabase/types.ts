@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           author_id: string | null
           categories: string[] | null
+          conceptual_tags: string[] | null
           cover_url: string | null
           created_at: string
           description: string | null
@@ -36,6 +37,7 @@ export type Database = {
         Insert: {
           author_id?: string | null
           categories?: string[] | null
+          conceptual_tags?: string[] | null
           cover_url?: string | null
           created_at?: string
           description?: string | null
@@ -54,6 +56,7 @@ export type Database = {
         Update: {
           author_id?: string | null
           categories?: string[] | null
+          conceptual_tags?: string[] | null
           cover_url?: string | null
           created_at?: string
           description?: string | null
@@ -170,6 +173,33 @@ export type Database = {
           },
         ]
       }
+      book_ai_tags: {
+        Row: {
+          book_identifier: string
+          cached_at: string | null
+          created_at: string | null
+          id: string
+          suggested_tags: Json
+          user_id: string | null
+        }
+        Insert: {
+          book_identifier: string
+          cached_at?: string | null
+          created_at?: string | null
+          id?: string
+          suggested_tags: Json
+          user_id?: string | null
+        }
+        Update: {
+          book_identifier?: string
+          cached_at?: string | null
+          created_at?: string | null
+          id?: string
+          suggested_tags?: Json
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       book_collections: {
         Row: {
           cover_image_url: string | null
@@ -265,6 +295,30 @@ export type Database = {
           source_context?: string | null
           success?: boolean | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      book_recommendations_cache: {
+        Row: {
+          cached_at: string | null
+          created_at: string | null
+          id: string
+          recommendations: Json
+          user_id: string
+        }
+        Insert: {
+          cached_at?: string | null
+          created_at?: string | null
+          id?: string
+          recommendations: Json
+          user_id: string
+        }
+        Update: {
+          cached_at?: string | null
+          created_at?: string | null
+          id?: string
+          recommendations?: Json
+          user_id?: string
         }
         Relationships: []
       }
@@ -640,6 +694,36 @@ export type Database = {
           logo_url?: string | null
           name?: string
           publisher?: string
+        }
+        Relationships: []
+      }
+      reading_insights: {
+        Row: {
+          created_at: string | null
+          generated_at: string | null
+          id: string
+          metadata: Json | null
+          narrative: string
+          timeframe: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          generated_at?: string | null
+          id?: string
+          metadata?: Json | null
+          narrative: string
+          timeframe?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          generated_at?: string | null
+          id?: string
+          metadata?: Json | null
+          narrative?: string
+          timeframe?: string | null
+          user_id?: string
         }
         Relationships: []
       }
