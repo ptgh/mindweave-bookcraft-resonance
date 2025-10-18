@@ -47,6 +47,13 @@ const SignalInFocus = ({ book, onClick }: SignalInFocusProps) => {
     }
   }, []);
 
+  const handleClick = () => {
+    console.log('Signal Detected icon clicked');
+    if (onClick) {
+      onClick();
+    }
+  };
+
   return (
     <div className="bg-slate-800/30 border border-slate-600 rounded-lg p-6 mb-8">
       <div className="flex items-center justify-between mb-4">
@@ -56,8 +63,8 @@ const SignalInFocus = ({ book, onClick }: SignalInFocusProps) => {
         <div className="flex items-center space-x-2">
           <button
             ref={iconRef}
-            onClick={onClick}
-            className="cursor-pointer hover:scale-110 transition-transform p-1 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-full"
+            onClick={handleClick}
+            className="cursor-pointer p-2 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-full relative z-10"
             aria-label="View Reading Insights"
             type="button"
           >

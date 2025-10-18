@@ -79,14 +79,19 @@ const Index = () => {
   }, [toast, user]);
 
   useEffect(() => {
-    console.log('Auth state changed - User:', user?.email, 'Auth loading:', authLoading);
+    console.log('=== Auth State Debug ===');
+    console.log('User email:', user?.email);
+    console.log('User ID:', user?.id);
+    console.log('Auth loading:', authLoading);
+    console.log('======================');
     
     // Only proceed if auth is not loading
     if (!authLoading) {
       if (user) {
+        console.log('User authenticated, loading transmissions...');
         loadTransmissions();
       } else {
-        console.log('No authenticated user, setting loading to false');
+        console.log('No authenticated user found');
         setLoading(false);
         setError(null);
       }
@@ -268,7 +273,10 @@ const Index = () => {
           <div ref={addFeatureBlockRef} className="feature-block">
             <SignalInFocus 
               book={currentSignal} 
-              onClick={() => setShowInsightsModal(true)}
+              onClick={() => {
+                console.log('Opening Reading Insights modal');
+                setShowInsightsModal(true);
+              }}
             />
           </div>
           
