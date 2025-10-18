@@ -20,11 +20,12 @@ const SignalInFocus = ({ book, onClick }: SignalInFocusProps) => {
     if (!button || !onClick) return;
 
     const tl = gsap.timeline({ paused: true });
-    tl.to(button, { 
-      scale: 1.15, 
-      duration: 0.3,
-      ease: "power2.out"
-    });
+      tl.to(button, { 
+        scale: 1.15,
+        color: '#60a5fa',
+        duration: 0.3,
+        ease: "power2.out"
+      });
 
     const handleMouseEnter = () => tl.play();
     const handleMouseLeave = () => tl.reverse();

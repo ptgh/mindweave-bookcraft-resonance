@@ -21,7 +21,7 @@ const PublisherResonance = lazy(() => import("./pages/PublisherResonance"));
 const Auth = lazy(() => import("./pages/Auth"));
 const TestBrain = lazy(() => import("./pages/TestBrain"));
 const AdminEnrichment = lazy(() => import("./pages/AdminEnrichment"));
-const ReadingInsights = lazy(() => import("./pages/ReadingInsights"));
+
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -78,7 +78,7 @@ const AppRoutes = () => {
         <Route path="/search" element={<Search />} />
         <Route path="/book-browser" element={<BookBrowser />} />
         <Route path="/publisher-resonance" element={<PublisherResonance />} />
-        <Route path="/insights" element={<ReadingInsights />} />
+        
         <Route path="/test-brain" element={<TestBrain />} />
         <Route path="/admin/enrichment" element={<AdminEnrichment />} />
         <Route path="/auth" element={<Navigate to="/" replace />} />
