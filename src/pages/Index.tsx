@@ -18,7 +18,6 @@ import { AuthorPopup } from "@/components/AuthorPopup";
 import { getAuthorByName, ScifiAuthor, findOrCreateAuthor } from "@/services/scifiAuthorsService";
 import { usePatternRecognition } from "@/hooks/usePatternRecognition";
 import { SEOHead } from "@/components/SEOHead";
-import { ReadingInsightsModal } from "@/components/ReadingInsightsModal";
 
 const Index = () => {
   const [books, setBooks] = useState<Transmission[]>([]);
@@ -29,7 +28,6 @@ const Index = () => {
   const [showContactModal, setShowContactModal] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
   const [authorPopupVisible, setAuthorPopupVisible] = useState(false);
-  const [showInsightsModal, setShowInsightsModal] = useState(false);
 
   // Memoize static data to prevent unnecessary re-renders
   const currentSignal = useMemo(() => ({
@@ -79,19 +77,14 @@ const Index = () => {
   }, [toast, user]);
 
   useEffect(() => {
-    console.log('=== Auth State Debug ===');
-    console.log('User email:', user?.email);
-    console.log('User ID:', user?.id);
-    console.log('Auth loading:', authLoading);
-    console.log('======================');
+    console.log('Auth state changed - User:', user?.email, 'Auth loading:', authLoading);
     
     // Only proceed if auth is not loading
     if (!authLoading) {
       if (user) {
-        console.log('User authenticated, loading transmissions...');
         loadTransmissions();
       } else {
-        console.log('No authenticated user found');
+        console.log('No authenticated user, setting loading to false');
         setLoading(false);
         setError(null);
       }
@@ -271,13 +264,7 @@ const Index = () => {
         
         <main ref={mainContainerRef} className="container mx-auto px-4 sm:px-6 py-8">
           <div ref={addFeatureBlockRef} className="feature-block">
-            <SignalInFocus 
-              book={currentSignal} 
-              onClick={() => {
-                console.log('Opening Reading Insights modal');
-                setShowInsightsModal(true);
-              }}
-            />
+            <SignalInFocus book={currentSignal} />
           </div>
           
           <div ref={addFeatureBlockRef} className="feature-block flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
@@ -367,11 +354,6 @@ const Index = () => {
           onAuthorUpdate={(updatedAuthor) => {
             setSelectedAuthor(updatedAuthor);
           }}
-        />
-
-        <ReadingInsightsModal 
-          isOpen={showInsightsModal}
-          onClose={() => setShowInsightsModal(false)}
         />
       </div>
     </>
