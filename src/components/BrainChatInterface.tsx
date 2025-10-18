@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { BrainNode, BookLink } from '@/pages/TestBrain';
 import { BrainContextService } from '@/services/brainContextService';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Transmission } from '@/services/transmissionsService';
 
 interface Message {
   id: string;
@@ -41,9 +42,62 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [userTransmissions, setUserTransmissions] = useState<Transmission[]>([]);
+  const [isFetchingTransmissions, setIsFetchingTransmissions] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
+
+  // Fetch user's transmissions when chat opens
+  useEffect(() => {
+    const fetchTransmissions = async () => {
+      if (isOpen && userTransmissions.length === 0 && !isFetchingTransmissions) {
+        setIsFetchingTransmissions(true);
+        try {
+          const { data: userData } = await supabase.auth.getUser();
+          if (userData?.user) {
+            const { data, error } = await supabase
+              .from('transmissions')
+              .select('*')
+              .eq('user_id', userData.user.id)
+              .order('created_at', { ascending: false });
+
+            if (!error && data) {
+              // Map database records to Transmission format
+              const mappedData = data.map((record: any) => ({
+                id: record.id,
+                title: record.title || '',
+                author: record.author || '',
+                status: 'read' as const,
+                tags: typeof record.tags === 'string' ? JSON.parse(record.tags || '[]') : (record.tags || []),
+                notes: record.notes || '',
+                cover_url: record.cover_url || '',
+                rating: typeof record.resonance_labels === 'string' ? JSON.parse(record.resonance_labels || '{}') : (record.resonance_labels || {}),
+                user_id: record.user_id,
+                created_at: record.created_at,
+                publisher_series_id: record.publisher_series_id,
+                isbn: record.isbn,
+                apple_link: record.apple_link,
+                open_count: record.open_count,
+                publication_year: record.publication_year,
+                narrative_time_period: record.narrative_time_period,
+                historical_context_tags: record.historical_context_tags || [],
+                is_favorite: record.is_favorite
+              }));
+              setUserTransmissions(mappedData);
+              console.log('Fetched user transmissions:', mappedData.length);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch transmissions:', error);
+        } finally {
+          setIsFetchingTransmissions(false);
+        }
+      }
+    };
+
+    fetchTransmissions();
+  }, [isOpen]);
 
   // Initialize or retrieve conversation when chat opens
   useEffect(() => {
@@ -215,7 +269,17 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         brainData: {
           ...cleanData,
           activeFilters: Array.isArray(activeFilters) ? activeFilters : []
-        }
+        },
+        userTransmissions: userTransmissions.map(t => ({
+          id: t.id,
+          title: t.title,
+          author: t.author,
+          tags: Array.isArray(t.tags) ? t.tags.join(', ') : '',
+          notes: t.notes,
+          publication_year: t.publication_year,
+          narrative_time_period: t.narrative_time_period,
+          historical_context_tags: t.historical_context_tags
+        }))
       };
 
       console.log('Calling supabase function with conversation history:', conversationHistory.length, 'messages');
@@ -322,7 +386,17 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         brainData: {
           ...cleanData,
           activeFilters: Array.isArray(activeFilters) ? activeFilters : []
-        }
+        },
+        userTransmissions: userTransmissions.map(t => ({
+          id: t.id,
+          title: t.title,
+          author: t.author,
+          tags: Array.isArray(t.tags) ? t.tags.join(', ') : '',
+          notes: t.notes,
+          publication_year: t.publication_year,
+          narrative_time_period: t.narrative_time_period,
+          historical_context_tags: t.historical_context_tags
+        }))
       };
 
       const { data, error } = await supabase.functions.invoke('brain-chat', {

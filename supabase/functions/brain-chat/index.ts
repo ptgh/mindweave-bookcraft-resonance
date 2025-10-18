@@ -31,6 +31,17 @@ interface ChatMessage {
   content: string;
 }
 
+interface UserTransmission {
+  id: number;
+  title: string;
+  author: string;
+  tags: string;
+  notes?: string;
+  publication_year?: number;
+  narrative_time_period?: string;
+  historical_context_tags?: string[];
+}
+
 interface ChatRequest {
   message: string;
   conversationId?: string;
@@ -40,6 +51,7 @@ interface ChatRequest {
     links: BookLink[];
     activeFilters: string[];
   };
+  userTransmissions?: UserTransmission[];
 }
 
 serve(async (req) => {
@@ -82,7 +94,7 @@ serve(async (req) => {
       });
     }
 
-    const { message, conversationId, messages = [], brainData }: ChatRequest = requestBody;
+    const { message, conversationId, messages = [], brainData, userTransmissions = [] }: ChatRequest = requestBody;
 
     // Validate required fields
     if (!message) {
@@ -95,36 +107,34 @@ serve(async (req) => {
       });
     }
 
-    if (!brainData || !brainData.nodes || !brainData.links) {
-      console.error('Missing or invalid brain data');
-      return new Response(JSON.stringify({ 
-        error: 'Brain data is required' 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     console.log('Request validation passed:', {
       messageLength: message.length,
-      nodeCount: brainData.nodes.length,
-      linkCount: brainData.links.length,
-      activeFilters: brainData.activeFilters.length
+      nodeCount: brainData?.nodes?.length || 0,
+      linkCount: brainData?.links?.length || 0,
+      activeFilters: brainData?.activeFilters?.length || 0,
+      transmissionsCount: userTransmissions.length
     });
 
     // Generate brain context
-    const brainContext = generateBrainContext(brainData);
-    console.log('Brain context generated, length:', brainContext.length);
+    const brainContext = brainData ? generateBrainContext(brainData) : '';
+    const transmissionsContext = generateTransmissionsContext(userTransmissions);
+    console.log('Context generated - brain:', brainContext.length, 'transmissions:', transmissionsContext.length);
     
-    const systemPrompt = `You are an AI assistant specialized in analyzing science fiction reading networks and neural knowledge graphs. You have access to the user's personal SF library visualization showing books as nodes connected by thematic, author, and conceptual relationships.
+    const systemPrompt = `You are the Neural Assistant for leafnode—a personal science fiction library and knowledge graph application.
 
-Current Brain State:
+ABOUT LEAFNODE:
+Leafnode helps readers build and explore their personal SF reading network. It's not just a book tracker—it's a tool for discovering thematic connections, conceptual patterns, and intellectual threads across your science fiction collection. Think of it as your "second brain" for sci-fi reading, visualizing how books, themes, and ideas connect in your literary journey.
+
+USER'S COLLECTION:
+${transmissionsContext}
+
+${brainContext ? `NEURAL MAP STATE:
 - Total Books: ${brainData.nodes.length}
 - Total Connections: ${brainData.links.length}
 - Active Filters: ${brainData.activeFilters.length > 0 ? brainData.activeFilters.join(', ') : 'None'}
 
 Brain Analysis:
-${brainContext}
+${brainContext}` : ''}
 
 You can help users:
 - Identify thematic clusters (groups of 2+ books exploring the same theme)
@@ -458,6 +468,102 @@ function formatAIResponse(response: string): string {
   } catch (error) {
     console.error('Error formatting AI response:', error);
     return response;
+  }
+}
+
+function generateTransmissionsContext(transmissions: UserTransmission[]): string {
+  if (!transmissions || transmissions.length === 0) {
+    return "The user hasn't added any books to their collection yet. Encourage them to add their favorite sci-fi books to start building their neural reading network!";
+  }
+
+  try {
+    const totalBooks = transmissions.length;
+    
+    // Extract all tags
+    const allTags = transmissions
+      .flatMap(t => t.tags ? t.tags.split(',').map(tag => tag.trim()) : [])
+      .filter(tag => tag !== '');
+    
+    const tagFrequency = allTags.reduce((acc, tag) => {
+      acc[tag] = (acc[tag] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const topTags = Object.entries(tagFrequency)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 12)
+      .map(([tag, count]) => `${tag} (${count})`);
+
+    // Author analysis
+    const authors = transmissions
+      .map(t => t.author)
+      .filter(a => a && a !== 'Unknown Author');
+    
+    const authorFrequency = authors.reduce((acc, author) => {
+      acc[author] = (acc[author] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const topAuthors = Object.entries(authorFrequency)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 8)
+      .map(([author, count]) => `${author} (${count} books)`);
+
+    // Extract historical context tags
+    const historicalTags = transmissions
+      .flatMap(t => t.historical_context_tags || [])
+      .filter(tag => tag);
+    
+    const historicalFreq = historicalTags.reduce((acc, tag) => {
+      acc[tag] = (acc[tag] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const topHistorical = Object.entries(historicalFreq)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 6)
+      .map(([tag, count]) => `${tag} (${count})`);
+
+    // Recent additions
+    const recentBooks = transmissions
+      .slice(0, 5)
+      .map(t => `"${t.title}" by ${t.author}`);
+
+    // Books with notes
+    const booksWithNotes = transmissions.filter(t => t.notes && t.notes.trim() !== '');
+    
+    let context = `Total Books in Collection: ${totalBooks}
+
+Most Common Themes: ${topTags.join(', ')}
+
+Top Authors: ${topAuthors.join(', ')}`;
+
+    if (topHistorical.length > 0) {
+      context += `\n\nHistorical Context Tags: ${topHistorical.join(', ')}`;
+    }
+
+    context += `\n\nRecently Added: ${recentBooks.join(', ')}`;
+
+    if (booksWithNotes.length > 0) {
+      context += `\n\n${booksWithNotes.length} books have personal notes/reflections.`;
+    }
+
+    // Sample a few books with their full details
+    const sampleBooks = transmissions.slice(0, 3).map(t => {
+      let bookDetail = `"${t.title}" by ${t.author}`;
+      if (t.tags) bookDetail += ` [Tags: ${t.tags}]`;
+      if (t.notes) bookDetail += ` (Note: ${t.notes.substring(0, 100)}${t.notes.length > 100 ? '...' : ''})`;
+      return bookDetail;
+    });
+
+    if (sampleBooks.length > 0) {
+      context += `\n\nSample Books:\n${sampleBooks.join('\n')}`;
+    }
+
+    return context;
+  } catch (error) {
+    console.error('Error generating transmissions context:', error);
+    return `User has ${transmissions.length} books in their collection.`;
   }
 }
 
