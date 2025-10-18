@@ -147,15 +147,7 @@ export const getTransmissions = async (): Promise<Transmission[]> => {
     const { data, error } = await supabase
       .from('transmissions')
       .select(`
-        *,
-        publisher_series:publisher_series_id (
-          id,
-          name,
-          publisher,
-          description,
-          logo_url,
-          badge_emoji
-        )
+        *
       `)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
@@ -169,39 +161,27 @@ export const getTransmissions = async (): Promise<Transmission[]> => {
     
     console.log('Fetched transmissions:', data?.length || 0);
     
-    return (data || []).map(item => {
-      // Parse tags safely
-      let parsedTags: string[] = [];
-      try {
-        if (item.tags) {
-          parsedTags = typeof item.tags === 'string' ? JSON.parse(item.tags) : item.tags;
-        }
-      } catch (e) {
-        console.error('Error parsing tags for item:', item.id, e);
-      }
-
-      return {
-        id: item.id,
-        title: item.title || '',
-        author: item.author || '',
-        status: 'read' as const,
-        tags: parsedTags,
-        notes: item.notes || '',
-        cover_url: item.cover_url || '',
-        rating: item.resonance_labels ? JSON.parse(item.resonance_labels) : {},
-        user_id: item.user_id || '',
-        created_at: item.created_at,
-        publisher_series_id: item.publisher_series_id,
-        publisher_series: (item.publisher_series && typeof item.publisher_series === 'object') ? item.publisher_series : null,
-        isbn: item.isbn,
-        apple_link: item.apple_link,
-        open_count: item.open_count || 0,
-        publication_year: item.publication_year,
-        narrative_time_period: item.narrative_time_period,
-        historical_context_tags: item.historical_context_tags,
-        is_favorite: item.is_favorite || false
-      };
-    });
+    return (data || []).map(item => ({
+      id: item.id,
+      title: item.title || '',
+      author: item.author || '',
+      status: 'read' as const,
+      tags: item.tags ? JSON.parse(item.tags) : [],
+      notes: item.notes || '',
+      cover_url: item.cover_url || '',
+      rating: item.resonance_labels ? JSON.parse(item.resonance_labels) : {},
+      user_id: item.user_id || '',
+      created_at: item.created_at,
+      publisher_series_id: item.publisher_series_id,
+      publisher_series: null, // Set to null since we're not joining
+      isbn: item.isbn,
+      apple_link: item.apple_link,
+      open_count: item.open_count || 0,
+      publication_year: item.publication_year,
+      narrative_time_period: item.narrative_time_period,
+      historical_context_tags: item.historical_context_tags,
+      is_favorite: item.is_favorite || false
+    }));
   } catch (error) {
     console.error('Unexpected error in getTransmissions:', error);
     return []; // Always return array to prevent UI crashes

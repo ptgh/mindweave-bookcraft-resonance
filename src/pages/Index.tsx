@@ -107,7 +107,6 @@ const Index = () => {
       }
 
       if (editingBook) {
-        console.log('Updating transmission with tags:', enriched.tags);
         await updateTransmission(editingBook.id, enriched);
         toast({
           title: "Signal Updated",
