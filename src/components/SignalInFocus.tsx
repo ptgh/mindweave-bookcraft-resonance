@@ -1,5 +1,7 @@
 
 import { Circle } from "lucide-react";
+import { useRef, useEffect } from "react";
+import gsap from "gsap";
 
 interface SignalInFocusProps {
   book: {
@@ -7,9 +9,44 @@ interface SignalInFocusProps {
     author: string;
     coverUrl?: string;
   };
+  onClick?: () => void;
 }
 
-const SignalInFocus = ({ book }: SignalInFocusProps) => {
+const SignalInFocus = ({ book, onClick }: SignalInFocusProps) => {
+  const iconRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (iconRef.current) {
+      const icon = iconRef.current;
+      
+      const handleMouseEnter = () => {
+        gsap.to(icon, {
+          scale: 1.2,
+          color: "#60a5fa",
+          duration: 0.3,
+          ease: "power2.out"
+        });
+      };
+      
+      const handleMouseLeave = () => {
+        gsap.to(icon, {
+          scale: 1,
+          color: "#93c5fd",
+          duration: 0.3,
+          ease: "power2.out"
+        });
+      };
+      
+      icon.addEventListener("mouseenter", handleMouseEnter);
+      icon.addEventListener("mouseleave", handleMouseLeave);
+      
+      return () => {
+        icon.removeEventListener("mouseenter", handleMouseEnter);
+        icon.removeEventListener("mouseleave", handleMouseLeave);
+      };
+    }
+  }, []);
+
   return (
     <div className="bg-slate-800/30 border border-slate-600 rounded-lg p-6 mb-8">
       <div className="flex items-center justify-between mb-4">
@@ -17,7 +54,15 @@ const SignalInFocus = ({ book }: SignalInFocusProps) => {
           SIGNAL IN FOCUS
         </h2>
         <div className="flex items-center space-x-2">
-          <Circle className="w-4 h-4 text-blue-400" />
+          <button
+            ref={iconRef}
+            onClick={onClick}
+            className="cursor-pointer hover:scale-110 transition-transform p-1 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-full"
+            aria-label="View Reading Insights"
+            type="button"
+          >
+            <Circle className="w-4 h-4 text-blue-300" />
+          </button>
           <Circle className="w-3 h-3 text-blue-300" />
           <Circle className="w-2 h-2 text-blue-200" />
         </div>
