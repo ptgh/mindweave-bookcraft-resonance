@@ -50,18 +50,14 @@ export const ReadingNarrative = ({ narrative, transmissions }: ReadingNarrativeP
         </p>
       );
     },
-    h1: ({ children }) => (
-      <h1 className="text-3xl font-semibold text-slate-100 mb-6 mt-0">
-        {children}
-      </h1>
-    ),
+    h1: () => null, // Hide h1 since we have the modal header
     h2: ({ children }) => (
-      <h2 className="text-2xl font-semibold text-blue-300 mt-8 mb-4">
+      <h2 className="text-lg font-semibold text-slate-200 mt-8 mb-3">
         {children}
       </h2>
     ),
     h3: ({ children }) => (
-      <h3 className="text-xl font-semibold text-blue-200 mt-6 mb-3">
+      <h3 className="text-lg font-semibold text-slate-200 mt-6 mb-3">
         {children}
       </h3>
     ),

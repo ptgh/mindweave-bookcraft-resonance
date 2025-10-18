@@ -90,7 +90,7 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[85vh] bg-slate-800/95 border border-slate-700 text-slate-200 p-0 overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl h-[85vh] bg-slate-800/95 border border-slate-700 text-slate-200 p-0 flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-700 p-6 flex-shrink-0">
           <div className="flex items-center space-x-3">
@@ -117,8 +117,8 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
           </StandardButton>
         </div>
 
-        {/* Content - native scroll, hidden scrollbars */}
-        <div className="flex-1 overflow-y-scroll no-scrollbar" style={{ overflowY: 'scroll' }}>
+        {/* Content - scrollable with hidden scrollbar */}
+        <div className="flex-1 overflow-y-auto min-h-0">
           <div className="p-6 pb-12">
           {loading && (
             <div className="flex flex-col items-center justify-center py-12">
@@ -149,11 +149,6 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
           )}
           </div>
         </div>
-        {/* Hide scrollbars but allow scrolling */}
-        <style>{`
-          .no-scrollbar::-webkit-scrollbar { display: none; }
-          .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        `}</style>
       </DialogContent>
     </Dialog>
   );
