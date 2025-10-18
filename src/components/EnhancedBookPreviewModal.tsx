@@ -217,23 +217,14 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
     fetchBookData();
   }, [book.title, book.author, book.isbn]);
 
-  const handleDigitalCopyAction = async () => {
+  const handleDigitalCopyAction = () => {
     // Apple Books
     if (appleBook) {
-      await analyticsService.logDigitalCopyClick(
-        { title: book.title, author: book.author, isbn: book.isbn },
-        'apple_books',
-        'publisher_resonance'
-      );
-
-      // Directly open Apple Books without confirmation
-
+      // Open link FIRST (synchronously) to preserve user gesture for Safari
       try {
-        // Detect if we're on iOS/macOS to use deep link
         const isAppleDevice = /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
         
         if (isAppleDevice) {
-          // Use the ibooks:// deep link on Apple devices
           const deepLink = generateAppleBooksDeepLink(appleBook.id);
           window.location.href = deepLink;
           
@@ -242,7 +233,6 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
             description: "Launching Apple Books app...",
           });
         } else {
-          // Open web store directly on non-Apple devices
           const webUrl = generateAppleBooksWebUrl(appleBook.id);
           window.open(webUrl, '_blank', 'noopener,noreferrer');
           
@@ -251,6 +241,13 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
             description: "Opening in web browser...",
           });
         }
+        
+        // Log analytics AFTER opening (non-blocking)
+        analyticsService.logDigitalCopyClick(
+          { title: book.title, author: book.author, isbn: book.isbn },
+          'apple_books',
+          'publisher_resonance'
+        );
       } catch (error) {
         toast({
           title: "Error",
@@ -263,33 +260,39 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
 
     // Internet Archive
     if (freeEbooks?.archive?.url) {
-      await analyticsService.logDigitalCopyClick(
-        { title: book.title, author: book.author, isbn: book.isbn },
-        'internet_archive',
-        'publisher_resonance'
-      );
-
-      window.open(freeEbooks.archive.url, '_blank', 'noopener,noreferrer');
+      // Open link FIRST to preserve user gesture for Safari mobile
+      window.location.href = freeEbooks.archive.url;
+      
       toast({
         title: "Opening Digital Library",
         description: "Redirecting to digital library...",
       });
+      
+      // Log analytics AFTER (non-blocking)
+      analyticsService.logDigitalCopyClick(
+        { title: book.title, author: book.author, isbn: book.isbn },
+        'internet_archive',
+        'publisher_resonance'
+      );
       return;
     }
 
     // Project Gutenberg
     if (freeEbooks?.gutenberg?.url) {
-      await analyticsService.logDigitalCopyClick(
-        { title: book.title, author: book.author, isbn: book.isbn },
-        'project_gutenberg',
-        'publisher_resonance'
-      );
-
-      window.open(freeEbooks.gutenberg.url, '_blank', 'noopener,noreferrer');
+      // Open link FIRST to preserve user gesture for Safari mobile
+      window.location.href = freeEbooks.gutenberg.url;
+      
       toast({
         title: "Opening Digital Library",
         description: "Redirecting to digital library...",
       });
+      
+      // Log analytics AFTER (non-blocking)
+      analyticsService.logDigitalCopyClick(
+        { title: book.title, author: book.author, isbn: book.isbn },
+        'project_gutenberg',
+        'publisher_resonance'
+      );
       return;
     }
   };
