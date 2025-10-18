@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { searchBooksEnhanced, EnhancedBookSuggestion } from "@/services/googleBooksApi";
 import { searchDebouncer } from "@/services/debounced-search";
@@ -26,10 +26,12 @@ const BookSearchInput = ({
   const [suggestions, setSuggestions] = useState<EnhancedBookSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [justSelected, setJustSelected] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Don't search in edit mode
-    if (isEditMode) {
+    // Don't search in edit mode or if just selected
+    if (isEditMode || justSelected) {
       setSuggestions([]);
       setShowSuggestions(false);
       setIsLoading(false);
@@ -59,20 +61,39 @@ const BookSearchInput = ({
       (results) => {
         console.log('Setting book suggestions:', results);
         setSuggestions(results);
-        setShowSuggestions(results.length > 0);
+        setShowSuggestions(results.length > 0 && !justSelected);
         setIsLoading(false);
       }
     );
-  }, [value, authorFilter, isEditMode]);
+  }, [value, authorFilter, isEditMode, justSelected]);
 
   const handleSuggestionClick = (book: EnhancedBookSuggestion) => {
     console.log('Book suggestion clicked:', book);
-    onBookSelect(book);
+    
+    // Cancel any pending searches
+    searchDebouncer.cancel(`book-search-${value}`);
+    
+    // Set flag to prevent dropdown from reopening
+    setJustSelected(true);
     setShowSuggestions(false);
+    setSuggestions([]);
+    setIsLoading(false);
+    
+    // Blur the input to prevent refocus from showing dropdown
+    if (inputRef.current) {
+      inputRef.current.blur();
+    }
+    
+    onBookSelect(book);
+    
+    // Reset flag after a delay
+    setTimeout(() => {
+      setJustSelected(false);
+    }, 300);
   };
 
   const handleInputFocus = () => {
-    if (suggestions.length > 0 && value.length >= 2) {
+    if (suggestions.length > 0 && value.length >= 2 && !justSelected) {
       setShowSuggestions(true);
     }
   };
@@ -82,12 +103,21 @@ const BookSearchInput = ({
     setTimeout(() => setShowSuggestions(false), 200);
   };
 
+  const handleInputChange = (newValue: string) => {
+    // Reset justSelected flag when user starts typing again
+    if (justSelected) {
+      setJustSelected(false);
+    }
+    onValueChange(newValue);
+  };
+
   return (
     <div className="relative">
       <Input
+        ref={inputRef}
         placeholder={placeholder}
         value={value}
-        onChange={(e) => onValueChange(e.target.value)}
+        onChange={(e) => handleInputChange(e.target.value)}
         onFocus={handleInputFocus}
         onBlur={handleInputBlur}
         className="bg-slate-700 border-slate-600 text-slate-200"

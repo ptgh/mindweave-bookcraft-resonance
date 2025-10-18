@@ -304,7 +304,7 @@ const BookGridItem = memo(({
                           <span>🧠 AI</span>
                         </div>
                         {/* Tooltip on hover */}
-                        <div className="absolute left-0 top-full mt-1 w-48 p-2 bg-slate-900 border border-purple-500/30 rounded text-xs text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                        <div className="absolute left-0 top-full mt-1 w-48 p-2 bg-slate-800/50 border border-slate-700 rounded text-xs text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                           <div className="font-medium text-purple-300 mb-1">{aiRecommendation.cluster_connection}</div>
                           <div className="text-slate-400 text-[10px]">{aiRecommendation.reason}</div>
                         </div>

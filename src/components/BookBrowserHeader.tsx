@@ -37,17 +37,15 @@ const BookBrowserHeader = ({
         </StandardButton>
         
         {showAiToggle && onAiModeToggle && (
-          <button
+          <StandardButton
             onClick={() => onAiModeToggle(!aiMode)}
-            className={`px-4 py-2 rounded-lg text-xs transition-all ${
-              aiMode
-                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                : 'bg-slate-700/40 text-slate-400 border border-slate-600/40 hover:bg-slate-700/60'
-            }`}
+            variant="standard"
+            size="default"
+            className={aiMode ? 'border-[#89b4fa] text-[#89b4fa] shadow-[0_0_10px_rgba(137,180,250,0.3)]' : ''}
             title="AI analyzes your collection to suggest books that bridge your interests"
           >
             🧠 Neural {aiMode ? 'ON' : 'OFF'}
-          </button>
+          </StandardButton>
         )}
       </div>
     </div>
