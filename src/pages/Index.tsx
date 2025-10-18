@@ -18,6 +18,7 @@ import { AuthorPopup } from "@/components/AuthorPopup";
 import { getAuthorByName, ScifiAuthor, findOrCreateAuthor } from "@/services/scifiAuthorsService";
 import { usePatternRecognition } from "@/hooks/usePatternRecognition";
 import { SEOHead } from "@/components/SEOHead";
+import { ReadingInsightsModal } from "@/components/ReadingInsightsModal";
 
 const Index = () => {
   const [books, setBooks] = useState<Transmission[]>([]);
@@ -28,6 +29,7 @@ const Index = () => {
   const [showContactModal, setShowContactModal] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
   const [authorPopupVisible, setAuthorPopupVisible] = useState(false);
+  const [showInsightsModal, setShowInsightsModal] = useState(false);
 
   // Memoize static data to prevent unnecessary re-renders
   const currentSignal = useMemo(() => ({
@@ -264,7 +266,7 @@ const Index = () => {
         
         <main ref={mainContainerRef} className="container mx-auto px-4 sm:px-6 py-8">
           <div ref={addFeatureBlockRef} className="feature-block">
-            <SignalInFocus book={currentSignal} />
+            <SignalInFocus book={currentSignal} onInsightsClick={() => setShowInsightsModal(true)} />
           </div>
           
           <div ref={addFeatureBlockRef} className="feature-block flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
@@ -354,6 +356,11 @@ const Index = () => {
           onAuthorUpdate={(updatedAuthor) => {
             setSelectedAuthor(updatedAuthor);
           }}
+        />
+
+        <ReadingInsightsModal
+          open={showInsightsModal}
+          onOpenChange={setShowInsightsModal}
         />
       </div>
     </>
