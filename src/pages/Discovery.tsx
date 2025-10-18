@@ -128,6 +128,22 @@ const Discovery = () => {
               </Link>
             </div>
 
+            <div ref={addFeatureBlockRef} className="feature-block">
+              <Link 
+                to="/insights" 
+                className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-cyan-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-cyan-500/10 flex items-center space-x-6 w-full"
+              >
+                <div className="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center group-hover:bg-cyan-500/30 transition-colors">
+                  <Brain className="w-6 h-6 text-cyan-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-medium text-slate-200 mb-2">Reading Insights</h2>
+                  <p className="text-slate-400 leading-relaxed text-sm">
+                    Your AI-generated reading narrative
+                  </p>
+                </div>
+              </Link>
+            </div>
 
             <div ref={addFeatureBlockRef} className="feature-block">
               <Link 
