@@ -28,7 +28,7 @@ export const ReadingNarrative = ({ narrative, transmissions }: ReadingNarrativeP
                 acc.push(
                   <span 
                     key={`${name}-${i}`}
-                    className="hover-link"
+                    className="story-link text-slate-200 hover:text-blue-300"
                   >
                     {name}
                   </span>
@@ -88,35 +88,6 @@ export const ReadingNarrative = ({ narrative, transmissions }: ReadingNarrativeP
       <ReactMarkdown components={components}>
         {narrative}
       </ReactMarkdown>
-      
-      <style>{`
-        .hover-link {
-          cursor: pointer;
-          color: inherit;
-          transition: all 0.2s ease;
-          display: inline;
-          position: relative;
-        }
-        .hover-link::after {
-          content: '';
-          position: absolute;
-          width: 100%;
-          height: 1px;
-          bottom: -1px;
-          left: 0;
-          background-color: #60a5fa;
-          transform: scaleX(0);
-          transform-origin: bottom right;
-          transition: transform 0.2s ease;
-        }
-        .hover-link:hover {
-          color: #60a5fa;
-        }
-        .hover-link:hover::after {
-          transform: scaleX(1);
-          transform-origin: bottom left;
-        }
-      `}</style>
     </article>
   );
 };
