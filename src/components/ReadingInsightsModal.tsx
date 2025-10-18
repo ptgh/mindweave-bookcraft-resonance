@@ -90,7 +90,7 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[85vh] bg-slate-800/95 border border-slate-700 text-slate-200 p-0 overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl h-[85vh] bg-slate-800/95 border border-slate-700 text-slate-200 p-0 overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-700 p-6 flex-shrink-0">
           <div className="flex items-center space-x-3">
@@ -118,8 +118,8 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
         </div>
 
         {/* Content - native scroll, hidden scrollbars */}
-        <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
-          <div className="p-6 space-y-6">
+        <div className="flex-1 overflow-y-scroll no-scrollbar" style={{ overflowY: 'scroll' }}>
+          <div className="p-6 pb-12">
           {loading && (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="relative w-16 h-16 mb-4">

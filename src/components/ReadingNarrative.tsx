@@ -1,6 +1,5 @@
-import { useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import gsap from 'gsap';
+import type { Components } from 'react-markdown';
 import { Transmission } from '@/services/transmissionsService';
 
 interface ReadingNarrativeProps {
@@ -9,92 +8,117 @@ interface ReadingNarrativeProps {
 }
 
 export const ReadingNarrative = ({ narrative, transmissions }: ReadingNarrativeProps) => {
-  const narrativeRef = useRef<HTMLDivElement>(null);
+  const bookTitles = transmissions.map(t => t.title);
+  const authorNames = transmissions.map(t => t.author);
+  const allNames = [...bookTitles, ...authorNames];
 
-  useEffect(() => {
-    if (!narrativeRef.current) return;
-
-    // Find all book titles and author names in the narrative
-    const bookTitles = transmissions.map(t => t.title);
-    const authorNames = transmissions.map(t => t.author);
-    
-    // Create a regex pattern to match book titles and authors
-    const allNames = [...bookTitles, ...authorNames];
-    const textNodes: { node: Node; parent: HTMLElement }[] = [];
-    
-    const walker = document.createTreeWalker(
-      narrativeRef.current,
-      NodeFilter.SHOW_TEXT,
-      null
-    );
-    
-    let node: Node | null;
-    while ((node = walker.nextNode())) {
-      if (node.parentElement && node.textContent) {
-        textNodes.push({ node, parent: node.parentElement });
-      }
-    }
-    
-    // Wrap matching text in spans with hover effects
-    textNodes.forEach(({ node, parent }) => {
-      const text = node.textContent || '';
-      let replaced = false;
-      let newHTML = text;
-      
-      allNames.forEach(name => {
-        if (text.includes(name)) {
-          const regex = new RegExp(`(${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-          newHTML = newHTML.replace(regex, '<span class="book-author-link">$1</span>');
-          replaced = true;
+  // Custom text renderer to add hover effects to book/author names
+  const components: Components = {
+    p: ({ children }) => {
+      const processText = (text: any): any => {
+        if (typeof text !== 'string') return text;
+        
+        // Find any matching book/author names
+        for (const name of allNames) {
+          if (text.includes(name)) {
+            const parts = text.split(name);
+            return parts.reduce((acc: any[], part: string, i: number) => {
+              acc.push(part);
+              if (i < parts.length - 1) {
+                acc.push(
+                  <span 
+                    key={`${name}-${i}`}
+                    className="hover-link"
+                  >
+                    {name}
+                  </span>
+                );
+              }
+              return acc;
+            }, []);
+          }
         }
-      });
-      
-      if (replaced) {
-        const wrapper = document.createElement('span');
-        wrapper.innerHTML = newHTML;
-        parent.replaceChild(wrapper, node);
-      }
-    });
-    
-    // Apply GSAP hover effects to all book/author links
-    const links = narrativeRef.current.querySelectorAll('.book-author-link');
-    links.forEach((link) => {
-      const tl = gsap.timeline({ paused: true });
-      tl.to(link, {
-        color: '#60a5fa',
-        textDecoration: 'underline',
-        textDecorationColor: '#60a5fa',
-        duration: 0.2,
-        ease: 'power2.out'
-      });
-      
-      link.addEventListener('mouseenter', () => tl.play());
-      link.addEventListener('mouseleave', () => tl.reverse());
-    });
-  }, [narrative, transmissions]);
+        return text;
+      };
+
+      return (
+        <p className="text-slate-300 leading-relaxed mb-4 text-base">
+          {Array.isArray(children) 
+            ? children.map((child, i) => <span key={i}>{processText(child)}</span>)
+            : processText(children)
+          }
+        </p>
+      );
+    },
+    h1: ({ children }) => (
+      <h1 className="text-3xl font-semibold text-slate-100 mb-6 mt-0">
+        {children}
+      </h1>
+    ),
+    h2: ({ children }) => (
+      <h2 className="text-2xl font-semibold text-blue-300 mt-8 mb-4">
+        {children}
+      </h2>
+    ),
+    h3: ({ children }) => (
+      <h3 className="text-xl font-semibold text-blue-200 mt-6 mb-3">
+        {children}
+      </h3>
+    ),
+    strong: ({ children }) => (
+      <strong className="text-slate-100 font-semibold">{children}</strong>
+    ),
+    em: ({ children }) => (
+      <em className="text-blue-200 italic">{children}</em>
+    ),
+    ul: ({ children }) => (
+      <ul className="my-4 list-disc list-inside">{children}</ul>
+    ),
+    ol: ({ children }) => (
+      <ol className="my-4 list-decimal list-inside">{children}</ol>
+    ),
+    li: ({ children }) => (
+      <li className="text-slate-300 mb-2">{children}</li>
+    ),
+    blockquote: ({ children }) => (
+      <blockquote className="border-l-4 border-blue-400 pl-4 text-slate-300 italic my-4">
+        {children}
+      </blockquote>
+    ),
+  };
 
   return (
-    <article 
-      ref={narrativeRef}
-      className="prose prose-invert max-w-none
-        prose-headings:text-slate-100 prose-headings:font-semibold
-        prose-h1:text-3xl prose-h1:mb-6 prose-h1:mt-0
-        prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:text-blue-300
-        prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-h3:text-blue-200
-        prose-p:text-slate-300 prose-p:leading-relaxed prose-p:mb-4 prose-p:text-base
-        prose-strong:text-slate-100 prose-strong:font-semibold
-        prose-em:text-blue-200 prose-em:italic
-        prose-li:text-slate-300 prose-li:mb-2
-        prose-ul:my-4 prose-ol:my-4
-        prose-blockquote:border-l-blue-400 prose-blockquote:text-slate-300 prose-blockquote:italic"
-    >
-      <ReactMarkdown>{narrative}</ReactMarkdown>
+    <article className="prose prose-invert max-w-none">
+      <ReactMarkdown components={components}>
+        {narrative}
+      </ReactMarkdown>
       
       <style>{`
-        .book-author-link {
+        .hover-link {
           cursor: pointer;
+          color: inherit;
           transition: all 0.2s ease;
           display: inline;
+          position: relative;
+        }
+        .hover-link::after {
+          content: '';
+          position: absolute;
+          width: 100%;
+          height: 1px;
+          bottom: -1px;
+          left: 0;
+          background-color: #60a5fa;
+          transform: scaleX(0);
+          transform-origin: bottom right;
+          transition: transform 0.2s ease;
+        }
+        .hover-link:hover {
+          color: #60a5fa;
+        }
+        .hover-link:hover::after {
+          transform: scaleX(1);
+          transform-origin: bottom left;
         }
       `}</style>
     </article>
