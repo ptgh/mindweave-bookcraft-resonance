@@ -10,10 +10,25 @@ import NotesSection from "./NotesSection";
 import PublisherResonanceBadge from "../PublisherResonanceBadge";
 import { BookSuggestion } from "@/services/googleBooksApi";
 import { findMatchingPublisherSeries, PublisherSeries } from "@/services/publisherService";
-import { transmissionSchema } from "@/utils/validation";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
+// Local form validation schema matching BookFormData
+const formSchema = z.object({
+  title: z.string().trim().min(1, "Title is required"),
+  author: z.string().trim().min(1, "Author is required"),
+  status: z.enum(["reading", "read", "want-to-read"]),
+  tags: z.array(z.string()).max(50).optional().default([]),
+  notes: z.string().max(5000).optional().or(z.literal("")),
+  cover_url: z.string().url().max(2048).optional().or(z.literal("")),
+  rating: z.object({
+    truth: z.boolean(),
+    confirmed: z.boolean(),
+    disrupted: z.boolean(),
+    rewired: z.boolean(),
+  }),
+  publisher_series_id: z.string().uuid().optional(),
+});
 interface BookFormData {
   title: string;
   author: string;
@@ -135,16 +150,7 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModal
     e.preventDefault();
     try {
       // Validate using Zod schema
-      transmissionSchema.parse({
-        title: formData.title,
-        author: formData.author,
-        status: formData.status,
-        tags: formData.tags,
-        notes: formData.notes || undefined,
-        cover_url: formData.cover_url || undefined,
-        rating: formData.rating,
-        publisher_series_id: formData.publisher_series_id,
-      });
+      formSchema.parse(formData);
 
       // Call onSubmit and wait for completion
       await Promise.resolve(onSubmit(formData));
