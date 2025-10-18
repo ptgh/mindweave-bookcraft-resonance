@@ -80,7 +80,7 @@ const SignalInFocus = ({ book, onInsightsClick }: SignalInFocusProps) => {
             aria-label="View reading insights"
             type="button"
           >
-            <Circle className="w-4 h-4 text-blue-300 fill-blue-300/20 transition-all duration-300" />
+            <Circle className="w-4 h-4 transition-all duration-300 text-current" />
           </button>
           <Circle className="w-3 h-3 text-blue-300" />
           <Circle className="w-2 h-2 text-blue-200" />

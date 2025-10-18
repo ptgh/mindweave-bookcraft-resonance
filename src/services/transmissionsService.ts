@@ -157,7 +157,6 @@ export const getTransmissions = async (): Promise<Transmission[]> => {
           badge_emoji
         )
       `)
-      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(50);
 
