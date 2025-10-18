@@ -50,10 +50,11 @@ const SignalInFocus = ({ book, onClick }: SignalInFocusProps) => {
             <button
               ref={buttonRef}
               onClick={onClick}
-              className="relative z-10 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded-full"
+              className="relative z-10 cursor-pointer hover:scale-110 transition-transform duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded-full p-1 -m-1"
               aria-label="View reading insights"
+              title="View reading insights"
             >
-              <Circle className="w-4 h-4 text-blue-400" />
+              <Circle className="w-4 h-4 text-blue-400 fill-blue-400/20" />
             </button>
           ) : (
             <Circle className="w-4 h-4 text-blue-400" />
