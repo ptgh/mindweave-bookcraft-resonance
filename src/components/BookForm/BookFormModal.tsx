@@ -146,7 +146,11 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModal
         publisher_series_id: formData.publisher_series_id,
       });
 
+      // Call onSubmit and wait for completion
       await Promise.resolve(onSubmit(formData));
+      
+      // Reset form and close modal after successful submission
+      resetForm();
       onClose();
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -158,16 +162,21 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModal
         });
       } else {
         console.error('BookForm submission failed:', error);
+        toast({
+          title: "Submission Error",
+          description: "Failed to save changes. Please try again.",
+          variant: "destructive",
+        });
       }
       // Keep modal open so user can correct issues
     }
-  }, [formData, onSubmit, onClose, toast]);
+  }, [formData, onSubmit, onClose, toast, resetForm]);
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-800 border border-slate-600 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-slate-800 border border-slate-600 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-hide">
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
           <h2 className="text-slate-200 text-lg font-medium">
             {editingBook ? "Edit Signal" : "Log Signal"}
