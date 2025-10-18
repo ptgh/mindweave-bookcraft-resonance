@@ -19,6 +19,7 @@ export default function ReadingInsights() {
   const [narrative, setNarrative] = useState<string>('');
   const [generatedAt, setGeneratedAt] = useState<string>('');
   const [cached, setCached] = useState(false);
+  const [transmissions, setTransmissions] = useState<any[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -33,7 +34,7 @@ export default function ReadingInsights() {
 
     try {
       // First, fetch user's transmissions
-      const { data: transmissions, error: transmissionsError } = await supabase
+      const { data: transmissionsData, error: transmissionsError } = await supabase
         .from('transmissions')
         .select('*')
         .eq('user_id', user.id)
@@ -41,7 +42,7 @@ export default function ReadingInsights() {
 
       if (transmissionsError) throw transmissionsError;
 
-      if (!transmissions || transmissions.length < 3) {
+      if (!transmissionsData || transmissionsData.length < 3) {
         toast({
           title: 'Not enough data yet',
           description: 'Add at least 3 books to generate your reading insights.',
@@ -50,10 +51,15 @@ export default function ReadingInsights() {
         return;
       }
 
+      setTransmissions(transmissionsData);
+
+      // Get the current session for auth
+      const { data: { session } } = await supabase.auth.getSession();
+
       // Call AI edge function
       const { data, error } = await supabase.functions.invoke('ai-reading-narrative', {
         body: {
-          userTransmissions: transmissions.map(t => ({
+          userTransmissions: transmissionsData.map(t => ({
             title: t.title,
             author: t.author,
             tags: t.tags,
@@ -65,6 +71,9 @@ export default function ReadingInsights() {
           timeframe: 'all',
           forceRegenerate,
         },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`
+        }
       });
 
       if (error) throw error;
@@ -173,7 +182,7 @@ export default function ReadingInsights() {
               </p>
             </div>
           ) : narrative ? (
-            <ReadingNarrative narrative={narrative} />
+            <ReadingNarrative narrative={narrative} transmissions={transmissions} />
           ) : (
             <div className="text-center py-20">
               <Brain className="h-16 w-16 mx-auto mb-4 text-primary/40" />

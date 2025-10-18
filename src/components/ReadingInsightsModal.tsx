@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { X, Sparkles, RefreshCw } from 'lucide-react';
+import { Sparkles, RefreshCw } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ReadingNarrative } from '@/components/ReadingNarrative';
 import { StandardButton } from '@/components/ui/standard-button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { Transmission } from '@/services/transmissionsService';
 import { useEnhancedToast } from '@/hooks/use-enhanced-toast';
@@ -39,11 +40,17 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
         created_at: t.created_at
       }));
 
+      // Get the current session to pass auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      
       const { data, error: functionError } = await supabase.functions.invoke('ai-reading-narrative', {
         body: {
           userTransmissions,
           timeframe: 'all',
           forceRegenerate
+        },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`
         }
       });
 
@@ -84,9 +91,9 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] bg-slate-800/95 border border-slate-700 text-slate-200 p-0 overflow-hidden">
+      <DialogContent className="max-w-4xl max-h-[85vh] bg-slate-800/95 border border-slate-700 text-slate-200 p-0 overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-700 p-6">
+        <div className="flex items-center justify-between border-b border-slate-700 p-6 flex-shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse" />
             <div>
@@ -99,29 +106,21 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
             </div>
           </div>
           
-          <div className="flex items-center space-x-2">
-            <StandardButton
-              onClick={() => generateNarrative(true)}
-              variant="standard"
-              size="xs"
-              disabled={loading}
-              className="inline-flex items-center gap-1"
-            >
-              <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-              Regenerate
-            </StandardButton>
-            
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg hover:bg-slate-700/50 transition-colors"
-            >
-              <X className="w-5 h-5 text-slate-400" />
-            </button>
-          </div>
+          <StandardButton
+            onClick={() => generateNarrative(true)}
+            variant="standard"
+            size="xs"
+            disabled={loading}
+            className="inline-flex items-center gap-1"
+          >
+            <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+            Regenerate
+          </StandardButton>
         </div>
 
-        {/* Content */}
-        <div className="overflow-y-auto p-6 space-y-6">
+        {/* Content with ScrollArea */}
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="p-6 space-y-6">
           {loading && (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="relative w-16 h-16 mb-4">
@@ -147,9 +146,10 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
           )}
 
           {narrative && !loading && !error && (
-            <ReadingNarrative narrative={narrative} />
+            <ReadingNarrative narrative={narrative} transmissions={transmissions} />
           )}
-        </div>
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
