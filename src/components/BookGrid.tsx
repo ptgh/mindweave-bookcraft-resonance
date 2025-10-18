@@ -300,13 +300,13 @@ const BookGridItem = memo(({
                     {/* AI recommendation badge */}
                     {aiRecommendation && (
                       <div className="mt-2 group relative">
-                        <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-500/10 border border-purple-500/20 rounded text-[10px] text-purple-300">
-                          <span>🧠 AI</span>
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#89b4fa]/10 border border-[#89b4fa]/20 rounded text-[10px] text-[#89b4fa]">
+                          <span>AI</span>
                         </div>
                         {/* Tooltip on hover */}
-                        <div className="absolute left-0 top-full mt-1 w-48 p-2 bg-slate-800/50 border border-slate-700 rounded text-xs text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                          <div className="font-medium text-purple-300 mb-1">{aiRecommendation.cluster_connection}</div>
-                          <div className="text-slate-400 text-[10px]">{aiRecommendation.reason}</div>
+                        <div className="absolute left-0 top-full mt-1 w-48 p-3 bg-slate-800/50 border border-slate-700 rounded text-xs text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                          <div className="font-medium text-[#89b4fa] mb-1">{aiRecommendation.cluster_connection}</div>
+                          <div className="text-slate-400 text-[10px] leading-relaxed">{aiRecommendation.reason}</div>
                         </div>
                       </div>
                     )}

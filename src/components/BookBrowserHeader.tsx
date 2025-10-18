@@ -44,7 +44,7 @@ const BookBrowserHeader = ({
             className={aiMode ? 'border-[#89b4fa] text-[#89b4fa] shadow-[0_0_10px_rgba(137,180,250,0.3)]' : ''}
             title="AI analyzes your collection to suggest books that bridge your interests"
           >
-            🧠 Neural {aiMode ? 'ON' : 'OFF'}
+            Neural {aiMode ? 'ON' : 'OFF'}
           </StandardButton>
         )}
       </div>
