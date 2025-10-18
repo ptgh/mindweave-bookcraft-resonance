@@ -271,20 +271,7 @@ const BookCard = ({
             );
           })()}
           
-          {/* Pattern Recognition Badges - Subtle Intelligence */}
-          
-          {resonanceLabels.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {resonanceLabels.map((label, index) => (
-                <span
-                  key={index}
-                  className={`text-[10px] px-2 py-0.5 rounded-full bg-slate-700/30 border border-slate-600/40 ${label.color}`}
-                >
-                  {label.text}
-                </span>
-              ))}
-            </div>
-          )}
+          {/* Personal Resonance badges hidden per user request */}
         </div>
       </div>
       
