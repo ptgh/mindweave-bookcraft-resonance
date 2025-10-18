@@ -14,28 +14,38 @@ interface SignalInFocusProps {
 
 const SignalInFocus = ({ book, onClick }: SignalInFocusProps) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const leftButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const button = buttonRef.current;
-    if (!button || !onClick) return;
+    if (!onClick) return;
 
-    const tl = gsap.timeline({ paused: true });
-      tl.to(button, { 
+    const setupHover = (el: HTMLButtonElement | null) => {
+      if (!el) return { cleanup: () => {} };
+      const tl = gsap.timeline({ paused: true });
+      tl.to(el, {
         scale: 1.15,
         color: '#60a5fa',
         duration: 0.3,
-        ease: "power2.out"
+        ease: 'power2.out',
       });
+      const enter = () => tl.play();
+      const leave = () => tl.reverse();
+      el.addEventListener('mouseenter', enter);
+      el.addEventListener('mouseleave', leave);
+      return {
+        cleanup: () => {
+          el.removeEventListener('mouseenter', enter);
+          el.removeEventListener('mouseleave', leave);
+        },
+      };
+    };
 
-    const handleMouseEnter = () => tl.play();
-    const handleMouseLeave = () => tl.reverse();
-
-    button.addEventListener('mouseenter', handleMouseEnter);
-    button.addEventListener('mouseleave', handleMouseLeave);
+    const right = setupHover(buttonRef.current);
+    const left = setupHover(leftButtonRef.current);
 
     return () => {
-      button.removeEventListener('mouseenter', handleMouseEnter);
-      button.removeEventListener('mouseleave', handleMouseLeave);
+      right.cleanup();
+      left.cleanup();
     };
   }, [onClick]);
 
@@ -65,19 +75,42 @@ const SignalInFocus = ({ book, onClick }: SignalInFocusProps) => {
       </div>
       
       <div className="flex items-center space-x-4">
-        <div className="w-16 h-20 bg-slate-700 rounded flex items-center justify-center">
-          {book.coverUrl ? (
-            <img 
-              src={book.coverUrl} 
-              alt={book.title} 
-              className="w-full h-full object-cover rounded" 
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full border-2 border-blue-400 flex items-center justify-center">
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-            </div>
-          )}
-        </div>
+        {onClick ? (
+          <button
+            ref={leftButtonRef}
+            onClick={onClick}
+            type="button"
+            className="w-16 h-20 bg-slate-700 rounded flex items-center justify-center cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+            aria-label="Open insights"
+            title="Open insights"
+          >
+            {book.coverUrl ? (
+              <img 
+                src={book.coverUrl} 
+                alt={book.title} 
+                className="w-full h-full object-cover rounded" 
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full border-2 border-blue-400 flex items-center justify-center">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+              </div>
+            )}
+          </button>
+        ) : (
+          <div className="w-16 h-20 bg-slate-700 rounded flex items-center justify-center">
+            {book.coverUrl ? (
+              <img 
+                src={book.coverUrl} 
+                alt={book.title} 
+                className="w-full h-full object-cover rounded" 
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full border-2 border-blue-400 flex items-center justify-center">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+              </div>
+            )}
+          </div>
+        )}
         
         <div>
           <h3 className="text-slate-200 text-lg font-medium mb-1">
