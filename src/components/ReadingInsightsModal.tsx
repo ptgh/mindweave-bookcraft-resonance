@@ -90,13 +90,13 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[85vh] bg-slate-800/95 border border-slate-700 text-slate-200 p-0 flex flex-col">
+      <DialogContent className="max-w-4xl h-[85vh] min-h-0 bg-slate-800/95 border border-slate-700 text-slate-200 p-0 flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-700 p-6 flex-shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse" />
             <div>
-              <h2 className="text-xl font-medium text-slate-200">Your Reading Journey</h2>
+              <h2 className="text-xl font-medium text-slate-200">Reading Narrative</h2>
               {generatedAt && (
                 <p className="text-xs text-slate-400 mt-1">
                   Generated {generatedAt.toLocaleDateString()}
@@ -118,7 +118,7 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
         </div>
 
         {/* Content - scrollable with hidden scrollbar */}
-        <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex-1 overflow-y-auto min-h-0 no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div className="p-6 pb-12">
           {loading && (
             <div className="flex flex-col items-center justify-center py-12">
@@ -149,6 +149,11 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
           )}
           </div>
         </div>
+        {/* Hide scrollbars but allow scrolling */}
+        <style>{`
+          .no-scrollbar::-webkit-scrollbar { display: none; }
+          .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        `}</style>
       </DialogContent>
     </Dialog>
   );
