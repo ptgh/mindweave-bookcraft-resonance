@@ -1,0 +1,156 @@
+import { useState, useEffect } from 'react';
+import { X, Sparkles, RefreshCw } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { ReadingNarrative } from '@/components/ReadingNarrative';
+import { StandardButton } from '@/components/ui/standard-button';
+import { supabase } from '@/integrations/supabase/client';
+import { Transmission } from '@/services/transmissionsService';
+import { useEnhancedToast } from '@/hooks/use-enhanced-toast';
+
+interface ReadingInsightsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  transmissions: Transmission[];
+}
+
+export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: ReadingInsightsModalProps) => {
+  const [narrative, setNarrative] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
+  const { toast } = useEnhancedToast();
+
+  const generateNarrative = async (forceRegenerate = false) => {
+    if (transmissions.length === 0) {
+      setError('No transmissions found. Add some books to generate insights.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const userTransmissions = transmissions.map(t => ({
+        title: t.title,
+        author: t.author,
+        tags: t.tags || '',
+        notes: t.notes || '',
+        publication_year: t.publication_year,
+        created_at: t.created_at
+      }));
+
+      const { data, error: functionError } = await supabase.functions.invoke('ai-reading-narrative', {
+        body: {
+          userTransmissions,
+          timeframe: 'all',
+          forceRegenerate
+        }
+      });
+
+      if (functionError) throw functionError;
+
+      if (data?.narrative) {
+        setNarrative(data.narrative);
+        setGeneratedAt(new Date());
+        
+        if (forceRegenerate) {
+          toast({
+            title: 'Narrative Regenerated',
+            description: 'Your reading insights have been refreshed.',
+            variant: 'success'
+          });
+        }
+      } else {
+        throw new Error('No narrative received');
+      }
+    } catch (err: any) {
+      console.error('Error generating narrative:', err);
+      setError(err.message || 'Failed to generate narrative. Please try again.');
+      toast({
+        title: 'Generation Failed',
+        description: 'Unable to generate reading insights.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen && !narrative && !loading) {
+      generateNarrative(false);
+    }
+  }, [isOpen]);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[80vh] bg-slate-800/95 border border-slate-700 text-slate-200 p-0 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-700 p-6">
+          <div className="flex items-center space-x-3">
+            <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse" />
+            <div>
+              <h2 className="text-xl font-medium text-slate-200">Your Reading Journey</h2>
+              {generatedAt && (
+                <p className="text-xs text-slate-400 mt-1">
+                  Generated {generatedAt.toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <StandardButton
+              onClick={() => generateNarrative(true)}
+              variant="standard"
+              size="xs"
+              disabled={loading}
+              className="inline-flex items-center gap-1"
+            >
+              <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+              Regenerate
+            </StandardButton>
+            
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg hover:bg-slate-700/50 transition-colors"
+            >
+              <X className="w-5 h-5 text-slate-400" />
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="overflow-y-auto p-6 space-y-6">
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="relative w-16 h-16 mb-4">
+                <div className="absolute inset-0 rounded-full border-2 border-blue-400/20" />
+                <div className="absolute inset-0 rounded-full border-2 border-t-blue-400 animate-spin" />
+                <Sparkles className="absolute inset-0 m-auto w-6 h-6 text-blue-400" />
+              </div>
+              <p className="text-slate-400 text-sm">Analyzing your reading patterns...</p>
+            </div>
+          )}
+
+          {error && !loading && (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-red-600 flex items-center justify-center">
+                <div className="w-6 h-6 rounded-full bg-red-500" />
+              </div>
+              <h3 className="text-red-400 text-lg mb-2">Generation Error</h3>
+              <p className="text-slate-400 mb-4">{error}</p>
+              <StandardButton onClick={() => generateNarrative(false)} variant="standard">
+                Try Again
+              </StandardButton>
+            </div>
+          )}
+
+          {narrative && !loading && !error && (
+            <ReadingNarrative narrative={narrative} />
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};

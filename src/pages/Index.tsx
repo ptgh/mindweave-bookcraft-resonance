@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import SignalInFocus from "@/components/SignalInFocus";
 import AddBookModal from "@/components/AddBookModal";
 import TransmissionsList from "@/components/TransmissionsList";
+import { ReadingInsightsModal } from "@/components/ReadingInsightsModal";
 import { StandardButton } from "@/components/ui/standard-button";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,6 +29,7 @@ const Index = () => {
   const [showContactModal, setShowContactModal] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
   const [authorPopupVisible, setAuthorPopupVisible] = useState(false);
+  const [showInsightsModal, setShowInsightsModal] = useState(false);
 
   // Memoize static data to prevent unnecessary re-renders
   const currentSignal = useMemo(() => ({
@@ -263,7 +265,10 @@ const Index = () => {
         
         <main ref={mainContainerRef} className="container mx-auto px-4 sm:px-6 py-8">
           <div ref={addFeatureBlockRef} className="feature-block">
-            <SignalInFocus book={currentSignal} />
+            <SignalInFocus 
+              book={currentSignal} 
+              onClick={() => setShowInsightsModal(true)}
+            />
           </div>
           
           <div ref={addFeatureBlockRef} className="feature-block flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
@@ -353,6 +358,12 @@ const Index = () => {
           onAuthorUpdate={(updatedAuthor) => {
             setSelectedAuthor(updatedAuthor);
           }}
+        />
+
+        <ReadingInsightsModal
+          isOpen={showInsightsModal}
+          onClose={() => setShowInsightsModal(false)}
+          transmissions={books}
         />
       </div>
     </>
