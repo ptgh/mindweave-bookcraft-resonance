@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      author_ai_analysis: {
+        Row: {
+          analysis_data: Json
+          author_identifier: string
+          cached_at: string | null
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          analysis_data: Json
+          author_identifier: string
+          cached_at?: string | null
+          created_at?: string | null
+          id?: string
+        }
+        Update: {
+          analysis_data?: Json
+          author_identifier?: string
+          cached_at?: string | null
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       author_books: {
         Row: {
           author_id: string | null
@@ -172,6 +196,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      book_ai_analysis: {
+        Row: {
+          analysis_data: Json
+          book_identifier: string
+          cached_at: string | null
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          analysis_data: Json
+          book_identifier: string
+          cached_at?: string | null
+          created_at?: string | null
+          id?: string
+        }
+        Update: {
+          analysis_data?: Json
+          book_identifier?: string
+          cached_at?: string | null
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: []
       }
       book_ai_tags: {
         Row: {

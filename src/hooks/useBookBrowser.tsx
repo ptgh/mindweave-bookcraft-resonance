@@ -9,6 +9,13 @@ import { debounce } from "@/utils/performance";
 import { getRandomCuratedBooks, CuratedBook } from "@/services/curatedSciFiLists";
 import { supabase } from "@/integrations/supabase/client";
 
+interface AIRecommendation {
+  title: string;
+  author: string;
+  reason: string;
+  cluster_connection: string;
+}
+
 export const useBookBrowser = () => {
   const [books, setBooks] = useState<EnhancedBookSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
@@ -16,6 +23,8 @@ export const useBookBrowser = () => {
   const [previouslyShownBooks, setPreviouslyShownBooks] = useState<Set<string>>(new Set());
   const [rotationCount, setRotationCount] = useState(0);
   const [userTransmissionTitles, setUserTransmissionTitles] = useState<Set<string>>(new Set());
+  const [aiMode, setAiMode] = useState(false);
+  const [aiRecommendations, setAiRecommendations] = useState<Map<string, AIRecommendation>>(new Map());
   const { toast } = useEnhancedToast();
 
   // Load user's transmission titles on mount to filter them out
@@ -51,15 +60,57 @@ export const useBookBrowser = () => {
     'subject:interstellar science fiction'
   ], []);
 
-  // Enhanced loading with curated books mixed in
+  // Enhanced loading with curated books mixed in + AI recommendations when enabled
   const debouncedLoadBooks = useMemo(
     () => debounce(async () => {
-      console.log('Loading sci-fi books...', 'Rotation:', rotationCount);
+      console.log('Loading sci-fi books...', 'Rotation:', rotationCount, 'AI Mode:', aiMode);
       setLoading(true);
       setVisibleBooks(new Set());
       
       try {
         let allBooks: EnhancedBookSuggestion[] = [];
+        let aiRecs: AIRecommendation[] = [];
+        
+        // If AI mode is enabled and user has 5+ books, fetch AI recommendations
+        if (aiMode && userTransmissionTitles.size >= 5) {
+          try {
+            const transmissions = await getTransmissions();
+            const { data, error } = await supabase.functions.invoke('ai-book-recommendations', {
+              body: { 
+                userTransmissions: transmissions.map(t => ({
+                  title: t.title,
+                  author: t.author,
+                  tags: t.tags.join(', '),
+                  publication_year: t.publication_year
+                })),
+                limit: 6
+              }
+            });
+            
+            if (!error && data?.recommendations) {
+              aiRecs = data.recommendations;
+              console.log(`Received ${aiRecs.length} AI recommendations`);
+            }
+          } catch (aiError) {
+            console.error('AI recommendations failed:', aiError);
+          }
+        }
+        
+        // Search for AI recommended books if we have any
+        if (aiRecs.length > 0) {
+          for (const rec of aiRecs) {
+            try {
+              const searchQuery = `intitle:"${rec.title}" inauthor:"${rec.author}"`;
+              const results = await searchBooksEnhanced(searchQuery, 1, 0);
+              if (results.length > 0 && !previouslyShownBooks.has(results[0].id)) {
+                allBooks.push(results[0]);
+                setAiRecommendations(prev => new Map(prev).set(results[0].id, rec));
+              }
+            } catch (e) {
+              console.warn(`Failed to find AI recommended book: ${rec.title}`, e);
+            }
+          }
+        }
         
         // 1. Load books from author_books database table with author names
         try {
@@ -209,7 +260,7 @@ export const useBookBrowser = () => {
         setLoading(false);
       }
     }, 300),
-    [previouslyShownBooks, toast, searchTerms, rotationCount, userTransmissionTitles]
+    [previouslyShownBooks, toast, searchTerms, rotationCount, userTransmissionTitles, aiMode]
   );
 
   const loadRandomBooks = useCallback(() => {
@@ -297,6 +348,9 @@ export const useBookBrowser = () => {
     visibleBooks,
     previouslyShownBooks,
     loadRandomBooks,
-    addToTransmissions
+    addToTransmissions,
+    aiMode,
+    setAiMode,
+    aiRecommendations
   };
 };

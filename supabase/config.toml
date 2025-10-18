@@ -49,3 +49,9 @@ verify_jwt = true
 
 [functions.ai-reading-narrative]
 verify_jwt = true
+
+[functions.ai-book-analysis]
+verify_jwt = false
+
+[functions.ai-author-analysis]
+verify_jwt = false

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import BookBrowserHeader from "@/components/BookBrowserHeader";
 import BookGrid from "@/components/BookGrid";
@@ -9,6 +9,7 @@ import { AuthorPopup } from "@/components/AuthorPopup";
 import { useBookBrowser } from "@/hooks/useBookBrowser";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 import { getAuthorByName, findOrCreateAuthor, ScifiAuthor } from "@/services/scifiAuthorsService";
+import { supabase } from "@/integrations/supabase/client";
 
 const BookBrowser = () => {
   const {
@@ -17,12 +18,35 @@ const BookBrowser = () => {
     visibleBooks,
     previouslyShownBooks,
     loadRandomBooks,
-    addToTransmissions
+    addToTransmissions,
+    aiMode,
+    setAiMode,
+    aiRecommendations
   } = useBookBrowser();
 
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
   const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
   const [authorPopupVisible, setAuthorPopupVisible] = useState(false);
+  const [userBooksCount, setUserBooksCount] = useState(0);
+  
+  // Load user book count for AI toggle visibility
+  useEffect(() => {
+    const loadUserBooksCount = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { count } = await supabase
+            .from('transmissions')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id);
+          setUserBooksCount(count || 0);
+        }
+      } catch (error) {
+        console.error('Error loading user books count:', error);
+      }
+    };
+    loadUserBooksCount();
+  }, []);
 
   const handleAuthorClick = async (authorName: string) => {
     console.log('Author clicked:', authorName);
@@ -55,6 +79,9 @@ const BookBrowser = () => {
             <BookBrowserHeader 
               loading={loading}
               onDiscover={loadRandomBooks}
+              aiMode={aiMode}
+              onAiModeToggle={setAiMode}
+              userBooksCount={userBooksCount}
             />
           </div>
 
@@ -72,6 +99,7 @@ const BookBrowser = () => {
                 visibleBooks={visibleBooks}
                 onAddToTransmissions={addToTransmissions}
                 onAuthorClick={handleAuthorClick}
+                aiRecommendations={aiRecommendations}
               />
             </div>
           ) : (

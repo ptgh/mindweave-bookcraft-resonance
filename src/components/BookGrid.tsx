@@ -18,9 +18,10 @@ interface BookGridProps {
   visibleBooks: Set<number>;
   onAddToTransmissions: (book: EnhancedBookSuggestion) => void;
   onAuthorClick?: (authorName: string) => void;
+  aiRecommendations?: Map<string, any>;
 }
 
-const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClick }: BookGridProps) => {
+const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClick, aiRecommendations }: BookGridProps) => {
   const { getDeepLink } = useDeepLinking();
   const previewButtonsRef = useRef<HTMLButtonElement[]>([]);
   const addButtonsRef = useRef<HTMLButtonElement[]>([]);
@@ -148,6 +149,7 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClic
               isVisible={isVisible}
               deepLink={deepLink}
               showPenguinBadge={showPenguinBadge}
+              aiRecommendation={aiRecommendations?.get(book.id)}
               onAddToTransmissions={onAddToTransmissions}
               onAuthorClick={onAuthorClick}
               onPreview={handleBookPreview}
@@ -197,6 +199,7 @@ interface BookGridItemProps {
   isVisible: boolean;
   deepLink: any;
   showPenguinBadge: boolean;
+  aiRecommendation?: { reason: string; cluster_connection: string };
   onAddToTransmissions: (book: EnhancedBookSuggestion) => void;
   onAuthorClick?: (authorName: string) => void;
   onPreview: (book: EnhancedBookSuggestion) => void;
@@ -209,6 +212,7 @@ const BookGridItem = memo(({
   isVisible,
   deepLink,
   showPenguinBadge,
+  aiRecommendation,
   onAddToTransmissions,
   onAuthorClick,
   onPreview,
@@ -290,6 +294,20 @@ const BookGridItem = memo(({
                     {showPenguinBadge && (
                       <div className="mt-2">
                         <PenguinPublisherBadge size="sm" />
+                      </div>
+                    )}
+                    
+                    {/* AI recommendation badge */}
+                    {aiRecommendation && (
+                      <div className="mt-2 group relative">
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-500/10 border border-purple-500/20 rounded text-[10px] text-purple-300">
+                          <span>🧠 AI</span>
+                        </div>
+                        {/* Tooltip on hover */}
+                        <div className="absolute left-0 top-full mt-1 w-48 p-2 bg-slate-900 border border-purple-500/30 rounded text-xs text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                          <div className="font-medium text-purple-300 mb-1">{aiRecommendation.cluster_connection}</div>
+                          <div className="text-slate-400 text-[10px]">{aiRecommendation.reason}</div>
+                        </div>
                       </div>
                     )}
                   </div>
