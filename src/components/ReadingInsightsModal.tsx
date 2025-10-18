@@ -3,7 +3,6 @@ import { Sparkles, RefreshCw } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ReadingNarrative } from '@/components/ReadingNarrative';
 import { StandardButton } from '@/components/ui/standard-button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { Transmission } from '@/services/transmissionsService';
 import { useEnhancedToast } from '@/hooks/use-enhanced-toast';
@@ -118,8 +117,8 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
           </StandardButton>
         </div>
 
-        {/* Content with ScrollArea */}
-        <ScrollArea className="flex-1 min-h-0">
+        {/* Content - native scroll, hidden scrollbars */}
+        <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
           <div className="p-6 space-y-6">
           {loading && (
             <div className="flex flex-col items-center justify-center py-12">
@@ -149,7 +148,12 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
             <ReadingNarrative narrative={narrative} transmissions={transmissions} />
           )}
           </div>
-        </ScrollArea>
+        </div>
+        {/* Hide scrollbars but allow scrolling */}
+        <style>{`
+          .no-scrollbar::-webkit-scrollbar { display: none; }
+          .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        `}</style>
       </DialogContent>
     </Dialog>
   );

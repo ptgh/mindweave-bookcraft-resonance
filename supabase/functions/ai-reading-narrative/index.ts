@@ -9,7 +9,7 @@ const corsHeaders = {
 interface UserTransmission {
   title: string;
   author: string;
-  tags?: string;
+  tags?: string | string[] | null;
   historical_context_tags?: string[];
   publication_year?: number;
   created_at?: string;
@@ -219,10 +219,22 @@ function generateReadingContext(transmissions: UserTransmission[]): string {
   // Extract tags
   const allTags: string[] = [];
   transmissions.forEach(t => {
-    if (t.tags) {
-      const tags = t.tags.split(',').map(tag => tag.trim()).filter(Boolean);
-      allTags.push(...tags);
+    let tagList: string[] = [];
+    const value = (t as any).tags;
+    if (Array.isArray(value)) {
+      tagList = value.map(String);
+    } else if (typeof value === 'string') {
+      const s = value.trim();
+      if (s.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(s);
+          if (Array.isArray(parsed)) tagList = parsed.map(String);
+        } catch { /* ignore bad JSON */ }
+      } else if (s.length) {
+        tagList = s.split(',').map(tag => tag.trim()).filter(Boolean);
+      }
     }
+    allTags.push(...tagList);
   });
   
   const tagFreq: Record<string, number> = {};
