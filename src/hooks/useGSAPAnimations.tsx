@@ -61,18 +61,26 @@ export const useGSAPAnimations = () => {
         // 3. Faster feature sections with reduced delays
         featureBlocksRef.current.forEach((block, index) => {
           if (block) {
-            gsap.from(block, {
-              y: 20,
-              opacity: 0,
-              duration: 0.4,
-              delay: index * 0.05,
-              ease: "power2.out",
-              scrollTrigger: {
-                trigger: block,
-                start: "top 90%",
-                toggleActions: "play none none reverse"
-              }
-            });
+            // Ensure block is visible by default (fallback)
+            gsap.set(block, { opacity: 1, y: 0 });
+            
+            // Only animate on larger screens to avoid mobile issues
+            if (window.innerWidth >= 768) {
+              gsap.from(block, {
+                y: 20,
+                opacity: 0,
+                duration: 0.4,
+                delay: index * 0.05,
+                ease: "power2.out",
+                scrollTrigger: {
+                  trigger: block,
+                  start: "top 95%",
+                  end: "bottom 5%",
+                  toggleActions: "play none none reverse",
+                  once: false
+                }
+              });
+            }
           }
         });
 
