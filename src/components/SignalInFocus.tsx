@@ -76,7 +76,7 @@ const SignalInFocus = ({ book, onInsightsClick }: SignalInFocusProps) => {
             onClick={handleClick}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
-            className="cursor-pointer transition-all duration-300 hover:text-blue-400 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-full p-1"
+            className="relative z-10 cursor-pointer transition-all duration-300 hover:text-blue-400 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-full p-2"
             aria-label="View reading insights"
             type="button"
           >
