@@ -4,11 +4,12 @@ import { gsap } from 'gsap';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, BookOpen, Calendar, X, ExternalLink, CheckCircle, Clock, AlertTriangle, RefreshCw } from 'lucide-react';
+import { User, BookOpen, Calendar, X, ExternalLink, CheckCircle, Clock, AlertTriangle, RefreshCw, Network } from 'lucide-react';
 import { ScifiAuthor } from '@/services/scifiAuthorsService';
 import { supabase } from '@/integrations/supabase/client';
 import { queueAuthorForEnrichment, triggerEnrichmentJob, checkEnrichmentStatus } from '@/services/authorEnrichmentService';
 import { useEnhancedToast } from '@/hooks/use-enhanced-toast';
+import { AuthorRelationshipModal } from './AuthorRelationshipModal';
 
 interface AuthorPopupProps {
   author: ScifiAuthor | null;
@@ -32,6 +33,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
   const [isEnriching, setIsEnriching] = useState(false);
   const [enrichmentStatus, setEnrichmentStatus] = useState<string>('');
   const [fallbackWorks, setFallbackWorks] = useState<string[]>([]);
+  const [isRelationshipModalOpen, setIsRelationshipModalOpen] = useState(false);
   const { toast } = useEnhancedToast();
 
   // Update current author when prop changes
@@ -427,6 +429,15 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
             <Button
               variant="outline"
               size="sm"
+              className="w-full bg-purple-500/10 border-purple-400/30 text-purple-300 hover:bg-purple-500/20 transition-all duration-300"
+              onClick={() => setIsRelationshipModalOpen(true)}
+            >
+              <Network className="w-4 h-4 mr-2" />
+              Analyze Relationships
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               className="w-full bg-blue-500/10 border-blue-400/30 text-blue-300 hover:bg-blue-500/20 transition-all duration-300"
               onClick={() => {
                 // Try to construct direct Wikipedia URL, fallback to stored URL or search
@@ -441,6 +452,14 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
           </div>
         </CardContent>
       </Card>
+
+      {currentAuthor && (
+        <AuthorRelationshipModal
+          isOpen={isRelationshipModalOpen}
+          onClose={() => setIsRelationshipModalOpen(false)}
+          author={currentAuthor}
+        />
+      )}
     </div>
   );
 };
