@@ -126,21 +126,6 @@ export const BookConfirmationCard: React.FC<BookConfirmationCardProps> = ({
           </Select>
         </div>
 
-        {/* Sentiment Badge */}
-        {bookData.sentiment && (
-          <div className="flex items-center gap-2 px-2.5 py-1.5 bg-slate-800/40 border border-slate-700/50 rounded-md">
-            <span className="text-slate-400 text-[10px]">Detected sentiment:</span>
-            <span className={`text-[10px] font-medium ${
-              bookData.sentiment === 'positive' ? 'text-green-400' :
-              bookData.sentiment === 'negative' ? 'text-red-400' :
-              bookData.sentiment === 'mixed' ? 'text-yellow-400' :
-              'text-slate-400'
-            }`}>
-              {bookData.sentiment}
-            </span>
-          </div>
-        )}
-
         {/* Conceptual Nodes */}
         {bookData.suggestedTags.length > 0 && (
           <div className="space-y-2">
