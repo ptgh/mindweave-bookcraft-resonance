@@ -64,52 +64,58 @@ export const BookConfirmationCard: React.FC<BookConfirmationCardProps> = ({
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto bg-slate-900/95 border-cyan-400/20 shadow-2xl shadow-cyan-400/10">
-      <CardHeader className="border-b border-slate-700/50 bg-slate-800/40">
+    <Card className="w-full max-w-xl mx-auto bg-slate-900/98 border-cyan-400/30 shadow-2xl shadow-cyan-400/20 backdrop-blur-sm">
+      <CardHeader className="border-b border-slate-700/50 bg-slate-800/60 py-3 px-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-cyan-400" />
-            <CardTitle className="text-slate-200 text-lg">Book Detected</CardTitle>
+            <Sparkles className="w-4 h-4 text-cyan-400" />
+            <CardTitle className="text-slate-200 text-base">Book Detected</CardTitle>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={onCancel}
-            className="text-slate-400 hover:text-slate-200 hover:bg-slate-700/20"
+            className="text-slate-400 hover:text-slate-200 hover:bg-slate-700/20 h-7 w-7"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </Button>
         </div>
       </CardHeader>
 
-      <CardContent className="p-6 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
+      <CardContent className="p-4 space-y-4 max-h-[60vh] overflow-y-auto scrollbar-hide"
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          WebkitOverflowScrolling: 'touch'
+        }}
+      >
         {/* Title */}
-        <div className="space-y-2">
-          <Label htmlFor="title" className="text-slate-300 text-sm">Title</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="title" className="text-slate-300 text-xs">Title</Label>
           <Input
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="bg-slate-800/50 border-slate-700/50 text-slate-200 focus:border-cyan-400/50"
+            className="bg-slate-800/50 border-slate-700/50 text-slate-200 focus:border-cyan-400/50 h-9 text-sm"
           />
         </div>
 
         {/* Author */}
-        <div className="space-y-2">
-          <Label htmlFor="author" className="text-slate-300 text-sm">Author</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="author" className="text-slate-300 text-xs">Author</Label>
           <Input
             id="author"
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
-            className="bg-slate-800/50 border-slate-700/50 text-slate-200 focus:border-cyan-400/50"
+            className="bg-slate-800/50 border-slate-700/50 text-slate-200 focus:border-cyan-400/50 h-9 text-sm"
           />
         </div>
 
         {/* Status */}
-        <div className="space-y-2">
-          <Label className="text-slate-300 text-sm">Reading Status</Label>
+        <div className="space-y-1.5">
+          <Label className="text-slate-300 text-xs">Reading Status</Label>
           <Select value={status} onValueChange={(value: any) => setStatus(value)}>
-            <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-slate-200">
+            <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-slate-200 h-9 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-slate-800 border-slate-700">
@@ -122,9 +128,9 @@ export const BookConfirmationCard: React.FC<BookConfirmationCardProps> = ({
 
         {/* Sentiment Badge */}
         {bookData.sentiment && (
-          <div className="flex items-center gap-2 px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-lg">
-            <span className="text-slate-400 text-xs">Detected sentiment:</span>
-            <span className={`text-xs font-medium ${
+          <div className="flex items-center gap-2 px-2.5 py-1.5 bg-slate-800/40 border border-slate-700/50 rounded-md">
+            <span className="text-slate-400 text-[10px]">Detected sentiment:</span>
+            <span className={`text-[10px] font-medium ${
               bookData.sentiment === 'positive' ? 'text-green-400' :
               bookData.sentiment === 'negative' ? 'text-red-400' :
               bookData.sentiment === 'mixed' ? 'text-yellow-400' :
@@ -137,18 +143,18 @@ export const BookConfirmationCard: React.FC<BookConfirmationCardProps> = ({
 
         {/* Conceptual Nodes */}
         {bookData.suggestedTags.length > 0 && (
-          <div className="space-y-3">
-            <Label className="text-slate-300 text-sm">Conceptual Nodes</Label>
-            <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-2">
+            <Label className="text-slate-300 text-xs">Conceptual Nodes</Label>
+            <div className="flex flex-wrap gap-1.5">
               {bookData.suggestedTags.map(tag => (
                 <button
                   key={tag}
                   type="button"
                   onClick={() => handleToggleTag(tag)}
-                  className={`px-3 py-2 rounded-full text-xs transition-colors ${
+                  className={`px-2.5 py-1 rounded-full text-[10px] transition-all ${
                     selectedTags.includes(tag)
-                      ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
-                      : "bg-slate-700 text-slate-400 border border-slate-600 hover:bg-slate-600"
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                      : "bg-slate-700/50 text-slate-400 border border-slate-600/50 hover:bg-slate-600/50 hover:border-slate-500/50"
                   }`}
                 >
                   {tag}
@@ -159,35 +165,36 @@ export const BookConfirmationCard: React.FC<BookConfirmationCardProps> = ({
         )}
 
         {/* Notes */}
-        <div className="space-y-2">
-          <Label htmlFor="notes" className="text-slate-300 text-sm">Notes</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="notes" className="text-slate-300 text-xs">Notes</Label>
           <Textarea
             id="notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Connections, insights, influences..."
-            className="bg-slate-800/50 border-slate-700/50 text-slate-200 focus:border-cyan-400/50 min-h-[100px] resize-none"
+            className="bg-slate-800/50 border-slate-700/50 text-slate-200 focus:border-cyan-400/50 min-h-[80px] resize-none text-sm"
           />
         </div>
 
         {/* Clarification Questions */}
         {bookData.needsClarification && bookData.clarificationQuestions && bookData.clarificationQuestions.length > 0 && (
-          <div className="space-y-3 border-t border-slate-700/50 pt-6">
-            <Label className="text-slate-300 text-sm">Help us refine your tags:</Label>
+          <div className="space-y-2 border-t border-slate-700/50 pt-4">
+            <Label className="text-slate-300 text-xs">Help us refine your tags:</Label>
             {bookData.clarificationQuestions.map((question, idx) => (
-              <p key={idx} className="text-slate-400 text-sm italic">{question}</p>
+              <p key={idx} className="text-slate-400 text-xs italic">{question}</p>
             ))}
             <Textarea
               value={clarificationAnswer}
               onChange={(e) => setClarificationAnswer(e.target.value)}
               placeholder="Your answer will help us suggest better tags..."
-              className="bg-slate-800/50 border-slate-700/50 text-slate-200 focus:border-cyan-400/50 min-h-[80px]"
+              className="bg-slate-800/50 border-slate-700/50 text-slate-200 focus:border-cyan-400/50 min-h-[60px] text-sm"
             />
             <Button
               onClick={handleSendAnswer}
               disabled={!clarificationAnswer.trim()}
               variant="outline"
-              className="w-full border-cyan-400/50 text-cyan-400 hover:bg-cyan-400/10"
+              size="sm"
+              className="w-full border-cyan-400/50 text-cyan-400 hover:bg-cyan-400/10 h-8 text-xs"
             >
               Send Answer
             </Button>
@@ -195,18 +202,20 @@ export const BookConfirmationCard: React.FC<BookConfirmationCardProps> = ({
         )}
 
         {/* Actions */}
-        <div className="flex gap-3 pt-4">
+        <div className="flex gap-2 pt-3 border-t border-slate-700/30">
           <Button
             onClick={handleConfirm}
             disabled={!title.trim() || !author.trim()}
-            className="flex-1 bg-cyan-400/20 hover:bg-cyan-400/30 text-cyan-400 border border-cyan-400/50"
+            size="sm"
+            className="flex-1 bg-cyan-400/20 hover:bg-cyan-400/30 text-cyan-400 border border-cyan-400/50 h-9 text-xs"
           >
             Add to Library
           </Button>
           <Button
             onClick={onCancel}
             variant="ghost"
-            className="text-slate-400 hover:text-slate-200 hover:bg-slate-700/20"
+            size="sm"
+            className="text-slate-400 hover:text-slate-200 hover:bg-slate-700/20 h-9 text-xs"
           >
             Cancel
           </Button>

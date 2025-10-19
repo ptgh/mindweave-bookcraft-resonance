@@ -124,7 +124,9 @@ serve(async (req) => {
     const bookAddingPhrases = [
       'i just finished', 'i read', "i'm reading", 'i want to read', 
       'add this book', 'just completed', 'finished reading',
-      'currently reading', 'add to my library', 'just started'
+      'currently reading', 'add to my library', 'just started',
+      'add to my list', 'transmission', 'catalogue', 'catalog',
+      'add it', 'can you add', 'could you add'
     ];
     const lowerMessage = message.toLowerCase();
     const isAddingBook = bookAddingPhrases.some(phrase => lowerMessage.includes(phrase));
@@ -197,8 +199,10 @@ You can help users:
 - Recognize genre evolution and cross-genre connections
 - Help users ADD BOOKS naturally through conversation
 
-BOOK ADDING:
-When users mention reading a book or wanting to add a book, use the extract_book_data tool to:
+BOOK ADDING & TERMINOLOGY:
+In this library, books are called "TRANSMISSIONS" - it's the poetic term for cataloging sci-fi books. Users may say "add it to my transmissions", "catalogue this", or "add to my list". All mean the same thing: add a book to their library.
+
+When users mention reading a book or wanting to add a book (including saying "transmission" or "catalogue"), use the extract_book_data tool to:
 - Extract title and author accurately
 - Infer reading status from context (just finished = read, currently = reading, want to = want-to-read)
 - Detect sentiment (positive, neutral, negative, mixed) from their description
