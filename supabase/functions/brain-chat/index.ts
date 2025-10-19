@@ -456,7 +456,7 @@ function generateBrainContext(brainData: { nodes: BrainNode[], links: BookLink[]
       .map(([tag, count]) => `${tag} (${count})`);
 
     // Detect thematic clusters (2+ books with same tag)
-    const clusters = Object.entries(tagFrequency)
+    const clusters = Object.entries(conceptualTagFrequency)
       .filter(([, count]) => count >= 2)
       .sort(([,a], [,b]) => b - a)
       .slice(0, 5)
