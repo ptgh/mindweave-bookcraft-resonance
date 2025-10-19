@@ -94,24 +94,24 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
         <div className="flex h-[85vh] max-h-[85vh] min-h-0 flex-col">
           {/* Header */}
           <div className="px-6 py-4 border-b border-slate-700 flex-shrink-0">
+            <div className="flex items-center space-x-3 mb-3">
+              <Sparkles className="w-5 h-5 text-blue-400" />
+              <h2 className="text-xl font-light text-slate-200">
+                Reading Narrative
+              </h2>
+            </div>
             <div className="flex items-center justify-between">
-              <div className="flex flex-col space-y-1">
-                <div className="flex items-center space-x-3">
-                  <Sparkles className="w-5 h-5 text-blue-400" />
-                  <h2 className="text-xl font-light text-slate-200">Reading Narrative</h2>
-                </div>
-                <p className="text-sm text-slate-400 ml-8">
-                  Traverse the cosmos of your curated constellation to reveal patterns in your speculative fiction journey
-                </p>
-              </div>
+              <p className="text-sm text-slate-400">
+                Traverse the cosmos of your curated constellation to reveal patterns in your speculative fiction journey
+              </p>
               <StandardButton
                 onClick={() => generateNarrative(true)}
                 variant="standard"
-                size="xs"
+                size="sm"
                 disabled={loading}
-                className="inline-flex items-center gap-1"
+                className="inline-flex items-center gap-1 flex-shrink-0"
               >
-                <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
                 Regenerate
               </StandardButton>
             </div>

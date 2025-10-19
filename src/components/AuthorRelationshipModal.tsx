@@ -108,21 +108,18 @@ export const AuthorRelationshipModal = ({
       <DialogContent className="max-w-4xl h-[85vh] min-h-0 bg-slate-800/95 border border-slate-700 text-slate-200 p-0">
         <div className="flex h-[85vh] max-h-[85vh] min-h-0 flex-col">
           <DialogHeader className="px-6 py-4 flex-shrink-0 border-b border-slate-700">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                  <Network className="w-5 h-5 text-blue-400" />
-                </div>
-                <div>
-                  <DialogTitle className="text-slate-100 text-xl font-medium">
-                    Author Relationships
-                  </DialogTitle>
-                  <DialogDescription className="text-slate-400 text-sm mt-1">
-                    Mapping literary influences and thematic connections across the SF consciousness network
-                  </DialogDescription>
-                </div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <Network className="w-5 h-5 text-blue-400" />
               </div>
-              
+              <DialogTitle className="text-slate-100 text-xl font-medium">
+                Author Relationships
+              </DialogTitle>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <DialogDescription className="text-slate-400 text-sm">
+                Mapping literary influences and thematic connections across the SF consciousness network
+              </DialogDescription>
               <StandardButton
                 onClick={generateAnalysis}
                 disabled={loading}
