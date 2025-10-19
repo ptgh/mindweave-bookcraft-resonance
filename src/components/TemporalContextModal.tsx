@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { StandardButton } from '@/components/ui/standard-button';
 import { RefreshCw, Sparkles, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useEnhancedToast } from '@/hooks/use-enhanced-toast';
@@ -87,7 +87,7 @@ export const TemporalContextModal = ({ isOpen, onClose, transmissions }: Tempora
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[85vh] min-h-0 bg-slate-800/95 border border-slate-700 text-slate-200 p-0">
+      <DialogContent className="max-w-4xl h-[85vh] min-h-0 bg-slate-800/95 border border-slate-700 text-slate-200 p-0 flex flex-col">
         <DialogHeader className="px-6 py-4 border-b border-slate-700 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex flex-col space-y-1">
@@ -101,16 +101,16 @@ export const TemporalContextModal = ({ isOpen, onClose, transmissions }: Tempora
                 Navigate the corridors of time to map your reading across eras and historical landscapes
               </p>
             </div>
-            <Button
+            <StandardButton
               onClick={handleRegenerate}
+              variant="standard"
+              size="xs"
               disabled={loading}
-              variant="ghost"
-              size="sm"
-              className="text-slate-300 hover:text-blue-400 hover:bg-slate-700/50"
+              className="inline-flex items-center gap-1"
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
               Regenerate
-            </Button>
+            </StandardButton>
           </div>
         </DialogHeader>
 
@@ -129,9 +129,9 @@ export const TemporalContextModal = ({ isOpen, onClose, transmissions }: Tempora
                 <p className="font-medium mb-2">Analysis Failed</p>
                 <p className="text-sm text-slate-400">{error}</p>
               </div>
-              <Button onClick={() => generateAnalysis(true)} variant="outline" size="sm">
+              <StandardButton onClick={() => generateAnalysis(true)} variant="standard">
                 Try Again
-              </Button>
+              </StandardButton>
             </div>
           )}
 
