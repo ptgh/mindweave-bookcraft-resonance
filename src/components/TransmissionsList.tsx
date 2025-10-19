@@ -84,7 +84,7 @@ const TransmissionsList = memo(({
         action={
           <StandardButton
             onClick={onAddNew}
-            variant="primary"
+            variant="standard"
             className="touch-manipulation active:scale-95"
           >
             Log Your First Signal
