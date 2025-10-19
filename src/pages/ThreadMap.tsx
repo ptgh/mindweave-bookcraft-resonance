@@ -8,7 +8,6 @@ import { Calendar, Clock, BookOpen, TrendingUp, Brain, Sparkles } from "lucide-r
 import { getTransmissions } from "@/services/transmissionsService";
 import { SEOHead } from "@/components/SEOHead";
 import { TemporalContextModal } from "@/components/TemporalContextModal";
-import { Button } from "@/components/ui/button";
 import { HistoricalContextService } from "@/services/historicalContext";
 
 const ThreadMap = () => {
@@ -122,16 +121,14 @@ const ThreadMap = () => {
               selected={timeframe}
               onSelect={(id) => setTimeframe(id as 'month' | 'year' | 'all')}
             />
-            <Button
+            <button
               onClick={() => setShowTemporalModal(true)}
               disabled={filteredTransmissions.length < 3}
-              variant="outline"
-              size="sm"
-              className="ml-auto bg-slate-800/50 border-blue-500/30 hover:border-blue-400 hover:bg-slate-700/50 text-slate-200"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-xs font-medium transition-all duration-200 py-1.5 px-3 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 touch-manipulation disabled:opacity-50 disabled:pointer-events-none"
             >
-              <Sparkles className="w-4 h-4 mr-2 text-blue-400" />
+              <Sparkles className="w-4 h-4 text-blue-400" />
               Temporal Analysis
-            </Button>
+            </button>
           </div>
 
           <div className="grid gap-8 xl:grid-cols-3">
