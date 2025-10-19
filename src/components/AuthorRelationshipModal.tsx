@@ -105,9 +105,9 @@ export const AuthorRelationshipModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[85vh] min-h-0 bg-slate-800/95 backdrop-blur-sm border border-slate-700">
+      <DialogContent className="max-w-4xl h-[85vh] min-h-0 bg-slate-800/95 border border-slate-700 text-slate-200 p-0">
         <div className="flex h-[85vh] max-h-[85vh] min-h-0 flex-col">
-          <DialogHeader className="flex-shrink-0 pb-4 border-b border-slate-700">
+          <DialogHeader className="px-6 py-4 flex-shrink-0 border-b border-slate-700">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
@@ -136,7 +136,7 @@ export const AuthorRelationshipModal = ({
             </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide pt-4 px-6 pb-6">
+          <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide pt-4 px-6 pb-6" style={{ WebkitOverflowScrolling: 'touch' }}>
             {loading && !narrative ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <Network className="w-12 h-12 text-blue-400 animate-pulse mb-4" />
