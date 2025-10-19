@@ -238,7 +238,7 @@ IMPORTANT: Write your responses in clear, flowing paragraphs. Do NOT use bold ma
     console.log(`Message history: ${conversationMessages.length} messages`);
     
     // Build request body - add tool if book-adding detected
-    const requestBody: any = {
+    const aiRequestBody: any = {
       model: 'google/gemini-2.5-flash',
       messages: conversationMessages,
       temperature: 0.7,
@@ -247,8 +247,8 @@ IMPORTANT: Write your responses in clear, flowing paragraphs. Do NOT use bold ma
 
     if (isAddingBook) {
       console.log('Book-adding intent detected, enabling extraction tool');
-      requestBody.tools = [bookExtractionTool];
-      requestBody.tool_choice = { type: "function", function: { name: "extract_book_data" } };
+      aiRequestBody.tools = [bookExtractionTool];
+      aiRequestBody.tool_choice = { type: "function", function: { name: "extract_book_data" } };
     }
     
     // Call Lovable AI Gateway
@@ -258,7 +258,7 @@ IMPORTANT: Write your responses in clear, flowing paragraphs. Do NOT use bold ma
         'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify(aiRequestBody),
     });
 
     console.log('Lovable AI response status:', response.status);
