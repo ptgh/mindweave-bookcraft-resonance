@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { StandardButton } from '@/components/ui/standard-button';
 import { RefreshCw, Sparkles, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useEnhancedToast } from '@/hooks/use-enhanced-toast';
 import { Transmission } from '@/services/transmissionsService';
+import { ReadingNarrative } from '@/components/ReadingNarrative';
 
 interface TemporalContextModalProps {
   isOpen: boolean;
@@ -87,116 +88,80 @@ export const TemporalContextModal = ({ isOpen, onClose, transmissions }: Tempora
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[85vh] min-h-0 bg-slate-800/95 border border-slate-700 text-slate-200 p-0 flex flex-col">
-        <DialogHeader className="px-6 py-4 border-b border-slate-700 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col space-y-1">
-              <div className="flex items-center space-x-3">
-                <Clock className="w-5 h-5 text-blue-400" />
-                <DialogTitle className="text-xl font-light text-slate-200">
-                  Temporal Context Analysis
-                </DialogTitle>
+      <DialogContent className="max-w-4xl h-[85vh] min-h-0 bg-slate-800/95 border border-slate-700 text-slate-200 p-0">
+        <div className="flex h-[85vh] max-h-[85vh] min-h-0 flex-col">
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-slate-700 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col space-y-1">
+                <div className="flex items-center space-x-3">
+                  <Clock className="w-5 h-5 text-blue-400" />
+                  <h2 className="text-xl font-light text-slate-200">
+                    Temporal Context Analysis
+                  </h2>
+                </div>
+                <p className="text-sm text-slate-400 ml-8">
+                  Navigate the corridors of time to map your reading across eras and historical landscapes
+                </p>
               </div>
-              <p className="text-sm text-slate-400 ml-8">
-                Navigate the corridors of time to map your reading across eras and historical landscapes
-              </p>
-            </div>
-            <StandardButton
-              onClick={handleRegenerate}
-              variant="standard"
-              size="xs"
-              disabled={loading}
-              className="inline-flex items-center gap-1"
-            >
-              <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-              Regenerate
-            </StandardButton>
-          </div>
-        </DialogHeader>
-
-        <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide pt-4 px-6 pb-6">
-          {loading && !narrative && (
-            <div className="flex flex-col items-center justify-center h-full space-y-4">
-              <Sparkles className="w-12 h-12 text-blue-400 animate-pulse" />
-              <p className="text-slate-300">Analyzing your temporal reading landscape...</p>
-              <p className="text-slate-500 text-sm">Mapping literary eras and historical context</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="flex flex-col items-center justify-center h-full space-y-4">
-              <div className="text-red-400 text-center">
-                <p className="font-medium mb-2">Analysis Failed</p>
-                <p className="text-sm text-slate-400">{error}</p>
-              </div>
-              <StandardButton onClick={() => generateAnalysis(true)} variant="standard">
-                Try Again
+              <StandardButton
+                onClick={handleRegenerate}
+                variant="standard"
+                size="xs"
+                disabled={loading}
+                className="inline-flex items-center gap-1"
+              >
+                <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+                Regenerate
               </StandardButton>
             </div>
-          )}
+          </div>
 
-          {narrative && (
-            <div className="prose prose-invert prose-slate max-w-none">
-              <div className="space-y-6">
-                {narrative.split('\n').map((paragraph, index) => {
-                  if (!paragraph.trim()) return null;
-                  
-                  // Handle markdown headings
-                  if (paragraph.startsWith('# ')) {
-                    return (
-                      <h1 key={index} className="text-2xl font-light text-blue-300 mt-8 mb-4 first:mt-0">
-                        {paragraph.replace('# ', '')}
-                      </h1>
-                    );
-                  }
-                  if (paragraph.startsWith('## ')) {
-                    return (
-                      <h2 key={index} className="text-xl font-light text-slate-200 mt-6 mb-3">
-                        {paragraph.replace('## ', '')}
-                      </h2>
-                    );
-                  }
-                  
-                  // Handle markdown lists
-                  if (paragraph.match(/^[-*]\s/)) {
-                    return (
-                      <li key={index} className="text-slate-300 ml-6 mb-2">
-                        {paragraph.replace(/^[-*]\s/, '')}
-                      </li>
-                    );
-                  }
-                  
-                  // Regular paragraphs with bold/italic support
-                  let formattedText = paragraph
-                    .replace(/\*\*(.+?)\*\*/g, '<strong class="text-slate-100">$1</strong>')
-                    .replace(/\*(.+?)\*/g, '<em class="text-slate-300">$1</em>')
-                    .replace(/"([^"]+)"/g, '<span class="text-blue-300">"$1"</span>');
-                  
-                  return (
-                    <p 
-                      key={index} 
-                      className="text-slate-300 leading-relaxed mb-4"
-                      dangerouslySetInnerHTML={{ __html: formattedText }}
-                    />
-                  );
-                })}
-              </div>
-
-              {generatedAt && (
-                <div className="mt-8 pt-6 border-t border-slate-700 text-center">
-                  <p className="text-slate-500 text-xs">
-                    Generated {new Date(generatedAt).toLocaleDateString('en-US', { 
-                      month: 'long', 
-                      day: 'numeric', 
-                      year: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit'
-                    })}
-                  </p>
+          {/* Content - scrollable with hidden scrollbar */}
+          <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide pt-4 px-6 pb-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+            {loading && !narrative && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="relative w-16 h-16 mb-4">
+                  <div className="absolute inset-0 rounded-full border-2 border-blue-400/20" />
+                  <div className="absolute inset-0 rounded-full border-2 border-t-blue-400 animate-spin" />
+                  <Sparkles className="absolute inset-0 m-auto w-6 h-6 text-blue-400" />
                 </div>
-              )}
-            </div>
-          )}
+                <p className="text-slate-400 text-sm">Analyzing your temporal reading landscape...</p>
+              </div>
+            )}
+
+            {error && (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-red-600 flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-full bg-red-500" />
+                </div>
+                <h3 className="text-red-400 text-lg mb-2">Analysis Failed</h3>
+                <p className="text-slate-400 mb-4">{error}</p>
+                <StandardButton onClick={() => generateAnalysis(true)} variant="standard">
+                  Try Again
+                </StandardButton>
+              </div>
+            )}
+
+            {narrative && !loading && !error && (
+              <>
+                <ReadingNarrative narrative={narrative} transmissions={transmissions} />
+                {generatedAt && (
+                  <div className="mt-8 pt-6 border-t border-slate-700 text-center">
+                    <p className="text-slate-500 text-xs">
+                      Generated {new Date(generatedAt).toLocaleDateString('en-US', { 
+                        month: 'long', 
+                        day: 'numeric', 
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
