@@ -7,7 +7,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { BrainNode, BookLink } from '@/pages/TestBrain';
 import { BrainContextService } from '@/services/brainContextService';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Transmission } from '@/services/transmissionsService';
+import { Transmission, saveTransmission, getTransmissions } from '@/services/transmissionsService';
+import { BookConfirmationCard } from './BookConfirmationCard';
+import { toast } from '@/hooks/use-toast';
 
 interface Message {
   id: string;
@@ -44,6 +46,8 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [userTransmissions, setUserTransmissions] = useState<Transmission[]>([]);
   const [isFetchingTransmissions, setIsFetchingTransmissions] = useState(false);
+  const [extractedBook, setExtractedBook] = useState<any>(null);
+  const [showBookConfirmation, setShowBookConfirmation] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
@@ -295,6 +299,24 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         throw new Error(`Function call failed: ${error.message}`);
       }
 
+      // Check for book extraction response
+      if (data?.type === 'book_extraction' && data?.bookData) {
+        console.log('Book extraction detected:', data.bookData);
+        setExtractedBook(data.bookData);
+        setShowBookConfirmation(true);
+        
+        // Add AI message explaining what was detected
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: data.message,
+          isUser: false,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, aiMessage]);
+        setIsLoading(false);
+        return;
+      }
+
       if (data?.error) {
         console.error('Function returned error:', data.error);
         
@@ -353,6 +375,94 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  const handleConfirmBook = async (bookData: any) => {
+    try {
+      console.log('Confirming book addition:', bookData);
+      
+      // Combine suggested and custom tags
+      const allTags = [...bookData.suggestedTags, ...bookData.customTags];
+      
+      // Save to database using transmissionsService
+      await saveTransmission({
+        title: bookData.title,
+        author: bookData.author,
+        status: bookData.status,
+        tags: allTags,
+        notes: `Added via conversation. Sentiment: ${bookData.sentiment}`,
+        cover_url: '',
+        rating: {}
+      });
+      
+      // Success message
+      const successMessage: Message = {
+        id: Date.now().toString(),
+        text: `✓ "${bookData.title}" has been added to your library!`,
+        isUser: false,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, successMessage]);
+      
+      // Show toast
+      toast({
+        title: "Book Added",
+        description: `"${bookData.title}" is now in your library`,
+      });
+      
+      // Refresh transmissions
+      const updatedTransmissions = await getTransmissions();
+      setUserTransmissions(updatedTransmissions);
+      
+      // Clear extraction state
+      setExtractedBook(null);
+      setShowBookConfirmation(false);
+    } catch (error) {
+      console.error('Error adding book:', error);
+      
+      // Error message
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        text: error instanceof Error ? error.message : 'Failed to add book. Please try again.',
+        isUser: false,
+        timestamp: new Date(),
+        isError: true
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      
+      // Show error toast
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to add book',
+        variant: "destructive"
+      });
+      
+      setShowBookConfirmation(false);
+    }
+  };
+  
+  const handleCancelBook = () => {
+    setExtractedBook(null);
+    setShowBookConfirmation(false);
+    
+    const cancelMessage: Message = {
+      id: Date.now().toString(),
+      text: "No problem! Let me know if you'd like to add it later.",
+      isUser: false,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, cancelMessage]);
+  };
+  
+  const handleAnswerClarification = async (answer: string) => {
+    // Send answer back to AI for tag refinement
+    setInputText(answer);
+    setShowBookConfirmation(false);
+    
+    // Trigger message send
+    setTimeout(() => {
+      handleSendMessage();
+    }, 100);
   };
 
   const handleSuggestionClick = async (suggestion: string) => {
@@ -470,6 +580,17 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         height: 'calc(100dvh - (env(safe-area-inset-top) + env(safe-area-inset-bottom) + 88px))'
       } : undefined}
     >
+      {/* Book Confirmation Overlay */}
+      {showBookConfirmation && extractedBook && (
+        <div className="absolute inset-0 bg-slate-900/95 backdrop-blur-sm z-10 p-4 overflow-y-auto flex items-start justify-center pt-8">
+          <BookConfirmationCard
+            bookData={extractedBook}
+            onConfirm={handleConfirmBook}
+            onCancel={handleCancelBook}
+            onAnswer={handleAnswerClarification}
+          />
+        </div>
+      )}
       
       <Card className="bg-slate-900/95 md:bg-slate-900/60 border-slate-700/30 backdrop-blur-lg h-full flex flex-col shadow-2xl shadow-slate-900/20 safe-area-inset">
         {/* Header */}

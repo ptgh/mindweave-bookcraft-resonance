@@ -120,6 +120,56 @@ serve(async (req) => {
     const transmissionsContext = generateTransmissionsContext(userTransmissions);
     console.log('Context generated - brain:', brainContext.length, 'transmissions:', transmissionsContext.length);
     
+    // Detect book-adding intent
+    const bookAddingPhrases = [
+      'i just finished', 'i read', "i'm reading", 'i want to read', 
+      'add this book', 'just completed', 'finished reading',
+      'currently reading', 'add to my library', 'just started'
+    ];
+    const lowerMessage = message.toLowerCase();
+    const isAddingBook = bookAddingPhrases.some(phrase => lowerMessage.includes(phrase));
+
+    // Define book extraction tool
+    const bookExtractionTool = {
+      type: "function",
+      function: {
+        name: "extract_book_data",
+        description: "Extract book information from natural language when user wants to add a book to their library",
+        parameters: {
+          type: "object",
+          properties: {
+            title: { type: "string", description: "Book title" },
+            author: { type: "string", description: "Author name" },
+            status: { 
+              type: "string", 
+              enum: ["reading", "read", "want-to-read"],
+              description: "Reading status inferred from context"
+            },
+            sentiment: {
+              type: "string",
+              enum: ["positive", "neutral", "negative", "mixed"],
+              description: "Overall sentiment about the book"
+            },
+            suggestedTags: {
+              type: "array",
+              items: { type: "string" },
+              description: "Conceptual SF tags from taxonomy: Cyberpunk, Post-Cyberpunk, Space Opera, Hard Science Fiction, Biopunk, Golden Age, Block Universe Compatible, Time Dilation, Chrono Loops, Technological Shamanism, Utopian Collapse, Mega-Corporate Systems, Off-Earth Civilisations, Dystopian Systems, Nonlinear Structure, Dream Logic, Archive-Based, Memory Distortion, Cybernetic Enhancement, Quantum Consciousness, Neural Interface, Posthuman Evolution"
+            },
+            needsClarification: {
+              type: "boolean",
+              description: "Whether to ask clarifying questions"
+            },
+            clarificationQuestions: {
+              type: "array",
+              items: { type: "string" },
+              description: "Questions to ask for better tagging"
+            }
+          },
+          required: ["title", "author", "status", "sentiment"]
+        }
+      }
+    };
+
     const systemPrompt = `You are the Neural Assistant for leafnode—a personal science fiction library and knowledge graph application.
 
 ABOUT LEAFNODE:
@@ -145,11 +195,20 @@ You can help users:
 - Analyze influence networks between authors
 - Identify SF genre patterns (Cyberpunk, Hard SF, Space Opera, etc.)
 - Recognize genre evolution and cross-genre connections
+- Help users ADD BOOKS naturally through conversation
+
+BOOK ADDING:
+When users mention reading a book or wanting to add a book, use the extract_book_data tool to:
+- Extract title and author accurately
+- Infer reading status from context (just finished = read, currently = reading, want to = want-to-read)
+- Detect sentiment (positive, neutral, negative, mixed) from their description
+- Suggest 3-5 relevant Conceptual Tags from the official taxonomy based on book context
+- Determine if clarification would improve tagging (e.g., "What aspects resonated most?", "Which themes stood out?")
 
 TRIPLE TAXONOMY SYSTEM:
 The library uses THREE classification systems working together:
 1. GENRES: SF subgenres like Cyberpunk, Hard SF, Space Opera, Biopunk, etc.
-2. CONCEPTUAL NODES: Thematic sci-fi tags like "AI Consciousness", "Neural Interface", "Time Paradox"
+2. CONCEPTUAL NODES: Thematic sci-fi tags like "Cyberpunk", "Neural Interface", "Time Dilation" (use ONLY from official list)
 3. CONTEXT TAGS: Broader intellectual themes like "Mathematics", "Philosophy", "Social hierarchy", "Ethics"
 
 These three taxonomies create a rich multi-dimensional framework for understanding books. Use all three when analyzing patterns.
@@ -178,6 +237,20 @@ IMPORTANT: Write your responses in clear, flowing paragraphs. Do NOT use bold ma
 
     console.log(`Message history: ${conversationMessages.length} messages`);
     
+    // Build request body - add tool if book-adding detected
+    const requestBody: any = {
+      model: 'google/gemini-2.5-flash',
+      messages: conversationMessages,
+      temperature: 0.7,
+      max_tokens: 1000,
+    };
+
+    if (isAddingBook) {
+      console.log('Book-adding intent detected, enabling extraction tool');
+      requestBody.tools = [bookExtractionTool];
+      requestBody.tool_choice = { type: "function", function: { name: "extract_book_data" } };
+    }
+    
     // Call Lovable AI Gateway
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -185,12 +258,7 @@ IMPORTANT: Write your responses in clear, flowing paragraphs. Do NOT use bold ma
         'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: conversationMessages,
-        temperature: 0.7,
-        max_tokens: 1000,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     console.log('Lovable AI response status:', response.status);
@@ -242,6 +310,32 @@ IMPORTANT: Write your responses in clear, flowing paragraphs. Do NOT use bold ma
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Check for tool calls (book extraction)
+    if (data.choices[0]?.message?.tool_calls && data.choices[0].message.tool_calls.length > 0) {
+      const toolCall = data.choices[0].message.tool_calls[0];
+      console.log('Tool call detected:', toolCall.function.name);
+      
+      try {
+        const bookData = JSON.parse(toolCall.function.arguments);
+        console.log('Extracted book data:', bookData);
+        
+        // Generate a friendly confirmation message
+        const confirmationMessage = `I detected you want to add "${bookData.title}" by ${bookData.author} to your library. I've suggested some tags based on the book's themes. Please review and confirm!`;
+        
+        // Return book extraction response
+        return new Response(JSON.stringify({ 
+          type: 'book_extraction',
+          bookData: bookData,
+          message: confirmationMessage
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (parseError) {
+        console.error('Failed to parse book data:', parseError);
+        // Fall through to normal response
+      }
     }
 
     if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
