@@ -4,9 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, X, Plus } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 import { CONCEPTUAL_TAGS } from '@/constants/conceptualTags';
 
 interface BookData {
@@ -17,11 +16,12 @@ interface BookData {
   suggestedTags: string[];
   clarificationQuestions?: string[];
   needsClarification?: boolean;
+  notes?: string;
 }
 
 interface BookConfirmationCardProps {
   bookData: BookData;
-  onConfirm: (editedData: BookData & { customTags: string[] }) => void;
+  onConfirm: (editedData: BookData) => void;
   onCancel: () => void;
   onAnswer?: (answer: string) => void;
 }
@@ -36,25 +36,13 @@ export const BookConfirmationCard: React.FC<BookConfirmationCardProps> = ({
   const [author, setAuthor] = useState(bookData.author);
   const [status, setStatus] = useState<"reading" | "read" | "want-to-read">(bookData.status);
   const [selectedTags, setSelectedTags] = useState<string[]>(bookData.suggestedTags || []);
-  const [customTag, setCustomTag] = useState('');
-  const [customTags, setCustomTags] = useState<string[]>([]);
+  const [notes, setNotes] = useState(bookData.notes || '');
   const [clarificationAnswer, setClarificationAnswer] = useState('');
 
   const handleToggleTag = (tag: string) => {
     setSelectedTags(prev => 
       prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
     );
-  };
-
-  const handleAddCustomTag = () => {
-    if (customTag.trim() && !customTags.includes(customTag.trim())) {
-      setCustomTags(prev => [...prev, customTag.trim()]);
-      setCustomTag('');
-    }
-  };
-
-  const handleRemoveCustomTag = (tag: string) => {
-    setCustomTags(prev => prev.filter(t => t !== tag));
   };
 
   const handleConfirm = () => {
@@ -64,7 +52,7 @@ export const BookConfirmationCard: React.FC<BookConfirmationCardProps> = ({
       status,
       sentiment: bookData.sentiment,
       suggestedTags: selectedTags,
-      customTags
+      notes
     });
   };
 
@@ -94,7 +82,7 @@ export const BookConfirmationCard: React.FC<BookConfirmationCardProps> = ({
         </div>
       </CardHeader>
 
-      <CardContent className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+      <CardContent className="p-6 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
         {/* Title */}
         <div className="space-y-2">
           <Label htmlFor="title" className="text-slate-300 text-sm">Title</Label>
@@ -147,72 +135,39 @@ export const BookConfirmationCard: React.FC<BookConfirmationCardProps> = ({
           </div>
         )}
 
-        {/* Suggested Tags */}
+        {/* Conceptual Nodes */}
         {bookData.suggestedTags.length > 0 && (
           <div className="space-y-3">
-            <Label className="text-slate-300 text-sm">Suggested Conceptual Tags</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Label className="text-slate-300 text-sm">Conceptual Nodes</Label>
+            <div className="grid grid-cols-2 gap-2">
               {bookData.suggestedTags.map(tag => (
-                <div
+                <button
                   key={tag}
-                  className="flex items-center space-x-2 p-2 bg-slate-800/40 border border-slate-700/50 rounded-md hover:bg-slate-800/60 transition-colors"
+                  type="button"
+                  onClick={() => handleToggleTag(tag)}
+                  className={`px-3 py-2 rounded-full text-xs transition-colors ${
+                    selectedTags.includes(tag)
+                      ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                      : "bg-slate-700 text-slate-400 border border-slate-600 hover:bg-slate-600"
+                  }`}
                 >
-                  <Checkbox
-                    id={tag}
-                    checked={selectedTags.includes(tag)}
-                    onCheckedChange={() => handleToggleTag(tag)}
-                    className="border-cyan-400/50 data-[state=checked]:bg-cyan-400 data-[state=checked]:border-cyan-400"
-                  />
-                  <label
-                    htmlFor={tag}
-                    className="text-sm text-slate-300 cursor-pointer flex-1"
-                  >
-                    {tag}
-                  </label>
-                </div>
+                  {tag}
+                </button>
               ))}
             </div>
           </div>
         )}
 
-        {/* Custom Tags */}
-        <div className="space-y-3">
-          <Label className="text-slate-300 text-sm">Add Custom Tags (Optional)</Label>
-          <div className="flex gap-2">
-            <Input
-              value={customTag}
-              onChange={(e) => setCustomTag(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddCustomTag()}
-              placeholder="Add a custom tag..."
-              className="bg-slate-800/50 border-slate-700/50 text-slate-200 focus:border-cyan-400/50"
-            />
-            <Button
-              onClick={handleAddCustomTag}
-              variant="outline"
-              size="icon"
-              className="border-cyan-400/50 text-cyan-400 hover:bg-cyan-400/10"
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
-          </div>
-          {customTags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {customTags.map(tag => (
-                <div
-                  key={tag}
-                  className="flex items-center gap-1 px-2 py-1 bg-cyan-400/10 border border-cyan-400/30 rounded text-cyan-400 text-xs"
-                >
-                  <span>{tag}</span>
-                  <button
-                    onClick={() => handleRemoveCustomTag(tag)}
-                    className="hover:text-cyan-300"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Notes */}
+        <div className="space-y-2">
+          <Label htmlFor="notes" className="text-slate-300 text-sm">Notes</Label>
+          <Textarea
+            id="notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Connections, insights, influences..."
+            className="bg-slate-800/50 border-slate-700/50 text-slate-200 focus:border-cyan-400/50 min-h-[100px] resize-none"
+          />
         </div>
 
         {/* Clarification Questions */}

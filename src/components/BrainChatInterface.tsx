@@ -381,8 +381,8 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
     try {
       console.log('Confirming book addition:', bookData);
       
-      // Combine suggested and custom tags
-      const allTags = [...bookData.suggestedTags, ...bookData.customTags];
+      // Use only suggested tags (custom tags removed)
+      const allTags = bookData.suggestedTags;
       
       // Save to database using transmissionsService
       await saveTransmission({
@@ -390,7 +390,9 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         author: bookData.author,
         status: bookData.status,
         tags: allTags,
-        notes: `Added via conversation. Sentiment: ${bookData.sentiment}`,
+        notes: bookData.notes 
+          ? `Inputted Neural Assistant\n\n${bookData.notes}` 
+          : 'Inputted Neural Assistant',
         cover_url: '',
         rating: {}
       });
