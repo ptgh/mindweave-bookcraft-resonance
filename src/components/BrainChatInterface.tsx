@@ -23,6 +23,12 @@ interface Message {
   };
   isError?: boolean;
   errorCode?: string;
+  actions?: {
+    primaryLabel: string;
+    onPrimary: 'autoAdd';
+    secondaryLabel?: string;
+    onSecondary?: 'openCard';
+  };
 }
 
 interface BrainChatInterfaceProps {
@@ -303,14 +309,27 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
       if (data?.type === 'book_extraction' && data?.bookData) {
         console.log('Book extraction detected:', data.bookData);
         setExtractedBook(data.bookData);
-        setShowBookConfirmation(true);
         
-        // Add AI message explaining what was detected
+        // If autoAdd is true, immediately save the book
+        if (data.autoAdd === true) {
+          console.log('Auto-add enabled, saving book immediately');
+          await handleConfirmBook(data.bookData);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Otherwise, show message with action buttons
         const aiMessage: Message = {
           id: (Date.now() + 1).toString(),
           text: data.message,
           isUser: false,
-          timestamp: new Date()
+          timestamp: new Date(),
+          actions: {
+            primaryLabel: 'Just add',
+            onPrimary: 'autoAdd',
+            secondaryLabel: 'Review details',
+            onSecondary: 'openCard'
+          }
         };
         setMessages(prev => [...prev, aiMessage]);
         setIsLoading(false);
@@ -381,8 +400,19 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
     try {
       console.log('Confirming book addition:', bookData);
       
+      // Check if user is authenticated
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) {
+        toast({
+          title: "Authentication Required",
+          description: "Sign in to log signals",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       // Use only suggested tags (custom tags removed)
-      const allTags = bookData.suggestedTags;
+      const allTags = bookData.suggestedTags || [];
       
       // Save to database using transmissionsService
       await saveTransmission({
@@ -422,10 +452,16 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
     } catch (error) {
       console.error('Error adding book:', error);
       
+      // Check for duplicate entry
+      const errorMsg = error instanceof Error ? error.message : 'Failed to add book. Please try again.';
+      const isDuplicate = errorMsg.includes('already in your transmissions');
+      
       // Error message
       const errorMessage: Message = {
         id: Date.now().toString(),
-        text: error instanceof Error ? error.message : 'Failed to add book. Please try again.',
+        text: isDuplicate 
+          ? `This book is already in your library!` 
+          : errorMsg,
         isUser: false,
         timestamp: new Date(),
         isError: true
@@ -434,8 +470,8 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
       
       // Show error toast
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : 'Failed to add book',
+        title: isDuplicate ? "Already Added" : "Error",
+        description: errorMsg,
         variant: "destructive"
       });
       
@@ -516,6 +552,37 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
       });
 
       if (error) throw new Error(`Function call failed: ${error.message}`);
+      
+      // Check for book extraction response
+      if (data?.type === 'book_extraction' && data?.bookData) {
+        console.log('Book extraction detected from suggestion:', data.bookData);
+        setExtractedBook(data.bookData);
+        
+        // If autoAdd is true, immediately save the book
+        if (data.autoAdd === true) {
+          console.log('Auto-add enabled, saving book immediately');
+          await handleConfirmBook(data.bookData);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Otherwise, show message with action buttons
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: data.message,
+          isUser: false,
+          timestamp: new Date(),
+          actions: {
+            primaryLabel: 'Just add',
+            onPrimary: 'autoAdd',
+            secondaryLabel: 'Review details',
+            onSecondary: 'openCard'
+          }
+        };
+        setMessages(prev => [...prev, aiMessage]);
+        setIsLoading(false);
+        return;
+      }
       
       if (data?.error) {
         const errorMessage: Message = {
@@ -668,6 +735,31 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
                     <div className="text-[10px] text-cyan-300">
                       Highlighted: {message.highlights.nodeIds.length} books, {message.highlights.tags.length} themes
                     </div>
+                  </div>
+                )}
+                {/* Action buttons for book extraction */}
+                {message.actions && !message.isUser && (
+                  <div className="flex gap-2 mt-3 pt-3 border-t border-slate-700/30">
+                    <button
+                      onClick={() => {
+                        if (extractedBook) {
+                          handleConfirmBook(extractedBook);
+                        }
+                      }}
+                      className="flex-1 px-3 py-1.5 bg-cyan-400/20 hover:bg-cyan-400/30 text-cyan-400 border border-cyan-400/50 rounded text-[11px] font-medium transition-all"
+                    >
+                      {message.actions.primaryLabel}
+                    </button>
+                    {message.actions.secondaryLabel && (
+                      <button
+                        onClick={() => {
+                          setShowBookConfirmation(true);
+                        }}
+                        className="flex-1 px-3 py-1.5 bg-slate-700/20 hover:bg-slate-700/40 text-slate-300 border border-slate-600/50 rounded text-[11px] transition-all"
+                      >
+                        {message.actions.secondaryLabel}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

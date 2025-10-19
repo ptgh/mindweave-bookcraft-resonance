@@ -120,16 +120,20 @@ serve(async (req) => {
     const transmissionsContext = generateTransmissionsContext(userTransmissions);
     console.log('Context generated - brain:', brainContext.length, 'transmissions:', transmissionsContext.length);
     
-    // Detect book-adding intent
+    // Detect book-adding intent (expanded phrases)
     const bookAddingPhrases = [
-      'i just finished', 'i read', "i'm reading", 'i want to read', 
-      'add this book', 'just completed', 'finished reading',
-      'currently reading', 'add to my library', 'just started',
-      'add to my list', 'transmission', 'catalogue', 'catalog',
-      'add it', 'can you add', 'could you add'
+      'please add', 'just add', 'add "', 'add book', 'add this', 'add it',
+      'add to transmissions', 'add to my transmissions', 'add to my list',
+      'add to my library', 'catalogue', 'catalog', 'log signal', 'log this', 'log it',
+      "i'm reading", 'i just finished', 'i read', 'want to read',
+      'i just finished', 'just completed', 'finished reading',
+      'currently reading', 'just started', 'can you add', 'could you add'
     ];
     const lowerMessage = message.toLowerCase();
     const isAddingBook = bookAddingPhrases.some(phrase => lowerMessage.includes(phrase));
+    
+    // Detect "auto add" wording (skip questions, add immediately)
+    const wantsAutoAdd = /\b(just add|add now|please add|no questions|skip|go ahead)\b/i.test(message);
 
     // Define book extraction tool
     const bookExtractionTool = {
@@ -325,13 +329,24 @@ IMPORTANT: Write your responses in clear, flowing paragraphs. Do NOT use bold ma
         const bookData = JSON.parse(toolCall.function.arguments);
         console.log('Extracted book data:', bookData);
         
-        // Generate a friendly confirmation message
-        const confirmationMessage = `I detected you want to add "${bookData.title}" by ${bookData.author} to your library. I've suggested some tags based on the book's themes. Please review and confirm!`;
+        // Normalize defaults
+        bookData.suggestedTags = Array.isArray(bookData.suggestedTags) ? bookData.suggestedTags : [];
+        bookData.status = bookData.status || 'want-to-read';
+        bookData.sentiment = bookData.sentiment || 'neutral';
         
-        // Return book extraction response
+        // Determine if auto-add (no clarification needed OR user explicitly wants it)
+        const autoAdd = wantsAutoAdd || bookData.needsClarification === false;
+        
+        // Generate a friendly message with action options
+        const confirmationMessage = autoAdd
+          ? `Adding "${bookData.title}" by ${bookData.author} to your library...`
+          : `I can add "${bookData.title}" by ${bookData.author}. Would you like me to just add it now, or review details first?`;
+        
+        // Return structured book extraction response
         return new Response(JSON.stringify({ 
           type: 'book_extraction',
           bookData: bookData,
+          autoAdd: autoAdd,
           message: confirmationMessage
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -339,6 +354,57 @@ IMPORTANT: Write your responses in clear, flowing paragraphs. Do NOT use bold ma
       } catch (parseError) {
         console.error('Failed to parse book data:', parseError);
         // Fall through to normal response
+      }
+    }
+    
+    // Fallback: if book-adding intent detected but tool wasn't called, try regex extraction
+    if (isAddingBook && (!data.choices[0]?.message?.tool_calls || data.choices[0].message.tool_calls.length === 0)) {
+      console.log('Book-adding intent detected but no tool call - attempting fallback extraction');
+      
+      // Try to extract title and author from message
+      const patterns = [
+        /add\s+"([^"]+)"\s+by\s+([^.,;]+)/i,
+        /add\s+(.+?)\s+by\s+([^\n.,;]+)/i,
+        /"([^"]+)"\s+by\s+([^.,;]+)/i,
+        /please add\s+(.+?)\s+by\s+([^\n.,;]+)/i
+      ];
+      
+      let title = null;
+      let author = null;
+      
+      for (const pattern of patterns) {
+        const match = message.match(pattern);
+        if (match) {
+          title = match[1].trim();
+          author = match[2].trim();
+          break;
+        }
+      }
+      
+      if (title && author) {
+        console.log('Fallback extraction successful:', { title, author });
+        
+        const bookData = {
+          title,
+          author,
+          status: 'want-to-read',
+          sentiment: 'neutral',
+          suggestedTags: [],
+          needsClarification: false
+        };
+        
+        const confirmationMessage = wantsAutoAdd
+          ? `Adding "${title}" by ${author} to your library...`
+          : `I can add "${title}" by ${author}. Would you like me to just add it now, or review details first?`;
+        
+        return new Response(JSON.stringify({ 
+          type: 'book_extraction',
+          bookData: bookData,
+          autoAdd: wantsAutoAdd,
+          message: confirmationMessage
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
     }
 
