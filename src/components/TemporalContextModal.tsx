@@ -90,11 +90,16 @@ export const TemporalContextModal = ({ isOpen, onClose, transmissions }: Tempora
       <DialogContent className="max-w-4xl h-[85vh] min-h-0 bg-slate-800/95 border border-slate-700 text-slate-200 p-0">
         <DialogHeader className="px-6 py-4 border-b border-slate-700 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Clock className="w-5 h-5 text-blue-400" />
-              <DialogTitle className="text-xl font-light text-slate-200">
-                Temporal Context Analysis
-              </DialogTitle>
+            <div className="flex flex-col space-y-1">
+              <div className="flex items-center space-x-3">
+                <Clock className="w-5 h-5 text-blue-400" />
+                <DialogTitle className="text-xl font-light text-slate-200">
+                  Temporal Context Analysis
+                </DialogTitle>
+              </div>
+              <p className="text-sm text-slate-400 ml-8">
+                Navigate the corridors of time to map your reading across eras and historical landscapes
+              </p>
             </div>
             <Button
               onClick={handleRegenerate}

@@ -93,29 +93,28 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
       <DialogContent className="max-w-4xl h-[85vh] min-h-0 bg-slate-800/95 border border-slate-700 text-slate-200 p-0">
         <div className="flex h-[85vh] max-h-[85vh] min-h-0 flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-700 p-6 flex-shrink-0">
-            <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse" />
-              <div>
-                <h2 className="text-xl font-medium text-slate-200">Reading Narrative</h2>
-                {generatedAt && (
-                  <p className="text-xs text-slate-400 mt-1">
-                    Generated {generatedAt.toLocaleDateString()}
-                  </p>
-                )}
+          <div className="px-6 py-4 border-b border-slate-700 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col space-y-1">
+                <div className="flex items-center space-x-3">
+                  <Sparkles className="w-5 h-5 text-blue-400" />
+                  <h2 className="text-xl font-light text-slate-200">Reading Narrative</h2>
+                </div>
+                <p className="text-sm text-slate-400 ml-8">
+                  Traverse the cosmos of your curated constellation to reveal patterns in your speculative fiction journey
+                </p>
               </div>
+              <StandardButton
+                onClick={() => generateNarrative(true)}
+                variant="standard"
+                size="xs"
+                disabled={loading}
+                className="inline-flex items-center gap-1"
+              >
+                <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+                Regenerate
+              </StandardButton>
             </div>
-            
-            <StandardButton
-              onClick={() => generateNarrative(true)}
-              variant="standard"
-              size="xs"
-              disabled={loading}
-              className="inline-flex items-center gap-1"
-            >
-              <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-              Regenerate
-            </StandardButton>
           </div>
 
           {/* Content - scrollable with hidden scrollbar */}
