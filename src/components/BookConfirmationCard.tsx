@@ -176,30 +176,6 @@ export const BookConfirmationCard: React.FC<BookConfirmationCardProps> = ({
           />
         </div>
 
-        {/* Clarification Questions */}
-        {bookData.needsClarification && bookData.clarificationQuestions && bookData.clarificationQuestions.length > 0 && (
-          <div className="space-y-2 border-t border-slate-700/50 pt-4">
-            <Label className="text-slate-300 text-xs">Help us refine your tags:</Label>
-            {bookData.clarificationQuestions.map((question, idx) => (
-              <p key={idx} className="text-slate-400 text-xs italic">{question}</p>
-            ))}
-            <Textarea
-              value={clarificationAnswer}
-              onChange={(e) => setClarificationAnswer(e.target.value)}
-              placeholder="Your answer will help us suggest better tags..."
-              className="bg-slate-800/50 border-slate-700/50 text-slate-200 focus:border-cyan-400/50 min-h-[60px] text-sm"
-            />
-            <Button
-              onClick={handleSendAnswer}
-              disabled={!clarificationAnswer.trim()}
-              variant="outline"
-              size="sm"
-              className="w-full border-cyan-400/50 text-cyan-400 hover:bg-cyan-400/10 h-8 text-xs"
-            >
-              Send Answer
-            </Button>
-          </div>
-        )}
 
         {/* Actions */}
         <div className="flex gap-2 pt-3 border-t border-slate-700/30">
@@ -209,7 +185,7 @@ export const BookConfirmationCard: React.FC<BookConfirmationCardProps> = ({
             size="sm"
             className="flex-1 bg-cyan-400/20 hover:bg-cyan-400/30 text-cyan-400 border border-cyan-400/50 h-9 text-xs"
           >
-            Add to Library
+            + Log Signal
           </Button>
           <Button
             onClick={onCancel}
