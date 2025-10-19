@@ -10,6 +10,7 @@ import { useDeepLinking } from "@/hooks/useDeepLinking";
 import { gsap } from "gsap";
 import EnhancedBookPreviewModal from "./EnhancedBookPreviewModal";
 import EnhancedBookCover from "./EnhancedBookCover";
+import { AuthorRelationshipModal } from "./AuthorRelationshipModal";
 
 interface AuthorBooksSectionProps {
   selectedAuthor: ScifiAuthor | null;
@@ -28,6 +29,7 @@ const AuthorBooksSection = memo(({
   const previewButtonsRef = useRef<HTMLButtonElement[]>([]);
   const addButtonsRef = useRef<HTMLButtonElement[]>([]);
   const [selectedBookForPreview, setSelectedBookForPreview] = useState<any>(null);
+  const [isRelationshipModalOpen, setIsRelationshipModalOpen] = useState(false);
 
   // Add buttons to refs array
   const addToRefs = (el: HTMLButtonElement | null) => {
@@ -144,7 +146,10 @@ const AuthorBooksSection = memo(({
         {booksLoading ? (
           <LoadingSkeleton type="author-detail" />
         ) : (
-          <AuthorDetails author={selectedAuthor} />
+          <AuthorDetails 
+            author={selectedAuthor} 
+            onAnalyzeRelationships={() => setIsRelationshipModalOpen(true)}
+          />
         )}
 
         <div>
@@ -276,6 +281,14 @@ const AuthorBooksSection = memo(({
             };
             onAddToTransmissions(authorBook);
           }}
+        />
+      )}
+
+      {selectedAuthor && (
+        <AuthorRelationshipModal
+          isOpen={isRelationshipModalOpen}
+          onClose={() => setIsRelationshipModalOpen(false)}
+          author={selectedAuthor}
         />
       )}
     </>

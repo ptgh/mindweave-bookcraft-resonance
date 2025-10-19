@@ -3,13 +3,16 @@ import { memo, useState, useEffect } from "react";
 import { ScifiAuthor, AuthorBook } from "@/services/scifiAuthorsService";
 import { Transmission, getTransmissions } from "@/services/transmissionsService";
 import EnhancedBookPreviewModal from "./EnhancedBookPreviewModal";
+import { Network } from "lucide-react";
+import { StandardButton } from "./ui/standard-button";
 
 interface AuthorDetailsProps {
   author: ScifiAuthor;
   onNotableWorkClick?: (bookTitle: string) => void;
+  onAnalyzeRelationships?: () => void;
 }
 
-const AuthorDetails = memo(({ author, onNotableWorkClick }: AuthorDetailsProps) => {
+const AuthorDetails = memo(({ author, onNotableWorkClick, onAnalyzeRelationships }: AuthorDetailsProps) => {
   const [userTransmissions, setUserTransmissions] = useState<Transmission[]>([]);
   const [selectedBookForPreview, setSelectedBookForPreview] = useState<any>(null);
 
@@ -99,6 +102,20 @@ const AuthorDetails = memo(({ author, onNotableWorkClick }: AuthorDetailsProps) 
                 );
               })}
             </ul>
+          </div>
+        )}
+        
+        {onAnalyzeRelationships && (
+          <div className="mt-3 pt-3 border-t border-slate-700/50">
+            <StandardButton
+              onClick={onAnalyzeRelationships}
+              variant="standard"
+              size="sm"
+              className="w-full"
+            >
+              <Network className="w-3.5 h-3.5 mr-2" />
+              Analyze Relationships
+            </StandardButton>
           </div>
         )}
       </div>
