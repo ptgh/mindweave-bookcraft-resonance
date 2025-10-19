@@ -50,6 +50,9 @@ verify_jwt = true
 [functions.ai-reading-narrative]
 verify_jwt = true
 
+[functions.ai-temporal-analysis]
+verify_jwt = true
+
 [functions.ai-book-analysis]
 verify_jwt = false
 

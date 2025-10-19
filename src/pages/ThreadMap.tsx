@@ -4,12 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import { ChronoTimeline } from "@/components/ChronoTimeline";
 import GSAPButtonGroup from "@/components/GSAPButtonGroup";
-import { Calendar, Clock, BookOpen, TrendingUp, Brain } from "lucide-react";
+import { Calendar, Clock, BookOpen, TrendingUp, Brain, Sparkles } from "lucide-react";
 import { getTransmissions } from "@/services/transmissionsService";
 import { SEOHead } from "@/components/SEOHead";
+import { TemporalContextModal } from "@/components/TemporalContextModal";
+import { Button } from "@/components/ui/button";
+import { HistoricalContextService } from "@/services/historicalContext";
 
 const ThreadMap = () => {
   const [timeframe, setTimeframe] = useState<'month' | 'year' | 'all'>('year');
+  const [showTemporalModal, setShowTemporalModal] = useState(false);
 
   const { data: transmissions = [], isLoading } = useQuery({
     queryKey: ['transmissions'],
@@ -118,6 +122,16 @@ const ThreadMap = () => {
               selected={timeframe}
               onSelect={(id) => setTimeframe(id as 'month' | 'year' | 'all')}
             />
+            <Button
+              onClick={() => setShowTemporalModal(true)}
+              disabled={filteredTransmissions.length < 3}
+              variant="outline"
+              size="sm"
+              className="ml-auto bg-slate-800/50 border-blue-500/30 hover:border-blue-400 hover:bg-slate-700/50 text-slate-200"
+            >
+              <Sparkles className="w-4 h-4 mr-2 text-blue-400" />
+              Temporal Analysis
+            </Button>
           </div>
 
           <div className="grid gap-8 xl:grid-cols-3">
@@ -214,6 +228,33 @@ const ThreadMap = () => {
                 </div>
               </div>
 
+              {/* Historical Context Section */}
+              <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
+                <div className="flex items-center space-x-2 mb-6">
+                  <Brain className="w-5 h-5 text-cyan-400" />
+                  <h2 className="text-lg font-medium text-slate-200">Historical Context</h2>
+                </div>
+                <div className="space-y-3">
+                  {publicationYears.length > 0 ? (
+                    <>
+                      {HistoricalContextService.getMovementsInRange(
+                        Math.min(...publicationYears),
+                        Math.max(...publicationYears)
+                      ).slice(0, 3).map((movement, idx) => (
+                        <div key={idx} className="text-xs p-3 bg-slate-700/30 rounded border border-slate-600/30">
+                          <div className="font-semibold text-cyan-400 mb-1">{movement.name}</div>
+                          <div className="text-slate-400">{movement.description}</div>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <div className="text-slate-500 text-sm italic">
+                      Add books with publication years to see historical context
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {temporalJumps.length > 0 && (
                 <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
                   <div className="flex items-center space-x-2 mb-6">
@@ -244,6 +285,12 @@ const ThreadMap = () => {
             </div>
           </div>
         </main>
+
+        <TemporalContextModal
+          isOpen={showTemporalModal}
+          onClose={() => setShowTemporalModal(false)}
+          transmissions={filteredTransmissions}
+        />
       </div>
     </>
   );
