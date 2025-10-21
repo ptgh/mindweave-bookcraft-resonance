@@ -64,7 +64,7 @@ export const ReadingChallengeModal = ({ isOpen, onClose }: ReadingChallengeModal
       }
     } catch (error) {
       console.error('Error loading challenge:', error);
-      toast.error('Failed to load reading challenge');
+      toast.error('Failed to load transmission protocol');
     } finally {
       setIsLoading(false);
       setIsRegenerating(false);
@@ -99,11 +99,11 @@ export const ReadingChallengeModal = ({ isOpen, onClose }: ReadingChallengeModal
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto bg-slate-900/95 border-slate-700/50 backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle className="text-2xl font-light text-slate-200">
-              Reading Challenges
+              Transmission Protocol
             </DialogTitle>
           </DialogHeader>
           <div className="text-center py-12">
-            <p className="text-slate-400 mb-4">Sign in to access personalized reading challenges</p>
+            <p className="text-slate-400 mb-4">Sign in to access personalized transmission protocols</p>
           </div>
         </DialogContent>
       </Dialog>
@@ -116,7 +116,7 @@ export const ReadingChallengeModal = ({ isOpen, onClose }: ReadingChallengeModal
         <DialogHeader>
           <DialogTitle className="text-2xl font-light text-slate-200 flex items-center gap-3">
             <Target className="w-6 h-6 text-cyan-400" />
-            Reading Challenge
+            Transmission Protocol
           </DialogTitle>
         </DialogHeader>
 
@@ -159,7 +159,7 @@ export const ReadingChallengeModal = ({ isOpen, onClose }: ReadingChallengeModal
                   size="sm"
                   className="border-slate-600/50 hover:border-cyan-500/50 hover:bg-slate-800/50"
                 >
-                  {isRegenerating ? 'Generating...' : 'New Challenge'}
+                  {isRegenerating ? 'Generating...' : 'New Protocol'}
                 </Button>
               </div>
 
@@ -236,17 +236,17 @@ export const ReadingChallengeModal = ({ isOpen, onClose }: ReadingChallengeModal
 
             {/* Generated timestamp */}
             <div className="text-xs text-slate-500 text-center pt-4 border-t border-slate-700/30">
-              Challenge generated {new Date(challenge.created_at).toLocaleDateString()}
+              Protocol generated {new Date(challenge.created_at).toLocaleDateString()}
             </div>
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-slate-400 mb-4">No active challenge yet</p>
+            <p className="text-slate-400 mb-4">No active protocol yet</p>
             <Button
               onClick={() => loadChallenge(true)}
               className="bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-200"
             >
-              Generate Challenge
+              Generate Protocol
             </Button>
           </div>
         )}
