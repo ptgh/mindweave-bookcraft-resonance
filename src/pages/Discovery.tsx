@@ -3,16 +3,18 @@ import Header from "@/components/Header";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { StandardButton } from "@/components/ui/standard-button";
-import { Brain, BookOpen, Users, Search, Map, Eye, Building, Mail, Heart } from "lucide-react";
+import { Brain, BookOpen, Users, Search, Map, Eye, Building, Mail, Heart, Trophy } from "lucide-react";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 import { useState } from "react";
 import ContactModal from "@/components/ContactModal";
 import ContributionButton from "@/components/ContributionButton";
 import { SEOHead } from "@/components/SEOHead";
+import { ReadingChallengeModal } from "@/components/ReadingChallengeModal";
 
 const Discovery = () => {
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showChallengeModal, setShowChallengeModal] = useState(false);
 
   return (
     <>
@@ -145,6 +147,23 @@ const Discovery = () => {
                 </div>
               </Link>
             </div>
+
+            <div ref={addFeatureBlockRef} className="feature-block">
+              <button
+                onClick={() => setShowChallengeModal(true)}
+                className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-yellow-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-yellow-500/10 flex items-center space-x-6 w-full text-left"
+              >
+                <div className="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center group-hover:bg-yellow-500/30 transition-colors">
+                  <Trophy className="w-6 h-6 text-yellow-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-medium text-slate-200 mb-2">Reading Challenge</h2>
+                  <p className="text-slate-400 leading-relaxed text-sm">
+                    Personalized AI-generated goals
+                  </p>
+                </div>
+              </button>
+            </div>
           </div>
 
           <div className="text-center mt-16">
@@ -175,6 +194,11 @@ const Discovery = () => {
         <ContactModal 
           isOpen={showContactModal} 
           onClose={() => setShowContactModal(false)} 
+        />
+
+        <ReadingChallengeModal
+          isOpen={showChallengeModal}
+          onClose={() => setShowChallengeModal(false)}
         />
       </div>
     </>

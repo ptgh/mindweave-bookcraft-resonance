@@ -58,3 +58,6 @@ verify_jwt = false
 
 [functions.ai-author-analysis]
 verify_jwt = false
+
+[functions.ai-challenge-generator]
+verify_jwt = true

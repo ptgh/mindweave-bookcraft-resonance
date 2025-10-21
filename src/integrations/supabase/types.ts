@@ -745,6 +745,60 @@ export type Database = {
         }
         Relationships: []
       }
+      reading_challenges: {
+        Row: {
+          ai_encouragement: string | null
+          challenge_type: string
+          completed_at: string | null
+          created_at: string
+          current_progress: number
+          description: string
+          difficulty: string
+          expires_at: string | null
+          goal_count: number
+          id: string
+          metadata: Json | null
+          status: string
+          target_books: Json | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          ai_encouragement?: string | null
+          challenge_type: string
+          completed_at?: string | null
+          created_at?: string
+          current_progress?: number
+          description: string
+          difficulty?: string
+          expires_at?: string | null
+          goal_count?: number
+          id?: string
+          metadata?: Json | null
+          status?: string
+          target_books?: Json | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          ai_encouragement?: string | null
+          challenge_type?: string
+          completed_at?: string | null
+          created_at?: string
+          current_progress?: number
+          description?: string
+          difficulty?: string
+          expires_at?: string | null
+          goal_count?: number
+          id?: string
+          metadata?: Json | null
+          status?: string
+          target_books?: Json | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       reading_insights: {
         Row: {
           created_at: string | null
