@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import LoadingSpinner from "./LoadingSpinner";
 import { toast } from "sonner";
-import { Trophy, Target, Zap, Calendar, CheckCircle2 } from "lucide-react";
+import { Target, Zap, Calendar, CheckCircle2 } from "lucide-react";
 
 interface ReadingChallenge {
   id: string;
@@ -87,7 +87,7 @@ export const ReadingChallengeModal = ({ isOpen, onClose }: ReadingChallengeModal
   const getChallengeIcon = (type: string) => {
     switch (type) {
       case 'cluster_completion': return Target;
-      case 'author_dive': return Trophy;
+      case 'author_dive': return Target;
       case 'velocity': return Zap;
       default: return Target;
     }
@@ -96,7 +96,7 @@ export const ReadingChallengeModal = ({ isOpen, onClose }: ReadingChallengeModal
   if (!user) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-slate-900 border-slate-700">
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto bg-slate-900/95 border-slate-700/50 backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle className="text-2xl font-light text-slate-200">
               Reading Challenges
@@ -112,10 +112,10 @@ export const ReadingChallengeModal = ({ isOpen, onClose }: ReadingChallengeModal
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-slate-900 border-slate-700">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto bg-slate-900/95 border-slate-700/50 backdrop-blur-sm">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-light text-slate-200 flex items-center gap-2">
-            <Trophy className="w-6 h-6 text-yellow-400" />
+          <DialogTitle className="text-2xl font-light text-slate-200 flex items-center gap-3">
+            <Target className="w-6 h-6 text-cyan-400" />
             Reading Challenge
           </DialogTitle>
         </DialogHeader>
@@ -127,12 +127,12 @@ export const ReadingChallengeModal = ({ isOpen, onClose }: ReadingChallengeModal
         ) : challenge ? (
           <div className="space-y-6">
             {/* Challenge Header */}
-            <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
+            <div className="bg-slate-800/30 border border-slate-700/30 rounded-lg p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   {(() => {
                     const Icon = getChallengeIcon(challenge.challenge_type);
-                    return <Icon className="w-8 h-8 text-blue-400" />;
+                    return <Icon className="w-8 h-8 text-cyan-400" />;
                   })()}
                   <div>
                     <h3 className="text-xl font-medium text-slate-200">{challenge.title}</h3>
@@ -157,7 +157,7 @@ export const ReadingChallengeModal = ({ isOpen, onClose }: ReadingChallengeModal
                   disabled={isRegenerating}
                   variant="outline"
                   size="sm"
-                  className="bg-slate-800 border-slate-600 hover:bg-slate-700"
+                  className="border-slate-600/50 hover:border-cyan-500/50 hover:bg-slate-800/50"
                 >
                   {isRegenerating ? 'Generating...' : 'New Challenge'}
                 </Button>
@@ -171,9 +171,9 @@ export const ReadingChallengeModal = ({ isOpen, onClose }: ReadingChallengeModal
                     {challenge.current_progress} / {challenge.goal_count} books
                   </span>
                 </div>
-                <div className="w-full bg-slate-700/50 rounded-full h-2">
+                <div className="w-full bg-slate-700/30 rounded-full h-2">
                   <div
-                    className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full transition-all duration-500"
+                    className="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full transition-all duration-500"
                     style={{ width: `${(challenge.current_progress / challenge.goal_count) * 100}%` }}
                   />
                 </div>
@@ -181,15 +181,15 @@ export const ReadingChallengeModal = ({ isOpen, onClose }: ReadingChallengeModal
             </div>
 
             {/* Description */}
-            <div className="prose prose-invert prose-sm max-w-none">
+            <div className="bg-slate-800/20 border border-slate-700/20 rounded-lg p-5">
               <p className="text-slate-300 leading-relaxed">{challenge.description}</p>
             </div>
 
             {/* AI Encouragement */}
             {challenge.ai_encouragement && (
-              <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
-                <p className="text-cyan-300 text-sm italic leading-relaxed">
-                  {challenge.ai_encouragement}
+              <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-lg p-4">
+                <p className="text-cyan-200/90 text-sm italic leading-relaxed">
+                  "{challenge.ai_encouragement}"
                 </p>
               </div>
             )}
@@ -204,9 +204,9 @@ export const ReadingChallengeModal = ({ isOpen, onClose }: ReadingChallengeModal
                   {challenge.target_books.map((book, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-3 bg-slate-800/30 border border-slate-700/50 rounded p-3 hover:border-blue-500/30 transition-colors"
+                      className="flex items-center gap-3 bg-slate-800/20 border border-slate-700/30 rounded p-3 hover:border-cyan-500/30 transition-colors"
                     >
-                      <CheckCircle2 className="w-4 h-4 text-slate-600" />
+                      <CheckCircle2 className="w-4 h-4 text-slate-500" />
                       <span className="text-slate-300 text-sm">{book}</span>
                     </div>
                   ))}
@@ -235,7 +235,7 @@ export const ReadingChallengeModal = ({ isOpen, onClose }: ReadingChallengeModal
             )}
 
             {/* Generated timestamp */}
-            <div className="text-xs text-slate-500 text-center pt-4 border-t border-slate-700/50">
+            <div className="text-xs text-slate-500 text-center pt-4 border-t border-slate-700/30">
               Challenge generated {new Date(challenge.created_at).toLocaleDateString()}
             </div>
           </div>
@@ -244,7 +244,7 @@ export const ReadingChallengeModal = ({ isOpen, onClose }: ReadingChallengeModal
             <p className="text-slate-400 mb-4">No active challenge yet</p>
             <Button
               onClick={() => loadChallenge(true)}
-              className="bg-blue-500 hover:bg-blue-600"
+              className="bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-200"
             >
               Generate Challenge
             </Button>
