@@ -68,7 +68,7 @@ export const NewsletterSignup = () => {
           placeholder="Enter signal coordinates"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="bg-slate-800/30 border-slate-700/50 text-slate-200 placeholder:text-slate-500 focus:border-cyan-500/50 focus:bg-slate-800/50 transition-all text-sm h-9 pr-20"
+          className="bg-slate-800/30 border-slate-700/50 text-slate-200 placeholder:text-slate-500 focus:border-cyan-500/50 focus:bg-slate-800/50 transition-all text-sm h-9 pr-24"
           required
           disabled={isLoading}
         />
@@ -76,7 +76,7 @@ export const NewsletterSignup = () => {
           type="submit"
           size="sm"
           disabled={isLoading}
-          className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-3 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-200 text-xs"
+          className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-3 min-w-fit bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-200 text-xs"
         >
           {isLoading ? "..." : "Sync"}
         </Button>
