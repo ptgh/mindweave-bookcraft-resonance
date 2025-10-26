@@ -81,7 +81,7 @@ export const WelcomeNewsletterEmail = ({
 export default WelcomeNewsletterEmail;
 
 const main = {
-  backgroundColor: '#0f172a',
+  backgroundColor: '#020617',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
 };
 
@@ -100,31 +100,31 @@ const h1 = {
 };
 
 const text = {
-  color: '#e2e8f0',
+  color: '#cbd5e1',
   fontSize: '16px',
   lineHeight: '26px',
   margin: '0 0 24px',
 };
 
 const section = {
-  backgroundColor: '#1e293b',
+  backgroundColor: '#0f172a',
   borderRadius: '8px',
   padding: '24px',
   margin: '32px 0',
-  border: '1px solid #334155',
+  border: '1px solid rgba(51, 65, 85, 0.3)',
 };
 
 const sectionTitle = {
-  color: '#06b6d4',
-  fontSize: '14px',
-  fontWeight: '600',
+  color: '#22d3ee',
+  fontSize: '12px',
+  fontWeight: '400',
   textTransform: 'uppercase' as const,
-  letterSpacing: '1px',
+  letterSpacing: '1.5px',
   margin: '0 0 16px',
 };
 
 const listText = {
-  color: '#cbd5e1',
+  color: '#94a3b8',
   fontSize: '14px',
   lineHeight: '24px',
   margin: '0 0 12px',
@@ -141,33 +141,34 @@ const ctaSection = {
 };
 
 const button = {
-  backgroundColor: 'rgba(6, 182, 212, 0.2)',
+  backgroundColor: 'rgba(6, 182, 212, 0.15)',
   borderRadius: '6px',
-  color: '#06b6d4',
+  color: '#22d3ee',
   fontSize: '14px',
-  fontWeight: '600',
+  fontWeight: '500',
   textDecoration: 'none',
   textAlign: 'center' as const,
   display: 'inline-block',
   padding: '12px 32px',
-  border: '1px solid rgba(6, 182, 212, 0.3)',
+  border: '1px solid rgba(6, 182, 212, 0.25)',
+  letterSpacing: '0.3px',
 };
 
 const footer = {
   color: '#64748b',
-  fontSize: '14px',
-  lineHeight: '24px',
+  fontSize: '13px',
+  lineHeight: '22px',
   marginTop: '32px',
   fontStyle: 'italic' as const,
 };
 
 const footerLinks = {
-  color: '#64748b',
+  color: '#475569',
   fontSize: '12px',
   lineHeight: '20px',
   marginTop: '24px',
   paddingTop: '24px',
-  borderTop: '1px solid #334155',
+  borderTop: '1px solid rgba(51, 65, 85, 0.3)',
   textAlign: 'center' as const,
 };
 
