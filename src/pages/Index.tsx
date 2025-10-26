@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Mail, BookOpen, Search, Eye, Map, Circle, Sparkles } from "lucide-react";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import SignalInFocus from "@/components/SignalInFocus";
 import AddBookModal from "@/components/AddBookModal";
 import TransmissionsList from "@/components/TransmissionsList";
@@ -365,6 +366,8 @@ const Index = () => {
           onClose={() => setShowInsightsModal(false)}
           transmissions={books}
         />
+
+        <Footer />
       </div>
     </>
   );

@@ -11,9 +11,11 @@ interface AuthFormProps {
   password: string;
   showPassword: boolean;
   loading: boolean;
+  subscribeNewsletter?: boolean;
   onEmailChange: (email: string) => void;
   onPasswordChange: (password: string) => void;
   onTogglePassword: () => void;
+  onNewsletterChange?: (checked: boolean) => void;
   onSubmit: (e: React.FormEvent) => void;
   onToggleMode: () => void;
 }
@@ -24,9 +26,11 @@ const AuthForm = ({
   password,
   showPassword,
   loading,
+  subscribeNewsletter = true,
   onEmailChange,
   onPasswordChange,
   onTogglePassword,
+  onNewsletterChange,
   onSubmit,
   onToggleMode
 }: AuthFormProps) => {
@@ -80,6 +84,21 @@ const AuthForm = ({
           </button>
         </div>
       </div>
+
+      {isSignUp && onNewsletterChange && (
+        <div className="flex items-start gap-2">
+          <input
+            type="checkbox"
+            id="newsletter"
+            checked={subscribeNewsletter}
+            onChange={(e) => onNewsletterChange(e.target.checked)}
+            className="mt-1 w-4 h-4 rounded border-slate-600 bg-slate-700 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-slate-800"
+          />
+          <label htmlFor="newsletter" className="text-sm text-slate-300 cursor-pointer">
+            Join weekly transmissions (curated sci-fi insights & reading lists)
+          </label>
+        </div>
+      )}
 
       <Button
         type="submit"

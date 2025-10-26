@@ -1,5 +1,6 @@
 
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import AuthorMatrixHeader from "@/components/AuthorMatrixHeader";
 import AuthorsList from "@/components/AuthorsList";
 import AuthorBooksSection from "@/components/AuthorBooksSection";
@@ -80,6 +81,8 @@ const AuthorMatrix = () => {
             </div>
           </div>
         </main>
+
+        <Footer />
       </div>
     </>
   );

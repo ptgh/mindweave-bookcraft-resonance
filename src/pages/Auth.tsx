@@ -15,6 +15,7 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [subscribeNewsletter, setSubscribeNewsletter] = useState(true);
   const { toast } = useEnhancedToast();
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -50,6 +51,21 @@ const Auth = () => {
             description: "Please check your email and click the confirmation link to complete your registration.",
             variant: "success"
           });
+
+          // Subscribe to newsletter if opted in
+          if (subscribeNewsletter) {
+            try {
+              await supabase.functions.invoke('newsletter-subscribe', {
+                body: { 
+                  email: email.trim(), 
+                  userId: data.user.id 
+                }
+              });
+            } catch (error) {
+              console.error('Newsletter subscription error:', error);
+              // Don't show error to user, it's optional
+            }
+          }
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -176,9 +192,11 @@ const Auth = () => {
               password={password}
               showPassword={showPassword}
               loading={loading}
+              subscribeNewsletter={subscribeNewsletter}
               onEmailChange={setEmail}
               onPasswordChange={setPassword}
               onTogglePassword={() => setShowPassword(!showPassword)}
+              onNewsletterChange={setSubscribeNewsletter}
               onSubmit={handleAuth}
               onToggleMode={handleToggleMode}
             />
