@@ -27,6 +27,14 @@ export const WelcomeNewsletterEmail = ({
     <Preview>{isResubscribe ? 'Signal restored. Welcome back.' : 'Sync confirmed. Welcome to the network.'}</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Section style={logoSection}>
+          <img
+            src="https://mmnfjeukxandnhdaovzx.supabase.co/storage/v1/object/public/book-covers/leafnode-logo.png"
+            alt="Leafnode"
+            style={logo}
+          />
+        </Section>
+        
         <Heading style={h1}>
           {isResubscribe ? '◉ Signal Restored' : '◉ Sync Confirmed'}
         </Heading>
@@ -89,6 +97,17 @@ const container = {
   margin: '0 auto',
   padding: '40px 20px',
   maxWidth: '600px',
+};
+
+const logoSection = {
+  textAlign: 'center' as const,
+  marginBottom: '32px',
+};
+
+const logo = {
+  width: '64px',
+  height: '64px',
+  borderRadius: '12px',
 };
 
 const h1 = {

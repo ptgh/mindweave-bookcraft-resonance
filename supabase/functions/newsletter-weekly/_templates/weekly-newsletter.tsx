@@ -38,6 +38,14 @@ export const WeeklyNewsletterEmail = ({
     <Preview>This week's signals from Leafnode—{recommendations.length} books curated for you</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Section style={logoSection}>
+          <img
+            src="https://mmnfjeukxandnhdaovzx.supabase.co/storage/v1/object/public/book-covers/leafnode-logo.png"
+            alt="Leafnode"
+            style={logo}
+          />
+        </Section>
+        
         <Heading style={h1}>Weekly Transmission #{weekNumber}</Heading>
         <Text style={text}>
           New signals detected in the network. Here are this week's curated science fiction 
@@ -119,6 +127,17 @@ const container = {
   margin: '0 auto',
   padding: '40px 20px',
   maxWidth: '600px',
+};
+
+const logoSection = {
+  textAlign: 'center' as const,
+  marginBottom: '32px',
+};
+
+const logo = {
+  width: '64px',
+  height: '64px',
+  borderRadius: '12px',
 };
 
 const h1 = {
