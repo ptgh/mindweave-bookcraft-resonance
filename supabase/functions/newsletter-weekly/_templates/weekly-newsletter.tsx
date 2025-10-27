@@ -144,7 +144,7 @@ export const WeeklyNewsletterEmail = ({
 export default WeeklyNewsletterEmail;
 
 const main = {
-  backgroundColor: '#020617',
+  backgroundColor: '#0f172a',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
 };
 
@@ -182,11 +182,11 @@ const text = {
 };
 
 const statsSection = {
-  backgroundColor: '#0f172a',
+  backgroundColor: 'rgba(15, 23, 42, 0.5)',
   borderRadius: '8px',
   padding: '16px 24px',
   margin: '24px 0',
-  border: '1px solid rgba(51, 65, 85, 0.3)',
+  border: '1px solid rgba(100, 116, 139, 0.2)',
   textAlign: 'center' as const,
 };
 
@@ -199,11 +199,11 @@ const statText = {
 };
 
 const bookSection = {
-  backgroundColor: '#0f172a',
+  backgroundColor: 'rgba(15, 23, 42, 0.5)',
   borderRadius: '12px',
   padding: '24px',
   margin: '20px 0',
-  border: '1px solid rgba(51, 65, 85, 0.3)',
+  border: '1px solid rgba(100, 116, 139, 0.2)',
 };
 
 const bookCover = {
@@ -301,7 +301,7 @@ const secondaryButton = {
 const featuresSection = {
   margin: '32px 0',
   padding: '24px 0',
-  borderTop: '1px solid rgba(51, 65, 85, 0.3)',
+  borderTop: '1px solid rgba(100, 116, 139, 0.2)',
 };
 
 const sectionTitle = {

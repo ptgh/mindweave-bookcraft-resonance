@@ -96,7 +96,7 @@ export const WelcomeNewsletterEmail = ({
 export default WelcomeNewsletterEmail;
 
 const main = {
-  backgroundColor: '#020617',
+  backgroundColor: '#0f172a',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
 };
 
@@ -133,11 +133,11 @@ const text = {
 };
 
 const section = {
-  backgroundColor: '#0f172a',
+  backgroundColor: 'rgba(15, 23, 42, 0.5)',
   borderRadius: '8px',
   padding: '24px',
   margin: '32px 0',
-  border: '1px solid rgba(51, 65, 85, 0.3)',
+  border: '1px solid rgba(100, 116, 139, 0.2)',
 };
 
 const sectionTitle = {
