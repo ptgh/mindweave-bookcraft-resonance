@@ -17,6 +17,7 @@ interface BookRecommendation {
   author: string;
   coverUrl?: string;
   description: string;
+  tags?: string[];
   addUrl: string;
 }
 
@@ -60,19 +61,36 @@ export const WeeklyNewsletterEmail = ({
 
         {recommendations.map((book, index) => (
           <Section key={index} style={bookSection}>
-            {book.coverUrl && (
-              <Img
-                src={book.coverUrl}
-                alt={`${book.title} cover`}
-                style={bookCover}
-              />
-            )}
-            <Heading style={bookTitle}>{book.title}</Heading>
-            <Text style={bookAuthor}>by {book.author}</Text>
-            <Text style={bookDescription}>{book.description}</Text>
-            <Link href={book.addUrl} style={button}>
-              Add Signal →
-            </Link>
+            <table style={{ width: '100%' }}>
+              <tr>
+                <td style={{ width: '100px', verticalAlign: 'top', paddingRight: '16px' }}>
+                  {book.coverUrl && (
+                    <Img
+                      src={book.coverUrl}
+                      alt={`${book.title} cover`}
+                      style={bookCover}
+                    />
+                  )}
+                </td>
+                <td style={{ verticalAlign: 'top' }}>
+                  <Heading style={bookTitle}>{book.title}</Heading>
+                  <Text style={bookAuthor}>{book.author}</Text>
+                  {book.tags && book.tags.length > 0 && (
+                    <div style={tagsContainer}>
+                      {book.tags.map((tag, tagIndex) => (
+                        <span key={tagIndex} style={tag}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <Text style={bookDescription}>{book.description}</Text>
+                  <Link href={book.addUrl} style={button}>
+                    Add Signal →
+                  </Link>
+                </td>
+              </tr>
+            </table>
           </Section>
         ))}
 
@@ -100,6 +118,13 @@ export const WeeklyNewsletterEmail = ({
 
         <Text style={footer}>
           This transmission was compiled for {email}
+        </Text>
+        
+        <Text style={contactText}>
+          Questions? Reach us at{' '}
+          <Link href="mailto:connect@leafnode.co.uk" style={contactLink}>
+            connect@leafnode.co.uk
+          </Link>
         </Text>
         
         <Section style={footerLinks}>
@@ -176,52 +201,69 @@ const statText = {
 const bookSection = {
   backgroundColor: '#0f172a',
   borderRadius: '12px',
-  padding: '32px',
-  margin: '24px 0',
+  padding: '24px',
+  margin: '20px 0',
   border: '1px solid rgba(51, 65, 85, 0.3)',
 };
 
 const bookCover = {
-  width: '120px',
+  width: '100px',
   height: 'auto',
   borderRadius: '4px',
-  marginBottom: '16px',
   border: '1px solid rgba(51, 65, 85, 0.5)',
 };
 
 const bookTitle = {
   color: '#f1f5f9',
-  fontSize: '20px',
+  fontSize: '18px',
   fontWeight: '600',
-  margin: '0 0 8px',
-  lineHeight: '1.4',
+  margin: '0 0 6px',
+  lineHeight: '1.3',
 };
 
 const bookAuthor = {
-  color: '#22d3ee',
+  color: '#94a3b8',
   fontSize: '14px',
-  fontWeight: '500',
-  margin: '0 0 16px',
-  letterSpacing: '0.3px',
+  fontWeight: '400',
+  margin: '0 0 12px',
+};
+
+const tagsContainer = {
+  display: 'flex',
+  flexWrap: 'wrap' as const,
+  gap: '8px',
+  marginBottom: '12px',
+};
+
+const tagStyle = {
+  backgroundColor: 'rgba(6, 182, 212, 0.1)',
+  color: '#22d3ee',
+  fontSize: '12px',
+  padding: '4px 12px',
+  borderRadius: '4px',
+  border: '1px solid rgba(6, 182, 212, 0.2)',
+  display: 'inline-block',
+  marginRight: '6px',
+  marginBottom: '6px',
 };
 
 const bookDescription = {
   color: '#94a3b8',
   fontSize: '14px',
-  lineHeight: '22px',
-  margin: '0 0 20px',
+  lineHeight: '20px',
+  margin: '0 0 16px',
 };
 
 const button = {
   backgroundColor: 'rgba(6, 182, 212, 0.15)',
   borderRadius: '6px',
   color: '#22d3ee',
-  fontSize: '14px',
+  fontSize: '13px',
   fontWeight: '500',
   textDecoration: 'none',
   textAlign: 'center' as const,
   display: 'inline-block',
-  padding: '12px 32px',
+  padding: '10px 24px',
   border: '1px solid rgba(6, 182, 212, 0.25)',
   letterSpacing: '0.3px',
 };
@@ -289,6 +331,19 @@ const footer = {
   lineHeight: '22px',
   marginTop: '32px',
   fontStyle: 'italic' as const,
+};
+
+const contactText = {
+  color: '#94a3b8',
+  fontSize: '13px',
+  lineHeight: '22px',
+  marginTop: '16px',
+  textAlign: 'center' as const,
+};
+
+const contactLink = {
+  color: '#22d3ee',
+  textDecoration: 'none',
 };
 
 const footerLinks = {

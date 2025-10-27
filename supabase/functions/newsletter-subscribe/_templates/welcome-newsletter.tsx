@@ -71,6 +71,13 @@ export const WelcomeNewsletterEmail = ({
         <Text style={footer}>
           Keep your signal strong. Stay future-literate.
         </Text>
+        
+        <Text style={contactText}>
+          Questions? Reach us at{' '}
+          <Link href="mailto:connect@leafnode.co.uk" style={contactLink}>
+            connect@leafnode.co.uk
+          </Link>
+        </Text>
 
         <Text style={footerLinks}>
           <Link href={unsubscribeUrl} target="_blank" style={footerLink}>
@@ -179,6 +186,20 @@ const footer = {
   lineHeight: '22px',
   marginTop: '32px',
   fontStyle: 'italic' as const,
+  textAlign: 'center' as const,
+};
+
+const contactText = {
+  color: '#94a3b8',
+  fontSize: '13px',
+  lineHeight: '22px',
+  marginTop: '16px',
+  textAlign: 'center' as const,
+};
+
+const contactLink = {
+  color: '#22d3ee',
+  textDecoration: 'none',
 };
 
 const footerLinks = {
