@@ -45,9 +45,9 @@ export const WelcomeEmail = ({
       <Container style={container}>
         <Section style={header}>
           <Img
-            src="https://your-domain.com/leafnode-logo.png"
-            width="120"
-            height="40"
+            src="https://mmnfjeukxandnhdaovzx.supabase.co/storage/v1/object/public/book-covers/leafnode-logo.png"
+            width="64"
+            height="64"
             alt="Leafnode"
             style={logo}
           />
@@ -123,7 +123,7 @@ export const WelcomeEmail = ({
 export default WelcomeEmail
 
 const main = {
-  backgroundColor: '#0a0a0a',
+  backgroundColor: '#0f172a',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
 }
 
@@ -140,26 +140,29 @@ const header = {
 
 const logo = {
   margin: '0 auto',
+  borderRadius: '12px',
 }
 
 const h1 = {
-  color: '#ffffff',
+  color: '#06b6d4',
   fontSize: '28px',
-  fontWeight: 'bold',
+  fontWeight: '300',
   margin: '0 0 24px',
   textAlign: 'center' as const,
+  letterSpacing: '0.5px',
 }
 
 const h2 = {
-  color: '#ffffff',
+  color: '#22d3ee',
   fontSize: '22px',
-  fontWeight: 'bold',
+  fontWeight: '400',
   margin: '32px 0 16px',
   textAlign: 'center' as const,
+  letterSpacing: '0.3px',
 }
 
 const text = {
-  color: '#cccccc',
+  color: '#cbd5e1',
   fontSize: '16px',
   lineHeight: '26px',
   margin: '16px 0',
@@ -171,15 +174,17 @@ const confirmSection = {
 }
 
 const confirmButton = {
-  backgroundColor: '#3b82f6',
-  borderRadius: '8px',
-  color: '#ffffff',
+  backgroundColor: 'rgba(6, 182, 212, 0.15)',
+  borderRadius: '6px',
+  border: '1px solid rgba(6, 182, 212, 0.25)',
+  color: '#22d3ee',
   display: 'inline-block',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  padding: '16px 32px',
+  fontSize: '14px',
+  fontWeight: '500',
+  padding: '12px 32px',
   textDecoration: 'none',
   textAlign: 'center' as const,
+  letterSpacing: '0.3px',
 }
 
 const booksSection = {
@@ -194,8 +199,8 @@ const booksGrid = {
 }
 
 const bookCard = {
-  backgroundColor: '#1a1a1a',
-  border: '1px solid #333',
+  backgroundColor: 'rgba(15, 23, 42, 0.5)',
+  border: '1px solid rgba(100, 116, 139, 0.2)',
   borderRadius: '8px',
   overflow: 'hidden',
   transition: 'all 0.2s ease',
@@ -219,30 +224,31 @@ const bookInfo = {
 }
 
 const bookTitle = {
-  color: '#ffffff',
+  color: '#e2e8f0',
   fontSize: '14px',
-  fontWeight: 'bold',
+  fontWeight: '600',
   lineHeight: '20px',
   margin: '0 0 4px',
 }
 
 const bookAuthor = {
-  color: '#888888',
+  color: '#94a3b8',
   fontSize: '12px',
   lineHeight: '18px',
   margin: '0',
 }
 
 const footer = {
-  color: '#cccccc',
-  fontSize: '16px',
-  lineHeight: '26px',
+  color: '#64748b',
+  fontSize: '13px',
+  lineHeight: '22px',
   margin: '32px 0 16px',
   textAlign: 'center' as const,
+  fontStyle: 'italic' as const,
 }
 
 const disclaimer = {
-  color: '#666666',
+  color: '#475569',
   fontSize: '12px',
   lineHeight: '18px',
   margin: '24px 0 0',

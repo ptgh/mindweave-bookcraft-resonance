@@ -24,6 +24,22 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
+        // First check if user already exists
+        const { data: existingUser } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (existingUser?.user) {
+          toast({
+            title: "Account already exists",
+            description: "This email is already registered. You've been signed in.",
+            variant: "default",
+          });
+          return;
+        }
+
+        // User doesn't exist or password is wrong, proceed with signup
         const redirectUrl = `${window.location.origin}/`;
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -34,10 +50,10 @@ const Auth = () => {
         });
 
         if (error) {
-          if (error.message.includes('already registered')) {
+          if (error.message.includes('already registered') || error.message.includes('User already registered')) {
             toast({
               title: "Account exists",
-              description: "This email is already registered. Try signing in instead.",
+              description: "This email is already registered. Please sign in instead or use password reset if you forgot your password.",
               variant: "destructive",
             });
             setIsSignUp(false);
