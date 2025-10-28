@@ -67,3 +67,6 @@ verify_jwt = false
 
 [functions.newsletter-weekly]
 verify_jwt = false
+
+[functions.send-engagement-email]
+verify_jwt = false
