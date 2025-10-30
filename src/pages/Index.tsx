@@ -274,7 +274,14 @@ const Index = () => {
           <div ref={addFeatureBlockRef} className="feature-block flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
             <div className="flex-1">
               <h2 ref={heroTitleRef} className="text-slate-200 text-xl font-medium mb-1">Transmissions</h2>
-              <p className="text-slate-400 text-sm">Your reading frequency across time and space</p>
+              <p className="text-slate-400 text-sm">
+                Your reading frequency across time and space
+                <span className="ml-2 inline-flex items-center gap-1.5 text-xs">
+                  <span aria-hidden="true">•</span>
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                  <span>Signal archive: Active</span>
+                </span>
+              </p>
             </div>
             
             <StandardButton

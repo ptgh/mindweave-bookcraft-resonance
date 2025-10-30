@@ -150,15 +150,18 @@ const Discovery = () => {
 
           <div className="text-center mt-16">
             <div className="flex flex-wrap items-center justify-center gap-3 text-slate-400 text-xs">
+              <div className="scale-75 origin-center">
+                <NewsletterSignup />
+              </div>
+              
+              <span aria-hidden="true">•</span>
+              
               <div className="flex items-center gap-2">
                 <span className="inline-block w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
                 <span>Quantum resonance stabilized</span>
-                <span aria-hidden="true">•</span>
               </div>
               
-              <div className="w-full max-w-xs">
-                <NewsletterSignup />
-              </div>
+              <span aria-hidden="true">•</span>
               
               <StandardButton
                 onClick={() => setShowContactModal(true)}
