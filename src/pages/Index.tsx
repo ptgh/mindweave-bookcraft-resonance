@@ -2,8 +2,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Mail, BookOpen, Search, Eye, Map, Circle, Sparkles } from "lucide-react";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import SignalInFocus from "@/components/SignalInFocus";
+import { NewsletterSignup } from "@/components/NewsletterSignup";
 import AddBookModal from "@/components/AddBookModal";
 import TransmissionsList from "@/components/TransmissionsList";
 import { ReadingInsightsModal } from "@/components/ReadingInsightsModal";
@@ -315,25 +315,36 @@ const Index = () => {
           
           <div className="mt-12 pb-8">
             <footer className="text-center">
-              <div className="flex flex-col items-center justify-center gap-3">
-                <div className="flex items-center justify-center gap-2 text-slate-400 text-xs">
-                  <span className="inline-block w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                  <span>Quantum resonance stabilized</span>
-                  <span aria-hidden="true">•</span>
+              <div className="flex flex-col items-center justify-center gap-6">
+                {/* Newsletter Signup */}
+                <div className="w-full max-w-md">
+                  <NewsletterSignup />
+                  <p className="text-xs text-slate-500 mt-2">
+                    Weekly transmissions. Curated insights. Stay future-literate.
+                  </p>
                 </div>
-                <div className="flex items-center justify-center gap-2">
-                  <StandardButton
-                    onClick={() => setShowContactModal(true)}
-                    variant="standard"
-                    size="xs"
-                    className="inline-flex items-center justify-center gap-1 w-36 truncate focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 ring-0 outline-none"
-                  >
-                    <Mail className="w-3 h-3" />
-                    <span>Make Contact</span>
-                  </StandardButton>
-                  <ContributionButton 
-                    walletAddress="0xDd966928cC8EA2e61221170490D696BD224866bf"
-                  />
+                
+                {/* Status and Actions */}
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex items-center justify-center gap-2 text-slate-400 text-xs">
+                    <span className="inline-block w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                    <span>Quantum resonance stabilized</span>
+                    <span aria-hidden="true">•</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <StandardButton
+                      onClick={() => setShowContactModal(true)}
+                      variant="standard"
+                      size="xs"
+                      className="inline-flex items-center justify-center gap-1 w-36 truncate focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 ring-0 outline-none"
+                    >
+                      <Mail className="w-3 h-3" />
+                      <span>Make Contact</span>
+                    </StandardButton>
+                    <ContributionButton 
+                      walletAddress="0xDd966928cC8EA2e61221170490D696BD224866bf"
+                    />
+                  </div>
                 </div>
               </div>
             </footer>
@@ -366,8 +377,6 @@ const Index = () => {
           onClose={() => setShowInsightsModal(false)}
           transmissions={books}
         />
-
-        <Footer />
       </div>
     </>
   );
