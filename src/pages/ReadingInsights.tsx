@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { ReadingNarrative } from '@/components/ReadingNarrative';
 import { Button } from '@/components/ui/button';
 import { Brain, RefreshCw, ArrowLeft } from 'lucide-react';
@@ -118,7 +117,6 @@ export default function ReadingInsights() {
             </p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -197,8 +195,6 @@ export default function ReadingInsights() {
           )}
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

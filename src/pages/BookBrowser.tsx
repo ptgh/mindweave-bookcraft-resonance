@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import BookBrowserHeader from "@/components/BookBrowserHeader";
 import BookGrid from "@/components/BookGrid";
 import BookBrowserEmpty from "@/components/BookBrowserEmpty";
@@ -123,8 +122,6 @@ const BookBrowser = () => {
           onClose={closeAuthorPopup}
           onAuthorUpdate={setSelectedAuthor}
         />
-
-        <Footer />
       </div>
     </>
   );

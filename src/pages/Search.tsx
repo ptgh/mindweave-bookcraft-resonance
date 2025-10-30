@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import SearchInput from "@/components/SearchInput";
 import SearchResults from "@/components/SearchResults";
 import { SearchResult } from "@/services/searchService";
@@ -72,8 +71,6 @@ const Search = () => {
             )}
           </div>
         </main>
-
-        <Footer />
       </div>
     </>
   );

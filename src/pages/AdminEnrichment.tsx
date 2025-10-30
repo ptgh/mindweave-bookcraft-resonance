@@ -1,7 +1,6 @@
 import { AdminEnrichmentPanel } from "@/components/AdminEnrichmentPanel";
 import { AdminPopulateBooks } from "@/components/AdminPopulateBooks";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { ProtectedAdminRoute } from "@/components/ProtectedAdminRoute";
 
 const AdminEnrichment = () => {
@@ -25,8 +24,6 @@ const AdminEnrichment = () => {
             <AdminEnrichmentPanel />
           </div>
         </main>
-        
-        <Footer />
       </div>
     </ProtectedAdminRoute>
   );

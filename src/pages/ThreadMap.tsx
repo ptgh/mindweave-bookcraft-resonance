@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { ChronoTimeline } from "@/components/ChronoTimeline";
 import GSAPButtonGroup from "@/components/GSAPButtonGroup";
 import { Calendar, Clock, BookOpen, TrendingUp, Brain, Sparkles, Target } from "lucide-react";
@@ -304,8 +303,6 @@ const ThreadMap = () => {
           isOpen={showChallengeModal}
           onClose={() => setShowChallengeModal(false)}
         />
-
-        <Footer />
       </div>
     </>
   );

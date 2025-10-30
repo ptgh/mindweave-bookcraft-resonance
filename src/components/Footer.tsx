@@ -4,13 +4,10 @@ import { NewsletterSignup } from "./NewsletterSignup";
 const Footer = () => {
   return (
     <footer className="bg-slate-900 mt-auto border-t border-slate-800/50">
-      <div className="container mx-auto px-4 md:px-6 py-6 md:py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-center">
+      <div className="container mx-auto px-4 md:px-6 py-4 md:py-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:items-center">
           {/* Newsletter */}
           <div className="w-full">
-            <div className="text-xs font-light text-cyan-400 uppercase tracking-wider mb-2">
-              Join the Network
-            </div>
             <NewsletterSignup />
             <p className="text-xs text-slate-500 mt-2">
               Weekly transmissions. Curated insights. Stay future-literate.

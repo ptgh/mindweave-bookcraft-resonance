@@ -74,7 +74,7 @@ const emailStyles = {
     borderRadius: '12px',
   },
   h1: {
-    color: '#06b6d4',
+    color: '#22d3ee',
     fontSize: '28px',
     fontWeight: '300',
     margin: '0 0 24px',
@@ -97,7 +97,7 @@ const emailStyles = {
   },
   bookCard: {
     backgroundColor: 'rgba(15, 23, 42, 0.5)',
-    border: '1px solid rgba(100, 116, 139, 0.2)',
+    border: '1px solid rgba(34, 211, 238, 0.1)',
     borderRadius: '8px',
     padding: '16px',
     margin: '12px 0',
@@ -120,9 +120,9 @@ const emailStyles = {
     margin: '0',
   },
   button: {
-    backgroundColor: 'rgba(6, 182, 212, 0.15)',
+    backgroundColor: 'rgba(34, 211, 238, 0.15)',
     borderRadius: '6px',
-    border: '1px solid rgba(6, 182, 212, 0.25)',
+    border: '1px solid rgba(34, 211, 238, 0.25)',
     color: '#22d3ee',
     display: 'inline-block',
     fontSize: '14px',
