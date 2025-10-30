@@ -148,8 +148,8 @@ const Discovery = () => {
             </div>
           </div>
 
-          <div className="text-center mt-16">
-            <div className="flex flex-wrap items-center justify-center gap-3 text-slate-400 text-xs">
+          <div className="max-w-4xl mx-auto mt-16">
+            <div className="flex flex-wrap items-center justify-center gap-3 text-slate-400 text-xs px-6">
               <div className="scale-75 origin-center">
                 <NewsletterSignup />
               </div>

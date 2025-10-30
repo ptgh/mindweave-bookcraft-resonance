@@ -318,6 +318,31 @@ const Index = () => {
               />
             )}
           </div>
+
+          <div className="text-center mt-16">
+            <div className="flex flex-wrap items-center justify-center gap-3 text-slate-400 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                <span>Transmission relay: Active</span>
+              </div>
+              
+              <span aria-hidden="true">•</span>
+              
+              <StandardButton
+                onClick={() => setShowContactModal(true)}
+                variant="standard"
+                size="xs"
+                className="inline-flex items-center justify-center gap-1 w-36 truncate focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 ring-0 outline-none"
+              >
+                <Mail className="w-3 h-3" />
+                <span>Make Contact</span>
+              </StandardButton>
+              
+              <ContributionButton 
+                walletAddress="0xDd966928cC8EA2e61221170490D696BD224866bf"
+              />
+            </div>
+          </div>
           
         </main>
         
