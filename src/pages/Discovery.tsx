@@ -149,33 +149,37 @@ const Discovery = () => {
           </div>
 
           <div className="max-w-4xl mx-auto mt-16">
-            <div className="flex flex-wrap items-center justify-center gap-3 text-slate-400 text-xs px-6">
-              <div className="scale-75 origin-center">
-                <NewsletterSignup />
+            <div className="grid grid-cols-3 items-center text-slate-400 text-xs px-6 gap-4">
+              <div className="flex items-center justify-start gap-2">
+                <div className="scale-75 origin-left">
+                  <NewsletterSignup />
+                </div>
               </div>
               
-              <span aria-hidden="true">•</span>
+              <div className="flex items-center justify-center">
+                <span aria-hidden="true" className="mr-2">•</span>
+                <span className="inline-flex items-center space-x-2">
+                  <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse inline-block" />
+                  <span>Quantum resonance stabilized</span>
+                </span>
+                <span aria-hidden="true" className="ml-2">•</span>
+              </div>
               
-              <span className="inline-flex items-center space-x-2">
-                <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse inline-block" />
-                <span>Quantum resonance stabilized</span>
-              </span>
-              
-              <span aria-hidden="true">•</span>
-              
-              <StandardButton
-                onClick={() => setShowContactModal(true)}
-                variant="standard"
-                size="xs"
-                className="inline-flex items-center justify-center gap-1 w-36 truncate focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 ring-0 outline-none"
-              >
-                <Mail className="w-3 h-3" />
-                <span>Make Contact</span>
-              </StandardButton>
-              
-              <ContributionButton 
-                walletAddress="0xDd966928cC8EA2e61221170490D696BD224866bf"
-              />
+              <div className="flex items-center justify-end gap-2">
+                <StandardButton
+                  onClick={() => setShowContactModal(true)}
+                  variant="standard"
+                  size="xs"
+                  className="inline-flex items-center justify-center gap-1 w-36 truncate focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 ring-0 outline-none"
+                >
+                  <Mail className="w-3 h-3" />
+                  <span>Make Contact</span>
+                </StandardButton>
+                
+                <ContributionButton 
+                  walletAddress="0xDd966928cC8EA2e61221170490D696BD224866bf"
+                />
+              </div>
             </div>
           </div>
         </main>
