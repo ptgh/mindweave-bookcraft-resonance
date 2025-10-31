@@ -156,10 +156,10 @@ const Discovery = () => {
               
               <span aria-hidden="true">•</span>
               
-              <div className="inline-flex items-center space-x-2">
-                <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
+              <span className="inline-flex items-center space-x-2">
+                <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse inline-block" />
                 <span>Quantum resonance stabilized</span>
-              </div>
+              </span>
               
               <span aria-hidden="true">•</span>
               
