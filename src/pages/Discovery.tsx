@@ -149,7 +149,7 @@ const Discovery = () => {
           </div>
 
           <div className="max-w-4xl mx-auto mt-16">
-            <div className="grid grid-cols-3 items-center text-slate-400 text-xs px-6 gap-4">
+            <div className="grid grid-cols-3 items-center text-slate-400 text-xs gap-4">
               <div className="flex items-center justify-start gap-2">
                 <div className="scale-75 origin-left">
                   <NewsletterSignup />
@@ -170,9 +170,9 @@ const Discovery = () => {
                   onClick={() => setShowContactModal(true)}
                   variant="standard"
                   size="xs"
-                  className="inline-flex items-center justify-center gap-1 w-36 truncate focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 ring-0 outline-none"
+                  className="inline-flex items-center justify-center gap-1.5 px-3 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 ring-0 outline-none whitespace-nowrap"
                 >
-                  <Mail className="w-3 h-3" />
+                  <Mail className="w-3 h-3 flex-shrink-0" />
                   <span>Make Contact</span>
                 </StandardButton>
                 
