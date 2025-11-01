@@ -100,11 +100,11 @@ const ThreadMap = () => {
         description="Explore the temporal patterns and historical context of your science fiction reading journey"
         keywords={['reading timeline', 'book history', 'publication timeline', 'temporal analysis']}
       />
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
         <Header />
         
-        <main className="container mx-auto px-4 sm:px-6 py-8">
-          <div className="mb-8">
+        <main className="flex-1 overflow-hidden flex flex-col px-4 sm:px-6 py-6">
+          <div className="mb-6">
             <div className="flex items-center space-x-3 mb-2">
               <Brain className="w-8 h-8 text-blue-400" />
               <h1 className="text-2xl sm:text-3xl font-light text-slate-200">Chrono Thread</h1>
@@ -112,7 +112,7 @@ const ThreadMap = () => {
             <p className="text-slate-400 text-sm sm:text-base">Temporal navigation • Literary chronology through your transmission timeline</p>
           </div>
 
-          <div className="mb-6 flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
             <span className="text-slate-300 text-sm">Temporal Scope:</span>
             <GSAPButtonGroup
               buttons={[
@@ -141,9 +141,9 @@ const ThreadMap = () => {
             </button>
           </div>
 
-          <div className="grid gap-8 xl:grid-cols-3">
-            {/* Chrono Timeline Visualization */}
-            <div className="xl:col-span-2 bg-slate-800/50 rounded-lg border border-slate-700 p-6">
+          <div className="flex-1 overflow-hidden grid grid-cols-2 gap-6">
+            {/* Left Column: Chrono Timeline */}
+            <div className="overflow-y-auto scrollbar-hide bg-slate-800/50 rounded-lg border border-slate-700 p-6">
               <div className="flex items-center space-x-2 mb-6">
                 <Clock className="w-5 h-5 text-blue-400" />
                 <h2 className="text-lg font-medium text-slate-200">Temporal Thread</h2>
@@ -159,7 +159,7 @@ const ThreadMap = () => {
                 </div>
               ) : filteredTransmissions.length > 0 ? (
                 <div className="min-h-[400px]">
-                  <ChronoTimeline transmissions={filteredTransmissions} />
+                  <ChronoTimeline transmissions={filteredTransmissions.slice(0, 10)} />
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-[400px] text-slate-400">
@@ -172,8 +172,8 @@ const ThreadMap = () => {
               )}
             </div>
 
-            {/* Temporal Stats Panel */}
-            <div className="space-y-8 flex flex-col">
+            {/* Right Column: Temporal Stats Panels */}
+            <div className="overflow-y-auto scrollbar-hide space-y-6">
               <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
                 <div className="flex items-center space-x-2 mb-6">
                   <Calendar className="w-5 h-5 text-green-400" />
@@ -203,7 +203,7 @@ const ThreadMap = () => {
                 </div>
               </div>
 
-              <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6 flex-1">
+              <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
                 <div className="flex items-center space-x-2 mb-6">
                   <TrendingUp className="w-5 h-5 text-purple-400" />
                   <h2 className="text-lg font-medium text-slate-200">Era Distribution</h2>
@@ -235,7 +235,6 @@ const ThreadMap = () => {
                 </div>
               </div>
 
-              {/* Historical Context Section */}
               <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
                 <div className="flex items-center space-x-2 mb-6">
                   <Brain className="w-5 h-5 text-cyan-400" />
@@ -280,15 +279,6 @@ const ThreadMap = () => {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-
-          <div className="mt-12 text-center">
-            <div className="inline-flex flex-wrap items-center justify-center space-x-2 text-slate-500 text-xs">
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-              <span>Temporal threads: {totalTransmissions > 0 ? 'Active' : 'Dormant'}</span>
-              <div className="w-1 h-1 bg-slate-600 rounded-full" />
-              <span>Chronological mapping: {yearRange ? `${yearRange.span}y span` : 'Awaiting data'}</span>
             </div>
           </div>
         </main>
