@@ -159,7 +159,7 @@ const ThreadMap = () => {
                 </div>
               ) : filteredTransmissions.length > 0 ? (
                 <div className="min-h-[400px]">
-                  <ChronoTimeline transmissions={filteredTransmissions.slice(0, 10)} />
+                  <ChronoTimeline transmissions={filteredTransmissions} />
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-[400px] text-slate-400">
