@@ -70,3 +70,9 @@ verify_jwt = false
 
 [functions.send-engagement-email]
 verify_jwt = false
+
+[functions.analyze-temporal-context]
+verify_jwt = true
+
+[functions.enrich-timeline-data]
+verify_jwt = false

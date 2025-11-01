@@ -972,6 +972,33 @@ export type Database = {
         }
         Relationships: []
       }
+      temporal_analysis_cache: {
+        Row: {
+          analysis: Json
+          created_at: string
+          generated_at: string
+          id: string
+          temporal_signature: string
+          user_id: string
+        }
+        Insert: {
+          analysis: Json
+          created_at?: string
+          generated_at?: string
+          id?: string
+          temporal_signature: string
+          user_id: string
+        }
+        Update: {
+          analysis?: Json
+          created_at?: string
+          generated_at?: string
+          id?: string
+          temporal_signature?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       transmissions: {
         Row: {
           apple_link: string | null

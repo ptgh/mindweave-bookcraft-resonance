@@ -8,11 +8,13 @@ import { getTransmissions } from "@/services/transmissionsService";
 import { SEOHead } from "@/components/SEOHead";
 import { TemporalContextModal } from "@/components/TemporalContextModal";
 import { ReadingChallengeModal } from "@/components/ReadingChallengeModal";
-import { HistoricalContextService } from "@/services/historicalContext";
+import { TemporalAnalysisPanel } from "@/components/TemporalAnalysisPanel";
+import { useAuth } from "@/hooks/useAuth";
 
 const ThreadMap = () => {
   const [showTemporalModal, setShowTemporalModal] = useState(false);
   const [showChallengeModal, setShowChallengeModal] = useState(false);
+  const { session } = useAuth();
 
   const { data: transmissions = [], isLoading } = useQuery({
     queryKey: ['transmissions'],
@@ -207,31 +209,7 @@ const ThreadMap = () => {
                 </div>
               </div>
 
-              <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
-                <div className="flex items-center space-x-2 mb-6">
-                  <Brain className="w-5 h-5 text-cyan-400" />
-                  <h2 className="text-lg font-medium text-slate-200">Historical Context</h2>
-                </div>
-                <div className="space-y-3">
-                  {publicationYears.length > 0 ? (
-                    <>
-                      {HistoricalContextService.getMovementsInRange(
-                        Math.min(...publicationYears),
-                        Math.max(...publicationYears)
-                      ).slice(0, 3).map((movement, idx) => (
-                        <div key={idx} className="text-xs p-3 bg-slate-700/30 rounded border border-slate-600/30">
-                          <div className="font-semibold text-cyan-400 mb-1">{movement.name}</div>
-                          <div className="text-slate-400">{movement.description}</div>
-                        </div>
-                      ))}
-                    </>
-                  ) : (
-                    <div className="text-slate-500 text-sm italic">
-                      Add books with publication years to see historical context
-                    </div>
-                  )}
-                </div>
-              </div>
+              <TemporalAnalysisPanel userId={session?.user?.id || null} />
 
               {temporalJumps.length > 0 && (
                 <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
