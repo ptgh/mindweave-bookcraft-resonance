@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Brain, ChevronDown, ChevronRight, Sparkles, Clock, Zap, BookOpen, User, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from './ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
 import { TEMPORAL_CONTEXT_TAGS } from '@/constants/temporalTags';
@@ -47,6 +46,15 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
   useEffect(() => {
     if (!userId) return;
 
+    const getEra = (year: number): string => {
+      if (year < 1900) return 'Victorian Era';
+      if (year < 1920) return 'Edwardian Era';
+      if (year < 1950) return 'Early Modern';
+      if (year < 1980) return 'Mid-Century';
+      if (year < 2000) return 'Late 20th Century';
+      return '21st Century';
+    };
+
     const fetchBooks = async () => {
       const { data, error } = await supabase
         .from('transmissions')
@@ -60,29 +68,23 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
 
       setBooks(data || []);
 
-      // Analyze era distribution from temporal tags
+      // Build era distribution from tags when present, otherwise from publication year
       const eraMap = new Map<string, Book[]>();
       
-      data?.forEach(book => {
-        const temporalTags = book.temporal_context_tags || [];
-        const eras = temporalTags.filter(tag => 
-          TEMPORAL_CONTEXT_TAGS.literaryEra.includes(tag as any)
-        );
-        
-        eras.forEach(era => {
-          if (!eraMap.has(era)) {
-            eraMap.set(era, []);
-          }
-          eraMap.get(era)!.push(book);
+      (data || []).forEach((book) => {
+        const tags = book.temporal_context_tags || [];
+        const tagEras = tags.filter((t) => TEMPORAL_CONTEXT_TAGS.literaryEra.includes(t as any));
+        const derivedEra = !tagEras.length && book.publication_year ? [getEra(book.publication_year)] : tagEras;
+
+        derivedEra.forEach((era) => {
+          if (!eraMap.has(era)) eraMap.set(era, []);
+          eraMap.get(era)!.push(book as Book);
         });
       });
 
-      // Convert to array and sort by count
-      const eraArray = Array.from(eraMap.entries()).map(([era, books]) => ({
-        era,
-        count: books.length,
-        books
-      })).sort((a, b) => b.count - a.count);
+      const eraArray = Array.from(eraMap.entries())
+        .map(([era, books]) => ({ era, count: books.length, books }))
+        .sort((a, b) => b.count - a.count);
 
       setEraData(eraArray);
     };
@@ -224,7 +226,7 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
         <div className="space-y-2">
           {eraData.length === 0 ? (
             <p className="text-xs text-slate-400">
-              No temporal tags found. Add temporal context tags to your books to explore historical patterns.
+              No eras detected yet. Add publication years or temporal context tags to your books to explore historical patterns.
             </p>
           ) : (
             <>
