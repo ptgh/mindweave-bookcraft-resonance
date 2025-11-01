@@ -319,35 +319,11 @@ const Index = () => {
             )}
           </div>
 
-          <div className="max-w-4xl mx-auto mt-16">
-            <div className="grid grid-cols-3 items-center text-slate-400 text-xs gap-4">
-              <div className="flex items-center justify-start gap-2">
-                {/* Left column - empty for alignment */}
-              </div>
-              
-              <div className="flex items-center justify-center">
-                <span className="inline-flex items-center space-x-2">
-                  <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse inline-block" />
-                  <span>Transmission relay: Active</span>
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-end gap-2">
-                <StandardButton
-                  onClick={() => setShowContactModal(true)}
-                  variant="standard"
-                  size="xs"
-                  className="inline-flex items-center justify-center gap-1.5 px-3 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 ring-0 outline-none whitespace-nowrap"
-                >
-                  <Mail className="w-3 h-3 flex-shrink-0" />
-                  <span>Make Contact</span>
-                </StandardButton>
-                
-                <ContributionButton 
-                  walletAddress="0xDd966928cC8EA2e61221170490D696BD224866bf"
-                />
-              </div>
-            </div>
+          <div className="text-center mt-16">
+            <span className="inline-flex items-center space-x-2 text-slate-400 text-xs">
+              <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse inline-block" />
+              <span>Transmission relay: Active</span>
+            </span>
           </div>
           
         </main>
