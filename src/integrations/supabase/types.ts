@@ -992,6 +992,7 @@ export type Database = {
           reading_velocity_score: number | null
           resonance_labels: string | null
           tags: string | null
+          temporal_context_tags: string[] | null
           thematic_constellation: string | null
           title: string | null
           user_id: string | null
@@ -1015,6 +1016,7 @@ export type Database = {
           reading_velocity_score?: number | null
           resonance_labels?: string | null
           tags?: string | null
+          temporal_context_tags?: string[] | null
           thematic_constellation?: string | null
           title?: string | null
           user_id?: string | null
@@ -1038,6 +1040,7 @@ export type Database = {
           reading_velocity_score?: number | null
           resonance_labels?: string | null
           tags?: string | null
+          temporal_context_tags?: string[] | null
           thematic_constellation?: string | null
           title?: string | null
           user_id?: string | null

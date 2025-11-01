@@ -18,6 +18,7 @@ import { getAuthorByName, ScifiAuthor, findOrCreateAuthor } from '@/services/sci
 import { GenreInferenceService } from '@/services/genreInferenceService';
 import { SciFiGenre, getEraForYear } from '@/constants/scifiGenres';
 import { filterConceptualTags } from '@/constants/conceptualTags';
+import { TEMPORAL_CONTEXT_TAGS, getTagCategory } from '@/constants/temporalTags';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -758,6 +759,71 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                               </Badge>
                             ))}
                           </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Temporal Context - NEW STRUCTURED VERSION */}
+                    {(() => {
+                      const temporalTags = node.transmission.temporal_context_tags || [];
+                      if (temporalTags.length === 0) return null;
+                      
+                      // Categorize tags by type
+                      const literaryEra = temporalTags.filter(tag => 
+                        TEMPORAL_CONTEXT_TAGS.literaryEra.includes(tag as any)
+                      );
+                      const historicalForces = temporalTags.filter(tag => 
+                        TEMPORAL_CONTEXT_TAGS.historicalForces.includes(tag as any)
+                      );
+                      const techContext = temporalTags.filter(tag => 
+                        TEMPORAL_CONTEXT_TAGS.technologicalContext.includes(tag as any)
+                      );
+                      
+                      return (
+                        <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600/30">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Clock className="w-4 h-4 text-purple-400" />
+                            <span className="text-sm font-medium text-purple-300">Temporal Context</span>
+                          </div>
+                          
+                          {literaryEra.length > 0 && (
+                            <div className="mb-2">
+                              <span className="text-xs text-slate-400">Era:</span>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {literaryEra.map((tag, idx) => (
+                                  <Badge key={idx} className="text-xs bg-purple-500/30 text-purple-200 border-purple-400/40">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {historicalForces.length > 0 && (
+                            <div className="mb-2">
+                              <span className="text-xs text-slate-400">Forces:</span>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {historicalForces.map((tag, idx) => (
+                                  <Badge key={idx} className="text-xs bg-amber-500/30 text-amber-200 border-amber-400/40">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {techContext.length > 0 && (
+                            <div>
+                              <span className="text-xs text-slate-400">Tech:</span>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {techContext.map((tag, idx) => (
+                                  <Badge key={idx} className="text-xs bg-blue-500/30 text-blue-200 border-blue-400/40">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     })()}

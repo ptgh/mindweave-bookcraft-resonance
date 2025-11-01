@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Transmission } from '@/services/transmissionsService';
-import { PatternRecognitionService } from '@/services/patternRecognition';
+import { PatternRecognitionService, TemporalCluster, TemporalBridge, TemporalEvolution } from '@/services/patternRecognition';
 
 export const usePatternRecognition = (transmissions: Transmission[]) => {
   const clusters = useMemo(() => 
@@ -23,6 +23,21 @@ export const usePatternRecognition = (transmissions: Transmission[]) => {
     [transmissions]
   );
 
+  const temporalClusters = useMemo(() =>
+    PatternRecognitionService.detectTemporalClusters(transmissions),
+    [transmissions]
+  );
+
+  const temporalBridges = useMemo(() =>
+    PatternRecognitionService.findTemporalBridges(transmissions),
+    [transmissions]
+  );
+
+  const temporalEvolution = useMemo(() =>
+    PatternRecognitionService.detectTemporalEvolution(transmissions),
+    [transmissions]
+  );
+
   const getBookClusters = (bookId: string) => 
     PatternRecognitionService.getBookClusterInfo(bookId, clusters);
 
@@ -34,6 +49,9 @@ export const usePatternRecognition = (transmissions: Transmission[]) => {
     bridges,
     velocities,
     influenceNetwork,
+    temporalClusters,
+    temporalBridges,
+    temporalEvolution,
     getBookClusters,
     getBookBridges
   };

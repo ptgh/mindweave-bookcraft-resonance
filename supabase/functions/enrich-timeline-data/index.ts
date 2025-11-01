@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { TEMPORAL_CONTEXT_TAGS } from '../_shared/temporalTags.ts';
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -23,10 +24,9 @@ interface BookData {
 interface EnrichedBookData {
   publication_year: number;
   narrative_time_period: string;
-  historical_context: string;
-  temporal_significance: string;
-  era_classification: string;
-  connections: string[];
+  literary_era: string[];
+  historical_forces: string[];
+  technological_context: string[];
 }
 
 serve(async (req) => {
@@ -57,17 +57,9 @@ serve(async (req) => {
 
     for (const book of transmissions || []) {
       try {
-        const prompt = `Analyze this science fiction book and provide temporal information. Title: "${book.title}" by ${book.author}.
+        const prompt = `Analyze this science fiction book's temporal context: "${book.title}" by ${book.author}.
 
-Respond with ONLY a valid JSON object (no markdown, no code blocks, no explanations) containing these exact fields:
-{
-  "publication_year": (number - actual publication year),
-  "narrative_time_period": (string - when story takes place, e.g. "2157", "Far Future", "22nd Century"),
-  "historical_context": (string - brief context about significance),
-  "temporal_significance": (string - why important in SF chronology),
-  "era_classification": (string - literary era like "Golden Age", "New Wave", "Cyberpunk"),
-  "connections": (array of strings - related themes/concepts)
-}`;
+You must select appropriate tags from the controlled vocabulary provided in the tool schema. Be selective and precise - choose only the most relevant tags that directly apply to this book's historical and technological context.`;
 
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -78,24 +70,78 @@ Respond with ONLY a valid JSON object (no markdown, no code blocks, no explanati
           body: JSON.stringify({
             model: 'gpt-4o-mini',
             messages: [
-              { role: 'system', content: 'You are an expert in science fiction literature and chronology. Provide accurate, well-researched information about SF books and their temporal contexts.' },
+              { 
+                role: 'system', 
+                content: 'You are an expert in science fiction literature and history. Analyze books and select appropriate temporal context tags from the provided controlled vocabulary. Be selective - only choose tags that directly apply to the book.' 
+              },
               { role: 'user', content: prompt }
             ],
+            tools: [{
+              type: "function",
+              function: {
+                name: "enrich_temporal_context",
+                description: "Enrich a science fiction book with structured temporal metadata",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    publication_year: { 
+                      type: "number",
+                      description: "Actual publication year of the book"
+                    },
+                    narrative_time_period: { 
+                      type: "string",
+                      description: "When the story takes place (e.g., '2157', 'Far Future', '22nd Century')"
+                    },
+                    literary_era: {
+                      type: "array",
+                      description: "Literary movement(s) the book belongs to - select 1-3 most relevant",
+                      items: {
+                        type: "string",
+                        enum: TEMPORAL_CONTEXT_TAGS.literaryEra
+                      }
+                    },
+                    historical_forces: {
+                      type: "array",
+                      description: "Historical context that influenced the book - select 2-5 most relevant",
+                      items: {
+                        type: "string",
+                        enum: TEMPORAL_CONTEXT_TAGS.historicalForces
+                      }
+                    },
+                    technological_context: {
+                      type: "array",
+                      description: "Technological era(s) relevant to the book - select 2-5 most relevant",
+                      items: {
+                        type: "string",
+                        enum: TEMPORAL_CONTEXT_TAGS.technologicalContext
+                      }
+                    }
+                  },
+                  required: ["publication_year", "narrative_time_period", "literary_era", "historical_forces", "technological_context"]
+                }
+              }
+            }],
+            tool_choice: { type: "function", function: { name: "enrich_temporal_context" } },
             temperature: 0.3,
           }),
         });
 
         const aiResponse = await response.json();
-        let content = aiResponse.choices[0].message.content.trim();
+        const toolCall = aiResponse.choices[0].message.tool_calls?.[0];
         
-        // Remove markdown code blocks if present
-        if (content.startsWith('```json')) {
-          content = content.replace(/```json\n?/, '').replace(/```$/, '').trim();
-        } else if (content.startsWith('```')) {
-          content = content.replace(/```\n?/, '').replace(/```$/, '').trim();
+        if (!toolCall) {
+          console.error(`No tool call for ${book.title}`);
+          continue;
         }
-        
-        const enrichedInfo = JSON.parse(content);
+
+        const enrichedInfo = JSON.parse(toolCall.function.arguments);
+
+        // Flatten all temporal tags into single array
+        const temporal_tags = [
+          ...(enrichedInfo.literary_era || []),
+          ...(enrichedInfo.historical_forces || []),
+          ...(enrichedInfo.technological_context || [])
+        ];
 
         // Update the database with enriched information
         const { error: updateError } = await supabase
@@ -103,8 +149,7 @@ Respond with ONLY a valid JSON object (no markdown, no code blocks, no explanati
           .update({
             publication_year: enrichedInfo.publication_year,
             narrative_time_period: enrichedInfo.narrative_time_period,
-            historical_context_tags: enrichedInfo.connections,
-            notes: enrichedInfo.historical_context + '\n\nTemporal Significance: ' + enrichedInfo.temporal_significance
+            temporal_context_tags: temporal_tags
           })
           .eq('id', book.id);
 

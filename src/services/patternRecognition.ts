@@ -1,5 +1,6 @@
 import { Transmission } from '@/services/transmissionsService';
 import { filterConceptualTags } from '@/constants/conceptualTags';
+import { TEMPORAL_CONTEXT_TAGS, getTagCategory } from '@/constants/temporalTags';
 
 export interface ThematicCluster {
   id: string;
@@ -32,6 +33,33 @@ export interface InfluenceNetwork {
   }>;
 }
 
+export interface TemporalCluster {
+  id: string;
+  era: string;
+  books: string[];
+  strength: number;
+  historicalForces: string[];
+  technologicalContext: string[];
+}
+
+export interface TemporalBridge {
+  bookId1: string;
+  bookId2: string;
+  bridgeType: 'era' | 'force' | 'tech' | 'evolution' | 'cross-temporal';
+  description: string;
+  strength: number;
+}
+
+export interface TemporalEvolution {
+  conceptualTheme: string;
+  timeline: Array<{
+    era: string;
+    bookIds: string[];
+    manifestation: string;
+  }>;
+  evolutionStrength: number;
+}
+
 export class PatternRecognitionService {
   /**
    * Detect thematic clusters in a collection of books
@@ -41,10 +69,11 @@ export class PatternRecognitionService {
     const clusters: Map<string, ThematicCluster> = new Map();
     
     transmissions.forEach(book => {
-      // Use both conceptual tags and context tags for clustering
+      // Use conceptual tags, temporal tags, and legacy context tags
       const conceptualTags = filterConceptualTags(book.tags || []);
+      const temporalTags = book.temporal_context_tags || [];
       const contextTags = book.historical_context_tags || [];
-      const allTags = [...conceptualTags, ...contextTags];
+      const allTags = [...conceptualTags, ...temporalTags, ...contextTags];
       
       allTags.forEach(tag => {
         if (!tag || !tag.trim()) return;
@@ -73,7 +102,7 @@ export class PatternRecognitionService {
 
   /**
    * Find conceptual bridges between seemingly disparate books
-   * Includes cross-taxonomy bridges
+   * Now includes temporal bridges and cross-temporal connections
    */
   static findConceptualBridges(transmissions: Transmission[]): ConceptualBridge[] {
     const bridges: ConceptualBridge[] = [];
@@ -88,22 +117,37 @@ export class PatternRecognitionService {
         const conceptualTags2 = new Set(filterConceptualTags(book2.tags || []));
         const commonConceptual = Array.from(conceptualTags1).filter(tag => conceptualTags2.has(tag));
         
-        // Check context tag bridges
+        // Check temporal tag bridges (NEW)
+        const temporalTags1 = new Set(book1.temporal_context_tags || []);
+        const temporalTags2 = new Set(book2.temporal_context_tags || []);
+        const commonTemporal = Array.from(temporalTags1).filter(tag => temporalTags2.has(tag));
+        
+        // Check legacy context tag bridges
         const contextTags1 = new Set(book1.historical_context_tags || []);
         const contextTags2 = new Set(book2.historical_context_tags || []);
         const commonContext = Array.from(contextTags1).filter(tag => contextTags2.has(tag));
         
-        // Create bridges for conceptual tags
+        // Create bridges for conceptual tags (strength 2.0)
         commonConceptual.forEach(bridgeConcept => {
           bridges.push({
             bookId1: book1.id.toString(),
             bookId2: book2.id.toString(),
             bridgeConcept: `[Conceptual] ${bridgeConcept}`,
-            strength: 2
+            strength: 2.0
           });
         });
         
-        // Create bridges for context tags
+        // Create bridges for temporal tags (strength 1.8)
+        commonTemporal.forEach(bridgeConcept => {
+          bridges.push({
+            bookId1: book1.id.toString(),
+            bookId2: book2.id.toString(),
+            bridgeConcept: `[Temporal] ${bridgeConcept}`,
+            strength: 1.8
+          });
+        });
+        
+        // Create bridges for legacy context tags (strength 1.5)
         commonContext.forEach(bridgeConcept => {
           bridges.push({
             bookId1: book1.id.toString(),
@@ -113,13 +157,23 @@ export class PatternRecognitionService {
           });
         });
         
-        // Cross-taxonomy bridge: stronger connection if books share both types
+        // Cross-temporal bridge: Conceptual + Temporal = strongest connection (strength 3.5)
+        if (commonConceptual.length > 0 && commonTemporal.length > 0) {
+          bridges.push({
+            bookId1: book1.id.toString(),
+            bookId2: book2.id.toString(),
+            bridgeConcept: `[Cross-Temporal] ${commonConceptual[0]} × ${commonTemporal[0]}`,
+            strength: 3.5
+          });
+        }
+        
+        // Cross-taxonomy bridge: Conceptual + Context (strength 3.0)
         if (commonConceptual.length > 0 && commonContext.length > 0) {
           bridges.push({
             bookId1: book1.id.toString(),
             bookId2: book2.id.toString(),
             bridgeConcept: `[Cross-Taxonomy] ${commonConceptual[0]} + ${commonContext[0]}`,
-            strength: 3
+            strength: 3.0
           });
         }
       }
@@ -136,10 +190,11 @@ export class PatternRecognitionService {
     const themeActivity: Map<string, Date[]> = new Map();
     
     transmissions.forEach(book => {
-      // Use conceptual tags, context tags, and genres
+      // Use conceptual tags, temporal tags, and legacy context tags
       const conceptualTags = filterConceptualTags(book.tags || []);
+      const temporalTags = book.temporal_context_tags || [];
       const contextTags = book.historical_context_tags || [];
-      const allThemes = [...conceptualTags, ...contextTags];
+      const allThemes = [...conceptualTags, ...temporalTags, ...contextTags];
       
       allThemes.forEach(tag => {
         if (!tag || !tag.trim()) return;
@@ -268,5 +323,169 @@ export class PatternRecognitionService {
     return bridges.filter(
       bridge => bridge.bookId1 === bookId || bridge.bookId2 === bookId
     );
+  }
+
+  /**
+   * Detect temporal clusters - group books by era/force/tech context
+   */
+  static detectTemporalClusters(transmissions: Transmission[]): TemporalCluster[] {
+    const clusters: Map<string, TemporalCluster> = new Map();
+    
+    transmissions.forEach(book => {
+      const temporalTags = book.temporal_context_tags || [];
+      
+      temporalTags.forEach(tag => {
+        const category = getTagCategory(tag);
+        if (!category) return;
+        
+        if (!clusters.has(tag)) {
+          clusters.set(tag, {
+            id: `temporal-${tag.toLowerCase().replace(/\s+/g, '-')}`,
+            era: tag,
+            books: [],
+            strength: 0,
+            historicalForces: [],
+            technologicalContext: []
+          });
+        }
+        
+        const cluster = clusters.get(tag)!;
+        cluster.books.push(book.id.toString());
+        cluster.strength += 1;
+        
+        // Categorize tags
+        if (category === 'historicalForces' && !cluster.historicalForces.includes(tag)) {
+          cluster.historicalForces.push(tag);
+        } else if (category === 'technologicalContext' && !cluster.technologicalContext.includes(tag)) {
+          cluster.technologicalContext.push(tag);
+        }
+      });
+    });
+    
+    return Array.from(clusters.values())
+      .filter(cluster => cluster.books.length >= 2)
+      .sort((a, b) => b.strength - a.strength);
+  }
+
+  /**
+   * Find temporal bridges - connections across different eras
+   */
+  static findTemporalBridges(transmissions: Transmission[]): TemporalBridge[] {
+    const bridges: TemporalBridge[] = [];
+    
+    for (let i = 0; i < transmissions.length; i++) {
+      for (let j = i + 1; j < transmissions.length; j++) {
+        const book1 = transmissions[i];
+        const book2 = transmissions[j];
+        
+        const temporal1 = book1.temporal_context_tags || [];
+        const temporal2 = book2.temporal_context_tags || [];
+        
+        // Find era tags
+        const era1 = temporal1.filter(t => TEMPORAL_CONTEXT_TAGS.literaryEra.includes(t as any));
+        const era2 = temporal2.filter(t => TEMPORAL_CONTEXT_TAGS.literaryEra.includes(t as any));
+        
+        // Find shared forces/tech despite different eras
+        const forces1 = new Set(temporal1.filter(t => TEMPORAL_CONTEXT_TAGS.historicalForces.includes(t as any)));
+        const forces2 = new Set(temporal2.filter(t => TEMPORAL_CONTEXT_TAGS.historicalForces.includes(t as any)));
+        const commonForces = Array.from(forces1).filter(f => forces2.has(f));
+        
+        const tech1 = new Set(temporal1.filter(t => TEMPORAL_CONTEXT_TAGS.technologicalContext.includes(t as any)));
+        const tech2 = new Set(temporal2.filter(t => TEMPORAL_CONTEXT_TAGS.technologicalContext.includes(t as any)));
+        const commonTech = Array.from(tech1).filter(t => tech2.has(t));
+        
+        // Create bridges for books from different eras sharing forces/tech
+        if (era1.length > 0 && era2.length > 0 && era1[0] !== era2[0]) {
+          if (commonForces.length > 0) {
+            bridges.push({
+              bookId1: book1.id.toString(),
+              bookId2: book2.id.toString(),
+              bridgeType: 'force',
+              description: `${commonForces[0]} connects ${era1[0]} to ${era2[0]}`,
+              strength: 2.5
+            });
+          }
+          
+          if (commonTech.length > 0) {
+            bridges.push({
+              bookId1: book1.id.toString(),
+              bookId2: book2.id.toString(),
+              bridgeType: 'tech',
+              description: `${commonTech[0]} connects ${era1[0]} to ${era2[0]}`,
+              strength: 2.5
+            });
+          }
+          
+          // Evolution bridge: same tech/force appears in multiple eras
+          if (commonForces.length > 0 && commonTech.length > 0) {
+            bridges.push({
+              bookId1: book1.id.toString(),
+              bookId2: book2.id.toString(),
+              bridgeType: 'evolution',
+              description: `${commonForces[0]} + ${commonTech[0]} evolved from ${era1[0]} to ${era2[0]}`,
+              strength: 3.0
+            });
+          }
+        }
+      }
+    }
+    
+    return bridges.sort((a, b) => b.strength - a.strength);
+  }
+
+  /**
+   * Detect temporal evolution - how themes evolve across eras
+   */
+  static detectTemporalEvolution(transmissions: Transmission[]): TemporalEvolution[] {
+    const conceptualThemes = new Map<string, Map<string, string[]>>();
+    
+    transmissions.forEach(book => {
+      const conceptualTags = filterConceptualTags(book.tags || []);
+      const temporalTags = book.temporal_context_tags || [];
+      const eras = temporalTags.filter(t => TEMPORAL_CONTEXT_TAGS.literaryEra.includes(t as any));
+      
+      if (eras.length === 0) return;
+      
+      conceptualTags.forEach(concept => {
+        if (!conceptualThemes.has(concept)) {
+          conceptualThemes.set(concept, new Map());
+        }
+        
+        const eraMap = conceptualThemes.get(concept)!;
+        eras.forEach(era => {
+          if (!eraMap.has(era)) {
+            eraMap.set(era, []);
+          }
+          eraMap.get(era)!.push(book.id.toString());
+        });
+      });
+    });
+    
+    const evolutions: TemporalEvolution[] = [];
+    
+    conceptualThemes.forEach((eraMap, conceptualTheme) => {
+      if (eraMap.size < 2) return; // Need at least 2 eras for evolution
+      
+      const timeline = Array.from(eraMap.entries())
+        .sort((a, b) => {
+          // Sort by era chronology
+          const indexA = TEMPORAL_CONTEXT_TAGS.literaryEra.indexOf(a[0] as any);
+          const indexB = TEMPORAL_CONTEXT_TAGS.literaryEra.indexOf(b[0] as any);
+          return indexA - indexB;
+        })
+        .map(([era, bookIds]) => ({
+          era,
+          bookIds,
+          manifestation: `${conceptualTheme} in ${era}`
+        }));
+      
+      evolutions.push({
+        conceptualTheme,
+        timeline,
+        evolutionStrength: eraMap.size * 1.5
+      });
+    });
+    
+    return evolutions.sort((a, b) => b.evolutionStrength - a.evolutionStrength);
   }
 }

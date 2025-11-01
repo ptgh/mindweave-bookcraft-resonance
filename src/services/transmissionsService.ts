@@ -31,6 +31,7 @@ export interface Transmission {
   publication_year?: number;
   narrative_time_period?: string;
   historical_context_tags?: string[];
+  temporal_context_tags?: string[];
   is_favorite?: boolean;
 }
 
