@@ -179,26 +179,26 @@ const ThreadMap = () => {
                   <Calendar className="w-5 h-5 text-green-400" />
                   <h2 className="text-lg font-medium text-slate-200">Temporal Analysis</h2>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-300 text-sm">Total Books</span>
-                    <span className="text-blue-400 font-medium">{totalTransmissions}</span>
+                    <span className="text-slate-300 text-xs">Total Books</span>
+                    <span className="text-blue-400 text-sm font-medium">{totalTransmissions}</span>
                   </div>
                   {yearRange && (
                     <>
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-300 text-sm">Year Span</span>
-                        <span className="text-green-400 font-medium">{yearRange.span}y</span>
+                        <span className="text-slate-300 text-xs">Year Span</span>
+                        <span className="text-green-400 text-sm font-medium">{yearRange.span}y</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-300 text-sm">Era Range</span>
+                        <span className="text-slate-300 text-xs">Era Range</span>
                         <span className="text-slate-200 text-xs">{yearRange.earliest}-{yearRange.latest}</span>
                       </div>
                     </>
                   )}
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-300 text-sm">Time Jumps</span>
-                    <span className="text-purple-400 font-medium">{temporalJumps.length}</span>
+                    <span className="text-slate-300 text-xs">Time Jumps</span>
+                    <span className="text-purple-400 text-sm font-medium">{temporalJumps.length}</span>
                   </div>
                 </div>
               </div>
@@ -208,12 +208,12 @@ const ThreadMap = () => {
                   <TrendingUp className="w-5 h-5 text-purple-400" />
                   <h2 className="text-lg font-medium text-slate-200">Era Distribution</h2>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {Object.entries(eraDistribution)
                     .sort(([,a], [,b]) => b - a)
                     .slice(0, 6)
                     .map(([era, count], index) => (
-                      <div key={era} className="flex items-center justify-between">
+                      <div key={era} className="flex items-center justify-between gap-2">
                         <div className="flex items-center space-x-2 min-w-0 flex-1">
                           <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                             index === 0 ? 'bg-purple-400' : 
@@ -222,13 +222,13 @@ const ThreadMap = () => {
                             index === 3 ? 'bg-yellow-400' : 
                             index === 4 ? 'bg-pink-400' : 'bg-cyan-400'
                           }`} />
-                          <span className="text-slate-300 text-sm truncate">{era}</span>
+                          <span className="text-slate-300 text-xs whitespace-nowrap overflow-hidden text-ellipsis">{era}</span>
                         </div>
-                        <span className="text-slate-400 text-sm flex-shrink-0 ml-2">{count}</span>
+                        <span className="text-slate-400 text-xs flex-shrink-0">{count}</span>
                       </div>
                     ))}
                   {Object.keys(eraDistribution).length === 0 && (
-                    <div className="text-slate-500 text-sm italic">
+                    <div className="text-slate-500 text-xs italic">
                       No temporal data detected
                     </div>
                   )}
@@ -267,11 +267,11 @@ const ThreadMap = () => {
                     <Clock className="w-5 h-5 text-yellow-400" />
                     <h2 className="text-lg font-medium text-slate-200">Biggest Time Jumps</h2>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {temporalJumps.slice(0, 3).map((jump, index) => (
-                      <div key={index} className="text-xs space-y-1 p-3 bg-slate-700/30 rounded border border-slate-600/30">
-                        <div className="font-semibold text-yellow-400">{jump.years} years</div>
-                        <div className="text-slate-300 line-clamp-1">
+                      <div key={index} className="text-xs space-y-1 p-2.5 bg-slate-700/30 rounded border border-slate-600/30">
+                        <div className="font-semibold text-yellow-400 text-xs">{jump.years} years</div>
+                        <div className="text-slate-300 text-xs line-clamp-1">
                           {jump.from.title} → {jump.to.title}
                         </div>
                       </div>
