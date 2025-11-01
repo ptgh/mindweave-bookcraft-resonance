@@ -1,11 +1,10 @@
-
-import Header from "@/components/Header";
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Brain, BookOpen, Users, Search, Map, Eye, Building, Mail, Heart } from "lucide-react";
+import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { StandardButton } from "@/components/ui/standard-button";
-import { Brain, BookOpen, Users, Search, Map, Eye, Building, Mail, Heart } from "lucide-react";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
-import { useState } from "react";
 import ContactModal from "@/components/ContactModal";
 import ContributionButton from "@/components/ContributionButton";
 import { SEOHead } from "@/components/SEOHead";
