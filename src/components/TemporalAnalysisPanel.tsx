@@ -1,9 +1,25 @@
-import { useState } from 'react';
-import { Brain, ChevronDown, ChevronRight, Sparkles, Clock, Zap, BookOpen, User } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Brain, ChevronDown, ChevronRight, Sparkles, Clock, Zap, BookOpen, User, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from './ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
+import { TEMPORAL_CONTEXT_TAGS } from '@/constants/temporalTags';
+import gsap from 'gsap';
+
+interface Book {
+  id: number;
+  title: string;
+  author: string;
+  publication_year?: number;
+  temporal_context_tags?: string[];
+}
+
+interface EraData {
+  era: string;
+  count: number;
+  books: Book[];
+}
 
 interface TemporalAnalysis {
   eraNarratives: Record<string, { description: string; books: Array<{ title: string; author: string; year: number }> }>;
@@ -21,7 +37,89 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
   const [analysis, setAnalysis] = useState<TemporalAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [selectedEra, setSelectedEra] = useState<string | null>(null);
+  const [eraData, setEraData] = useState<EraData[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
   const { toast } = useToast();
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Fetch user's books on mount
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchBooks = async () => {
+      const { data, error } = await supabase
+        .from('transmissions')
+        .select('id, title, author, publication_year, temporal_context_tags')
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('Error fetching books:', error);
+        return;
+      }
+
+      setBooks(data || []);
+
+      // Analyze era distribution from temporal tags
+      const eraMap = new Map<string, Book[]>();
+      
+      data?.forEach(book => {
+        const temporalTags = book.temporal_context_tags || [];
+        const eras = temporalTags.filter(tag => 
+          TEMPORAL_CONTEXT_TAGS.literaryEra.includes(tag as any)
+        );
+        
+        eras.forEach(era => {
+          if (!eraMap.has(era)) {
+            eraMap.set(era, []);
+          }
+          eraMap.get(era)!.push(book);
+        });
+      });
+
+      // Convert to array and sort by count
+      const eraArray = Array.from(eraMap.entries()).map(([era, books]) => ({
+        era,
+        count: books.length,
+        books
+      })).sort((a, b) => b.count - a.count);
+
+      setEraData(eraArray);
+    };
+
+    fetchBooks();
+  }, [userId]);
+
+  // GSAP hover animation for Analysis button
+  useEffect(() => {
+    if (!buttonRef.current) return;
+    
+    const button = buttonRef.current;
+    
+    const handleMouseEnter = () => {
+      gsap.to(button, {
+        scale: 1.05,
+        duration: 0.3,
+        ease: 'power2.out'
+      });
+    };
+    
+    const handleMouseLeave = () => {
+      gsap.to(button, {
+        scale: 1,
+        duration: 0.3,
+        ease: 'power2.out'
+      });
+    };
+    
+    button.addEventListener('mouseenter', handleMouseEnter);
+    button.addEventListener('mouseleave', handleMouseLeave);
+    
+    return () => {
+      button.removeEventListener('mouseenter', handleMouseEnter);
+      button.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, []);
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);
@@ -74,6 +172,35 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
     }
   };
 
+  const getSelectedEraBooks = () => {
+    if (!selectedEra) return [];
+    return eraData.find(e => e.era === selectedEra)?.books || [];
+  };
+
+  const selectedBooks = getSelectedEraBooks();
+
+  // Get historical forces and tech context for selected era
+  const getContextTags = (books: Book[]) => {
+    const forces = new Set<string>();
+    const tech = new Set<string>();
+
+    books.forEach(book => {
+      const tags = book.temporal_context_tags || [];
+      tags.forEach(tag => {
+        if (TEMPORAL_CONTEXT_TAGS.historicalForces.includes(tag as any)) {
+          forces.add(tag);
+        }
+        if (TEMPORAL_CONTEXT_TAGS.technologicalContext.includes(tag as any)) {
+          tech.add(tag);
+        }
+      });
+    });
+
+    return { forces: Array.from(forces), tech: Array.from(tech) };
+  };
+
+  const contextTags = selectedEra ? getContextTags(selectedBooks) : { forces: [], tech: [] };
+
   return (
     <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
       <div className="flex items-center justify-between mb-6">
@@ -81,41 +208,146 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
           <Brain className="w-5 h-5 text-cyan-400" />
           <h2 className="text-lg font-medium text-slate-200">Historical Context</h2>
         </div>
-        {analysis && (
-          <Button
-            variant="ghost"
-            size="sm"
+        {!analysis && (
+          <button
+            ref={buttonRef}
             onClick={() => generateAnalysis(true)}
-            disabled={isLoading}
-            className="text-xs"
+            disabled={isLoading || eraData.length === 0}
+            className="text-xs text-slate-300 hover:text-cyan-400 transition-colors disabled:opacity-50 disabled:pointer-events-none"
           >
-            Regenerate
-          </Button>
+            Analysis
+          </button>
         )}
       </div>
 
       {!analysis ? (
-        <div className="space-y-4">
-          <p className="text-sm text-slate-400">
-            Generate an AI-powered analysis of your temporal reading patterns, exploring how your books connect across eras, historical forces, and technological contexts.
-          </p>
-          <Button
-            onClick={() => generateAnalysis()}
-            disabled={isLoading}
-            className="w-full"
-          >
-            {isLoading ? (
-              <span className="flex items-center space-x-2">
-                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                <span>Analyzing...</span>
-              </span>
-            ) : (
-              <span className="flex items-center space-x-2">
-                <Sparkles className="w-4 h-4" />
-                <span>Generate Analysis</span>
-              </span>
-            )}
-          </Button>
+        <div className="space-y-2">
+          {eraData.length === 0 ? (
+            <p className="text-xs text-slate-400">
+              No temporal tags found. Add temporal context tags to your books to explore historical patterns.
+            </p>
+          ) : (
+            <>
+              {/* Era List */}
+              <div className="space-y-1.5">
+                {eraData.map((era) => (
+                  <button
+                    key={era.era}
+                    onClick={() => setSelectedEra(selectedEra === era.era ? null : era.era)}
+                    className="w-full flex items-center justify-between p-3 bg-slate-700/30 rounded border border-slate-600/30 hover:bg-slate-700/50 transition-colors text-left"
+                  >
+                    <div className="flex items-center space-x-2 flex-1 min-w-0">
+                      <Clock className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                      <span className="text-sm font-medium text-slate-200 truncate">{era.era}</span>
+                      <span className="text-xs text-slate-400">({era.count})</span>
+                    </div>
+                    {selectedEra === era.era ? (
+                      <Check className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Selected Era Details */}
+              {selectedEra && (
+                <div className="mt-4 space-y-3 pt-4 border-t border-slate-600/30">
+                  {/* Books in Era */}
+                  <Collapsible
+                    open={expandedSections.has('books')}
+                    onOpenChange={() => toggleSection('books')}
+                  >
+                    <CollapsibleTrigger className="w-full">
+                      <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded border border-slate-600/30 hover:bg-slate-700/50 transition-colors">
+                        <div className="flex items-center space-x-2">
+                          <BookOpen className="w-4 h-4 text-blue-400" />
+                          <span className="text-sm font-medium text-slate-200">Books</span>
+                          <span className="text-xs text-slate-400">({selectedBooks.length})</span>
+                        </div>
+                        {expandedSections.has('books') ? (
+                          <ChevronDown className="w-4 h-4 text-slate-400" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-slate-400" />
+                        )}
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-2 space-y-1.5">
+                      {selectedBooks.map((book) => (
+                        <div key={book.id} className="p-2.5 bg-slate-700/20 rounded border border-slate-600/20">
+                          <div className="text-xs font-medium text-slate-200">{book.title}</div>
+                          <div className="text-xs text-slate-400 mt-0.5">{book.author}</div>
+                          {book.publication_year && (
+                            <div className="text-xs text-slate-500 mt-0.5">{book.publication_year}</div>
+                          )}
+                        </div>
+                      ))}
+                    </CollapsibleContent>
+                  </Collapsible>
+
+                  {/* Historical Forces */}
+                  {contextTags.forces.length > 0 && (
+                    <Collapsible
+                      open={expandedSections.has('forces')}
+                      onOpenChange={() => toggleSection('forces')}
+                    >
+                      <CollapsibleTrigger className="w-full">
+                        <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded border border-slate-600/30 hover:bg-slate-700/50 transition-colors">
+                          <div className="flex items-center space-x-2">
+                            <Zap className="w-4 h-4 text-amber-400" />
+                            <span className="text-sm font-medium text-slate-200">Historical Forces</span>
+                            <span className="text-xs text-slate-400">({contextTags.forces.length})</span>
+                          </div>
+                          {expandedSections.has('forces') ? (
+                            <ChevronDown className="w-4 h-4 text-slate-400" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-slate-400" />
+                          )}
+                        </div>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-2 space-y-1.5">
+                        {contextTags.forces.map((force, idx) => (
+                          <div key={idx} className="p-2.5 bg-slate-700/20 rounded border border-slate-600/20">
+                            <span className="text-xs text-amber-400">{force}</span>
+                          </div>
+                        ))}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
+
+                  {/* Technology Context */}
+                  {contextTags.tech.length > 0 && (
+                    <Collapsible
+                      open={expandedSections.has('tech')}
+                      onOpenChange={() => toggleSection('tech')}
+                    >
+                      <CollapsibleTrigger className="w-full">
+                        <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded border border-slate-600/30 hover:bg-slate-700/50 transition-colors">
+                          <div className="flex items-center space-x-2">
+                            <Sparkles className="w-4 h-4 text-cyan-400" />
+                            <span className="text-sm font-medium text-slate-200">Technology Context</span>
+                            <span className="text-xs text-slate-400">({contextTags.tech.length})</span>
+                          </div>
+                          {expandedSections.has('tech') ? (
+                            <ChevronDown className="w-4 h-4 text-slate-400" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-slate-400" />
+                          )}
+                        </div>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-2 space-y-1.5">
+                        {contextTags.tech.map((tech, idx) => (
+                          <div key={idx} className="p-2.5 bg-slate-700/20 rounded border border-slate-600/20">
+                            <span className="text-xs text-cyan-400">{tech}</span>
+                          </div>
+                        ))}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
