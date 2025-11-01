@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Brain, ChevronDown, ChevronRight, Sparkles, Clock, Zap, BookOpen, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from './ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
+import { gsap } from 'gsap';
 
 interface TemporalAnalysis {
   eraNarratives: Record<string, { description: string; books: Array<{ title: string; author: string; year: number }> }>;
@@ -22,6 +23,37 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
   const [isLoading, setIsLoading] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const { toast } = useToast();
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!buttonRef.current) return;
+
+    const button = buttonRef.current;
+
+    const handleMouseEnter = () => {
+      gsap.to(button, {
+        scale: 1.02,
+        duration: 0.2,
+        ease: "power2.out"
+      });
+    };
+
+    const handleMouseLeave = () => {
+      gsap.to(button, {
+        scale: 1,
+        duration: 0.2,
+        ease: "power2.out"
+      });
+    };
+
+    button.addEventListener('mouseenter', handleMouseEnter);
+    button.addEventListener('mouseleave', handleMouseLeave);
+
+    return () => {
+      button.removeEventListener('mouseenter', handleMouseEnter);
+      button.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, []);
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);
@@ -82,15 +114,14 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
           <h2 className="text-lg font-medium text-slate-200">Historical Context</h2>
         </div>
         {analysis && (
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
+            ref={buttonRef}
             onClick={() => generateAnalysis(true)}
             disabled={isLoading}
-            className="text-xs"
+            className="text-xs text-slate-400 hover:text-slate-200 transition-colors disabled:opacity-50"
           >
-            Regenerate
-          </Button>
+            Analysis
+          </button>
         )}
       </div>
 
@@ -118,7 +149,7 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
           </Button>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* Era Narratives */}
           {Object.keys(analysis.eraNarratives).length > 0 && (
             <Collapsible
@@ -129,9 +160,8 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
                 <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded border border-slate-600/30 hover:bg-slate-700/50 transition-colors">
                   <div className="flex items-center space-x-2">
                     <Clock className="w-4 h-4 text-purple-400" />
-                    <span className="text-sm font-medium text-slate-200">Era Narratives</span>
-                    <span className="text-xs text-slate-400">
-                      ({Object.keys(analysis.eraNarratives).length})
+                    <span className="text-sm font-medium text-slate-200">
+                      Era Narratives ({Object.keys(analysis.eraNarratives).length})
                     </span>
                   </div>
                   {expandedSections.has('eras') ? (
@@ -165,9 +195,8 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
                 <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded border border-slate-600/30 hover:bg-slate-700/50 transition-colors">
                   <div className="flex items-center space-x-2">
                     <Sparkles className="w-4 h-4 text-cyan-400" />
-                    <span className="text-sm font-medium text-slate-200">Temporal Bridges</span>
-                    <span className="text-xs text-slate-400">
-                      ({analysis.temporalBridges.length})
+                    <span className="text-sm font-medium text-slate-200">
+                      Temporal Bridges ({analysis.temporalBridges.length})
                     </span>
                   </div>
                   {expandedSections.has('bridges') ? (
@@ -197,9 +226,8 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
                 <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded border border-slate-600/30 hover:bg-slate-700/50 transition-colors">
                   <div className="flex items-center space-x-2">
                     <Zap className="w-4 h-4 text-amber-400" />
-                    <span className="text-sm font-medium text-slate-200">Historical Forces</span>
-                    <span className="text-xs text-slate-400">
-                      ({analysis.historicalForces.length})
+                    <span className="text-sm font-medium text-slate-200">
+                      Historical Forces ({analysis.historicalForces.length})
                     </span>
                   </div>
                   {expandedSections.has('forces') ? (
@@ -233,9 +261,8 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
                 <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded border border-slate-600/30 hover:bg-slate-700/50 transition-colors">
                   <div className="flex items-center space-x-2">
                     <User className="w-4 h-4 text-green-400" />
-                    <span className="text-sm font-medium text-slate-200">Author Insights</span>
-                    <span className="text-xs text-slate-400">
-                      ({analysis.authorInsights.length})
+                    <span className="text-sm font-medium text-slate-200">
+                      Author Insights ({analysis.authorInsights.length})
                     </span>
                   </div>
                   {expandedSections.has('authors') ? (
