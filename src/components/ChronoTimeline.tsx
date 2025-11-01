@@ -166,7 +166,7 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
     return timelineData.filter(node => node.decade === selectedDecade);
   }, [timelineData, selectedDecade]);
 
-  // GSAP Animations
+  // GSAP Animations - Optimized for fast loading
   useEffect(() => {
     if (displayedNodes.length === 0) return;
 
@@ -176,50 +176,24 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
     gsap.fromTo(
       '.timeline-line',
       { scaleX: 0 },
-      { scaleX: 1, duration: 1.2, ease: 'power2.out' }
+      { scaleX: 1, duration: 0.6, ease: 'power2.out' }
     );
 
-    if (isMobile) {
-      // On mobile, avoid ScrollTrigger (iOS can skip firing). Just fade-in sequentially
-      cardsRef.current.forEach((card, index) => {
-        if (!card) return;
-        gsap.fromTo(
-          card,
-          { opacity: 0, y: 16, scale: 0.98 },
-          { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: 'power2.out', delay: index * 0.05 }
-        );
-      });
-    } else {
-      // Desktop: animate with ScrollTrigger
-      cardsRef.current.forEach((card) => {
-        if (!card) return;
-        gsap.fromTo(
-          card,
-          { opacity: 0, y: 30, scale: 0.95 },
-          {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            duration: 0.5,
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: card,
-              start: 'top 90%',
-              toggleActions: 'play none none reverse',
-              once: true,
-            },
-          }
-        );
-      });
-    }
+    // Animate all cards quickly with minimal delay
+    cardsRef.current.forEach((card, index) => {
+      if (!card) return;
+      gsap.fromTo(
+        card,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out', delay: index * 0.02 }
+      );
+    });
 
     // Era and tags entrance (non-blocking)
-    gsap.from('.era-section', { opacity: 0, x: -30, duration: 0.6, stagger: 0.1, ease: 'power2.out', delay: 0.2 });
-    gsap.from('.temporal-tags', { opacity: 0, y: 10, duration: 0.8, ease: 'power2.out', delay: 0.5 });
-    gsap.to('.temporal-tags', { opacity: 0.7, duration: 2, ease: 'power2.inOut', yoyo: true, repeat: -1 });
+    gsap.from('.era-section', { opacity: 0, x: -20, duration: 0.4, ease: 'power2.out', delay: 0.1 });
 
     return () => {
-      // Cleanup animations and ScrollTriggers to prevent stale state across navigations
+      // Cleanup animations
       gsap.killTweensOf('.timeline-line');
       cardsRef.current.forEach((card) => card && gsap.killTweensOf(card));
       try {
