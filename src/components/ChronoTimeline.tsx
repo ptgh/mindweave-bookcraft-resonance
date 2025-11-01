@@ -17,6 +17,7 @@ import { EnrichedPublisherBook } from '@/services/publisherService';
 import { getAuthorByName, ScifiAuthor, findOrCreateAuthor } from '@/services/scifiAuthorsService';
 import { GenreInferenceService } from '@/services/genreInferenceService';
 import { SciFiGenre, getEraForYear } from '@/constants/scifiGenres';
+import { filterConceptualTags } from '@/constants/conceptualTags';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -741,18 +742,25 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
                       </div>
                     )}
 
-                    {/* Temporal Tags */}
-                    {node.transmission.historical_context_tags && node.transmission.historical_context_tags.length > 0 && (
-                      <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600/30">
-                        <h5 className="temporal-tags text-slate-300 font-medium mb-2 flex items-center gap-2">
-                          <Globe className="w-4 h-4 text-cyan-400" />
-                          Temporal Tags:
-                        </h5>
-                        <p className="text-slate-400 text-sm leading-relaxed">
-                          {node.transmission.historical_context_tags.join('. ')}
-                        </p>
-                      </div>
-                    )}
+                    {/* Conceptual Nodes */}
+                    {(() => {
+                      const conceptualTags = filterConceptualTags(node.transmission.tags || []);
+                      return conceptualTags.length > 0 && (
+                        <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600/30">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Sparkles className="w-4 h-4 text-cyan-400" />
+                            <span className="text-sm font-medium text-cyan-300">Conceptual Nodes</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {conceptualTags.map((tag, idx) => (
+                              <Badge key={idx} className="text-xs bg-cyan-500/20 text-cyan-300 border-cyan-400/30">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Apple Books Link */}
                     {node.transmission.apple_link && (
