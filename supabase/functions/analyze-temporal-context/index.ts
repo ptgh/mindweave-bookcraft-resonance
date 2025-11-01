@@ -180,12 +180,17 @@ Keep responses specific to these books. Be concise but insightful.`;
     // Cache the result
     const { error: cacheError } = await supabaseClient
       .from('temporal_analysis_cache')
-      .upsert({
-        user_id: userId,
-        analysis,
-        temporal_signature: temporalSignature,
-        generated_at: new Date().toISOString(),
-      });
+      .upsert(
+        {
+          user_id: userId,
+          analysis,
+          temporal_signature: temporalSignature,
+          generated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'user_id'
+        }
+      );
 
     if (cacheError) {
       console.error('Error caching analysis:', cacheError);

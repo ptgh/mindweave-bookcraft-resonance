@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Brain, BookOpen, Users, Search, Map, Eye, Building, Mail, Heart } from "lucide-react";
 import Header from "@/components/Header";
@@ -10,9 +10,9 @@ import ContributionButton from "@/components/ContributionButton";
 import { SEOHead } from "@/components/SEOHead";
 import { NewsletterSignup } from "@/components/NewsletterSignup";
 
-const Discovery = () => {
-  const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
+const Discovery: React.FC = () => {
   const [showContactModal, setShowContactModal] = useState(false);
+  const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
 
   return (
     <>
