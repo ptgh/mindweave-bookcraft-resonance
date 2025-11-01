@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import { ChronoTimeline } from "@/components/ChronoTimeline";
-import GSAPButtonGroup from "@/components/GSAPButtonGroup";
 import { Calendar, Clock, BookOpen, TrendingUp, Brain, Sparkles, Target } from "lucide-react";
 import { getTransmissions } from "@/services/transmissionsService";
 import { SEOHead } from "@/components/SEOHead";
@@ -12,7 +11,6 @@ import { ReadingChallengeModal } from "@/components/ReadingChallengeModal";
 import { HistoricalContextService } from "@/services/historicalContext";
 
 const ThreadMap = () => {
-  const [timeframe, setTimeframe] = useState<'month' | 'year' | 'all'>('year');
   const [showTemporalModal, setShowTemporalModal] = useState(false);
   const [showChallengeModal, setShowChallengeModal] = useState(false);
 
@@ -21,25 +19,8 @@ const ThreadMap = () => {
     queryFn: getTransmissions,
   });
 
-  // Filter transmissions based on timeframe
-  const filteredTransmissions = transmissions.filter(transmission => {
-    if (timeframe === 'all') return true;
-    
-    const transmissionDate = new Date(transmission.created_at);
-    const now = new Date();
-    const cutoffDate = new Date();
-    
-    if (timeframe === 'month') {
-      cutoffDate.setMonth(now.getMonth() - 1);
-    } else if (timeframe === 'year') {
-      cutoffDate.setFullYear(now.getFullYear() - 1);
-    }
-    
-    return transmissionDate >= cutoffDate;
-  });
-
-  // Calculate temporal statistics from filtered transmissions
-  const totalTransmissions = filteredTransmissions.length;
+  // Calculate temporal statistics from all transmissions
+  const totalTransmissions = transmissions.length;
   
   // Era distribution
   const getEra = (year: number): string => {
@@ -51,7 +32,7 @@ const ThreadMap = () => {
     return '21st Century';
   };
   
-  const eraDistribution = filteredTransmissions.reduce((acc, t) => {
+  const eraDistribution = transmissions.reduce((acc, t) => {
     if (t.publication_year) {
       const era = getEra(t.publication_year);
       acc[era] = (acc[era] || 0) + 1;
@@ -60,7 +41,7 @@ const ThreadMap = () => {
   }, {} as Record<string, number>);
   
   // Publication year range
-  const publicationYears = filteredTransmissions
+  const publicationYears = transmissions
     .map(t => t.publication_year)
     .filter(year => year && year > 1800 && year < 2030) as number[];
   
@@ -71,7 +52,7 @@ const ThreadMap = () => {
   } : null;
   
   // Temporal jumps (biggest chronological differences)
-  const temporalJumps = filteredTransmissions
+  const temporalJumps = transmissions
     .filter(t => t.publication_year)
     .sort((a, b) => (a.publication_year || 0) - (b.publication_year || 0))
     .reduce((jumps, transmission, index, sorted) => {
@@ -91,7 +72,7 @@ const ThreadMap = () => {
     .slice(0, 3);
   
   // Books with temporal data
-  const booksWithTemporalData = filteredTransmissions.filter(t => t.publication_year).length;
+  const booksWithTemporalData = transmissions.filter(t => t.publication_year).length;
 
   return (
     <>
@@ -124,7 +105,7 @@ const ThreadMap = () => {
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => setShowTemporalModal(true)}
-                    disabled={filteredTransmissions.length < 3}
+                    disabled={transmissions.length < 3}
                     className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-xs font-medium transition-all duration-200 py-1.5 px-3 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 touch-manipulation disabled:opacity-50 disabled:pointer-events-none"
                   >
                     <Sparkles className="w-4 h-4 text-blue-400" />
@@ -132,7 +113,7 @@ const ThreadMap = () => {
                   </button>
                   <button
                     onClick={() => setShowChallengeModal(true)}
-                    disabled={filteredTransmissions.length < 3}
+                    disabled={transmissions.length < 3}
                     className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-xs font-medium transition-all duration-200 py-1.5 px-3 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 touch-manipulation disabled:opacity-50 disabled:pointer-events-none"
                   >
                     <Target className="w-4 h-4 text-cyan-400" />
@@ -148,9 +129,9 @@ const ThreadMap = () => {
                     <span className="ml-3">Mapping temporal threads...</span>
                   </div>
                 </div>
-              ) : filteredTransmissions.length > 0 ? (
+              ) : transmissions.length > 0 ? (
                 <div className="min-h-[400px]">
-                  <ChronoTimeline transmissions={filteredTransmissions} />
+                  <ChronoTimeline transmissions={transmissions} />
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-[400px] text-slate-400">
@@ -277,7 +258,7 @@ const ThreadMap = () => {
         <TemporalContextModal
           isOpen={showTemporalModal}
           onClose={() => setShowTemporalModal(false)}
-          transmissions={filteredTransmissions}
+          transmissions={transmissions}
         />
 
         <ReadingChallengeModal
