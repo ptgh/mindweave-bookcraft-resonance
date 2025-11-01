@@ -503,17 +503,6 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
           disabled={isEnriching}
         />
 
-        <div className="flex items-center gap-4 text-sm">
-          <span className="text-slate-400">Temporal Scope:</span>
-          <GSAPButtonGroup
-            buttons={[
-              { id: 'year', label: 'Year' },
-              { id: 'all', label: 'All Time' }
-            ]}
-            selected="year"
-            onSelect={(id) => console.log('Temporal scope:', id)}
-          />
-        </div>
       </div>
       
       <div className="text-center text-slate-400 italic text-sm font-light">
