@@ -306,9 +306,10 @@ serve(async (req) => {
   }
 
   try {
-    const { searchType, isbn, title, author } = await req.json();
+    const body = await req.json();
+    const { searchType, isbn, title, author, id } = body;
 
-    console.log('🍎 Apple Books proxy request:', { searchType, isbn, title, author });
+    console.log('🍎 Apple Books proxy request:', { searchType, isbn, title, author, id });
 
     let result;
     
@@ -317,7 +318,6 @@ serve(async (req) => {
     } else if (searchType === 'titleAuthor' && title && author) {
       result = await searchByTitleAuthor(title, author);
     } else if (searchType === 'lookupId') {
-      const { id } = await req.json(); // id may already be parsed, but safe re-parse
       if (id && title && author) {
         result = await lookupById(String(id), title, author);
       } else {
