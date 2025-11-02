@@ -6,6 +6,61 @@ import { useToast } from '@/hooks/use-toast';
 import { TEMPORAL_CONTEXT_TAGS } from '@/constants/temporalTags';
 import gsap from 'gsap';
 
+// Helper to remove asterisks and bold markdown
+const cleanText = (text: string) => text.replace(/\*\*/g, '').replace(/\*/g, '');
+
+// Helper to highlight book/author names with GSAP effect
+const HighlightedText = ({ text }: { text: string }) => {
+  const textRef = useRef<HTMLSpanElement>(null);
+  
+  useEffect(() => {
+    if (textRef.current) {
+      const spans = textRef.current.querySelectorAll('.highlight-item');
+      spans.forEach((span) => {
+        gsap.set(span, { 
+          color: 'hsl(var(--primary))',
+          cursor: 'pointer'
+        });
+        
+        span.addEventListener('mouseenter', () => {
+          gsap.to(span, {
+            scale: 1.05,
+            textShadow: '0 0 8px hsl(var(--primary) / 0.5)',
+            duration: 0.2
+          });
+        });
+        
+        span.addEventListener('mouseleave', () => {
+          gsap.to(span, {
+            scale: 1,
+            textShadow: '0 0 0px transparent',
+            duration: 0.2
+          });
+        });
+      });
+    }
+  }, [text]);
+  
+  return <span ref={textRef} dangerouslySetInnerHTML={{ __html: text }} />;
+};
+
+// Helper to wrap quoted titles and capitalize names in highlight spans
+const highlightItems = (text: string, books: Array<{ title: string; author: string }>) => {
+  let result = cleanText(text);
+  
+  // Highlight book titles (look for quoted text or known titles)
+  books.forEach(book => {
+    const titleRegex = new RegExp(`["']${book.title}["']|${book.title}`, 'gi');
+    result = result.replace(titleRegex, `<span class="highlight-item">${book.title}</span>`);
+    
+    // Highlight author names
+    const authorRegex = new RegExp(`\\b${book.author}\\b`, 'gi');
+    result = result.replace(authorRegex, `<span class="highlight-item">${book.author}</span>`);
+  });
+  
+  return result;
+};
+
 interface Book {
   id: number;
   title: string;
@@ -382,7 +437,9 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
                       <span className="text-xs font-semibold text-purple-400">{era}</span>
                       <span className="text-xs text-slate-500">{data.books.length} books</span>
                     </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">{data.description}</p>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      <HighlightedText text={highlightItems(data.description, data.books)} />
+                    </p>
                   </div>
                 ))}
               </CollapsibleContent>
@@ -414,7 +471,9 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
               <CollapsibleContent className="mt-2 space-y-2">
                 {analysis.temporalBridges.map((bridge, idx) => (
                   <div key={idx} className="p-3 bg-slate-700/20 rounded border border-slate-600/20">
-                    <p className="text-xs text-slate-300 leading-relaxed">{bridge.connection}</p>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      <HighlightedText text={highlightItems(bridge.connection, books)} />
+                    </p>
                   </div>
                 ))}
               </CollapsibleContent>
@@ -450,7 +509,9 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
                       <span className="text-xs font-semibold text-amber-400">{force.force}</span>
                       <span className="text-xs text-slate-500">{force.books.length} books</span>
                     </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">{force.impact}</p>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      <HighlightedText text={highlightItems(force.impact, force.books)} />
+                    </p>
                   </div>
                 ))}
               </CollapsibleContent>
@@ -486,7 +547,9 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
                       <span className="text-xs font-semibold text-green-400">{author.author}</span>
                       <span className="text-xs text-slate-500">{author.bookCount} books</span>
                     </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">{author.contribution}</p>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      <HighlightedText text={highlightItems(author.contribution, books)} />
+                    </p>
                   </div>
                 ))}
               </CollapsibleContent>
@@ -514,7 +577,9 @@ export const TemporalAnalysisPanel = ({ userId }: TemporalAnalysisPanelProps) =>
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-2">
                 <div className="p-3 bg-slate-700/20 rounded border border-slate-600/20">
-                  <p className="text-xs text-slate-300 leading-relaxed">{analysis.readingPattern}</p>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    <HighlightedText text={highlightItems(analysis.readingPattern, books)} />
+                  </p>
                 </div>
               </CollapsibleContent>
             </Collapsible>

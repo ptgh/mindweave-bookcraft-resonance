@@ -139,15 +139,15 @@ Provide a detailed analysis with these sections:
 
 1. ERA NARRATIVES: For each literary era present (Golden Age, New Wave, Cyberpunk Era, etc.), write 2-3 sentences explaining what defined that period and how these specific books embody it. Include the book titles.
 
-2. TEMPORAL BRIDGES: Identify 2-3 connections between books from different eras that share themes despite their temporal distance. Be specific about which books connect and why.
+2. TEMPORAL BRIDGES: Identify 4-6 significant thematic connections between books from DIFFERENT eras. For each bridge, specify the exact book titles being connected and explain the shared themes, ideas, or predictions that link them across time. Focus on meaningful conceptual bridges like: similar technological predictions made decades apart, recurring philosophical questions, evolving treatments of the same theme, or contrasting approaches to similar ideas.
 
 3. HISTORICAL FORCES: For each major historical force tag (Cold War, Digital Revolution, etc.), explain in 2-3 sentences how it shaped these specific books. List the book titles.
 
-4. AUTHOR INSIGHTS: Highlight 3-4 key authors and their specific contributions based on the books in this collection.
+4. AUTHOR INSIGHTS: Highlight 3-4 key authors and their specific contributions based on the books in this collection. Do not use asterisks or markdown formatting.
 
 5. READING PATTERN: In 3-4 sentences, describe what this collection reveals about the reader's interests and how they've explored SF across time.
 
-Keep responses specific to these books. Be concise but insightful.`;
+Keep responses specific to these books. Be concise but insightful. Do not use asterisks or markdown bold formatting in your response.`;
 
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -254,26 +254,34 @@ function parseAnalysis(
     });
   }
 
-  // Parse temporal bridges
+  // Parse temporal bridges - look for patterns indicating connections between books
   const temporalBridges: Array<{ eras: string[]; connection: string; bookTitles: string[] }> = [];
-  const bridgeMatches = sections.temporalBridges.match(/[-•]\s*([^\n]+)/g);
+  const bridgeLines = sections.temporalBridges.split('\n').filter(line => line.trim());
   
-  if (bridgeMatches) {
-    bridgeMatches.forEach(match => {
-      const connection = match.replace(/^[-•]\s*/, '').trim();
-      const eras: string[] = [];
-      const bookTitles: string[] = [];
-      
-      // Extract book titles mentioned
-      Array.from(tagToBooks.values()).flat().forEach(book => {
-        if (connection.includes(book.title)) {
-          bookTitles.push(book.title);
-        }
-      });
-      
-      temporalBridges.push({ eras, connection, bookTitles });
+  bridgeLines.forEach(line => {
+    // Skip numbered/bulleted prefixes
+    const cleanLine = line.replace(/^(\d+\.|-|\*|•)\s*/, '').trim();
+    if (!cleanLine || cleanLine.length < 20) return; // Skip too-short lines
+    
+    const bookTitles: string[] = [];
+    const allBooks = Array.from(tagToBooks.values()).flat();
+    
+    // Find all book titles mentioned in this bridge
+    allBooks.forEach(book => {
+      if (cleanLine.includes(book.title)) {
+        bookTitles.push(book.title);
+      }
     });
-  }
+    
+    // Only add bridges that mention at least 2 books
+    if (bookTitles.length >= 2) {
+      temporalBridges.push({ 
+        eras: [], 
+        connection: cleanLine, 
+        bookTitles 
+      });
+    }
+  });
 
   // Parse historical forces
   const historicalForces: Array<{ force: string; books: Array<{ title: string; author: string }>; impact: string }> = [];
