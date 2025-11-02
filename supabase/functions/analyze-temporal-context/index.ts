@@ -37,12 +37,11 @@ serve(async (req) => {
       throw new Error('userId is required');
     }
 
-    // Fetch user's books with temporal tags
+    // Fetch user's books
     const { data: transmissions, error: transmissionsError } = await supabaseClient
       .from('transmissions')
       .select('title, author, publication_year, temporal_context_tags')
-      .eq('user_id', userId)
-      .not('temporal_context_tags', 'is', null);
+      .eq('user_id', userId);
 
     if (transmissionsError) {
       console.error('Error fetching transmissions:', transmissionsError);
@@ -51,10 +50,20 @@ serve(async (req) => {
 
     if (!transmissions || transmissions.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'No books with temporal tags found' }),
+        JSON.stringify({ error: 'No books found' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
       );
     }
+
+    // Helper to derive era from publication year
+    const getEra = (year: number): string => {
+      if (year < 1900) return 'Victorian Era';
+      if (year < 1920) return 'Edwardian Era';
+      if (year < 1950) return 'Early Modern';
+      if (year < 1980) return 'Mid-Century';
+      if (year < 2000) return 'Late 20th Century';
+      return '21st Century';
+    };
 
     // Calculate temporal signature (hash of all tags)
     const allTags = transmissions
@@ -94,17 +103,23 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    // Organize books by temporal tags
+    // Organize books by temporal tags and derived eras
     const tagToBooks = new Map<string, Array<{ title: string; author: string; year: number }>>();
     transmissions.forEach(t => {
-      (t.temporal_context_tags || []).forEach((tag: string) => {
+      const tags = t.temporal_context_tags || [];
+      const year = t.publication_year;
+      
+      // Get eras from tags or derive from publication year
+      const eras = tags.length > 0 ? tags : (year ? [getEra(year)] : []);
+      
+      eras.forEach((tag: string) => {
         if (!tagToBooks.has(tag)) {
           tagToBooks.set(tag, []);
         }
         tagToBooks.get(tag)!.push({
           title: t.title,
           author: t.author,
-          year: t.publication_year || 0
+          year: year || 0
         });
       });
     });
