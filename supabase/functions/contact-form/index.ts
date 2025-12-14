@@ -112,13 +112,13 @@ const handler = async (req: Request): Promise<Response> => {
       subject: `New Contact Form Submission from ${name}`,
       html: `
         <!DOCTYPE html>
-        <html>
+        <html style="height: 100%; background-color: #0f172a;">
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
-        <body style="margin: 0; padding: 0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f172a;">
+        <body style="margin: 0; padding: 0; height: 100%; min-height: 100%; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <table role="presentation" width="100%" height="100%" cellpadding="0" cellspacing="0" style="background-color: #0f172a; min-height: 100%;">
             <tr>
               <td align="center" style="padding: 40px 20px;">
                 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px;">
@@ -213,13 +213,13 @@ const handler = async (req: Request): Promise<Response> => {
       subject: "Signal Received - LEAFNODE Contact Confirmation",
       html: `
         <!DOCTYPE html>
-        <html>
+        <html style="height: 100%; background-color: #0f172a;">
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
-        <body style="margin: 0; padding: 0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f172a;">
+        <body style="margin: 0; padding: 0; height: 100%; min-height: 100%; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <table role="presentation" width="100%" height="100%" cellpadding="0" cellspacing="0" style="background-color: #0f172a; min-height: 100%;">
             <tr>
               <td align="center" style="padding: 40px 20px;">
                 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px;">
