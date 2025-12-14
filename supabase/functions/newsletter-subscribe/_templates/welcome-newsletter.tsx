@@ -139,13 +139,13 @@ const logo = {
 
 const socialTable = {
   width: '100%',
-  maxWidth: '360px',
+  maxWidth: '400px',
   margin: '24px auto 16px',
 };
 
 const socialTd = {
   textAlign: 'center' as const,
-  padding: '0 20px',
+  padding: '0 40px',
   width: '50%',
 };
 
