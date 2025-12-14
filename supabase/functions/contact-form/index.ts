@@ -111,59 +111,98 @@ const handler = async (req: Request): Promise<Response> => {
       to: ["connect@leafnode.co.uk"],
       subject: `New Contact Form Submission from ${name}`,
       html: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #0f172a;">
-          <div style="text-align: center; margin-bottom: 32px;">
-            <img src="https://leafnode.co.uk/leafnode-email-logo.png" alt="Leafnode" style="width: 80px; height: auto; border-radius: 12px;" />
-          </div>
-          
-          <h1 style="color: #22d3ee; font-size: 28px; font-weight: 700; line-height: 1.3; margin: 0 0 24px; letter-spacing: -0.5px;">
-            New Contact Transmission
-          </h1>
-          
-          <p style="color: #cbd5e1; font-size: 16px; line-height: 26px; margin: 0 0 24px;">
-            A new signal has been detected from the network.
-          </p>
-          
-          <div style="background: rgba(15, 23, 42, 0.5); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(100, 116, 139, 0.2);">
-            <p style="color: #94a3b8; font-size: 14px; margin: 0 0 12px;">
-              <strong style="color: #f1f5f9;">Name:</strong> ${name}
-            </p>
-            <p style="color: #94a3b8; font-size: 14px; margin: 0 0 12px;">
-              <strong style="color: #f1f5f9;">Email:</strong> 
-              <a href="mailto:${email}" style="color: #22d3ee; text-decoration: none;">${email}</a>
-            </p>
-            <p style="color: #94a3b8; font-size: 14px; margin: 0 0 12px;">
-              <strong style="color: #f1f5f9;">Message:</strong>
-            </p>
-            <p style="color: #cbd5e1; font-size: 14px; line-height: 20px; margin: 0; padding: 12px; background: rgba(6, 182, 212, 0.05); border-radius: 6px; border: 1px solid rgba(6, 182, 212, 0.15);">
-              ${message.replace(/\n/g, '<br>')}
-            </p>
-          </div>
-          
-          <p style="color: #64748b; font-size: 13px; line-height: 22px; margin-top: 32px; font-style: italic; text-align: center;">
-            Received: ${new Date().toLocaleString('en-GB', { 
-              timeZone: 'Europe/London',
-              day: '2-digit',
-              month: '2-digit', 
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })} GMT
-          </p>
-          
-          <table style="width: 100%; max-width: 400px; margin: 24px auto 16px;">
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f172a;">
             <tr>
-              <td style="text-align: center; padding: 0 40px; width: 50%;">
-                <a href="https://leafnode.co.uk" style="color: #22d3ee; font-size: 13px; text-decoration: none;">leafnode.co.uk</a>
-              </td>
-              <td style="text-align: center; padding: 0 40px; width: 50%;">
-                <a href="https://www.instagram.com/leafnode.scifi" style="color: #22d3ee; font-size: 13px; text-decoration: none;">
-                  <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 6px;" />@leafnode.scifi
-                </a>
+              <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px;">
+                  
+                  <!-- Logo -->
+                  <tr>
+                    <td align="center" style="padding-bottom: 32px;">
+                      <img src="https://leafnode.co.uk/leafnode-email-logo.png" alt="Leafnode" width="80" style="width: 80px; height: auto; border-radius: 12px;" />
+                    </td>
+                  </tr>
+                  
+                  <!-- Heading -->
+                  <tr>
+                    <td style="padding-bottom: 24px;">
+                      <h1 style="color: #22d3ee; font-size: 28px; font-weight: 700; line-height: 1.3; margin: 0; letter-spacing: -0.5px;">New Contact Transmission</h1>
+                    </td>
+                  </tr>
+                  
+                  <!-- Intro text -->
+                  <tr>
+                    <td style="padding-bottom: 24px;">
+                      <p style="color: #cbd5e1; font-size: 16px; line-height: 26px; margin: 0;">A new signal has been detected from the network.</p>
+                    </td>
+                  </tr>
+                  
+                  <!-- Contact details box -->
+                  <tr>
+                    <td style="padding: 24px; background-color: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(100, 116, 139, 0.2);">
+                      <p style="color: #94a3b8; font-size: 14px; margin: 0 0 12px;">
+                        <strong style="color: #f1f5f9;">Name:</strong> ${name}
+                      </p>
+                      <p style="color: #94a3b8; font-size: 14px; margin: 0 0 12px;">
+                        <strong style="color: #f1f5f9;">Email:</strong> 
+                        <a href="mailto:${email}" style="color: #22d3ee; text-decoration: none;">${email}</a>
+                      </p>
+                      <p style="color: #94a3b8; font-size: 14px; margin: 0 0 12px;">
+                        <strong style="color: #f1f5f9;">Message:</strong>
+                      </p>
+                      <p style="color: #cbd5e1; font-size: 14px; line-height: 20px; margin: 0; padding: 12px; background-color: rgba(6, 182, 212, 0.05); border-radius: 6px; border: 1px solid rgba(6, 182, 212, 0.15);">
+                        ${message.replace(/\n/g, '<br>')}
+                      </p>
+                    </td>
+                  </tr>
+                  
+                  <!-- Timestamp -->
+                  <tr>
+                    <td align="center" style="padding-top: 32px;">
+                      <p style="color: #64748b; font-size: 13px; line-height: 22px; margin: 0; font-style: italic;">
+                        Received: ${new Date().toLocaleString('en-GB', { 
+                          timeZone: 'Europe/London',
+                          day: '2-digit',
+                          month: '2-digit', 
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })} GMT
+                      </p>
+                    </td>
+                  </tr>
+                  
+                  <!-- Social links -->
+                  <tr>
+                    <td style="padding-top: 24px;">
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 400px; margin: 0 auto;">
+                        <tr>
+                          <td align="center" width="50%" style="padding: 0 40px;">
+                            <a href="https://leafnode.co.uk" style="color: #22d3ee; font-size: 13px; text-decoration: none;">leafnode.co.uk</a>
+                          </td>
+                          <td align="center" width="50%" style="padding: 0 40px;">
+                            <a href="https://www.instagram.com/leafnode.scifi" style="color: #22d3ee; font-size: 13px; text-decoration: none;">
+                              <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" width="14" height="14" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 6px;" />@leafnode.scifi
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                </table>
               </td>
             </tr>
           </table>
-        </div>
+        </body>
+        </html>
       `,
     });
 
@@ -173,60 +212,109 @@ const handler = async (req: Request): Promise<Response> => {
       to: [email],
       subject: "Signal Received - LEAFNODE Contact Confirmation",
       html: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #0f172a;">
-          <div style="text-align: center; margin-bottom: 32px;">
-            <img src="https://leafnode.co.uk/leafnode-email-logo.png" alt="Leafnode" style="width: 80px; height: auto; border-radius: 12px;" />
-          </div>
-          
-          <h1 style="color: #22d3ee; font-size: 28px; font-weight: 700; line-height: 1.3; margin: 0 0 24px; letter-spacing: -0.5px;">
-            Signal Acknowledged
-          </h1>
-          
-          <p style="color: #cbd5e1; font-size: 16px; line-height: 26px; margin: 0 0 24px;">
-            Hello ${name}, your transmission has been received and logged in our consciousness network. 
-            We appreciate you reaching out and will respond to your signal soon.
-          </p>
-          
-          <div style="background: rgba(15, 23, 42, 0.5); border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid rgba(100, 116, 139, 0.2);">
-            <p style="color: #94a3b8; font-size: 14px; margin: 0 0 12px;">
-              <strong style="color: #f1f5f9;">Your Message:</strong>
-            </p>
-            <p style="color: #cbd5e1; font-size: 14px; line-height: 20px; margin: 0;">
-              ${message.replace(/\n/g, '<br>')}
-            </p>
-          </div>
-          
-          <div style="background: rgba(6, 182, 212, 0.05); border-radius: 8px; padding: 24px; margin: 32px 0; border: 1px solid rgba(6, 182, 212, 0.15); text-align: center;">
-            <p style="color: #cbd5e1; font-size: 15px; line-height: 24px; margin: 0 0 16px;">
-              While you wait, explore the narrative threads of consciousness
-            </p>
-            <a href="https://leafnode.co.uk" style="background: rgba(6, 182, 212, 0.15); border-radius: 6px; color: #22d3ee; font-size: 14px; font-weight: 500; text-decoration: none; text-align: center; display: inline-block; padding: 10px 28px; border: 1px solid rgba(6, 182, 212, 0.3); letter-spacing: 0.3px;">
-              Explore Leafnode
-            </a>
-          </div>
-          
-          <p style="color: #64748b; font-size: 13px; line-height: 22px; margin-top: 32px; font-style: italic; text-align: center;">
-            Keep your signal strong. Stay future-literate.
-          </p>
-          
-          <p style="color: #94a3b8; font-size: 13px; line-height: 22px; margin-top: 16px; text-align: center;">
-            Questions? Reach us at 
-            <a href="mailto:connect@leafnode.co.uk" style="color: #22d3ee; text-decoration: none;">connect@leafnode.co.uk</a>
-          </p>
-          
-          <table style="width: 100%; max-width: 400px; margin: 24px auto 16px;">
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f172a;">
             <tr>
-              <td style="text-align: center; padding: 0 40px; width: 50%;">
-                <a href="https://leafnode.co.uk" style="color: #22d3ee; font-size: 13px; text-decoration: none;">leafnode.co.uk</a>
-              </td>
-              <td style="text-align: center; padding: 0 40px; width: 50%;">
-                <a href="https://www.instagram.com/leafnode.scifi" style="color: #22d3ee; font-size: 13px; text-decoration: none;">
-                  <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 6px;" />@leafnode.scifi
-                </a>
+              <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px;">
+                  
+                  <!-- Logo -->
+                  <tr>
+                    <td align="center" style="padding-bottom: 32px;">
+                      <img src="https://leafnode.co.uk/leafnode-email-logo.png" alt="Leafnode" width="80" style="width: 80px; height: auto; border-radius: 12px;" />
+                    </td>
+                  </tr>
+                  
+                  <!-- Heading -->
+                  <tr>
+                    <td style="padding-bottom: 24px;">
+                      <h1 style="color: #22d3ee; font-size: 28px; font-weight: 700; line-height: 1.3; margin: 0; letter-spacing: -0.5px;">Signal Acknowledged</h1>
+                    </td>
+                  </tr>
+                  
+                  <!-- Intro text -->
+                  <tr>
+                    <td style="padding-bottom: 24px;">
+                      <p style="color: #cbd5e1; font-size: 16px; line-height: 26px; margin: 0;">
+                        Hello ${name}, your transmission has been received and logged in our consciousness network. 
+                        We appreciate you reaching out and will respond to your signal soon.
+                      </p>
+                    </td>
+                  </tr>
+                  
+                  <!-- Message box -->
+                  <tr>
+                    <td style="padding: 24px; background-color: rgba(15, 23, 42, 0.5); border-radius: 12px; border: 1px solid rgba(100, 116, 139, 0.2);">
+                      <p style="color: #94a3b8; font-size: 14px; margin: 0 0 12px;">
+                        <strong style="color: #f1f5f9;">Your Message:</strong>
+                      </p>
+                      <p style="color: #cbd5e1; font-size: 14px; line-height: 20px; margin: 0;">
+                        ${message.replace(/\n/g, '<br>')}
+                      </p>
+                    </td>
+                  </tr>
+                  
+                  <!-- CTA section -->
+                  <tr>
+                    <td align="center" style="padding: 32px 24px; margin-top: 20px; background-color: rgba(6, 182, 212, 0.05); border-radius: 8px; border: 1px solid rgba(6, 182, 212, 0.15);">
+                      <p style="color: #cbd5e1; font-size: 15px; line-height: 24px; margin: 0 0 16px;">
+                        While you wait, explore the narrative threads of consciousness
+                      </p>
+                      <a href="https://leafnode.co.uk" style="background-color: rgba(6, 182, 212, 0.15); border-radius: 6px; color: #22d3ee; font-size: 14px; font-weight: 500; text-decoration: none; display: inline-block; padding: 10px 28px; border: 1px solid rgba(6, 182, 212, 0.3); letter-spacing: 0.3px;">
+                        Explore Leafnode
+                      </a>
+                    </td>
+                  </tr>
+                  
+                  <!-- Footer text -->
+                  <tr>
+                    <td align="center" style="padding-top: 32px;">
+                      <p style="color: #64748b; font-size: 13px; line-height: 22px; margin: 0; font-style: italic;">
+                        Keep your signal strong. Stay future-literate.
+                      </p>
+                    </td>
+                  </tr>
+                  
+                  <!-- Contact -->
+                  <tr>
+                    <td align="center" style="padding-top: 16px;">
+                      <p style="color: #94a3b8; font-size: 13px; line-height: 22px; margin: 0;">
+                        Questions? Reach us at 
+                        <a href="mailto:connect@leafnode.co.uk" style="color: #22d3ee; text-decoration: none;">connect@leafnode.co.uk</a>
+                      </p>
+                    </td>
+                  </tr>
+                  
+                  <!-- Social links -->
+                  <tr>
+                    <td style="padding-top: 24px;">
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 400px; margin: 0 auto;">
+                        <tr>
+                          <td align="center" width="50%" style="padding: 0 40px;">
+                            <a href="https://leafnode.co.uk" style="color: #22d3ee; font-size: 13px; text-decoration: none;">leafnode.co.uk</a>
+                          </td>
+                          <td align="center" width="50%" style="padding: 0 40px;">
+                            <a href="https://www.instagram.com/leafnode.scifi" style="color: #22d3ee; font-size: 13px; text-decoration: none;">
+                              <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" width="14" height="14" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 6px;" />@leafnode.scifi
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                </table>
               </td>
             </tr>
           </table>
-        </div>
+        </body>
+        </html>
       `,
     });
 
