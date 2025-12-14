@@ -45,9 +45,8 @@ export const WelcomeEmail = ({
       <Container style={container}>
         <Section style={header}>
           <Img
-            src="https://mmnfjeukxandnhdaovzx.supabase.co/storage/v1/object/public/book-covers/leafnode-logo.png"
-            width="64"
-            height="64"
+            src="https://leafnode.co.uk/leafnode-email-logo.png"
+            width="80"
             alt="Leafnode"
             style={logo}
           />
@@ -111,6 +110,23 @@ export const WelcomeEmail = ({
           Welcome aboard,<br />
           The Leafnode Team
         </Text>
+
+        <Section style={socialSection}>
+          <Link href="https://leafnode.co.uk" target="_blank" style={socialLink}>
+            leafnode.co.uk
+          </Link>
+          <Text style={socialDivider}> · </Text>
+          <Link href="https://www.instagram.com/leafnode.scifi" target="_blank" style={socialLink}>
+            <Img 
+              src="https://cdn-icons-png.flaticon.com/512/174/174855.png" 
+              alt="Instagram" 
+              width="14"
+              height="14"
+              style={instagramIcon}
+            />
+            @leafnode.scifi
+          </Link>
+        </Section>
         
         <Text style={disclaimer}>
           If you didn't create an account with Leafnode, you can safely ignore this email.
@@ -253,4 +269,27 @@ const disclaimer = {
   lineHeight: '18px',
   margin: '24px 0 0',
   textAlign: 'center' as const,
+}
+
+const socialSection = {
+  textAlign: 'center' as const,
+  marginTop: '24px',
+  marginBottom: '16px',
+}
+
+const socialLink = {
+  color: '#22d3ee',
+  fontSize: '13px',
+  textDecoration: 'none',
+}
+
+const socialDivider = {
+  color: '#475569',
+  display: 'inline',
+  margin: '0 4px',
+}
+
+const instagramIcon = {
+  verticalAlign: 'middle',
+  marginRight: '4px',
 }
