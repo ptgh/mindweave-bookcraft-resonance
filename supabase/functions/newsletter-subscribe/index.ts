@@ -15,6 +15,7 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 interface SubscribeRequest {
   email: string;
   userId?: string;
+  forceResend?: boolean;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -27,7 +28,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { email, userId }: SubscribeRequest = await req.json();
+    const { email, userId, forceResend }: SubscribeRequest = await req.json();
 
     // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -55,29 +56,35 @@ const handler = async (req: Request): Promise<Response> => {
     let isResubscribe = false;
 
     if (existing) {
-      if (existing.status === 'active') {
+      if (existing.status === 'active' && !forceResend) {
         return new Response(
           JSON.stringify({ message: 'Already subscribed' }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       
-      // Reactivate subscription
-      const { data: updated, error: updateError } = await supabase
-        .from('newsletter_subscribers')
-        .update({ 
-          status: 'active', 
-          subscribed_at: new Date().toISOString(),
-          unsubscribed_at: null,
-          user_id: userId || null
-        })
-        .eq('id', existing.id)
-        .select()
-        .single();
+      // For forceResend on active subscribers, just get the ID and send email
+      if (existing.status === 'active' && forceResend) {
+        subscriberId = existing.id;
+        isResubscribe = false; // Treat as fresh welcome for testing
+      } else {
+        // Reactivate subscription
+        const { data: updated, error: updateError } = await supabase
+          .from('newsletter_subscribers')
+          .update({ 
+            status: 'active', 
+            subscribed_at: new Date().toISOString(),
+            unsubscribed_at: null,
+            user_id: userId || null
+          })
+          .eq('id', existing.id)
+          .select()
+          .single();
 
-      if (updateError) throw updateError;
-      subscriberId = updated.id;
-      isResubscribe = true;
+        if (updateError) throw updateError;
+        subscriberId = updated.id;
+        isResubscribe = true;
+      }
     } else {
       // Create new subscription
       const { data: newSub, error: insertError } = await supabase
