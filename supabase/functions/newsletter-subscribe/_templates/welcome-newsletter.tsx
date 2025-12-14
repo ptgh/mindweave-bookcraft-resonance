@@ -29,7 +29,7 @@ export const WelcomeNewsletterEmail = ({
       <Container style={container}>
         <Section style={logoSection}>
           <img
-            src="https://mmnfjeukxandnhdaovzx.supabase.co/storage/v1/object/public/book-covers/leafnode-logo.png"
+            src="https://leafnode.co.uk/leafnode-email-logo.png"
             alt="Leafnode"
             style={logo}
           />
@@ -79,6 +79,21 @@ export const WelcomeNewsletterEmail = ({
           </Link>
         </Text>
 
+        <Section style={socialSection}>
+          <Link href="https://leafnode.co.uk" target="_blank" style={socialLink}>
+            leafnode.co.uk
+          </Link>
+          {' · '}
+          <Link href="https://www.instagram.com/leafnode.scifi" target="_blank" style={socialLink}>
+            <img 
+              src="https://cdn-icons-png.flaticon.com/512/174/174855.png" 
+              alt="Instagram" 
+              style={instagramIcon}
+            />
+            @leafnode.scifi
+          </Link>
+        </Section>
+
         <Text style={footerLinks}>
           <Link href={unsubscribeUrl} target="_blank" style={footerLink}>
             Disconnect Signal
@@ -112,9 +127,30 @@ const logoSection = {
 };
 
 const logo = {
-  width: '64px',
-  height: '64px',
+  width: '80px',
+  height: 'auto',
   borderRadius: '12px',
+};
+
+const socialSection = {
+  textAlign: 'center' as const,
+  marginTop: '24px',
+  marginBottom: '16px',
+};
+
+const socialLink = {
+  color: '#22d3ee',
+  fontSize: '13px',
+  textDecoration: 'none',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '6px',
+};
+
+const instagramIcon = {
+  width: '14px',
+  height: '14px',
+  verticalAlign: 'middle',
 };
 
 const h1 = {

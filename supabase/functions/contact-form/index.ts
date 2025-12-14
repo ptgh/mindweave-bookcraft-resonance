@@ -111,39 +111,39 @@ const handler = async (req: Request): Promise<Response> => {
       to: ["connect@leafnode.co.uk"],
       subject: `New Contact Form Submission from ${name}`,
       html: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #0f172a;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <img src="https://leafnode.co.uk/leafnode-email-logo.png" alt="Leafnode" style="width: 80px; height: auto; border-radius: 12px;" />
+          </div>
           <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 30px; border-radius: 12px; color: white; margin-bottom: 20px;">
             <div style="text-align: center; margin-bottom: 20px;">
-              <div style="width: 60px; height: 60px; margin: 0 auto 15px; border: 2px dashed #60a5fa; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                <div style="width: 24px; height: 24px; background: #60a5fa; border-radius: 50%; animation: pulse 2s infinite;"></div>
-              </div>
               <h1 style="margin: 0; font-size: 28px; font-weight: 300; letter-spacing: 2px;">
-                <span style="color: #60a5fa;">LEAFNODE</span>
+                <span style="color: #22d3ee;">LEAFNODE</span>
               </h1>
               <p style="margin: 5px 0 0; font-size: 12px; color: #94a3b8;">Signal Detected</p>
             </div>
           </div>
           
-          <div style="background: #f8fafc; padding: 25px; border-radius: 8px; border-left: 4px solid #60a5fa;">
-            <h2 style="margin: 0 0 20px; color: #1e293b; font-size: 20px;">New Contact Transmission</h2>
+          <div style="background: #1e293b; padding: 25px; border-radius: 8px; border-left: 4px solid #22d3ee;">
+            <h2 style="margin: 0 0 20px; color: #e2e8f0; font-size: 20px;">New Contact Transmission</h2>
             
-            <div style="margin-bottom: 15px;">
-              <strong style="color: #475569;">Name:</strong> ${name}
+            <div style="margin-bottom: 15px; color: #cbd5e1;">
+              <strong style="color: #94a3b8;">Name:</strong> ${name}
             </div>
             
-            <div style="margin-bottom: 15px;">
-              <strong style="color: #475569;">Email:</strong> 
-              <a href="mailto:${email}" style="color: #2563eb; text-decoration: none;">${email}</a>
+            <div style="margin-bottom: 15px; color: #cbd5e1;">
+              <strong style="color: #94a3b8;">Email:</strong> 
+              <a href="mailto:${email}" style="color: #22d3ee; text-decoration: none;">${email}</a>
             </div>
             
-            <div style="margin-bottom: 15px;">
-              <strong style="color: #475569;">Message:</strong>
-              <div style="background: white; padding: 15px; border-radius: 6px; margin-top: 8px; border: 1px solid #e2e8f0;">
+            <div style="margin-bottom: 15px; color: #cbd5e1;">
+              <strong style="color: #94a3b8;">Message:</strong>
+              <div style="background: #0f172a; padding: 15px; border-radius: 6px; margin-top: 8px; border: 1px solid rgba(34, 211, 238, 0.2); color: #cbd5e1;">
                 ${message.replace(/\n/g, '<br>')}
               </div>
             </div>
             
-            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(100, 116, 139, 0.3); font-size: 12px; color: #64748b;">
               Received: ${new Date().toLocaleString('en-GB', { 
                 timeZone: 'Europe/London',
                 day: '2-digit',
@@ -153,6 +153,15 @@ const handler = async (req: Request): Promise<Response> => {
                 minute: '2-digit'
               })} GMT
             </div>
+          </div>
+          
+          <div style="text-align: center; margin-top: 24px; color: #64748b; font-size: 13px;">
+            <a href="https://leafnode.co.uk" style="color: #22d3ee; text-decoration: none;">leafnode.co.uk</a>
+            <span style="margin: 0 8px;">·</span>
+            <a href="https://www.instagram.com/leafnode.scifi" style="color: #22d3ee; text-decoration: none;">
+              <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" />
+              @leafnode.scifi
+            </a>
           </div>
         </div>
       `,
@@ -164,49 +173,58 @@ const handler = async (req: Request): Promise<Response> => {
       to: [email],
       subject: "Signal Received - LEAFNODE Contact Confirmation",
       html: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #0f172a;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <img src="https://leafnode.co.uk/leafnode-email-logo.png" alt="Leafnode" style="width: 80px; height: auto; border-radius: 12px;" />
+          </div>
           <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 30px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px;">
-            <div style="width: 60px; height: 60px; margin: 0 auto 15px; border: 2px dashed #60a5fa; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-              <div style="width: 24px; height: 24px; background: #60a5fa; border-radius: 50%;"></div>
-            </div>
             <h1 style="margin: 0; font-size: 28px; font-weight: 300; letter-spacing: 2px;">
-              <span style="color: #60a5fa;">LEAFNODE</span>
+              <span style="color: #22d3ee;">LEAFNODE</span>
             </h1>
             <p style="margin: 5px 0 0; font-size: 12px; color: #94a3b8;">for the future-literate</p>
           </div>
           
-          <div style="background: #f8fafc; padding: 25px; border-radius: 8px;">
-            <h2 style="margin: 0 0 15px; color: #1e293b; font-size: 20px;">Signal Acknowledged</h2>
+          <div style="background: #1e293b; padding: 25px; border-radius: 8px;">
+            <h2 style="margin: 0 0 15px; color: #e2e8f0; font-size: 20px;">Signal Acknowledged</h2>
             
-            <p style="color: #475569; line-height: 1.6; margin-bottom: 15px;">
+            <p style="color: #cbd5e1; line-height: 1.6; margin-bottom: 15px;">
               Hello ${name},
             </p>
             
-            <p style="color: #475569; line-height: 1.6; margin-bottom: 15px;">
+            <p style="color: #cbd5e1; line-height: 1.6; margin-bottom: 15px;">
               Your transmission has been received and logged in our consciousness network. 
               We appreciate you reaching out and will respond to your signal soon.
             </p>
             
-            <div style="background: white; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #60a5fa;">
-              <p style="margin: 0; color: #475569; font-size: 14px;">
-                <strong>Your Message:</strong><br>
+            <div style="background: #0f172a; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #22d3ee;">
+              <p style="margin: 0; color: #cbd5e1; font-size: 14px;">
+                <strong style="color: #94a3b8;">Your Message:</strong><br>
                 ${message.replace(/\n/g, '<br>')}
               </p>
             </div>
             
-            <p style="color: #475569; line-height: 1.6; margin-bottom: 20px;">
+            <p style="color: #cbd5e1; line-height: 1.6; margin-bottom: 20px;">
               While you wait, feel free to explore the narrative threads of consciousness at 
-              <a href="https://leafnode.co.uk" style="color: #2563eb; text-decoration: none;">leafnode.co.uk</a>
+              <a href="https://leafnode.co.uk" style="color: #22d3ee; text-decoration: none;">leafnode.co.uk</a>
             </p>
             
-            <div style="text-align: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-              <div style="display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: #64748b;">
-                <div style="width: 8px; height: 8px; background: #60a5fa; border-radius: 50%;"></div>
+            <div style="text-align: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid rgba(100, 116, 139, 0.3);">
+              <div style="font-size: 12px; color: #64748b;">
+                <span style="display: inline-block; width: 8px; height: 8px; background: #22d3ee; border-radius: 50%; vertical-align: middle; margin-right: 6px;"></span>
                 <span>Neural pathways: Active</span>
-                <div style="width: 4px; height: 4px; background: #94a3b8; border-radius: 50%;"></div>
+                <span style="margin: 0 8px;">·</span>
                 <span>Frequency: 432 Hz</span>
               </div>
             </div>
+          </div>
+          
+          <div style="text-align: center; margin-top: 24px; color: #64748b; font-size: 13px;">
+            <a href="https://leafnode.co.uk" style="color: #22d3ee; text-decoration: none;">leafnode.co.uk</a>
+            <span style="margin: 0 8px;">·</span>
+            <a href="https://www.instagram.com/leafnode.scifi" style="color: #22d3ee; text-decoration: none;">
+              <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" />
+              @leafnode.scifi
+            </a>
           </div>
         </div>
       `,

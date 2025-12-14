@@ -184,9 +184,8 @@ Deno.serve(async (req) => {
             React.createElement(Container, { style: emailStyles.container },
               React.createElement(Section, { style: emailStyles.header },
                 React.createElement(Img, {
-                  src: 'https://mmnfjeukxandnhdaovzx.supabase.co/storage/v1/object/public/book-covers/leafnode-logo.png',
-                  width: '64',
-                  height: '64',
+                  src: 'https://leafnode.co.uk/leafnode-email-logo.png',
+                  width: '80',
                   alt: 'Leafnode',
                   style: emailStyles.logo,
                 })
@@ -214,7 +213,27 @@ Deno.serve(async (req) => {
               React.createElement(Text, { style: emailStyles.footer },
                 'Keep your signal strong. Stay future-literate.'
               ),
-              React.createElement(Text, { style: { ...emailStyles.text, textAlign: 'center' as const } },
+              React.createElement(Section, { style: { textAlign: 'center' as const, marginTop: '24px' } },
+                React.createElement(Link, { 
+                  href: 'https://leafnode.co.uk', 
+                  style: { color: '#22d3ee', textDecoration: 'none', fontSize: '13px' } 
+                }, 'leafnode.co.uk'),
+                React.createElement(Text, { style: { display: 'inline', color: '#475569', margin: '0 8px' } }, ' · '),
+                React.createElement(Link, { 
+                  href: 'https://www.instagram.com/leafnode.scifi', 
+                  style: { color: '#22d3ee', textDecoration: 'none', fontSize: '13px' } 
+                }, 
+                  React.createElement(Img, {
+                    src: 'https://cdn-icons-png.flaticon.com/512/174/174855.png',
+                    width: '14',
+                    height: '14',
+                    alt: 'Instagram',
+                    style: { verticalAlign: 'middle', marginRight: '4px' }
+                  }),
+                  '@leafnode.scifi'
+                )
+              ),
+              React.createElement(Text, { style: { ...emailStyles.text, textAlign: 'center' as const, marginTop: '16px' } },
                 React.createElement(Link, { 
                   href: 'mailto:connect@leafnode.co.uk', 
                   style: { color: '#22d3ee', textDecoration: 'none' } 
