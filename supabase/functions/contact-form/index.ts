@@ -200,6 +200,10 @@ const handler = async (req: Request): Promise<Response> => {
                 </table>
               </td>
             </tr>
+            <!-- Bottom spacer to fill email client viewport -->
+            <tr>
+              <td style="height: 200px; background-color: #0f172a;">&nbsp;</td>
+            </tr>
           </table>
         </body>
         </html>
@@ -311,6 +315,10 @@ const handler = async (req: Request): Promise<Response> => {
                   
                 </table>
               </td>
+            </tr>
+            <!-- Bottom spacer to fill email client viewport -->
+            <tr>
+              <td style="height: 200px; background-color: #0f172a;">&nbsp;</td>
             </tr>
           </table>
         </body>
