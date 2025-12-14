@@ -202,7 +202,7 @@ const handler = async (req: Request): Promise<Response> => {
             </tr>
             <!-- Bottom spacer to fill email client viewport -->
             <tr>
-              <td style="height: 200px; background-color: #0f172a;">&nbsp;</td>
+              <td style="height: 300px; background-color: #0f172a;">&nbsp;</td>
             </tr>
           </table>
         </body>
