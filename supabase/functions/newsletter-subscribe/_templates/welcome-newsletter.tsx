@@ -79,20 +79,25 @@ export const WelcomeNewsletterEmail = ({
           </Link>
         </Text>
 
-        <Section style={socialSection}>
-          <Link href="https://leafnode.co.uk" target="_blank" style={socialLink}>
-            leafnode.co.uk
-          </Link>
-          {' · '}
-          <Link href="https://www.instagram.com/leafnode.scifi" target="_blank" style={socialLink}>
-            <img 
-              src="https://cdn-icons-png.flaticon.com/512/174/174855.png" 
-              alt="Instagram" 
-              style={instagramIcon}
-            />
-            @leafnode.scifi
-          </Link>
-        </Section>
+        <table style={socialTable}>
+          <tr>
+            <td style={socialTd}>
+              <Link href="https://leafnode.co.uk" target="_blank" style={socialLink}>
+                leafnode.co.uk
+              </Link>
+            </td>
+            <td style={socialTd}>
+              <Link href="https://www.instagram.com/leafnode.scifi" target="_blank" style={socialLink}>
+                <img 
+                  src="https://cdn-icons-png.flaticon.com/512/174/174855.png" 
+                  alt="Instagram" 
+                  style={instagramIcon}
+                />
+                @leafnode.scifi
+              </Link>
+            </td>
+          </tr>
+        </table>
 
         <Text style={footerLinks}>
           <Link href={unsubscribeUrl} target="_blank" style={footerLink}>
@@ -132,25 +137,29 @@ const logo = {
   borderRadius: '12px',
 };
 
-const socialSection = {
+const socialTable = {
+  width: '100%',
+  maxWidth: '360px',
+  margin: '24px auto 16px',
+};
+
+const socialTd = {
   textAlign: 'center' as const,
-  marginTop: '24px',
-  marginBottom: '16px',
+  padding: '0 20px',
+  width: '50%',
 };
 
 const socialLink = {
   color: '#22d3ee',
   fontSize: '13px',
   textDecoration: 'none',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '6px',
 };
 
 const instagramIcon = {
   width: '14px',
   height: '14px',
   verticalAlign: 'middle',
+  marginRight: '6px',
 };
 
 const h1 = {
