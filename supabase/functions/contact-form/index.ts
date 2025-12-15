@@ -107,7 +107,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send notification email to you
     const notificationEmail = await resend.emails.send({
-      from: "LEAFNODE Contact <connect@leafnode.co.uk>",
+      from: "Leafnode Contact <connect@leafnode.co.uk>",
       to: ["connect@leafnode.co.uk"],
       subject: `New Contact Form Submission from ${name}`,
       html: `
@@ -212,9 +212,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send confirmation email to the user
     const confirmationEmail = await resend.emails.send({
-      from: "LEAFNODE <connect@leafnode.co.uk>",
+      from: "Leafnode <connect@leafnode.co.uk>",
       to: [email],
-      subject: "Signal Received - LEAFNODE Contact Confirmation",
+      subject: "Signal Received - Leafnode Contact Confirmation",
       html: `
         <!DOCTYPE html>
         <html style="height: 100%; background-color: #0f172a;">
