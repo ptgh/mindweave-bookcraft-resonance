@@ -1,4 +1,5 @@
 
+import { useRef, useEffect } from "react";
 import Header from "@/components/Header";
 import AuthorMatrixHeader from "@/components/AuthorMatrixHeader";
 import AuthorsList from "@/components/AuthorsList";
@@ -7,6 +8,7 @@ import { useAuthorMatrix } from "@/hooks/useAuthorMatrix";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 
 const AuthorMatrix = () => {
+  const booksSectionRef = useRef<HTMLDivElement>(null);
   const {
     authors,
     selectedAuthor,
@@ -26,6 +28,18 @@ const AuthorMatrix = () => {
   } = useAuthorMatrix();
 
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
+
+  // Scroll to books section on mobile when author is selected
+  useEffect(() => {
+    if (selectedAuthor && booksSectionRef.current) {
+      const isMobile = window.innerWidth < 1024; // lg breakpoint
+      if (isMobile) {
+        setTimeout(() => {
+          booksSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+    }
+  }, [selectedAuthor]);
 
   return (
     <>
@@ -63,7 +77,7 @@ const AuthorMatrix = () => {
               />
             </div>
 
-            <div ref={addFeatureBlockRef} className="feature-block lg:col-span-3 mt-6 lg:mt-0">
+            <div ref={(el) => { addFeatureBlockRef(el); booksSectionRef.current = el; }} className="feature-block lg:col-span-3 mt-6 lg:mt-0">
               <AuthorBooksSection
                 selectedAuthor={selectedAuthor}
                 authorBooks={authorBooks}

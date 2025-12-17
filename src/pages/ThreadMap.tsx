@@ -95,31 +95,31 @@ const ThreadMap = () => {
             <p className="text-slate-400 text-sm sm:text-base">Temporal navigation • Literary chronology through your transmission timeline</p>
           </div>
 
-          <div className="flex-1 overflow-hidden grid grid-cols-2 gap-6">
+          <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
             {/* Left Column: Chrono Timeline */}
-            <div className="overflow-y-auto scrollbar-hide bg-slate-800/50 rounded-lg border border-slate-700 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-2">
-                  <Clock className="w-5 h-5 text-blue-400" />
-                  <h2 className="text-lg font-medium text-slate-200">Temporal Thread</h2>
-                  <span className="text-slate-400 text-sm">• {booksWithTemporalData} temporal nodes</span>
+            <div className="overflow-y-auto scrollbar-hide bg-slate-800/50 rounded-lg border border-slate-700 p-4 lg:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 lg:mb-6">
+                <div className="flex items-center space-x-2 min-w-0">
+                  <Clock className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                  <h2 className="text-base lg:text-lg font-medium text-slate-200 truncate">Temporal Thread</h2>
+                  <span className="text-slate-400 text-xs lg:text-sm whitespace-nowrap">• {booksWithTemporalData} temporal nodes</span>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 flex-shrink-0">
                   <button
                     onClick={() => setShowTemporalModal(true)}
                     disabled={transmissions.length < 3}
-                    className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-xs font-medium transition-all duration-200 py-1.5 px-3 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 touch-manipulation disabled:opacity-50 disabled:pointer-events-none"
+                    className="inline-flex items-center justify-center gap-1 lg:gap-2 whitespace-nowrap rounded-lg text-xs font-medium transition-all duration-200 py-1.5 px-2 lg:px-3 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 touch-manipulation disabled:opacity-50 disabled:pointer-events-none"
                   >
-                    <Sparkles className="w-4 h-4 text-blue-400" />
-                    Temporal Analysis
+                    <Sparkles className="w-3 h-3 lg:w-4 lg:h-4 text-blue-400" />
+                    <span className="hidden sm:inline">Temporal Analysis</span>
                   </button>
                   <button
                     onClick={() => setShowChallengeModal(true)}
                     disabled={transmissions.length < 3}
-                    className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-xs font-medium transition-all duration-200 py-1.5 px-3 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 touch-manipulation disabled:opacity-50 disabled:pointer-events-none"
+                    className="inline-flex items-center justify-center gap-1 lg:gap-2 whitespace-nowrap rounded-lg text-xs font-medium transition-all duration-200 py-1.5 px-2 lg:px-3 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 touch-manipulation disabled:opacity-50 disabled:pointer-events-none"
                   >
-                    <Target className="w-4 h-4 text-cyan-400" />
-                    Protocol Mission
+                    <Target className="w-3 h-3 lg:w-4 lg:h-4 text-cyan-400" />
+                    <span className="hidden sm:inline">Protocol Mission</span>
                   </button>
                 </div>
               </div>
