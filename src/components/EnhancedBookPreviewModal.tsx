@@ -27,8 +27,13 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   const digitalCopyButtonRef = useRef<HTMLButtonElement>(null);
 
   // Scroll to top on mount to ensure modal is centered in viewport on mobile
+  // On iOS Safari, scrolling happens on #root element, not window
   useEffect(() => {
-    window.scrollTo(0, 0);
+    const rootElement = document.getElementById('root');
+    if (rootElement) {
+      rootElement.scrollTo({ top: 0, behavior: 'instant' });
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
   // GSAP hover animations for digital copy button
@@ -350,7 +355,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   const hasDigitalCopy = !!(appleBook || freeEbooks?.archive?.url || freeEbooks?.gutenberg?.url);
 
   return (
-    <div className="fixed left-0 top-0 z-50 flex h-[100dvh] w-screen items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex h-[100dvh] w-screen items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
       <div className="modal-content bg-slate-800/50 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="p-3 border-b border-slate-700 flex-shrink-0">

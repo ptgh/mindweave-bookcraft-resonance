@@ -45,7 +45,7 @@ const FreeEbookModal = ({ isOpen, onClose, title, author, ebookData, isLoading =
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
         ref={contentRef}
-        className="max-w-xs bg-slate-900 border-0 text-slate-200 p-5 pt-12 data-[state=open]:bg-slate-900"
+        className="max-w-xs bg-slate-900 border-0 text-slate-200 p-5 pt-14 overflow-visible data-[state=open]:bg-slate-900"
       >
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
