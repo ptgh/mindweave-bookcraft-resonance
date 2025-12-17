@@ -86,39 +86,41 @@ const ThreadMap = () => {
       <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
         <Header />
         
-        <main className="flex-1 overflow-hidden flex flex-col px-4 sm:px-6 py-6">
-          <div className="mb-6">
-            <div className="flex items-center space-x-3 mb-2">
-              <Brain className="w-8 h-8 text-blue-400" />
-              <h1 className="text-2xl sm:text-3xl font-light text-slate-200">Chrono Thread</h1>
+        <main className="flex-1 overflow-hidden flex flex-col px-3 sm:px-6 py-4 sm:py-6">
+          <div className="mb-4 sm:mb-6">
+            <div className="flex items-center space-x-2 sm:space-x-3 mb-1 sm:mb-2">
+              <Brain className="w-6 h-6 sm:w-8 sm:h-8 text-blue-400 flex-shrink-0" />
+              <h1 className="text-xl sm:text-3xl font-light text-slate-200">Chrono Thread</h1>
             </div>
-            <p className="text-slate-400 text-sm sm:text-base">Temporal navigation • Literary chronology through your transmission timeline</p>
+            <p className="text-slate-400 text-xs sm:text-base">Temporal navigation • Literary chronology</p>
           </div>
 
-          <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+          <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
             {/* Left Column: Chrono Timeline */}
-            <div className="overflow-y-auto scrollbar-hide bg-slate-800/50 rounded-lg border border-slate-700 p-4 lg:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 lg:mb-6">
+            <div className="overflow-y-auto overflow-x-hidden scrollbar-hide bg-slate-800/50 rounded-lg border border-slate-700 p-3 sm:p-4 lg:p-6">
+              <div className="flex flex-col gap-2 sm:gap-3 mb-3 sm:mb-4 lg:mb-6">
                 <div className="flex items-center space-x-2 min-w-0">
-                  <Clock className="w-5 h-5 text-blue-400 flex-shrink-0" />
-                  <h2 className="text-base lg:text-lg font-medium text-slate-200 truncate">Temporal Thread</h2>
-                  <span className="text-slate-400 text-xs lg:text-sm whitespace-nowrap">• {booksWithTemporalData} temporal nodes</span>
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 flex-shrink-0" />
+                  <h2 className="text-sm sm:text-base lg:text-lg font-medium text-slate-200 truncate">Temporal Thread</h2>
+                  <span className="text-slate-400 text-[10px] sm:text-xs lg:text-sm whitespace-nowrap">• {booksWithTemporalData} nodes</span>
                 </div>
-                <div className="flex items-center space-x-2 flex-shrink-0">
+                <div className="flex items-center gap-2 flex-wrap">
                   <button
                     onClick={() => setShowTemporalModal(true)}
                     disabled={transmissions.length < 3}
-                    className="inline-flex items-center justify-center gap-1 lg:gap-2 whitespace-nowrap rounded-lg text-xs font-medium transition-all duration-200 py-1.5 px-2 lg:px-3 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 touch-manipulation disabled:opacity-50 disabled:pointer-events-none"
+                    className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-lg text-[10px] sm:text-xs font-medium transition-all duration-200 py-2 px-3 min-h-[44px] sm:min-h-0 sm:py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 touch-manipulation disabled:opacity-50 disabled:pointer-events-none"
                   >
-                    <Sparkles className="w-3 h-3 lg:w-4 lg:h-4 text-blue-400" />
+                    <Sparkles className="w-3 h-3 text-blue-400" />
+                    <span className="sm:hidden">Analysis</span>
                     <span className="hidden sm:inline">Temporal Analysis</span>
                   </button>
                   <button
                     onClick={() => setShowChallengeModal(true)}
                     disabled={transmissions.length < 3}
-                    className="inline-flex items-center justify-center gap-1 lg:gap-2 whitespace-nowrap rounded-lg text-xs font-medium transition-all duration-200 py-1.5 px-2 lg:px-3 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 touch-manipulation disabled:opacity-50 disabled:pointer-events-none"
+                    className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-lg text-[10px] sm:text-xs font-medium transition-all duration-200 py-2 px-3 min-h-[44px] sm:min-h-0 sm:py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 touch-manipulation disabled:opacity-50 disabled:pointer-events-none"
                   >
-                    <Target className="w-3 h-3 lg:w-4 lg:h-4 text-cyan-400" />
+                    <Target className="w-3 h-3 text-cyan-400" />
+                    <span className="sm:hidden">Mission</span>
                     <span className="hidden sm:inline">Protocol Mission</span>
                   </button>
                 </div>
@@ -147,10 +149,10 @@ const ThreadMap = () => {
             </div>
 
             {/* Right Column: Temporal Stats Panels */}
-            <div className="overflow-y-auto scrollbar-hide space-y-6">
-              <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
-                <div className="flex items-center space-x-2 mb-6">
-                  <Calendar className="w-5 h-5 text-green-400" />
+            <div className="overflow-y-auto overflow-x-hidden scrollbar-hide space-y-3 sm:space-y-6">
+              <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-3 sm:p-6">
+                <div className="flex items-center space-x-2 mb-3 sm:mb-6">
+                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
                   <h2 className="text-lg font-medium text-slate-200">Temporal Analysis</h2>
                 </div>
                 <div className="space-y-3">
@@ -177,10 +179,10 @@ const ThreadMap = () => {
                 </div>
               </div>
 
-              <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
-                <div className="flex items-center space-x-2 mb-6">
-                  <TrendingUp className="w-5 h-5 text-purple-400" />
-                  <h2 className="text-lg font-medium text-slate-200">Era Distribution</h2>
+              <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-3 sm:p-6">
+                <div className="flex items-center space-x-2 mb-3 sm:mb-6">
+                  <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+                  <h2 className="text-sm sm:text-lg font-medium text-slate-200">Era Distribution</h2>
                 </div>
                 <div className="space-y-3">
                   {Object.entries(eraDistribution)
@@ -212,10 +214,10 @@ const ThreadMap = () => {
               <TemporalAnalysisPanel userId={session?.user?.id || null} />
 
               {temporalJumps.length > 0 && (
-                <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
-                  <div className="flex items-center space-x-2 mb-6">
-                    <Clock className="w-5 h-5 text-yellow-400" />
-                    <h2 className="text-lg font-medium text-slate-200">Biggest Time Jumps</h2>
+              <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-3 sm:p-6">
+                  <div className="flex items-center space-x-2 mb-3 sm:mb-6">
+                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
+                    <h2 className="text-sm sm:text-lg font-medium text-slate-200">Biggest Time Jumps</h2>
                   </div>
                   <div className="space-y-2">
                     {temporalJumps.slice(0, 3).map((jump, index) => (

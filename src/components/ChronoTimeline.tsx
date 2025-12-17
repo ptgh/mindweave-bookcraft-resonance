@@ -480,17 +480,17 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-8 overflow-x-hidden">
       {/* Controls */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-slate-800/30 p-4 rounded-lg border border-slate-600/30">
+      <div className="flex flex-col gap-3 bg-slate-800/30 p-3 sm:p-4 rounded-lg border border-slate-600/30">
         <GSAPButtonGroup
           buttons={[
-            { id: 'publication', label: 'Publication' },
-            { id: 'narrative', label: 'Narrative' },
-            { id: 'reading', label: 'Reading' },
+            { id: 'publication', label: 'Pub' },
+            { id: 'narrative', label: 'Narr' },
+            { id: 'reading', label: 'Read' },
             { 
               id: 'enhance', 
-              label: isEnriching ? 'Enhancing...' : 'Enhance Data',
+              label: isEnriching ? '...' : 'AI',
               icon: isEnriching ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />
             }
           ]}
@@ -507,39 +507,39 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
 
       </div>
       
-      <div className="text-center text-slate-400 italic text-sm font-light">
-        "AI extracts publication years and narrative periods from book metadata"
+      <div className="text-center text-slate-400 italic text-xs sm:text-sm font-light px-2">
+        "AI extracts publication years and narrative periods"
       </div>
 
       {/* Statistics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-slate-800/30 p-4 rounded-lg border border-slate-600/30 text-center">
-          <div className="text-2xl font-bold text-slate-100">{stats.totalBooks}</div>
-          <div className="text-sm text-slate-400">Total Books</div>
+      <div className="grid grid-cols-2 gap-2 sm:gap-4">
+        <div className="bg-slate-800/30 p-2 sm:p-4 rounded-lg border border-slate-600/30 text-center">
+          <div className="text-lg sm:text-2xl font-bold text-slate-100">{stats.totalBooks}</div>
+          <div className="text-[10px] sm:text-sm text-slate-400">Books</div>
         </div>
-        <div className="bg-slate-800/30 p-4 rounded-lg border border-slate-600/30 text-center">
-          <div className="text-2xl font-bold text-slate-100">{stats.yearSpan.split(' - ').length > 1 ? Math.abs(parseInt(stats.yearSpan.split(' - ')[1]) - parseInt(stats.yearSpan.split(' - ')[0])) + 'y' : 'N/A'}</div>
-          <div className="text-sm text-slate-400">Year Span</div>
+        <div className="bg-slate-800/30 p-2 sm:p-4 rounded-lg border border-slate-600/30 text-center">
+          <div className="text-lg sm:text-2xl font-bold text-slate-100">{stats.yearSpan.split(' - ').length > 1 ? Math.abs(parseInt(stats.yearSpan.split(' - ')[1]) - parseInt(stats.yearSpan.split(' - ')[0])) + 'y' : 'N/A'}</div>
+          <div className="text-[10px] sm:text-sm text-slate-400">Span</div>
         </div>
-        <div className="bg-slate-800/30 p-4 rounded-lg border border-slate-600/30 text-center">
-          <div className="text-2xl font-bold text-slate-100">{stats.yearSpan !== "No data" ? stats.yearSpan : 'N/A'}</div>
-          <div className="text-sm text-slate-400">Era Range</div>
+        <div className="bg-slate-800/30 p-2 sm:p-4 rounded-lg border border-slate-600/30 text-center">
+          <div className="text-sm sm:text-2xl font-bold text-slate-100 truncate">{stats.yearSpan !== "No data" ? stats.yearSpan : 'N/A'}</div>
+          <div className="text-[10px] sm:text-sm text-slate-400">Range</div>
         </div>
-        <div className="bg-slate-800/30 p-4 rounded-lg border border-slate-600/30 text-center">
-          <div className="text-2xl font-bold text-slate-100">{displayedNodes.length > 1 ? displayedNodes.length - 1 : 0}</div>
-          <div className="text-sm text-slate-400">Time Jumps</div>
+        <div className="bg-slate-800/30 p-2 sm:p-4 rounded-lg border border-slate-600/30 text-center">
+          <div className="text-lg sm:text-2xl font-bold text-slate-100">{displayedNodes.length > 1 ? displayedNodes.length - 1 : 0}</div>
+          <div className="text-[10px] sm:text-sm text-slate-400">Jumps</div>
         </div>
       </div>
 
       {/* Era Distribution */}
       {Object.keys(stats.eraDistribution).length > 0 && (
-        <div className="bg-slate-800/30 p-4 rounded-lg border border-slate-600/30">
-          <h4 className="text-sm font-medium text-slate-300 mb-3">Era Distribution</h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div className="bg-slate-800/30 p-3 sm:p-4 rounded-lg border border-slate-600/30">
+          <h4 className="text-xs sm:text-sm font-medium text-slate-300 mb-2 sm:mb-3">Era Distribution</h4>
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
             {Object.entries(stats.eraDistribution).map(([era, count]) => (
               <div key={era} className="text-center">
-                <div className="text-lg font-bold text-blue-400">{count}</div>
-                <div className="text-xs text-slate-400">{era}</div>
+                <div className="text-sm sm:text-lg font-bold text-blue-400">{count}</div>
+                <div className="text-[9px] sm:text-xs text-slate-400 truncate">{era}</div>
               </div>
             ))}
           </div>

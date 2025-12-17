@@ -136,7 +136,7 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClic
   return (
     <>
       {/* Grid matching Transmissions design */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
         {books.map((book, index) => {
           const isVisible = visibleBooks.has(index);
           const deepLink = getDeepLink(book);
@@ -247,8 +247,8 @@ const BookGridItem = memo(({
                   : 'opacity-0 translate-y-4'
               }`}
             >
-              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors h-full flex flex-col relative overflow-visible">
-                <div className="flex items-start space-x-4 flex-1 mb-4">
+              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3 sm:p-4 hover:bg-slate-800/70 transition-colors h-full flex flex-col relative overflow-visible">
+                <div className="flex items-start space-x-3 sm:space-x-4 flex-1 mb-3 sm:mb-4">
                   <EnhancedBookCover
                     title={book.title}
                     author={book.author}
@@ -316,7 +316,7 @@ const BookGridItem = memo(({
                 </div>
                 
               {/* External links - subtle row above action buttons */}
-              <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-700/30">
+              <div className="flex items-center gap-2 mb-2 sm:mb-3 pb-2 sm:pb-3 border-b border-slate-700/30">
                 <AppleBooksLink 
                   appleLink={appleUrl || ''} 
                   title={book.title}
@@ -333,19 +333,18 @@ const BookGridItem = memo(({
                 />
               </div>
                 
-              <div className="flex flex-row space-x-2">
+              <div className="flex flex-row gap-2">
                 <button
                   ref={addToAddRefs}
                   onClick={() => onAddToTransmissions(book)}
-                  className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+                  className="flex-1 px-2 sm:px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-[11px] sm:text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa] touch-manipulation"
                   style={{
                     boxShadow: "0 0 0px transparent"
                   }}
                 >
-                  <Plus className="w-3 h-3 mr-2 inline" />
-                  Log Signal
+                  <Plus className="w-3 h-3 mr-1 sm:mr-2 inline" />
+                  Log
                 </button>
-                
                 {deepLink && (
                   <button
                     ref={addToRefs}
@@ -354,7 +353,7 @@ const BookGridItem = memo(({
                       e.stopPropagation();
                       onPreview(book);
                     }}
-                    className="flex-1 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa]"
+                    className="flex-1 px-2 sm:px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-[11px] sm:text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa] touch-manipulation"
                     title="Preview book"
                     style={{
                       boxShadow: "0 0 0px transparent"

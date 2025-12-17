@@ -41,12 +41,12 @@ const AuthorMatrix = () => {
     }
   }, [selectedAuthor]);
 
-  return (
+    return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-x-hidden">
         <Header />
         
-        <main ref={mainContainerRef} className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <main ref={mainContainerRef} className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
           <div ref={addFeatureBlockRef}>
             <AuthorMatrixHeader
               searchResults={searchResults}
@@ -56,14 +56,14 @@ const AuthorMatrix = () => {
             />
           </div>
 
-          <div ref={addFeatureBlockRef} className="feature-block flex items-center justify-between mb-4 sm:mb-6">
+          <div ref={addFeatureBlockRef} className="feature-block flex items-center justify-between mb-3 sm:mb-6">
             <div>
-              <h2 className="text-slate-200 text-lg sm:text-xl font-medium mb-1">Authors</h2>
-              <p className="text-slate-400 text-sm">Consciousness archives from the SF masters</p>
+              <h2 className="text-slate-200 text-base sm:text-xl font-medium mb-0.5 sm:mb-1">Authors</h2>
+              <p className="text-slate-400 text-xs sm:text-sm">Consciousness archives from the SF masters</p>
             </div>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-4">
+          <div className="grid gap-3 sm:gap-4 lg:grid-cols-4">
             <div ref={addFeatureBlockRef} className="feature-block lg:col-span-1">
               <AuthorsList
                 authors={authors}
@@ -77,7 +77,7 @@ const AuthorMatrix = () => {
               />
             </div>
 
-            <div ref={(el) => { addFeatureBlockRef(el); booksSectionRef.current = el; }} className="feature-block lg:col-span-3 mt-6 lg:mt-0">
+            <div ref={(el) => { addFeatureBlockRef(el); booksSectionRef.current = el; }} className="feature-block lg:col-span-3 mt-4 lg:mt-0">
               <AuthorBooksSection
                 selectedAuthor={selectedAuthor}
                 authorBooks={authorBooks}

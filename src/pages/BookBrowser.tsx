@@ -71,10 +71,10 @@ const BookBrowser = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-x-hidden">
         <Header />
         
-        <main ref={mainContainerRef} className="container mx-auto px-6 py-8">
+        <main ref={mainContainerRef} className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
           <div ref={addFeatureBlockRef} className="feature-block">
             <BookBrowserHeader 
               loading={loading}
