@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { X, ExternalLink, Smartphone, Globe, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,16 +26,6 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   const [error, setError] = useState<string | null>(null);
   const { toast } = useEnhancedToast();
   const digitalCopyButtonRef = useRef<HTMLButtonElement>(null);
-
-  // Scroll to top on mount to ensure modal is centered in viewport on mobile
-  // On iOS Safari, scrolling happens on #root element, not window
-  useEffect(() => {
-    const rootElement = document.getElementById('root');
-    if (rootElement) {
-      rootElement.scrollTo({ top: 0, behavior: 'instant' });
-    }
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  }, []);
 
   // GSAP hover animations for digital copy button
   useEffect(() => {
@@ -354,8 +345,8 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   const digitalCopyInfo = getDigitalCopyInfo();
   const hasDigitalCopy = !!(appleBook || freeEbooks?.archive?.url || freeEbooks?.gutenberg?.url);
 
-  return (
-    <div className="fixed inset-0 z-50 flex h-[100dvh] w-screen items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4">
+  const modal = (
+    <div className="fixed inset-0 z-[2000] flex h-[100dvh] w-screen items-center justify-center bg-background/50 backdrop-blur-sm p-4">
       <div className="modal-content bg-slate-800/50 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="p-3 border-b border-slate-700 flex-shrink-0">
@@ -531,6 +522,10 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
       </div>
     </div>
   );
+
+  if (typeof document === "undefined") return null;
+  return createPortal(modal, document.body);
+
 };
 
 export default EnhancedBookPreviewModal;
