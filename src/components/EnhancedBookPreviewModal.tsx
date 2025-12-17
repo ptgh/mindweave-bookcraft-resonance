@@ -26,6 +26,11 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   const { toast } = useEnhancedToast();
   const digitalCopyButtonRef = useRef<HTMLButtonElement>(null);
 
+  // Scroll to top on mount to ensure modal is centered in viewport on mobile
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // GSAP hover animations for digital copy button
   useEffect(() => {
     const button = digitalCopyButtonRef.current;
