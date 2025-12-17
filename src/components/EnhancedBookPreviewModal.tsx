@@ -345,8 +345,8 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   const hasDigitalCopy = !!(appleBook || freeEbooks?.archive?.url || freeEbooks?.gutenberg?.url);
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-800/50 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
+    <div className="fixed left-0 top-0 z-50 flex h-[100dvh] w-screen items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="modal-content bg-slate-800/50 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="p-3 border-b border-slate-700 flex-shrink-0">
           <div className="flex items-center justify-between">
