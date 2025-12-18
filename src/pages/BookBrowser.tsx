@@ -10,10 +10,12 @@ import { useBookBrowser } from "@/hooks/useBookBrowser";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 import { getAuthorByName, findOrCreateAuthor, ScifiAuthor } from "@/services/scifiAuthorsService";
 import { supabase } from "@/integrations/supabase/client";
+import { EnhancedBookSuggestion } from "@/services/googleBooksApi";
 
 const BookBrowser = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const highlightId = searchParams.get('highlight');
+  const searchQuery = searchParams.get('search');
   const [highlightedBookId, setHighlightedBookId] = useState<string | null>(null);
   const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const {
@@ -53,38 +55,62 @@ const BookBrowser = () => {
   }, []);
 
   // Handle highlight from URL parameter (from Neural Map navigation)
-  // Reorder books to put highlighted book first
-  const [reorderedBooks, setReorderedBooks] = useState<typeof books>([]);
+  // Fetch the transmission directly and show it first
+  const [reorderedBooks, setReorderedBooks] = useState<EnhancedBookSuggestion[]>([]);
   const [highlightAnimating, setHighlightAnimating] = useState(false);
+  const [fetchedTransmission, setFetchedTransmission] = useState<EnhancedBookSuggestion | null>(null);
   
+  // Fetch the highlighted transmission from the database
   useEffect(() => {
-    if (highlightId && !loading && books.length > 0) {
-      const searchQuery = searchParams.get('search');
-      if (searchQuery) {
-        const matchingBookIndex = books.findIndex(book => 
-          book.title.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-        if (matchingBookIndex !== -1) {
-          const matchingBook = books[matchingBookIndex];
-          setHighlightedBookId(matchingBook.id);
-          
-          // Reorder books: put matching book first with smooth animation
-          const reordered = [
-            matchingBook,
-            ...books.slice(0, matchingBookIndex),
-            ...books.slice(matchingBookIndex + 1)
-          ];
-          setHighlightAnimating(true);
-          setReorderedBooks(reordered);
-          
-          // Reset animation state after transition
-          setTimeout(() => setHighlightAnimating(false), 600);
-        } else {
-          setReorderedBooks(books);
+    const fetchHighlightedTransmission = async () => {
+      if (highlightId && searchQuery) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            // Fetch the transmission by ID
+            const { data: transmission, error } = await supabase
+              .from('transmissions')
+              .select('*')
+              .eq('id', parseInt(highlightId))
+              .eq('user_id', user.id)
+              .single();
+            
+            if (!error && transmission) {
+              // Transform transmission to EnhancedBookSuggestion format
+              const bookSuggestion: EnhancedBookSuggestion = {
+                id: `transmission-${transmission.id}`,
+                title: transmission.title || '',
+                author: transmission.author || 'Unknown Author',
+                coverUrl: transmission.cover_url || '',
+                thumbnailUrl: transmission.cover_url || '',
+                smallThumbnailUrl: transmission.cover_url || '',
+                description: transmission.notes || '',
+                categories: transmission.tags ? JSON.parse(transmission.tags) : [],
+              };
+              setFetchedTransmission(bookSuggestion);
+              setHighlightedBookId(bookSuggestion.id);
+              console.log('Fetched highlighted transmission:', bookSuggestion.title);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching highlighted transmission:', error);
         }
-      } else {
-        setReorderedBooks(books);
       }
+    };
+    
+    fetchHighlightedTransmission();
+  }, [highlightId, searchQuery]);
+  
+  // Reorder books with fetched transmission first
+  useEffect(() => {
+    if (fetchedTransmission && !loading) {
+      // Put the fetched transmission first, then the rest of the books
+      const reordered = [fetchedTransmission, ...books.filter(b => b.id !== fetchedTransmission.id)];
+      setHighlightAnimating(true);
+      setReorderedBooks(reordered);
+      
+      // Reset animation state after transition
+      setTimeout(() => setHighlightAnimating(false), 600);
       
       // Clear the highlight after 5 seconds
       highlightTimeoutRef.current = setTimeout(() => {
@@ -93,8 +119,9 @@ const BookBrowser = () => {
         newParams.delete('highlight');
         newParams.delete('search');
         setSearchParams(newParams, { replace: true });
+        setFetchedTransmission(null);
       }, 5000);
-    } else {
+    } else if (!fetchedTransmission) {
       setReorderedBooks(books);
     }
     
@@ -103,7 +130,7 @@ const BookBrowser = () => {
         clearTimeout(highlightTimeoutRef.current);
       }
     };
-  }, [highlightId, loading, books, searchParams, setSearchParams]);
+  }, [fetchedTransmission, loading, books, searchParams, setSearchParams]);
 
   const handleAuthorClick = async (authorName: string) => {
     console.log('Author clicked:', authorName);
