@@ -15,6 +15,8 @@ import { useProfile } from '@/hooks/useProfile';
 interface Message {
   id: string;
   text: string;
+  displayedText?: string; // For typewriter effect
+  isTyping?: boolean; // Whether typewriter is in progress
   isUser: boolean;
   timestamp: Date;
   highlights?: {
@@ -203,6 +205,37 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Typewriter effect for AI messages
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage && !lastMessage.isUser && lastMessage.isTyping) {
+      const fullText = lastMessage.text;
+      let currentIndex = lastMessage.displayedText?.length || 0;
+      
+      const typeInterval = setInterval(() => {
+        currentIndex += 2; // Type 2 characters at a time for faster effect
+        
+        if (currentIndex >= fullText.length) {
+          // Typing complete
+          setMessages(prev => prev.map((msg, idx) => 
+            idx === prev.length - 1 
+              ? { ...msg, displayedText: fullText, isTyping: false }
+              : msg
+          ));
+          clearInterval(typeInterval);
+        } else {
+          setMessages(prev => prev.map((msg, idx) => 
+            idx === prev.length - 1 
+              ? { ...msg, displayedText: fullText.slice(0, currentIndex) }
+              : msg
+          ));
+        }
+      }, 15); // 15ms per tick for smooth typing
+      
+      return () => clearInterval(typeInterval);
+    }
+  }, [messages]);
+
   // Focus input when opened (only on desktop, not mobile)
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -375,6 +408,8 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         const aiMessage: Message = {
           id: (Date.now() + 1).toString(),
           text: data.message,
+          displayedText: '',
+          isTyping: true,
           isUser: false,
           timestamp: new Date(),
           actions: {
@@ -415,6 +450,8 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: data.response,
+        displayedText: '',
+        isTyping: true,
         isUser: false,
         timestamp: new Date(),
         highlights: data.highlights
@@ -626,6 +663,8 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         const aiMessage: Message = {
           id: (Date.now() + 1).toString(),
           text: data.message,
+          displayedText: '',
+          isTyping: true,
           isUser: false,
           timestamp: new Date(),
           actions: {
@@ -659,6 +698,8 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: data.response,
+        displayedText: '',
+        isTyping: true,
         isUser: false,
         timestamp: new Date(),
         highlights: data.highlights
@@ -838,7 +879,11 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
                     </span>
                   </div>
                 )}
-                {message.text}
+                {/* Show displayedText for typewriter effect, or full text if not typing */}
+                {message.isUser || message.isError 
+                  ? message.text 
+                  : (message.displayedText ?? message.text)}
+                {message.isTyping && <span className="animate-pulse">▌</span>}
                 {message.highlights && (message.highlights.nodeIds.length > 0 || message.highlights.tags.length > 0) && (
                   <div className="mt-2 pt-2 border-t border-cyan-400/20">
                     <div className="text-[10px] text-cyan-300">
