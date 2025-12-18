@@ -62,11 +62,17 @@ export const AlreadySubscribedEmail = ({
               <table style={bookTable}>
                 <tr>
                   <td style={coverCell}>
-                    <Img
-                      src={book.coverUrl}
-                      alt={`${book.title} cover`}
-                      style={bookCover}
-                    />
+                    {book.coverUrl ? (
+                      <Img
+                        src={book.coverUrl}
+                        alt={`${book.title} cover`}
+                        style={bookCover}
+                      />
+                    ) : (
+                      <div style={placeholderCover}>
+                        📚
+                      </div>
+                    )}
                   </td>
                   <td style={infoCell}>
                     <Text style={bookTitle}>{book.title}</Text>
@@ -215,6 +221,19 @@ const bookCover = {
   height: 'auto',
   borderRadius: '4px',
   border: '1px solid rgba(51, 65, 85, 0.5)',
+};
+
+const placeholderCover = {
+  width: '80px',
+  height: '110px',
+  borderRadius: '4px',
+  border: '1px solid rgba(51, 65, 85, 0.5)',
+  backgroundColor: 'rgba(30, 41, 59, 0.8)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '32px',
+  color: '#64748b',
 };
 
 const bookTitle = {

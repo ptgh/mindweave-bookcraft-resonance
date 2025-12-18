@@ -20,88 +20,89 @@ interface SubscribeRequest {
 }
 
 // Full pool of curated book recommendations - 3 random picks sent each time
+// Using Open Library covers (more reliable) with ISBN-based URLs
 const ALL_ENGAGEMENT_BOOKS = [
   {
     title: "Neuromancer",
     author: "William Gibson",
-    coverUrl: "https://books.google.com/books/content?id=IDFfMPW32hQC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780441007462-M.jpg",
     description: "The seminal cyberpunk novel that defined a genre and predicted our digital future.",
     addUrl: "https://leafnode.co.uk/?add=neuromancer"
   },
   {
     title: "The Left Hand of Darkness",
     author: "Ursula K. Le Guin",
-    coverUrl: "https://books.google.com/books/content?id=h3ANDQAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780441478125-M.jpg",
     description: "A groundbreaking exploration of gender and society on an alien world.",
     addUrl: "https://leafnode.co.uk/?add=left-hand-darkness"
   },
   {
     title: "Hyperion",
     author: "Dan Simmons",
-    coverUrl: "https://books.google.com/books/content?id=tIDBPwAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780553283686-M.jpg",
     description: "An epic space opera told through interwoven pilgrim tales in Canterbury style.",
     addUrl: "https://leafnode.co.uk/?add=hyperion"
   },
   {
     title: "Dune",
     author: "Frank Herbert",
-    coverUrl: "https://books.google.com/books/content?id=B1hSG45JCX4C&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780441172719-M.jpg",
     description: "The definitive ecological epic—politics, religion, and desert survival on Arrakis.",
     addUrl: "https://leafnode.co.uk/?add=dune"
   },
   {
     title: "Snow Crash",
     author: "Neal Stephenson",
-    coverUrl: "https://books.google.com/books/content?id=RMd3GpIFxcUC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780553380958-M.jpg",
     description: "A razor-sharp satire of corporate America meets virtual reality thriller.",
     addUrl: "https://leafnode.co.uk/?add=snow-crash"
   },
   {
     title: "Foundation",
     author: "Isaac Asimov",
-    coverUrl: "https://books.google.com/books/content?id=FKqYDgAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780553293357-M.jpg",
     description: "The collapse and rebirth of galactic civilization through the lens of psychohistory.",
     addUrl: "https://leafnode.co.uk/?add=foundation"
   },
   {
     title: "The Dispossessed",
     author: "Ursula K. Le Guin",
-    coverUrl: "https://books.google.com/books/content?id=ZoyKDwAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780061054884-M.jpg",
     description: "An ambiguous utopia exploring anarchism, capitalism, and the nature of freedom.",
     addUrl: "https://leafnode.co.uk/?add=dispossessed"
   },
   {
     title: "Blindsight",
     author: "Peter Watts",
-    coverUrl: "https://books.google.com/books/content?id=FepCzQEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780765319647-M.jpg",
     description: "Hard SF first contact that questions consciousness and what it means to be human.",
     addUrl: "https://leafnode.co.uk/?add=blindsight"
   },
   {
     title: "A Fire Upon the Deep",
     author: "Vernor Vinge",
-    coverUrl: "https://books.google.com/books/content?id=fCCWWgZ7d6UC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780812515282-M.jpg",
     description: "A galaxy where physics changes with distance from the core, and ancient evils awaken.",
     addUrl: "https://leafnode.co.uk/?add=fire-upon-deep"
   },
   {
     title: "Rendezvous with Rama",
     author: "Arthur C. Clarke",
-    coverUrl: "https://books.google.com/books/content?id=E7G7CAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780553287899-M.jpg",
     description: "Humanity explores a vast alien spacecraft—pure sense of wonder distilled.",
     addUrl: "https://leafnode.co.uk/?add=rendezvous-rama"
   },
   {
     title: "The Stars My Destination",
     author: "Alfred Bester",
-    coverUrl: "https://books.google.com/books/content?id=O1QLEAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780679767800-M.jpg",
     description: "A revenge epic that pioneered teleportation and the anti-hero in science fiction.",
     addUrl: "https://leafnode.co.uk/?add=stars-my-destination"
   },
   {
     title: "Solaris",
     author: "Stanisław Lem",
-    coverUrl: "https://books.google.com/books/content?id=kmzctAEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780156027601-M.jpg",
     description: "An ocean planet probes the limits of human understanding and communication.",
     addUrl: "https://leafnode.co.uk/?add=solaris"
   }

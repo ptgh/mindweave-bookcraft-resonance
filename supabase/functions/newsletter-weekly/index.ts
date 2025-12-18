@@ -12,36 +12,36 @@ const corsHeaders = {
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-// Curated weekly book recommendations
+// Curated weekly book recommendations with reliable Open Library covers
 const WEEKLY_RECOMMENDATIONS = [
   {
     title: "Neuromancer",
     author: "William Gibson",
-    coverUrl: "https://covers.openlibrary.org/b/isbn/0441569595-M.jpg",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780441007462-M.jpg",
     description: "The book that defined cyberpunk. Follow Case, a washed-up hacker, through the neon-soaked matrix in this genre-defining masterpiece of digital consciousness.",
   },
   {
     title: "The Left Hand of Darkness",
     author: "Ursula K. Le Guin",
-    coverUrl: "https://covers.openlibrary.org/b/isbn/0441478123-M.jpg",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780441478125-M.jpg",
     description: "A groundbreaking exploration of gender and society on the frozen planet of Gethen. Le Guin's masterwork of social science fiction.",
   },
   {
     title: "Hyperion",
     author: "Dan Simmons",
-    coverUrl: "https://covers.openlibrary.org/b/isbn/0553283685-M.jpg",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780553283686-M.jpg",
     description: "Seven pilgrims journey to the Time Tombs on Hyperion, each sharing their tale in this Canterbury Tales-inspired space opera epic.",
   },
   {
     title: "The Three-Body Problem",
     author: "Liu Cixin",
-    coverUrl: "https://covers.openlibrary.org/b/isbn/0765382032-M.jpg",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780765382030-M.jpg",
     description: "China's Cultural Revolution meets alien contact in this hard sci-fi masterpiece that redefined first contact narratives.",
   },
   {
     title: "A Memory Called Empire",
     author: "Arkady Martine",
-    coverUrl: "https://covers.openlibrary.org/b/isbn/1250186447-M.jpg",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9781250186430-M.jpg",
     description: "Political intrigue and cultural identity collide in this space opera about an ambassador navigating a vast galactic empire.",
   },
 ];
