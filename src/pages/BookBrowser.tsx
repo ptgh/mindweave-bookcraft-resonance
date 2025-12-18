@@ -1,5 +1,5 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import BookBrowserHeader from "@/components/BookBrowserHeader";
 import BookGrid from "@/components/BookGrid";
@@ -12,6 +12,10 @@ import { getAuthorByName, findOrCreateAuthor, ScifiAuthor } from "@/services/sci
 import { supabase } from "@/integrations/supabase/client";
 
 const BookBrowser = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const highlightId = searchParams.get('highlight');
+  const [highlightedBookId, setHighlightedBookId] = useState<string | null>(null);
+  const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const {
     books,
     loading,
@@ -47,6 +51,45 @@ const BookBrowser = () => {
     };
     loadUserBooksCount();
   }, []);
+
+  // Handle highlight from URL parameter (from Neural Map navigation)
+  useEffect(() => {
+    if (highlightId && !loading && books.length > 0) {
+      // Match by searching for books with matching title from the search param
+      const searchQuery = searchParams.get('search');
+      if (searchQuery) {
+        const matchingBook = books.find(book => 
+          book.title.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        if (matchingBook) {
+          setHighlightedBookId(matchingBook.id);
+          
+          // Scroll to the highlighted element after a short delay
+          setTimeout(() => {
+            const highlightedElement = document.querySelector(`[data-book-id="${matchingBook.id}"]`);
+            if (highlightedElement) {
+              highlightedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 300);
+        }
+      }
+      
+      // Clear the highlight after 5 seconds
+      highlightTimeoutRef.current = setTimeout(() => {
+        setHighlightedBookId(null);
+        // Remove highlight param from URL
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('highlight');
+        setSearchParams(newParams, { replace: true });
+      }, 5000);
+    }
+    
+    return () => {
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+    };
+  }, [highlightId, loading, books, searchParams, setSearchParams]);
 
   const handleAuthorClick = async (authorName: string) => {
     console.log('Author clicked:', authorName);
@@ -100,6 +143,7 @@ const BookBrowser = () => {
                 onAddToTransmissions={addToTransmissions}
                 onAuthorClick={handleAuthorClick}
                 aiRecommendations={aiRecommendations}
+                highlightedBookId={highlightedBookId}
               />
             </div>
           ) : (

@@ -27,9 +27,9 @@ const NeuralMapPreviewModal = ({
     onClose();
   };
 
-  const handleViewDetails = () => {
-    // Navigate to book browser with search for this book
-    navigate(`/book-browser?search=${encodeURIComponent(node.title)}`);
+  const handleFindInArchive = () => {
+    // Navigate to Signal Archive with highlight and search
+    navigate(`/book-browser?highlight=${node.transmissionId}&search=${encodeURIComponent(node.title)}`);
     onClose();
   };
 
@@ -157,11 +157,11 @@ const NeuralMapPreviewModal = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={handleViewDetails}
+              onClick={handleFindInArchive}
               className="w-full border-slate-600/50 text-slate-400 hover:text-slate-200 hover:bg-slate-700/30 bg-transparent"
             >
               <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-              Find in Book Browser
+              Find in Signal Archive
             </Button>
           </div>
         </div>
