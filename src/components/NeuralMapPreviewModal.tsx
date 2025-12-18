@@ -1,24 +1,37 @@
-import { X, Plus, Link, BookOpen } from "lucide-react";
+import { X, Plus, Link, BookOpen, ExternalLink, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrainNode, BookLink } from "@/pages/TestBrain";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 
 interface NeuralMapPreviewModalProps {
   node: BrainNode;
   connections: BookLink[];
   onClose: () => void;
-  onAddToTransmissions?: () => void;
 }
 
 const NeuralMapPreviewModal = ({ 
   node, 
   connections, 
   onClose,
-  onAddToTransmissions 
 }: NeuralMapPreviewModalProps) => {
+  const navigate = useNavigate();
+  
   const connectionCount = connections.filter(
     link => link.fromId === node.id || link.toId === node.id
   ).length;
+
+  const handleViewInArchive = () => {
+    // Navigate to Signal Archive (transmissions) with the book highlighted
+    navigate(`/transmissions?highlight=${node.transmissionId}`);
+    onClose();
+  };
+
+  const handleViewDetails = () => {
+    // Navigate to book browser with search for this book
+    navigate(`/book-browser?search=${encodeURIComponent(node.title)}`);
+    onClose();
+  };
 
   const modal = (
     <div 
@@ -122,28 +135,34 @@ const NeuralMapPreviewModal = ({
           </div>
           
           {/* Actions */}
-          <div className="flex gap-3 p-4 pt-0">
+          <div className="flex flex-col gap-2 p-4 pt-0">
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onClose}
+                className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700/50 bg-transparent"
+              >
+                Close
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleViewInArchive}
+                className="flex-1 bg-cyan-600/80 hover:bg-cyan-600 text-white border-0"
+              >
+                <Archive className="w-3.5 h-3.5 mr-1.5" />
+                View in Archive
+              </Button>
+            </div>
             <Button
               variant="outline"
               size="sm"
-              onClick={onClose}
-              className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700/50 bg-transparent"
+              onClick={handleViewDetails}
+              className="w-full border-slate-600/50 text-slate-400 hover:text-slate-200 hover:bg-slate-700/30 bg-transparent"
             >
-              Close
+              <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+              Find in Book Browser
             </Button>
-            {onAddToTransmissions && (
-              <Button
-                size="sm"
-                onClick={() => {
-                  onAddToTransmissions();
-                  onClose();
-                }}
-                className="flex-1 bg-cyan-600/80 hover:bg-cyan-600 text-white border-0"
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                View Details
-              </Button>
-            )}
           </div>
         </div>
       </div>
