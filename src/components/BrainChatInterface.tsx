@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { MessageCircle, Send, X, Sparkles, AlertTriangle } from 'lucide-react';
+import { MessageCircle, Send, X, Sparkles, AlertTriangle, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { BrainNode, BookLink } from '@/pages/TestBrain';
 import { BrainContextService } from '@/services/brainContextService';
@@ -63,6 +63,9 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
   
   // Get user's first name for personalization
   const userName = profile?.first_name || profile?.display_name?.split(' ')[0] || null;
+  
+  // Get user insights from reading preferences (long-term memory)
+  const userInsights = (profile?.reading_preferences as any)?.neural_assistant_insights || null;
 
   // Fetch user's transmissions when chat opens
   useEffect(() => {
@@ -321,6 +324,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         conversationId: conversationId || undefined,
         messages: conversationHistory,
         userName: userName, // Pass user's first name for personalization
+        userInsights: userInsights, // Pass learned insights from past interactions
         brainData: {
           ...cleanData,
           activeFilters: Array.isArray(activeFilters) ? activeFilters : []
@@ -577,6 +581,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         conversationId: conversationId || undefined,
         messages: conversationHistory,
         userName: userName, // Pass user's first name for personalization
+        userInsights: userInsights, // Pass learned insights from past interactions
         brainData: {
           ...cleanData,
           activeFilters: Array.isArray(activeFilters) ? activeFilters : []
@@ -675,6 +680,47 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
     }
   };
 
+  // Clear conversation and start fresh
+  const handleClearConversation = async () => {
+    try {
+      // Delete conversation from database if exists
+      if (conversationId) {
+        await supabase.from('chat_messages').delete().eq('conversation_id', conversationId);
+        await supabase.from('chat_conversations').delete().eq('id', conversationId);
+      }
+      
+      // Reset local state
+      setMessages([]);
+      setConversationId(null);
+      setExtractedBook(null);
+      setShowBookConfirmation(false);
+      
+      // Create a new conversation
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const { data } = await supabase
+          .from('chat_conversations')
+          .insert({
+            user_id: userData.user.id,
+            title: 'Neural Map Chat'
+          })
+          .select()
+          .single();
+        
+        if (data) {
+          setConversationId(data.id);
+        }
+      }
+      
+      toast({
+        title: "Conversation cleared",
+        description: "Ready for a fresh start",
+      });
+    } catch (error) {
+      console.error('Failed to clear conversation:', error);
+    }
+  };
+
   if (!isOpen) {
     return (
       <Button
@@ -708,8 +754,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
       )}
       
       <Card className="bg-slate-900/95 md:bg-slate-900/60 border-slate-700/30 backdrop-blur-lg h-full flex flex-col shadow-2xl shadow-slate-900/20 safe-area-inset">
-        {/* Header */}
-        <div className="flex items-center justify-between p-3 border-b border-slate-700/30 bg-slate-800/40">
+          <div className="flex items-center justify-between p-3 border-b border-slate-700/30 bg-slate-800/40">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50" />
             <div className="flex flex-col">
@@ -717,14 +762,27 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
               <span className="text-slate-400 text-[9px]">Powered by Gemini 2.5 • FREE until Oct 6</span>
             </div>
           </div>
-          <Button
-            onClick={() => setIsOpen(false)}
-            variant="ghost"
-            size="icon"
-            className="text-slate-400 hover:text-slate-200 hover:bg-slate-700/20"
-          >
-            <X className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {messages.length > 0 && (
+              <Button
+                onClick={handleClearConversation}
+                variant="ghost"
+                size="icon"
+                className="text-slate-400 hover:text-red-400 hover:bg-red-500/10 h-8 w-8"
+                title="Clear conversation"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            )}
+            <Button
+              onClick={() => setIsOpen(false)}
+              variant="ghost"
+              size="icon"
+              className="text-slate-400 hover:text-slate-200 hover:bg-slate-700/20 h-8 w-8"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Messages */}
