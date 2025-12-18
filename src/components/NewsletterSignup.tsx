@@ -28,11 +28,20 @@ export const NewsletterSignup = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.functions.invoke('newsletter-subscribe', {
+      const { data, error } = await supabase.functions.invoke('newsletter-subscribe', {
         body: { email: email.trim() }
       });
 
       if (error) throw error;
+
+      // Check if already subscribed but engagement email was sent
+      if (data?.message === 'Already subscribed' && data?.emailSent) {
+        setIsSuccess(true);
+        setEmail("");
+        toast.success("You're already synced! Check inbox for fresh picks.");
+        setTimeout(() => setIsSuccess(false), 5000);
+        return;
+      }
 
       setIsSuccess(true);
       setEmail("");

@@ -201,6 +201,8 @@ const socialLinkStyle = {
   color: '#22d3ee',
   fontSize: '13px',
   textDecoration: 'none',
+  whiteSpace: 'nowrap' as const,
+  display: 'inline-block',
 };
 
 const instagramIconStyle = {
@@ -208,6 +210,7 @@ const instagramIconStyle = {
   height: '14px',
   verticalAlign: 'middle',
   marginRight: '6px',
+  display: 'inline-block',
 };
 
 const h1 = {

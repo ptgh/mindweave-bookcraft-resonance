@@ -188,8 +188,8 @@ const handler = async (req: Request): Promise<Response> => {
                             <a href="https://leafnode.co.uk" style="color: #22d3ee; font-size: 13px; text-decoration: none;">leafnode.co.uk</a>
                           </td>
                           <td align="center" width="50%" style="padding: 0 40px;">
-                            <a href="https://www.instagram.com/leafnode.scifi" style="color: #22d3ee; font-size: 13px; text-decoration: none;">
-                              <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" width="14" height="14" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 6px;" />@leafnode.scifi
+                            <a href="https://www.instagram.com/leafnode.scifi" style="color: #22d3ee; font-size: 13px; text-decoration: none; white-space: nowrap; display: inline-block;">
+                              <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" width="14" height="14" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 6px; display: inline-block;" /><span style="vertical-align: middle;">@leafnode.scifi</span>
                             </a>
                           </td>
                         </tr>
@@ -304,8 +304,8 @@ const handler = async (req: Request): Promise<Response> => {
                             <a href="https://leafnode.co.uk" style="color: #22d3ee; font-size: 13px; text-decoration: none;">leafnode.co.uk</a>
                           </td>
                           <td align="center" width="50%" style="padding: 0 40px;">
-                            <a href="https://www.instagram.com/leafnode.scifi" style="color: #22d3ee; font-size: 13px; text-decoration: none;">
-                              <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" width="14" height="14" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 6px;" />@leafnode.scifi
+                            <a href="https://www.instagram.com/leafnode.scifi" style="color: #22d3ee; font-size: 13px; text-decoration: none; white-space: nowrap; display: inline-block;">
+                              <img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram" width="14" height="14" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 6px; display: inline-block;" /><span style="vertical-align: middle;">@leafnode.scifi</span>
                             </a>
                           </td>
                         </tr>

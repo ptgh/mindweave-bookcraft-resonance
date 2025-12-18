@@ -4,6 +4,7 @@ import { Resend } from "npm:resend@2.0.0";
 import React from "npm:react@18.3.1";
 import { renderAsync } from "npm:@react-email/components@0.0.22";
 import { WelcomeNewsletterEmail } from "./_templates/welcome-newsletter.tsx";
+import { AlreadySubscribedEmail } from "./_templates/already-subscribed-email.tsx";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,6 +18,31 @@ interface SubscribeRequest {
   userId?: string;
   forceResend?: boolean;
 }
+
+// Curated book recommendations for engagement email
+const ENGAGEMENT_BOOKS = [
+  {
+    title: "Neuromancer",
+    author: "William Gibson",
+    coverUrl: "https://books.google.com/books/content?id=IDFfMPW32hQC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    description: "The seminal cyberpunk novel that defined a genre and predicted our digital future.",
+    addUrl: "https://leafnode.co.uk/?add=neuromancer"
+  },
+  {
+    title: "The Left Hand of Darkness",
+    author: "Ursula K. Le Guin",
+    coverUrl: "https://books.google.com/books/content?id=h3ANDQAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    description: "A groundbreaking exploration of gender and society on an alien world.",
+    addUrl: "https://leafnode.co.uk/?add=left-hand-darkness"
+  },
+  {
+    title: "Hyperion",
+    author: "Dan Simmons",
+    coverUrl: "https://books.google.com/books/content?id=tIDBPwAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    description: "An epic space opera told through interwoven pilgrim tales in Canterbury style.",
+    addUrl: "https://leafnode.co.uk/?add=hyperion"
+  }
+];
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
@@ -44,7 +70,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Check if already subscribed
     const { data: existing, error: checkError } = await supabase
       .from('newsletter_subscribers')
-      .select('id, status')
+      .select('id, status, unsubscribe_token')
       .eq('email', normalizedEmail)
       .single();
 
@@ -56,9 +82,38 @@ const handler = async (req: Request): Promise<Response> => {
     let isResubscribe = false;
 
     if (existing) {
+      // Already active subscriber - send engagement email with fresh picks
       if (existing.status === 'active' && !forceResend) {
+        console.log(`Sending engagement email to existing subscriber: ${normalizedEmail}`);
+        
+        const unsubscribeUrl = `https://leafnode.co.uk/unsubscribe/${existing.unsubscribe_token}`;
+        
+        const html = await renderAsync(
+          React.createElement(AlreadySubscribedEmail, {
+            email: normalizedEmail,
+            recommendations: ENGAGEMENT_BOOKS,
+            unsubscribeUrl
+          })
+        );
+
+        const { error: emailError } = await resend.emails.send({
+          from: 'Leafnode <signals@leafnode.co.uk>',
+          to: [normalizedEmail],
+          subject: 'Signal Active — Fresh Picks Inside',
+          html,
+        });
+
+        if (emailError) {
+          console.error('Engagement email send error:', emailError);
+        } else {
+          console.log(`Engagement email sent to: ${normalizedEmail}`);
+        }
+
         return new Response(
-          JSON.stringify({ message: 'Already subscribed' }),
+          JSON.stringify({ 
+            message: 'Already subscribed',
+            emailSent: true 
+          }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }

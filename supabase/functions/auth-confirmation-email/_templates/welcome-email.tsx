@@ -281,6 +281,8 @@ const socialLink = {
   color: '#22d3ee',
   fontSize: '13px',
   textDecoration: 'none',
+  whiteSpace: 'nowrap' as const,
+  display: 'inline-block',
 }
 
 const socialDivider = {
@@ -292,4 +294,5 @@ const socialDivider = {
 const instagramIcon = {
   verticalAlign: 'middle',
   marginRight: '4px',
+  display: 'inline-block',
 }
