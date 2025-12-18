@@ -19,8 +19,8 @@ interface SubscribeRequest {
   forceResend?: boolean;
 }
 
-// Curated book recommendations for engagement email
-const ENGAGEMENT_BOOKS = [
+// Full pool of curated book recommendations - 3 random picks sent each time
+const ALL_ENGAGEMENT_BOOKS = [
   {
     title: "Neuromancer",
     author: "William Gibson",
@@ -41,8 +41,81 @@ const ENGAGEMENT_BOOKS = [
     coverUrl: "https://books.google.com/books/content?id=tIDBPwAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
     description: "An epic space opera told through interwoven pilgrim tales in Canterbury style.",
     addUrl: "https://leafnode.co.uk/?add=hyperion"
+  },
+  {
+    title: "Dune",
+    author: "Frank Herbert",
+    coverUrl: "https://books.google.com/books/content?id=B1hSG45JCX4C&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    description: "The definitive ecological epic—politics, religion, and desert survival on Arrakis.",
+    addUrl: "https://leafnode.co.uk/?add=dune"
+  },
+  {
+    title: "Snow Crash",
+    author: "Neal Stephenson",
+    coverUrl: "https://books.google.com/books/content?id=RMd3GpIFxcUC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    description: "A razor-sharp satire of corporate America meets virtual reality thriller.",
+    addUrl: "https://leafnode.co.uk/?add=snow-crash"
+  },
+  {
+    title: "Foundation",
+    author: "Isaac Asimov",
+    coverUrl: "https://books.google.com/books/content?id=FKqYDgAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    description: "The collapse and rebirth of galactic civilization through the lens of psychohistory.",
+    addUrl: "https://leafnode.co.uk/?add=foundation"
+  },
+  {
+    title: "The Dispossessed",
+    author: "Ursula K. Le Guin",
+    coverUrl: "https://books.google.com/books/content?id=ZoyKDwAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    description: "An ambiguous utopia exploring anarchism, capitalism, and the nature of freedom.",
+    addUrl: "https://leafnode.co.uk/?add=dispossessed"
+  },
+  {
+    title: "Blindsight",
+    author: "Peter Watts",
+    coverUrl: "https://books.google.com/books/content?id=FepCzQEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    description: "Hard SF first contact that questions consciousness and what it means to be human.",
+    addUrl: "https://leafnode.co.uk/?add=blindsight"
+  },
+  {
+    title: "A Fire Upon the Deep",
+    author: "Vernor Vinge",
+    coverUrl: "https://books.google.com/books/content?id=fCCWWgZ7d6UC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    description: "A galaxy where physics changes with distance from the core, and ancient evils awaken.",
+    addUrl: "https://leafnode.co.uk/?add=fire-upon-deep"
+  },
+  {
+    title: "Rendezvous with Rama",
+    author: "Arthur C. Clarke",
+    coverUrl: "https://books.google.com/books/content?id=E7G7CAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    description: "Humanity explores a vast alien spacecraft—pure sense of wonder distilled.",
+    addUrl: "https://leafnode.co.uk/?add=rendezvous-rama"
+  },
+  {
+    title: "The Stars My Destination",
+    author: "Alfred Bester",
+    coverUrl: "https://books.google.com/books/content?id=O1QLEAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    description: "A revenge epic that pioneered teleportation and the anti-hero in science fiction.",
+    addUrl: "https://leafnode.co.uk/?add=stars-my-destination"
+  },
+  {
+    title: "Solaris",
+    author: "Stanisław Lem",
+    coverUrl: "https://books.google.com/books/content?id=kmzctAEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    description: "An ocean planet probes the limits of human understanding and communication.",
+    addUrl: "https://leafnode.co.uk/?add=solaris"
   }
 ];
+
+// Fisher-Yates shuffle and pick n items
+function getRandomBooks(count: number) {
+  const shuffled = [...ALL_ENGAGEMENT_BOOKS];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled.slice(0, count);
+}
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
@@ -88,10 +161,12 @@ const handler = async (req: Request): Promise<Response> => {
         
         const unsubscribeUrl = `https://leafnode.co.uk/unsubscribe/${existing.unsubscribe_token}`;
         
+        const selectedBooks = getRandomBooks(3);
+        
         const html = await renderAsync(
           React.createElement(AlreadySubscribedEmail, {
             email: normalizedEmail,
-            recommendations: ENGAGEMENT_BOOKS,
+            recommendations: selectedBooks,
             unsubscribeUrl
           })
         );
