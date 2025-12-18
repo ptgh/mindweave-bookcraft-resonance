@@ -19,9 +19,10 @@ interface BookGridProps {
   onAddToTransmissions: (book: EnhancedBookSuggestion) => void;
   onAuthorClick?: (authorName: string) => void;
   aiRecommendations?: Map<string, any>;
+  highlightedBookId?: string | null;
 }
 
-const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClick, aiRecommendations }: BookGridProps) => {
+const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClick, aiRecommendations, highlightedBookId }: BookGridProps) => {
   const { getDeepLink } = useDeepLinking();
   const previewButtonsRef = useRef<HTMLButtonElement[]>([]);
   const addButtonsRef = useRef<HTMLButtonElement[]>([]);
@@ -150,6 +151,7 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClic
               deepLink={deepLink}
               showPenguinBadge={showPenguinBadge}
               aiRecommendation={aiRecommendations?.get(book.id)}
+              isHighlighted={highlightedBookId === book.id}
               onAddToTransmissions={onAddToTransmissions}
               onAuthorClick={onAuthorClick}
               onPreview={handleBookPreview}
@@ -200,6 +202,7 @@ interface BookGridItemProps {
   deepLink: any;
   showPenguinBadge: boolean;
   aiRecommendation?: { reason: string; cluster_connection: string };
+  isHighlighted?: boolean;
   onAddToTransmissions: (book: EnhancedBookSuggestion) => void;
   onAuthorClick?: (authorName: string) => void;
   onPreview: (book: EnhancedBookSuggestion) => void;
@@ -213,6 +216,7 @@ const BookGridItem = memo(({
   deepLink,
   showPenguinBadge,
   aiRecommendation,
+  isHighlighted,
   onAddToTransmissions,
   onAuthorClick,
   onPreview,
@@ -241,11 +245,12 @@ const BookGridItem = memo(({
   return (
             <div
               key={book.id}
+              data-book-id={book.id}
               className={`transition-all duration-500 ${
                 isVisible 
                   ? 'opacity-100 translate-y-0' 
                   : 'opacity-0 translate-y-4'
-              }`}
+              } ${isHighlighted ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900 animate-pulse' : ''}`}
             >
               <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3 sm:p-4 hover:bg-slate-800/70 transition-colors h-full flex flex-col relative overflow-visible">
                 <div className="flex items-start space-x-3 sm:space-x-4 flex-1 mb-3 sm:mb-4">

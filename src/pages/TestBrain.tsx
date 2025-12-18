@@ -426,7 +426,10 @@ const TestBrain = () => {
       const nodeConnections = links.filter(link => 
         link.fromId === node.id || link.toId === node.id
       ).length;
-      const baseSize = Math.max(4, Math.min(8, 4 + nodeConnections * 0.6));
+      
+      // Book-like visual representation based on connection count
+      const connectionTier = nodeConnections <= 2 ? 'basic' : nodeConnections <= 5 ? 'medium' : 'high';
+      const baseSize = connectionTier === 'basic' ? 6 : connectionTier === 'medium' ? 8 : 10;
       const isHighActivity = nodeConnections > 2;
       
       // Pattern recognition: check if node belongs to clusters
@@ -447,32 +450,80 @@ const TestBrain = () => {
       const highlightColor = isHighlighted ? '#ff6b6b' : clusterColor;
       const highlightIntensity = isHighlighted ? 1.5 : 1;
       
+      // Enhanced book-like visual with rings based on connection tier
+      const ringStyles = connectionTier === 'high' 
+        ? `0 0 0 2px ${highlightColor}40, 0 0 0 5px ${highlightColor}20, 0 0 0 8px ${highlightColor}10`
+        : connectionTier === 'medium'
+        ? `0 0 0 2px ${highlightColor}30, 0 0 0 4px ${highlightColor}15`
+        : '';
+      
+      // Book-spine gradient for high-activity nodes
+      const bookGradient = connectionTier === 'high'
+        ? `linear-gradient(180deg, ${highlightColor} 0%, ${highlightColor}80 20%, ${highlightColor}40 80%, ${highlightColor} 100%)`
+        : `radial-gradient(circle, ${highlightColor} 0%, ${isHighActivity ? '#00d4ff' : '#0099cc'} 60%, ${isHighActivity ? '#0099cc40' : '#00669940'} 100%)`;
+
       nodeElement.style.cssText = `
         position: absolute;
         width: ${baseSize * (isHighlighted ? 1.3 : 1)}px;
         height: ${baseSize * (isHighlighted ? 1.3 : 1)}px;
-        background: radial-gradient(circle, 
-          ${highlightColor} 0%, 
-          ${isHighActivity ? '#00d4ff' : '#0099cc'} 60%, 
-          ${isHighActivity ? '#0099cc40' : '#00669940'} 100%);
+        background: ${bookGradient};
         border-radius: 50%;
         left: ${node.x}px;
         top: ${node.y}px;
         cursor: pointer;
         box-shadow: 
+          ${ringStyles ? ringStyles + ',' : ''}
           0 0 ${baseSize * 2 * highlightIntensity}px ${highlightColor}90,
           0 0 ${baseSize * 4 * highlightIntensity}px ${highlightColor}50,
           0 0 ${baseSize * 6 * highlightIntensity}px ${highlightColor}20,
           inset 0 0 ${baseSize}px ${highlightColor}30;
         opacity: 0;
         z-index: 10;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
         border: 1px solid ${highlightColor}80;
         will-change: transform, opacity;
       `;
+      
+      // Add invisible hit area for easier clicking (min 44px for touch)
+      const hitArea = document.createElement('div');
+      hitArea.className = 'node-hit-area';
+      hitArea.style.cssText = `
+        position: absolute;
+        width: 44px;
+        height: 44px;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        cursor: pointer;
+        z-index: 11;
+      `;
+      nodeElement.appendChild(hitArea);
 
       (nodeElement as any).nodeData = node;
       node.element = nodeElement;
+
+      // Debounced tooltip with stable positioning
+      let tooltipTimeout: NodeJS.Timeout | null = null;
+      
+      const showTooltip = () => {
+        const rect = nodeElement.getBoundingClientRect();
+        const canvasRect = canvas.getBoundingClientRect();
+        
+        // Fixed position relative to node
+        let tooltipX = rect.left - canvasRect.left + rect.width / 2;
+        let tooltipY = rect.top - canvasRect.top - 15;
+        
+        if (tooltipX < 150) tooltipX = 150;
+        if (tooltipX > window.innerWidth - 150) tooltipX = window.innerWidth - 150;
+        if (tooltipY < 80) tooltipY = rect.bottom - canvasRect.top + 15;
+        
+        setTooltip({
+          node,
+          x: tooltipX,
+          y: tooltipY
+        });
+      };
 
       nodeElement.addEventListener('mouseenter', (e) => {
         // Throttle hover events - only trigger once per 500ms per node
@@ -480,34 +531,20 @@ const TestBrain = () => {
         const lastHover = lastHoverTimeRef.current.get(node.id) || 0;
         const shouldTrigger = now - lastHover > 500;
         
-        const rect = nodeElement.getBoundingClientRect();
-        const canvasRect = canvas.getBoundingClientRect();
+        // Debounce tooltip appearance (100ms) for stability
+        tooltipTimeout = setTimeout(showTooltip, 100);
         
-        let tooltipX = rect.left - canvasRect.left + rect.width / 2;
-        let tooltipY = rect.top - canvasRect.top - 10;
-        
-        if (tooltipX < 150) tooltipX = 150;
-        if (tooltipX > window.innerWidth - 150) tooltipX = window.innerWidth - 150;
-        if (tooltipY < 80) tooltipY = rect.bottom - canvasRect.top + 10;
-        
-        setTooltip({
-          node,
-          x: tooltipX,
-          y: tooltipY
-        });
-        
-        // Enhanced hover effect with multiple rings
+        // Reduced hover scale from 6 to 2.5 for better control
         gsap.timeline()
           .to(nodeElement, {
-            scale: 6,
+            scale: 2.5,
             boxShadow: `
-              0 0 ${baseSize * 6}px #00ffff,
-              0 0 ${baseSize * 12}px #00ffff80,
-              0 0 ${baseSize * 18}px #00ffff40,
-              0 0 ${baseSize * 24}px #00ffff20
+              0 0 ${baseSize * 4}px #00ffff,
+              0 0 ${baseSize * 8}px #00ffff80,
+              0 0 ${baseSize * 12}px #00ffff40
             `,
-            duration: 0.4,
-            ease: "back.out(2)"
+            duration: 0.3,
+            ease: "power2.out"
           });
 
         if (shouldTrigger) {
@@ -517,20 +554,27 @@ const TestBrain = () => {
       });
 
       nodeElement.addEventListener('mouseleave', () => {
+        // Clear tooltip timeout
+        if (tooltipTimeout) {
+          clearTimeout(tooltipTimeout);
+          tooltipTimeout = null;
+        }
+        
         // Don't hide tooltip if this node is selected
         if (selectedNode?.id !== node.id) {
           setTooltip(null);
         }
         gsap.to(nodeElement, {
-          scale: selectedNode?.id === node.id ? 4 : 1,
+          scale: selectedNode?.id === node.id ? 2 : 1,
           boxShadow: selectedNode?.id === node.id 
-            ? `0 0 ${baseSize * 8}px #00ffff, 0 0 ${baseSize * 16}px #00ffff60`
+            ? `0 0 ${baseSize * 6}px #00ffff, 0 0 ${baseSize * 12}px #00ffff60`
             : `
+              ${ringStyles ? ringStyles + ',' : ''}
               0 0 ${baseSize * 2 * highlightIntensity}px ${highlightColor}90,
               0 0 ${baseSize * 4 * highlightIntensity}px ${highlightColor}50,
               0 0 ${baseSize * 6 * highlightIntensity}px ${highlightColor}20
             `,
-          duration: 0.4
+          duration: 0.3
         });
       });
 

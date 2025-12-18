@@ -890,6 +890,27 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
           <div ref={messagesEndRef} />
         </div>
 
+        {/* Quick Action Chips */}
+        {messages.length > 0 && !isLoading && (
+          <div className="px-3 py-2 border-t border-slate-700/20 bg-slate-800/20">
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { label: 'Patterns', query: 'What patterns do you see in my reading?' },
+                { label: 'Similar', query: 'Suggest books similar to my favorites' },
+                { label: 'Gaps', query: 'What themes am I missing?' },
+              ].map((chip) => (
+                <button
+                  key={chip.label}
+                  onClick={() => handleSuggestionClick(chip.query)}
+                  className="px-2 py-1 text-[10px] bg-slate-800/50 hover:bg-cyan-400/10 text-slate-400 hover:text-cyan-400 border border-slate-700/30 hover:border-cyan-400/30 rounded-full transition-all"
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Input */}
         <div className="p-3 pb-safe border-t border-slate-700/30 bg-slate-800/40">
           <div className="flex gap-2">
