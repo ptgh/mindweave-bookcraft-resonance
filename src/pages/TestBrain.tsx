@@ -8,6 +8,7 @@ import { X } from 'lucide-react';
 import BrainChatInterface from '@/components/BrainChatInterface';
 import Header from '@/components/Header';
 import NeuralMapHeader from '@/components/NeuralMapHeader';
+import NeuralMapPreviewModal from '@/components/NeuralMapPreviewModal';
 import { useGSAPAnimations } from '@/hooks/useGSAPAnimations';
 import { usePatternRecognition } from '@/hooks/usePatternRecognition';
 import { filterConceptualTags, CONCEPTUAL_TAGS } from '@/constants/conceptualTags';
@@ -52,6 +53,7 @@ const TestBrain = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<NodeTooltip | null>(null);
+  const [selectedNode, setSelectedNode] = useState<BrainNode | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [allTags, setAllTags] = useState<string[]>([]);
   const [remappingActive, setRemappingActive] = useState(false);
@@ -515,19 +517,43 @@ const TestBrain = () => {
       });
 
       nodeElement.addEventListener('mouseleave', () => {
-        setTooltip(null);
+        // Don't hide tooltip if this node is selected
+        if (selectedNode?.id !== node.id) {
+          setTooltip(null);
+        }
         gsap.to(nodeElement, {
-          scale: 1,
-          boxShadow: `
-            0 0 ${baseSize * 2 * highlightIntensity}px ${highlightColor}90,
-            0 0 ${baseSize * 4 * highlightIntensity}px ${highlightColor}50,
-            0 0 ${baseSize * 6 * highlightIntensity}px ${highlightColor}20
-          `,
+          scale: selectedNode?.id === node.id ? 4 : 1,
+          boxShadow: selectedNode?.id === node.id 
+            ? `0 0 ${baseSize * 8}px #00ffff, 0 0 ${baseSize * 16}px #00ffff60`
+            : `
+              0 0 ${baseSize * 2 * highlightIntensity}px ${highlightColor}90,
+              0 0 ${baseSize * 4 * highlightIntensity}px ${highlightColor}50,
+              0 0 ${baseSize * 6 * highlightIntensity}px ${highlightColor}20
+            `,
           duration: 0.4
         });
       });
 
-      // Click event listener removed - only hover functionality remains
+      // Click/touch handler for selection and preview modal
+      const handleNodeSelect = (e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedNode(node);
+        setTooltip(null); // Hide tooltip when modal opens
+        
+        // Visual feedback for selection
+        gsap.to(nodeElement, {
+          scale: 5,
+          boxShadow: `0 0 ${baseSize * 10}px #00ffff, 0 0 ${baseSize * 20}px #00ffff80`,
+          duration: 0.3,
+          ease: "back.out(2)"
+        });
+        
+        triggerSynapticFiring(node);
+      };
+
+      nodeElement.addEventListener('click', handleNodeSelect);
+      nodeElement.addEventListener('touchend', handleNodeSelect, { passive: false });
 
       canvas.appendChild(nodeElement);
 
@@ -604,7 +630,7 @@ const TestBrain = () => {
       activeParticlesRef.current = 0;
     };
 
-  }, [nodes, links, chatHighlights]);
+  }, [nodes, links, chatHighlights, selectedNode]);
 
   const drawLivingConnections = (svg: SVGSVGElement, nodes: BrainNode[], connections: BookLink[]) => {
     svg.setAttribute('width', '100%');
@@ -1131,6 +1157,15 @@ const TestBrain = () => {
         activeFilters={activeFilters}
         onHighlight={handleChatHighlight}
       />
+
+      {/* Neural Map Preview Modal */}
+      {selectedNode && (
+        <NeuralMapPreviewModal
+          node={selectedNode}
+          connections={links}
+          onClose={() => setSelectedNode(null)}
+        />
+      )}
     </div>
   );
 };

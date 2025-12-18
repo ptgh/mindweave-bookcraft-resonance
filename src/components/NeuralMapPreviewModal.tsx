@@ -1,0 +1,156 @@
+import { X, Plus, Link, BookOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BrainNode, BookLink } from "@/pages/TestBrain";
+import { createPortal } from "react-dom";
+
+interface NeuralMapPreviewModalProps {
+  node: BrainNode;
+  connections: BookLink[];
+  onClose: () => void;
+  onAddToTransmissions?: () => void;
+}
+
+const NeuralMapPreviewModal = ({ 
+  node, 
+  connections, 
+  onClose,
+  onAddToTransmissions 
+}: NeuralMapPreviewModalProps) => {
+  const connectionCount = connections.filter(
+    link => link.fromId === node.id || link.toId === node.id
+  ).length;
+
+  const modal = (
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="relative w-full max-w-sm sm:max-w-md animate-in fade-in zoom-in-95 duration-200">
+        {/* Glow effect */}
+        <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400/20 via-blue-500/20 to-cyan-400/20 rounded-2xl blur-lg" />
+        
+        <div className="relative bg-slate-900/95 border border-cyan-400/30 rounded-xl overflow-hidden shadow-2xl shadow-cyan-500/10">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
+            <div className="flex items-center space-x-2">
+              <div className="w-2.5 h-2.5 bg-cyan-400 rounded-full animate-pulse" />
+              <span className="text-slate-200 text-sm font-medium">Signal Preview</span>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-700/50"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {/* Content */}
+          <div className="p-4 sm:p-5">
+            <div className="flex gap-4">
+              {/* Book cover */}
+              <div className="flex-shrink-0 w-20 h-28 sm:w-24 sm:h-32 bg-slate-800/50 rounded-lg border border-slate-600/30 overflow-hidden relative">
+                {node.coverUrl ? (
+                  <>
+                    <img 
+                      src={node.coverUrl} 
+                      alt={node.title} 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const fallback = target.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.classList.remove('hidden');
+                      }}
+                    />
+                    <div className="hidden w-full h-full flex items-center justify-center text-slate-500">
+                      <BookOpen className="w-8 h-8" />
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-500">
+                    <BookOpen className="w-8 h-8" />
+                  </div>
+                )}
+                {/* Cover glow */}
+                <div className="absolute inset-0 bg-gradient-to-t from-cyan-400/10 to-transparent pointer-events-none" />
+              </div>
+              
+              {/* Book info */}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-slate-100 font-semibold text-base sm:text-lg leading-tight mb-1 line-clamp-2">
+                  {node.title}
+                </h3>
+                <p className="text-cyan-400/80 text-sm mb-3">{node.author}</p>
+                
+                {/* Connection badge */}
+                <div className="flex items-center gap-2 text-xs text-slate-400 mb-3">
+                  <Link className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>{connectionCount} neural connections</span>
+                </div>
+                
+                {/* Tags */}
+                {node.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {node.tags.slice(0, 3).map((tag, i) => (
+                      <span 
+                        key={i}
+                        className="px-2 py-0.5 text-xs bg-cyan-400/10 text-cyan-300 rounded-full border border-cyan-400/20"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                    {node.tags.length > 3 && (
+                      <span className="px-2 py-0.5 text-xs text-slate-500">
+                        +{node.tags.length - 3}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Description if available */}
+            {node.description && (
+              <div className="mt-4 pt-4 border-t border-slate-700/50">
+                <p className="text-slate-400 text-sm leading-relaxed line-clamp-3">
+                  {node.description}
+                </p>
+              </div>
+            )}
+          </div>
+          
+          {/* Actions */}
+          <div className="flex gap-3 p-4 pt-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700/50 bg-transparent"
+            >
+              Close
+            </Button>
+            {onAddToTransmissions && (
+              <Button
+                size="sm"
+                onClick={() => {
+                  onAddToTransmissions();
+                  onClose();
+                }}
+                className="flex-1 bg-cyan-600/80 hover:bg-cyan-600 text-white border-0"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                View Details
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(modal, document.body);
+};
+
+export default NeuralMapPreviewModal;
