@@ -53,35 +53,49 @@ const BookBrowser = () => {
   }, []);
 
   // Handle highlight from URL parameter (from Neural Map navigation)
+  // Reorder books to put highlighted book first
+  const [reorderedBooks, setReorderedBooks] = useState<typeof books>([]);
+  const [highlightAnimating, setHighlightAnimating] = useState(false);
+  
   useEffect(() => {
     if (highlightId && !loading && books.length > 0) {
-      // Match by searching for books with matching title from the search param
       const searchQuery = searchParams.get('search');
       if (searchQuery) {
-        const matchingBook = books.find(book => 
+        const matchingBookIndex = books.findIndex(book => 
           book.title.toLowerCase().includes(searchQuery.toLowerCase())
         );
-        if (matchingBook) {
+        if (matchingBookIndex !== -1) {
+          const matchingBook = books[matchingBookIndex];
           setHighlightedBookId(matchingBook.id);
           
-          // Scroll to the highlighted element after a short delay
-          setTimeout(() => {
-            const highlightedElement = document.querySelector(`[data-book-id="${matchingBook.id}"]`);
-            if (highlightedElement) {
-              highlightedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          }, 300);
+          // Reorder books: put matching book first with smooth animation
+          const reordered = [
+            matchingBook,
+            ...books.slice(0, matchingBookIndex),
+            ...books.slice(matchingBookIndex + 1)
+          ];
+          setHighlightAnimating(true);
+          setReorderedBooks(reordered);
+          
+          // Reset animation state after transition
+          setTimeout(() => setHighlightAnimating(false), 600);
+        } else {
+          setReorderedBooks(books);
         }
+      } else {
+        setReorderedBooks(books);
       }
       
       // Clear the highlight after 5 seconds
       highlightTimeoutRef.current = setTimeout(() => {
         setHighlightedBookId(null);
-        // Remove highlight param from URL
         const newParams = new URLSearchParams(searchParams);
         newParams.delete('highlight');
+        newParams.delete('search');
         setSearchParams(newParams, { replace: true });
       }, 5000);
+    } else {
+      setReorderedBooks(books);
     }
     
     return () => {
@@ -136,14 +150,15 @@ const BookBrowser = () => {
               <p className="text-slate-400">Scanning the consciousness archive...</p>
             </div>
           ) : books.length > 0 ? (
-            <div ref={addFeatureBlockRef} className="feature-block min-h-[60vh]">
+          <div ref={addFeatureBlockRef} className="feature-block min-h-[60vh]">
               <BookGrid
-                books={books}
+                books={reorderedBooks.length > 0 ? reorderedBooks : books}
                 visibleBooks={visibleBooks}
                 onAddToTransmissions={addToTransmissions}
                 onAuthorClick={handleAuthorClick}
                 aiRecommendations={aiRecommendations}
                 highlightedBookId={highlightedBookId}
+                highlightAnimating={highlightAnimating}
               />
             </div>
           ) : (

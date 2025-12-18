@@ -534,18 +534,21 @@ const TestBrain = () => {
         // Debounce tooltip appearance (100ms) for stability
         tooltipTimeout = setTimeout(showTooltip, 100);
         
-        // Reduced hover scale from 6 to 2.5 for better control
-        gsap.timeline()
-          .to(nodeElement, {
-            scale: 2.5,
-            boxShadow: `
-              0 0 ${baseSize * 4}px #00ffff,
-              0 0 ${baseSize * 8}px #00ffff80,
-              0 0 ${baseSize * 12}px #00ffff40
-            `,
-            duration: 0.3,
-            ease: "power2.out"
-          });
+        // STABILITY FIX: Kill all ongoing animations to freeze the node in place
+        gsap.killTweensOf(nodeElement);
+        
+        // Set stable hover state
+        gsap.to(nodeElement, {
+          scale: 2.5,
+          opacity: 1,
+          boxShadow: `
+            0 0 ${baseSize * 4}px #00ffff,
+            0 0 ${baseSize * 8}px #00ffff80,
+            0 0 ${baseSize * 12}px #00ffff40
+          `,
+          duration: 0.2,
+          ease: "power2.out"
+        });
 
         if (shouldTrigger) {
           lastHoverTimeRef.current.set(node.id, now);
@@ -564,6 +567,8 @@ const TestBrain = () => {
         if (selectedNode?.id !== node.id) {
           setTooltip(null);
         }
+        
+        // Restore base state
         gsap.to(nodeElement, {
           scale: selectedNode?.id === node.id ? 2 : 1,
           boxShadow: selectedNode?.id === node.id 
@@ -575,6 +580,28 @@ const TestBrain = () => {
               0 0 ${baseSize * 6 * highlightIntensity}px ${highlightColor}20
             `,
           duration: 0.3
+        });
+        
+        // STABILITY FIX: Restart gentle animations with reduced range
+        gsap.to(nodeElement, {
+          x: `+=${Math.random() * 10 - 5}`,
+          y: `+=${Math.random() * 10 - 5}`,
+          duration: 6 + Math.random() * 4,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+          delay: 0.5
+        });
+        
+        // Restart breathing pulse
+        gsap.to(nodeElement, {
+          scale: (1.3 + Math.random() * 0.4) * (isHighlighted ? 1.2 : 1),
+          opacity: 0.7 + Math.random() * 0.2,
+          duration: 3 + Math.random() * 2,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+          delay: 0.5
         });
       });
 
@@ -614,11 +641,11 @@ const TestBrain = () => {
           duration: 0.4
         }, "<0.3");
 
-      // More organic floating with multiple movement layers
+      // More organic floating with reduced movement for stability
       gsap.to(nodeElement, {
-        x: `+=${Math.random() * 20 - 10}`,
-        y: `+=${Math.random() * 20 - 10}`,
-        duration: 6 + Math.random() * 4,
+        x: `+=${Math.random() * 10 - 5}`,
+        y: `+=${Math.random() * 10 - 5}`,
+        duration: 8 + Math.random() * 4,
         ease: "sine.inOut",
         yoyo: true,
         repeat: -1
