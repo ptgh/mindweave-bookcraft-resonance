@@ -46,6 +46,7 @@ interface ChatRequest {
   message: string;
   conversationId?: string;
   messages?: ChatMessage[];
+  userName?: string; // User's first name for personalization
   brainData: {
     nodes: BrainNode[];
     links: BookLink[];
@@ -94,7 +95,7 @@ serve(async (req) => {
       });
     }
 
-    const { message, conversationId, messages = [], brainData, userTransmissions = [] }: ChatRequest = requestBody;
+    const { message, conversationId, messages = [], brainData, userTransmissions = [], userName }: ChatRequest = requestBody;
 
     // Validate required fields
     if (!message) {
@@ -176,7 +177,14 @@ serve(async (req) => {
       }
     };
 
+    // Build personalized greeting instruction
+    const userGreeting = userName 
+      ? `The user's name is ${userName}. Address them by name occasionally (not every message) to create a personal connection. Use their name naturally in context, especially when giving insights or recommendations.`
+      : 'The user has not provided their name.';
+
     const systemPrompt = `You are the Neural Assistant for leafnode—a personal science fiction library and knowledge graph application.
+
+${userGreeting}
 
 ABOUT LEAFNODE:
 Leafnode helps readers build and explore their personal SF reading network. It's not just a book tracker—it's a tool for discovering thematic connections, conceptual patterns, and intellectual threads across your science fiction collection. Think of it as your "second brain" for sci-fi reading, visualizing how books, themes, and ideas connect in your literary journey.

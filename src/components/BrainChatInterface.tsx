@@ -10,6 +10,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Transmission, saveTransmission, getTransmissions } from '@/services/transmissionsService';
 import { BookConfirmationCard } from './BookConfirmationCard';
 import { toast } from '@/hooks/use-toast';
+import { useProfile } from '@/hooks/useProfile';
 
 interface Message {
   id: string;
@@ -54,9 +55,14 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
   const [isFetchingTransmissions, setIsFetchingTransmissions] = useState(false);
   const [extractedBook, setExtractedBook] = useState<any>(null);
   const [showBookConfirmation, setShowBookConfirmation] = useState(false);
+  const [isLoadingConversation, setIsLoadingConversation] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
+  const { profile } = useProfile();
+  
+  // Get user's first name for personalization
+  const userName = profile?.first_name || profile?.display_name?.split(' ')[0] || null;
 
   // Fetch user's transmissions when chat opens
   useEffect(() => {
@@ -109,31 +115,69 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
     fetchTransmissions();
   }, [isOpen]);
 
-  // Initialize or retrieve conversation when chat opens
+  // Initialize or retrieve existing conversation when chat opens (cross-device persistence)
   useEffect(() => {
     const initConversation = async () => {
       if (isOpen && !conversationId) {
+        setIsLoadingConversation(true);
         try {
-          // Create a new conversation
           const { data: userData } = await supabase.auth.getUser();
           if (userData?.user) {
-            const { data, error } = await supabase
+            // First, try to find an existing recent conversation (last 24 hours)
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            const { data: existingConversation } = await supabase
               .from('chat_conversations')
-              .insert({
-                user_id: userData.user.id,
-                title: 'Neural Map Chat'
-              })
-              .select()
+              .select('id, title, updated_at')
+              .eq('user_id', userData.user.id)
+              .gte('updated_at', twentyFourHoursAgo)
+              .order('updated_at', { ascending: false })
+              .limit(1)
               .single();
+            
+            if (existingConversation) {
+              // Load existing conversation and its messages
+              setConversationId(existingConversation.id);
+              console.log('Resuming existing conversation:', existingConversation.id);
+              
+              // Load previous messages
+              const { data: existingMessages } = await supabase
+                .from('chat_messages')
+                .select('*')
+                .eq('conversation_id', existingConversation.id)
+                .order('created_at', { ascending: true });
+              
+              if (existingMessages && existingMessages.length > 0) {
+                const loadedMessages: Message[] = existingMessages.map(msg => ({
+                  id: msg.id,
+                  text: msg.content,
+                  isUser: msg.role === 'user',
+                  timestamp: new Date(msg.created_at || Date.now()),
+                  highlights: msg.highlights as Message['highlights'] || undefined
+                }));
+                setMessages(loadedMessages);
+                console.log('Loaded', loadedMessages.length, 'previous messages');
+              }
+            } else {
+              // Create a new conversation
+              const { data, error } = await supabase
+                .from('chat_conversations')
+                .insert({
+                  user_id: userData.user.id,
+                  title: 'Neural Map Chat'
+                })
+                .select()
+                .single();
 
-            if (!error && data) {
-              setConversationId(data.id);
-              console.log('Created new conversation:', data.id);
+              if (!error && data) {
+                setConversationId(data.id);
+                console.log('Created new conversation:', data.id);
+              }
             }
           }
         } catch (error) {
-          console.error('Failed to create conversation:', error);
-          // Continue without conversation storage if it fails
+          console.error('Failed to initialize conversation:', error);
+        } finally {
+          setIsLoadingConversation(false);
         }
       }
     };
@@ -276,6 +320,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         message: inputText,
         conversationId: conversationId || undefined,
         messages: conversationHistory,
+        userName: userName, // Pass user's first name for personalization
         brainData: {
           ...cleanData,
           activeFilters: Array.isArray(activeFilters) ? activeFilters : []
@@ -531,6 +576,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         message: suggestion,
         conversationId: conversationId || undefined,
         messages: conversationHistory,
+        userName: userName, // Pass user's first name for personalization
         brainData: {
           ...cleanData,
           activeFilters: Array.isArray(activeFilters) ? activeFilters : []
