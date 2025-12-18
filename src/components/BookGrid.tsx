@@ -20,9 +20,10 @@ interface BookGridProps {
   onAuthorClick?: (authorName: string) => void;
   aiRecommendations?: Map<string, any>;
   highlightedBookId?: string | null;
+  highlightAnimating?: boolean;
 }
 
-const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClick, aiRecommendations, highlightedBookId }: BookGridProps) => {
+const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClick, aiRecommendations, highlightedBookId, highlightAnimating }: BookGridProps) => {
   const { getDeepLink } = useDeepLinking();
   const previewButtonsRef = useRef<HTMLButtonElement[]>([]);
   const addButtonsRef = useRef<HTMLButtonElement[]>([]);
@@ -147,11 +148,13 @@ const BookGrid = memo(({ books, visibleBooks, onAddToTransmissions, onAuthorClic
             <BookGridItem
               key={book.id}
               book={book}
+              index={index}
               isVisible={isVisible}
               deepLink={deepLink}
               showPenguinBadge={showPenguinBadge}
               aiRecommendation={aiRecommendations?.get(book.id)}
               isHighlighted={highlightedBookId === book.id}
+              isFeatured={highlightAnimating && index === 0 && highlightedBookId === book.id}
               onAddToTransmissions={onAddToTransmissions}
               onAuthorClick={onAuthorClick}
               onPreview={handleBookPreview}
@@ -198,11 +201,13 @@ BookGrid.displayName = 'BookGrid';
 // Individual book item component with its own Apple Books fetching
 interface BookGridItemProps {
   book: EnhancedBookSuggestion;
+  index: number;
   isVisible: boolean;
   deepLink: any;
   showPenguinBadge: boolean;
   aiRecommendation?: { reason: string; cluster_connection: string };
   isHighlighted?: boolean;
+  isFeatured?: boolean;
   onAddToTransmissions: (book: EnhancedBookSuggestion) => void;
   onAuthorClick?: (authorName: string) => void;
   onPreview: (book: EnhancedBookSuggestion) => void;
@@ -212,17 +217,48 @@ interface BookGridItemProps {
 
 const BookGridItem = memo(({
   book,
+  index,
   isVisible,
   deepLink,
   showPenguinBadge,
   aiRecommendation,
   isHighlighted,
+  isFeatured,
   onAddToTransmissions,
   onAuthorClick,
   onPreview,
   addToRefs,
   addToAddRefs
 }: BookGridItemProps) => {
+  const itemRef = useRef<HTMLDivElement>(null);
+  
+  // Featured entrance animation when book moves to first position
+  useEffect(() => {
+    if (isFeatured && itemRef.current) {
+      gsap.fromTo(itemRef.current, 
+        { 
+          scale: 0.8, 
+          opacity: 0,
+          boxShadow: '0 0 0px rgba(34, 211, 238, 0)'
+        },
+        { 
+          scale: 1, 
+          opacity: 1,
+          boxShadow: '0 0 30px rgba(34, 211, 238, 0.4), 0 0 60px rgba(34, 211, 238, 0.2)',
+          duration: 0.6,
+          ease: "back.out(1.7)"
+        }
+      );
+      
+      // Fade out the glow after animation
+      gsap.to(itemRef.current, {
+        boxShadow: '0 0 0px rgba(34, 211, 238, 0)',
+        duration: 1,
+        delay: 2,
+        ease: "power2.out"
+      });
+    }
+  }, [isFeatured]);
   const [appleUrl, setAppleUrl] = useState<string | null>(null);
 
   // Fetch Apple Books link individually for this book
@@ -244,6 +280,7 @@ const BookGridItem = memo(({
 
   return (
             <div
+              ref={itemRef}
               key={book.id}
               data-book-id={book.id}
               className={`transition-all duration-500 ${
