@@ -64,6 +64,9 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
   // Get user's first name for personalization
   const userName = profile?.first_name || profile?.display_name?.split(' ')[0] || null;
   
+  // Get user ID for insight saving
+  const userId = profile?.id || null;
+  
   // Get user insights from reading preferences (long-term memory)
   const userInsights = (profile?.reading_preferences as any)?.neural_assistant_insights || null;
 
@@ -325,6 +328,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         messages: conversationHistory,
         userName: userName, // Pass user's first name for personalization
         userInsights: userInsights, // Pass learned insights from past interactions
+        userId: userId, // Pass user ID for saving new insights
         brainData: {
           ...cleanData,
           activeFilters: Array.isArray(activeFilters) ? activeFilters : []
@@ -582,6 +586,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
         messages: conversationHistory,
         userName: userName, // Pass user's first name for personalization
         userInsights: userInsights, // Pass learned insights from past interactions
+        userId: userId, // Pass user ID for saving new insights
         brainData: {
           ...cleanData,
           activeFilters: Array.isArray(activeFilters) ? activeFilters : []

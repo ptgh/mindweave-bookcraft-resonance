@@ -48,6 +48,7 @@ interface ChatRequest {
   messages?: ChatMessage[];
   userName?: string; // User's first name for personalization
   userInsights?: string; // Learned preferences from past interactions
+  userId?: string; // User ID for saving insights
   brainData: {
     nodes: BrainNode[];
     links: BookLink[];
@@ -96,7 +97,7 @@ serve(async (req) => {
       });
     }
 
-    const { message, conversationId, messages = [], brainData, userTransmissions = [], userName, userInsights }: ChatRequest = requestBody;
+    const { message, conversationId, messages = [], brainData, userTransmissions = [], userName, userInsights, userId }: ChatRequest = requestBody;
 
     // Validate required fields
     if (!message) {
@@ -177,6 +178,44 @@ serve(async (req) => {
         }
       }
     };
+
+    // Define insight saving tool
+    const saveInsightTool = {
+      type: "function",
+      function: {
+        name: "save_user_insight",
+        description: "Save a notable insight about the user's reading preferences, patterns, or interests. Use when you discover something meaningful about their reading behavior.",
+        parameters: {
+          type: "object",
+          properties: {
+            insight: { 
+              type: "string", 
+              description: "The insight to save (e.g., 'Prefers hard SF with philosophical themes', 'Strong interest in AI consciousness narratives', 'Gravitates toward 1960s-1980s classics')" 
+            },
+            category: {
+              type: "string",
+              enum: ["theme_preference", "author_preference", "era_preference", "reading_pattern", "emotional_response", "genre_preference"],
+              description: "Category of the insight"
+            },
+            confidence: {
+              type: "string",
+              enum: ["high", "medium", "low"],
+              description: "How confident you are in this insight based on evidence"
+            }
+          },
+          required: ["insight", "category", "confidence"]
+        }
+      }
+    };
+
+    // Detect if this might be a good time to extract insights (pattern discussion, preference revelation)
+    const insightPhrases = [
+      'i love', 'i prefer', 'my favorite', 'i always', 'i never', 'i tend to',
+      'i really enjoy', 'i don\'t like', 'i\'m drawn to', 'i find myself',
+      'what i look for', 'what appeals to me', 'what interests me'
+    ];
+    const mightHaveInsight = insightPhrases.some(phrase => lowerMessage.includes(phrase)) || 
+                             messages.length >= 4; // After some conversation, look for patterns
 
     // Build personalized greeting instruction
     const userGreeting = userName 
@@ -286,7 +325,21 @@ RESPONSE STYLE:
 - Write naturally as if speaking to someone
 - Use proper paragraph breaks for readability
 - Keep your tone conversational, insightful, and focused on SF
-- When helpful, reference specific leafnode features or pages the user might explore`;
+- When helpful, reference specific leafnode features or pages the user might explore
+
+LEARNING USER PREFERENCES:
+You have access to a save_user_insight tool. Use it when you discover meaningful patterns about the user's reading preferences. Save insights when:
+- The user explicitly states preferences ("I love...", "I prefer...", "My favorite...")
+- You detect clear patterns in their library (strong theme clusters, author preferences)
+- They share emotional responses to books that reveal their tastes
+- After analyzing their collection, you identify notable tendencies
+
+Only save HIGH-QUALITY insights that would genuinely help personalize future conversations. Don't save trivial observations. Examples of good insights:
+- "Strongly prefers hard SF with rigorous scientific accuracy"
+- "Drawn to philosophical explorations of consciousness and identity"
+- "Shows nostalgic affinity for Golden Age authors, especially Asimov and Clarke"
+- "Appreciates complex narrative structures and non-linear storytelling"
+- "Interested in the intersection of technology and social critique"`;
 
     console.log('Making Lovable AI request...');
     console.log('Using model: google/gemini-2.5-flash (FREE until Oct 6, 2025)');
@@ -300,7 +353,7 @@ RESPONSE STYLE:
 
     console.log(`Message history: ${conversationMessages.length} messages`);
     
-    // Build request body - add tool if book-adding detected
+    // Build request body - add tools based on context
     const aiRequestBody: any = {
       model: 'google/gemini-2.5-flash',
       messages: conversationMessages,
@@ -308,10 +361,23 @@ RESPONSE STYLE:
       max_tokens: 1000,
     };
 
+    // Add tools based on detected intent
+    const tools = [];
+    
     if (isAddingBook) {
       console.log('Book-adding intent detected, enabling extraction tool');
-      aiRequestBody.tools = [bookExtractionTool];
+      tools.push(bookExtractionTool);
       aiRequestBody.tool_choice = { type: "function", function: { name: "extract_book_data" } };
+    }
+    
+    // Add insight tool when appropriate (has userId and might have insight-worthy content)
+    if (userId && mightHaveInsight && !isAddingBook) {
+      console.log('Insight opportunity detected, enabling save_user_insight tool');
+      tools.push(saveInsightTool);
+    }
+    
+    if (tools.length > 0) {
+      aiRequestBody.tools = tools;
     }
     
     // Call Lovable AI Gateway
@@ -375,40 +441,104 @@ RESPONSE STYLE:
       });
     }
 
-    // Check for tool calls (book extraction)
+    // Check for tool calls
     if (data.choices[0]?.message?.tool_calls && data.choices[0].message.tool_calls.length > 0) {
       const toolCall = data.choices[0].message.tool_calls[0];
       console.log('Tool call detected:', toolCall.function.name);
       
-      try {
-        const bookData = JSON.parse(toolCall.function.arguments);
-        console.log('Extracted book data:', bookData);
+      // Handle save_user_insight tool
+      if (toolCall.function.name === 'save_user_insight') {
+        try {
+          const insightData = JSON.parse(toolCall.function.arguments);
+          console.log('Saving user insight:', insightData);
+          
+          if (userId && insightData.insight) {
+            // Fetch current reading preferences
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('reading_preferences')
+              .eq('id', userId)
+              .single();
+            
+            const currentPrefs = (profileData?.reading_preferences as Record<string, any>) || {};
+            const existingInsights = currentPrefs.neural_assistant_insights || '';
+            
+            // Format the new insight
+            const timestamp = new Date().toISOString().split('T')[0];
+            const newInsight = `[${timestamp}] (${insightData.category}, ${insightData.confidence}): ${insightData.insight}`;
+            
+            // Append to existing insights (keep last 10 insights max)
+            const insightLines = existingInsights ? existingInsights.split('\n') : [];
+            insightLines.push(newInsight);
+            const updatedInsights = insightLines.slice(-10).join('\n');
+            
+            // Update profile
+            await supabase
+              .from('profiles')
+              .update({
+                reading_preferences: {
+                  ...currentPrefs,
+                  neural_assistant_insights: updatedInsights
+                }
+              })
+              .eq('id', userId);
+            
+            console.log('User insight saved successfully');
+          }
+        } catch (insightError) {
+          console.error('Failed to save insight:', insightError);
+          // Continue without failing - insight saving is non-critical
+        }
         
-        // Normalize defaults
-        bookData.suggestedTags = Array.isArray(bookData.suggestedTags) ? bookData.suggestedTags : [];
-        bookData.status = bookData.status || 'want-to-read';
-        bookData.sentiment = bookData.sentiment || 'neutral';
-        
-        // Determine if auto-add (no clarification needed OR user explicitly wants it)
-        const autoAdd = wantsAutoAdd || bookData.needsClarification === false;
-        
-        // Generate a friendly message with action options
-        const confirmationMessage = autoAdd
-          ? `Adding "${bookData.title}" by ${bookData.author} to your library...`
-          : `I can add "${bookData.title}" by ${bookData.author}. Would you like me to just add it now, or review details first?`;
-        
-        // Return structured book extraction response
-        return new Response(JSON.stringify({ 
-          type: 'book_extraction',
-          bookData: bookData,
-          autoAdd: autoAdd,
-          message: confirmationMessage
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      } catch (parseError) {
-        console.error('Failed to parse book data:', parseError);
-        // Fall through to normal response
+        // After saving insight, the AI should still provide a response
+        // Check if there's content in the message
+        if (data.choices[0]?.message?.content) {
+          const aiResponse = data.choices[0].message.content;
+          const formattedResponse = formatAIResponse(aiResponse);
+          const highlights = extractHighlights(aiResponse, brainData);
+          
+          return new Response(JSON.stringify({ 
+            response: formattedResponse,
+            highlights,
+            insightSaved: true
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+      
+      // Handle book extraction tool
+      if (toolCall.function.name === 'extract_book_data') {
+        try {
+          const bookData = JSON.parse(toolCall.function.arguments);
+          console.log('Extracted book data:', bookData);
+          
+          // Normalize defaults
+          bookData.suggestedTags = Array.isArray(bookData.suggestedTags) ? bookData.suggestedTags : [];
+          bookData.status = bookData.status || 'want-to-read';
+          bookData.sentiment = bookData.sentiment || 'neutral';
+          
+          // Determine if auto-add (no clarification needed OR user explicitly wants it)
+          const autoAdd = wantsAutoAdd || bookData.needsClarification === false;
+          
+          // Generate a friendly message with action options
+          const confirmationMessage = autoAdd
+            ? `Adding "${bookData.title}" by ${bookData.author} to your library...`
+            : `I can add "${bookData.title}" by ${bookData.author}. Would you like me to just add it now, or review details first?`;
+          
+          // Return structured book extraction response
+          return new Response(JSON.stringify({ 
+            type: 'book_extraction',
+            bookData: bookData,
+            autoAdd: autoAdd,
+            message: confirmationMessage
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } catch (parseError) {
+          console.error('Failed to parse book data:', parseError);
+          // Fall through to normal response
+        }
       }
     }
     
