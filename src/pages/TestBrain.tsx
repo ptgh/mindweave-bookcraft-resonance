@@ -76,6 +76,13 @@ const TestBrain = () => {
     linkIds: string[];
     tags: string[];
   }>({ nodeIds: [], linkIds: [], tags: [] });
+  
+  // Occasional floating mini-card state
+  const [floatingCard, setFloatingCard] = useState<{
+    node: BrainNode;
+    x: number;
+    y: number;
+  } | null>(null);
 
   // Initialize brain data from user's transmissions only
   useEffect(() => {
@@ -131,6 +138,41 @@ const TestBrain = () => {
 
     initBrain();
   }, []);
+
+  // Occasional floating mini-card - show random book cards subtly every 15-25 seconds
+  useEffect(() => {
+    if (nodes.length === 0 || loading) return;
+    
+    const showRandomCard = () => {
+      // Only show if no tooltip or modal is active
+      if (tooltip || selectedNode) return;
+      
+      const randomNode = nodes[Math.floor(Math.random() * nodes.length)];
+      const canvas = canvasRef.current;
+      if (!randomNode || !canvas) return;
+      
+      // Position near the node but with some randomness
+      const canvasRect = canvas.getBoundingClientRect();
+      const x = Math.min(Math.max(randomNode.x, 120), canvasRect.width - 120);
+      const y = Math.min(Math.max(randomNode.y - 80, 100), canvasRect.height - 150);
+      
+      setFloatingCard({ node: randomNode, x, y });
+      
+      // Auto-hide after 4 seconds
+      setTimeout(() => setFloatingCard(null), 4000);
+    };
+    
+    // Show first card after 8 seconds, then every 15-25 seconds
+    const initialDelay = setTimeout(showRandomCard, 8000);
+    const interval = setInterval(() => {
+      if (Math.random() < 0.6) showRandomCard(); // 60% chance to show
+    }, 18000 + Math.random() * 7000);
+    
+    return () => {
+      clearTimeout(initialDelay);
+      clearInterval(interval);
+    };
+  }, [nodes, loading, tooltip, selectedNode]);
 
   const generateOrganicConnections = (nodes: BrainNode[]): BookLink[] => {
     const connections: BookLink[] = [];
@@ -1220,6 +1262,45 @@ const TestBrain = () => {
           </div>
         )}
       </div>
+
+      {/* Occasional floating mini-card */}
+      {floatingCard && !tooltip && !selectedNode && (
+        <div 
+          className="absolute z-25 pointer-events-none animate-fade-in"
+          style={{ 
+            left: floatingCard.x, 
+            top: floatingCard.y,
+            transform: 'translateX(-50%)',
+            opacity: 0.85
+          }}
+        >
+          <div className="relative bg-slate-900/80 backdrop-blur-xl border border-cyan-400/20 rounded-xl p-3 max-w-[200px] shadow-[0_0_20px_rgba(34,211,238,0.15)]">
+            <div className="flex items-center space-x-3">
+              {floatingCard.node.coverUrl && (
+                <div className="relative w-10 h-14 flex-shrink-0 rounded overflow-hidden border border-cyan-400/30">
+                  <img 
+                    src={floatingCard.node.coverUrl} 
+                    alt={floatingCard.node.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <h4 className="font-medium text-cyan-300 text-xs leading-tight line-clamp-2">
+                  {floatingCard.node.title}
+                </h4>
+                <p className="text-[10px] text-cyan-400/50 mt-0.5">
+                  {floatingCard.node.author}
+                </p>
+                <div className="flex items-center gap-1 text-[10px] text-cyan-300/60 mt-1">
+                  <div className="w-1 h-1 bg-cyan-400 rounded-full"></div>
+                  <span>{links.filter(link => link.fromId === floatingCard.node.id || link.toId === floatingCard.node.id).length} connections</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Chat Interface */}
       <BrainChatInterface
