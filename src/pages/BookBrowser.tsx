@@ -101,7 +101,7 @@ const BookBrowser = () => {
     fetchHighlightedTransmission();
   }, [highlightId, searchQuery]);
   
-  // Reorder books with fetched transmission first
+  // Reorder books with fetched transmission first - PERSIST the book in the list
   useEffect(() => {
     if (fetchedTransmission && !loading) {
       // Put the fetched transmission first, then the rest of the books
@@ -112,14 +112,14 @@ const BookBrowser = () => {
       // Reset animation state after transition
       setTimeout(() => setHighlightAnimating(false), 600);
       
-      // Clear the highlight after 5 seconds
+      // Clear ONLY the highlight styling after 5 seconds, but KEEP the book visible
       highlightTimeoutRef.current = setTimeout(() => {
         setHighlightedBookId(null);
         const newParams = new URLSearchParams(searchParams);
         newParams.delete('highlight');
         newParams.delete('search');
         setSearchParams(newParams, { replace: true });
-        setFetchedTransmission(null);
+        // NOTE: Do NOT clear fetchedTransmission - keep the book in the list
       }, 5000);
     } else if (!fetchedTransmission) {
       setReorderedBooks(books);
