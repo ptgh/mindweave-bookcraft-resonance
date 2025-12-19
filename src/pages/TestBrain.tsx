@@ -139,6 +139,9 @@ const TestBrain = () => {
     initBrain();
   }, []);
 
+  // Track which cards have been shown to avoid repetition
+  const [shownCardIds, setShownCardIds] = useState<Set<string>>(new Set());
+
   // Occasional floating mini-card - show random book cards subtly every 15-25 seconds
   useEffect(() => {
     if (nodes.length === 0 || loading) return;
@@ -147,9 +150,22 @@ const TestBrain = () => {
       // Only show if no tooltip or modal is active
       if (tooltip || selectedNode) return;
       
-      const randomNode = nodes[Math.floor(Math.random() * nodes.length)];
+      // Get nodes that haven't been shown yet
+      let availableNodes = nodes.filter(n => !shownCardIds.has(n.id));
+      
+      // If all nodes have been shown, reset the tracking
+      if (availableNodes.length === 0) {
+        setShownCardIds(new Set());
+        availableNodes = nodes;
+      }
+      
+      // Pick a random node from available ones
+      const randomNode = availableNodes[Math.floor(Math.random() * availableNodes.length)];
       const canvas = canvasRef.current;
       if (!randomNode || !canvas) return;
+      
+      // Mark this node as shown
+      setShownCardIds(prev => new Set([...prev, randomNode.id]));
       
       // Position near the node but with some randomness
       const canvasRect = canvas.getBoundingClientRect();
@@ -172,7 +188,7 @@ const TestBrain = () => {
       clearTimeout(initialDelay);
       clearInterval(interval);
     };
-  }, [nodes, loading, tooltip, selectedNode]);
+  }, [nodes, loading, tooltip, selectedNode, shownCardIds]);
 
   const generateOrganicConnections = (nodes: BrainNode[]): BookLink[] => {
     const connections: BookLink[] = [];
@@ -1270,18 +1286,17 @@ const TestBrain = () => {
           style={{ 
             left: floatingCard.x, 
             top: floatingCard.y,
-            transform: 'translateX(-50%)',
-            opacity: 0.85
+            transform: 'translateX(-50%)'
           }}
           onClick={() => {
             setSelectedNode(floatingCard.node);
             setFloatingCard(null);
           }}
         >
-          <div className="relative bg-slate-900/80 backdrop-blur-xl border border-cyan-400/20 rounded-xl p-3 max-w-[200px] shadow-[0_0_20px_rgba(34,211,238,0.15)] transition-all duration-200 hover:border-cyan-400/40 hover:shadow-[0_0_30px_rgba(34,211,238,0.25)] hover:scale-105">
+          <div className="relative bg-slate-900/40 backdrop-blur-md border border-cyan-400/15 rounded-xl p-3 max-w-[200px] shadow-[0_0_15px_rgba(34,211,238,0.08)] transition-all duration-200 hover:bg-slate-900/50 hover:border-cyan-400/25 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] hover:scale-105">
             <div className="flex items-center space-x-3">
               {floatingCard.node.coverUrl && (
-                <div className="relative w-10 h-14 flex-shrink-0 rounded overflow-hidden border border-cyan-400/30">
+                <div className="relative w-10 h-14 flex-shrink-0 rounded overflow-hidden border border-cyan-400/20 opacity-90">
                   <img 
                     src={floatingCard.node.coverUrl} 
                     alt={floatingCard.node.title}
@@ -1290,14 +1305,14 @@ const TestBrain = () => {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-cyan-300 text-xs leading-tight line-clamp-2">
+                <h4 className="font-medium text-cyan-300/80 text-xs leading-tight line-clamp-2">
                   {floatingCard.node.title}
                 </h4>
-                <p className="text-[10px] text-cyan-400/50 mt-0.5">
+                <p className="text-[10px] text-cyan-400/40 mt-0.5">
                   {floatingCard.node.author}
                 </p>
-                <div className="flex items-center gap-1 text-[10px] text-cyan-300/60 mt-1">
-                  <div className="w-1 h-1 bg-cyan-400 rounded-full"></div>
+                <div className="flex items-center gap-1 text-[10px] text-cyan-300/50 mt-1">
+                  <div className="w-1 h-1 bg-cyan-400/60 rounded-full"></div>
                   <span>{links.filter(link => link.fromId === floatingCard.node.id || link.toId === floatingCard.node.id).length} connections</span>
                 </div>
               </div>
