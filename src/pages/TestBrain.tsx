@@ -1266,15 +1266,19 @@ const TestBrain = () => {
       {/* Occasional floating mini-card */}
       {floatingCard && !tooltip && !selectedNode && (
         <div 
-          className="absolute z-25 pointer-events-none animate-fade-in"
+          className="absolute z-25 animate-fade-in cursor-pointer"
           style={{ 
             left: floatingCard.x, 
             top: floatingCard.y,
             transform: 'translateX(-50%)',
             opacity: 0.85
           }}
+          onClick={() => {
+            setSelectedNode(floatingCard.node);
+            setFloatingCard(null);
+          }}
         >
-          <div className="relative bg-slate-900/80 backdrop-blur-xl border border-cyan-400/20 rounded-xl p-3 max-w-[200px] shadow-[0_0_20px_rgba(34,211,238,0.15)]">
+          <div className="relative bg-slate-900/80 backdrop-blur-xl border border-cyan-400/20 rounded-xl p-3 max-w-[200px] shadow-[0_0_20px_rgba(34,211,238,0.15)] transition-all duration-200 hover:border-cyan-400/40 hover:shadow-[0_0_30px_rgba(34,211,238,0.25)] hover:scale-105">
             <div className="flex items-center space-x-3">
               {floatingCard.node.coverUrl && (
                 <div className="relative w-10 h-14 flex-shrink-0 rounded overflow-hidden border border-cyan-400/30">
