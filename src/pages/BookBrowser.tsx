@@ -25,7 +25,8 @@ const BookBrowser = () => {
     previouslyShownBooks,
     loadRandomBooks,
     addToTransmissions,
-    aiRecommendations
+    aiRecommendations,
+    hasLoadedOnce
   } = useBookBrowser();
 
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
@@ -184,9 +185,17 @@ const BookBrowser = () => {
                 highlightAnimating={highlightAnimating}
               />
             </div>
-          ) : (
+          ) : hasLoadedOnce ? (
             <div ref={addFeatureBlockRef} className="feature-block">
               <BookBrowserEmpty onScan={loadRandomBooks} />
+            </div>
+          ) : (
+            <div ref={addFeatureBlockRef} className="feature-block text-center py-16">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full border-2 border-dashed border-cyan-500/30 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-cyan-500/20" />
+              </div>
+              <h3 className="text-slate-200 text-lg mb-2">Ready to Scan</h3>
+              <p className="text-slate-400 mb-6">Click the button above to scan the Signal Collection</p>
             </div>
           )}
 

@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Mail, BookOpen, Search, Eye, Map, Circle, Sparkles } from "lucide-react";
+import { Mail, BookOpen, Search, Eye, Circle, Sparkles } from "lucide-react";
 import Header from "@/components/Header";
 import SignalInFocus from "@/components/SignalInFocus";
 import AddBookModal from "@/components/AddBookModal";
@@ -19,6 +19,12 @@ import { AuthorPopup } from "@/components/AuthorPopup";
 import { getAuthorByName, ScifiAuthor, findOrCreateAuthor } from "@/services/scifiAuthorsService";
 import { usePatternRecognition } from "@/hooks/usePatternRecognition";
 import { SEOHead } from "@/components/SEOHead";
+import { supabase } from "@/integrations/supabase/client";
+
+interface AIRecommendation {
+  reason: string;
+  cluster_connection: string;
+}
 
 const Index = () => {
   const [books, setBooks] = useState<Transmission[]>([]);
@@ -30,6 +36,7 @@ const Index = () => {
   const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
   const [authorPopupVisible, setAuthorPopupVisible] = useState(false);
   const [showInsightsModal, setShowInsightsModal] = useState(false);
+  const [aiRecommendations, setAiRecommendations] = useState<Map<string, AIRecommendation>>(() => new Map());
 
   // Memoize static data to prevent unnecessary re-renders
   const currentSignal = useMemo(() => ({
@@ -92,6 +99,42 @@ const Index = () => {
       }
     }
   }, [user, authLoading, loadTransmissions]);
+
+  // Load AI recommendations for transmissions (deferred for performance)
+  useEffect(() => {
+    const loadAIRecommendations = async () => {
+      if (books.length < 5) return;
+      
+      try {
+        const { data, error } = await supabase.functions.invoke('ai-book-recommendations', {
+          body: { 
+            userTransmissions: books.map(t => ({
+              title: t.title,
+              author: t.author,
+              tags: t.tags.join(', '),
+              publication_year: t.publication_year
+            })),
+            limit: 10
+          }
+        });
+        
+        if (!error && data?.recommendations) {
+          const newAiRecs: Map<string, AIRecommendation> = new Map();
+          for (const rec of data.recommendations) {
+            // Store by lowercase title for matching
+            newAiRecs.set(rec.title.toLowerCase().trim(), rec);
+          }
+          setAiRecommendations(newAiRecs);
+        }
+      } catch (aiError) {
+        console.error('AI recommendations for transmissions failed:', aiError);
+      }
+    };
+    
+    // Delay to ensure fast initial render
+    const timer = setTimeout(loadAIRecommendations, 800);
+    return () => clearTimeout(timer);
+  }, [books]);
 
   const addBook = useCallback(async (newBook: any) => {
     try {
@@ -315,6 +358,7 @@ const Index = () => {
                 onAddNew={() => setIsAddModalOpen(true)}
                 onAuthorClick={handleAuthorClick}
                 getBookBridges={getBookBridges}
+                aiRecommendations={aiRecommendations}
               />
             )}
           </div>
