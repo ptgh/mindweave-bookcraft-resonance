@@ -180,6 +180,31 @@ export async function generateBatchEmbeddings(books: Array<{
   }
 }
 
+export async function generateTransmissionEmbeddings(
+  limit: number = 50
+): Promise<{ processed: number; skipped: number; errors: number; total: number }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('generate-transmission-embeddings', {
+      body: { limit, skipExisting: true },
+    });
+
+    if (error) {
+      console.error('Transmission embedding generation error:', error);
+      throw new Error(error.message || 'Failed to generate embeddings');
+    }
+
+    return {
+      processed: data?.processed || 0,
+      skipped: data?.skipped || 0,
+      errors: data?.errors || 0,
+      total: data?.total || 0,
+    };
+  } catch (error) {
+    console.error('Failed to generate transmission embeddings:', error);
+    throw error;
+  }
+}
+
 export async function logSearchClick(
   queryId: string,
   bookIdentifier: string

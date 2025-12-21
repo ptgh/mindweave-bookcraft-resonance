@@ -150,9 +150,9 @@ export const NaturalLanguageSearchBar: React.FC<NaturalLanguageSearchBarProps> =
             autoFocus={autoFocus}
             className={cn(
               'pl-12 pr-24 py-6 text-lg',
-              'bg-slate-800/50 border-slate-600/50',
-              'focus:border-blue-500/50 focus:ring-blue-500/20',
-              'placeholder:text-slate-500 placeholder:text-base',
+              'bg-background border-border',
+              'focus:border-primary/50 focus:ring-primary/20',
+              'placeholder:text-muted-foreground placeholder:text-base',
               'transition-all duration-300'
             )}
           />
@@ -196,12 +196,12 @@ export const NaturalLanguageSearchBar: React.FC<NaturalLanguageSearchBarProps> =
         </div>
       </form>
 
-      {/* Suggestions Dropdown */}
+      {/* Suggestions Dropdown - Solid background with high z-index */}
       {showSuggestions && query.length === 0 && (recentSearches.length > 0 || popularSearches.length > 0) && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-lg shadow-2xl z-[100] overflow-hidden backdrop-blur-none">
           {recentSearches.length > 0 && (
-            <div className="p-3 border-b border-slate-700/50">
-              <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <div className="p-3 border-b border-border bg-background">
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <Clock className="h-3 w-3" />
                 Recent Searches
               </h4>
@@ -210,7 +210,7 @@ export const NaturalLanguageSearchBar: React.FC<NaturalLanguageSearchBarProps> =
                   <button
                     key={idx}
                     onClick={() => handleSuggestionClick(search)}
-                    className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-700/50 rounded-md transition-colors"
+                    className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
                   >
                     {search}
                   </button>
@@ -220,8 +220,8 @@ export const NaturalLanguageSearchBar: React.FC<NaturalLanguageSearchBarProps> =
           )}
 
           {popularSearches.length > 0 && (
-            <div className="p-3">
-              <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <div className="p-3 bg-background">
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <TrendingUp className="h-3 w-3" />
                 Try Searching For
               </h4>
@@ -230,7 +230,7 @@ export const NaturalLanguageSearchBar: React.FC<NaturalLanguageSearchBarProps> =
                   <button
                     key={idx}
                     onClick={() => handleSuggestionClick(search)}
-                    className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-700/50 rounded-md transition-colors"
+                    className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
                   >
                     {search}
                   </button>
