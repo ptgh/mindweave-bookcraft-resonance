@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { Brain, BookOpen, Search, Map, Eye, Building, Mail, ChevronDown, ChevronUp } from "lucide-react";
+import { Brain, BookOpen, Search, Map, Eye, Building, Mail } from "lucide-react";
 import Header from "@/components/Header";
 import { StandardButton } from "@/components/ui/standard-button";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
@@ -20,7 +20,7 @@ const Discovery: React.FC = () => {
   const [searchFilters, setSearchFilters] = useState<SearchFiltersType>({});
   const [responseTimeMs, setResponseTimeMs] = useState<number | undefined>();
   const [hasSearched, setHasSearched] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
+  
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
   const { toast } = useEnhancedToast();
 
@@ -88,6 +88,46 @@ const Discovery: React.FC = () => {
             </p>
           </div>
           
+          {/* Semantic Search */}
+          <section
+            aria-labelledby="semantic-search"
+            className="max-w-4xl mx-auto mb-10"
+          >
+            <div className="rounded-xl border border-border bg-card p-6 shadow-2xl">
+              <h2 id="semantic-search" className="text-lg font-medium text-foreground mb-4">
+                Semantic Search
+              </h2>
+
+              <NaturalLanguageSearchBar
+                onSearch={handleSearch}
+                isSearching={isSearching}
+                placeholder="Describe what you're looking for..."
+              />
+
+              {hasSearched && (
+                <div className="mt-6 space-y-4">
+                  <SearchFilters filters={searchFilters} onFiltersChange={setSearchFilters} />
+
+                  <SearchResultsView
+                    results={searchResults}
+                    query={searchQuery}
+                    isLoading={isSearching}
+                    responseTimeMs={responseTimeMs}
+                    onResultClick={handleResultClick}
+                  />
+
+                  {searchResults.length > 0 && (
+                    <QuerySuggestions
+                      currentQuery={searchQuery}
+                      results={searchResults.map(r => ({ title: r.title, author: r.author }))}
+                      onSuggestionClick={handleSearch}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          </section>
+
           {/* Navigation Links */}
           <div className="flex flex-col space-y-8 max-w-4xl mx-auto">
             <div ref={addFeatureBlockRef} className="feature-block">
@@ -192,63 +232,6 @@ const Discovery: React.FC = () => {
               </Link>
             </div>
 
-            {/* Collapsible Search Section - Below navigation */}
-            <div ref={addFeatureBlockRef} className="feature-block">
-              <button
-                onClick={() => setShowSearch(!showSearch)}
-                className="w-full bg-slate-800/30 border border-slate-700/50 rounded-lg p-4 hover:bg-slate-800/50 hover:border-slate-600/50 transition-all duration-300 flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-slate-700/30 rounded-lg flex items-center justify-center">
-                    <Search className="w-5 h-5 text-slate-400" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-slate-300 font-medium">Semantic Search</h3>
-                    <p className="text-slate-500 text-xs">Natural language book discovery</p>
-                  </div>
-                </div>
-                {showSearch ? (
-                  <ChevronUp className="w-5 h-5 text-slate-400" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-slate-400" />
-                )}
-              </button>
-              
-              {showSearch && (
-                <div className="mt-4 bg-slate-800/20 border border-slate-700/30 rounded-xl p-6 animate-in slide-in-from-top-2 duration-300">
-                  <NaturalLanguageSearchBar
-                    onSearch={handleSearch}
-                    isSearching={isSearching}
-                    placeholder="Describe what you're looking for..."
-                  />
-                  
-                  {hasSearched && (
-                    <div className="mt-6 space-y-4">
-                      <SearchFilters
-                        filters={searchFilters}
-                        onFiltersChange={setSearchFilters}
-                      />
-                      
-                      <SearchResultsView
-                        results={searchResults}
-                        query={searchQuery}
-                        isLoading={isSearching}
-                        responseTimeMs={responseTimeMs}
-                        onResultClick={handleResultClick}
-                      />
-                      
-                      {searchResults.length > 0 && (
-                        <QuerySuggestions
-                          currentQuery={searchQuery}
-                          results={searchResults.map(r => ({ title: r.title, author: r.author }))}
-                          onSuggestionClick={handleSearch}
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
           </div>
 
           <div className="max-w-4xl mx-auto mt-16">
