@@ -90,7 +90,8 @@ async function semanticSearch(
 async function fallbackKeywordSearch(
   supabase: ReturnType<typeof createClient>,
   query: string,
-  limit: number
+  limit: number,
+  userId?: string
 ): Promise<SearchResult[]> {
   const searchTerms = query.toLowerCase().split(' ').filter(t => t.length > 2);
   
@@ -179,15 +180,21 @@ async function fallbackKeywordSearch(
     console.error('Error searching publisher_books:', e);
   }
 
-  // Search transmissions (public books only - no user filtering here)
+  // Search user's transmissions only (filtered by userId if available)
   try {
-    const { data: transmissions, error } = await supabase
+    let transmissionQuery = supabase
       .from('transmissions')
       .select('id, title, author, cover_url, tags, notes, publication_year')
       .or(searchTerms.map(term => 
         `title.ilike.%${term}%,author.ilike.%${term}%,notes.ilike.%${term}%`
-      ).join(','))
-      .limit(limit);
+      ).join(','));
+    
+    // Only show user's own transmissions if userId is provided
+    if (userId) {
+      transmissionQuery = transmissionQuery.eq('user_id', userId);
+    }
+    
+    const { data: transmissions, error } = await transmissionQuery.limit(limit);
 
     if (!error && transmissions) {
       for (const t of transmissions) {
@@ -398,7 +405,7 @@ serve(async (req) => {
     } else {
       // Fallback: search across multiple tables when embeddings are empty
       console.log('Using fallback keyword search across author_books, publisher_books, transmissions');
-      const fallbackResults = await fallbackKeywordSearch(supabase, query, limit);
+      const fallbackResults = await fallbackKeywordSearch(supabase, query, limit, userId);
       results = fallbackResults.map(r => ({
         ...r,
         combined_score: r.similarity || 0.5,
