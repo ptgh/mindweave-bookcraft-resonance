@@ -6,6 +6,11 @@ import { Transmission } from "@/services/transmissionsService";
 import { getOptimizedSettings } from "@/utils/performance";
 import { ConceptualBridge } from "@/services/patternRecognition";
 
+interface AIRecommendation {
+  reason: string;
+  cluster_connection: string;
+}
+
 interface TransmissionsListProps {
   transmissions: Transmission[];
   loading: boolean;
@@ -15,6 +20,7 @@ interface TransmissionsListProps {
   onAddNew: () => void;
   onAuthorClick?: (authorName: string) => void;
   getBookBridges?: (bookId: string) => ConceptualBridge[];
+  aiRecommendations?: Map<string, AIRecommendation>;
 }
 
 const TransmissionsList = memo(({ 
@@ -25,7 +31,8 @@ const TransmissionsList = memo(({
   onDiscard, 
   onAddNew,
   onAuthorClick,
-  getBookBridges
+  getBookBridges,
+  aiRecommendations
 }: TransmissionsListProps) => {
   const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
   const [optimisticTransmissions, setOptimisticTransmissions] = useState<Transmission[]>([]);
@@ -98,6 +105,8 @@ const TransmissionsList = memo(({
     <div className={gridClasses}>
       {optimisticTransmissions.map(book => {
         const bridges = getBookBridges ? getBookBridges(book.id.toString()) : [];
+        const aiRec = aiRecommendations?.get(book.title.toLowerCase()) || 
+                      aiRecommendations?.get(book.id.toString());
         
         return (
           <div 
@@ -118,6 +127,7 @@ const TransmissionsList = memo(({
                 isbn={book.isbn}
                 apple_link={book.apple_link}
                 is_favorite={book.is_favorite}
+                aiRecommendation={aiRec}
                 onEdit={() => onEdit(book)}
                 onKeep={() => onKeep(book)}
                 onDiscard={() => handleDiscard(book)}

@@ -68,70 +68,6 @@ export const useBookBrowser = () => {
       
       try {
         let allBooks: EnhancedBookSuggestion[] = [];
-        let aiRecs: AIRecommendation[] = [];
-        
-        // Always fetch AI recommendations when user has 5+ books
-        if (userTransmissionTitles.size >= 5) {
-          try {
-            const transmissions = await getTransmissions();
-            const { data, error } = await supabase.functions.invoke('ai-book-recommendations', {
-              body: { 
-                userTransmissions: transmissions.map(t => ({
-                  title: t.title,
-                  author: t.author,
-                  tags: t.tags.join(', '),
-                  publication_year: t.publication_year
-                })),
-                limit: 6
-              }
-            });
-            
-            if (!error && data?.recommendations) {
-              aiRecs = data.recommendations;
-              console.log(`Received ${aiRecs.length} AI recommendations`);
-            }
-          } catch (aiError) {
-            console.error('AI recommendations failed:', aiError);
-          }
-        }
-        
-        // Search for AI recommended books if we have any - with fallback for books not found
-        if (aiRecs.length > 0) {
-          for (const rec of aiRecs) {
-            try {
-              const searchQuery = `intitle:"${rec.title}" inauthor:"${rec.author}"`;
-              const results = await searchBooksEnhanced(searchQuery, 1, 0);
-              if (results.length > 0 && !previouslyShownBooks.has(results[0].id)) {
-                allBooks.push(results[0]);
-                setAiRecommendations(prev => new Map(prev).set(results[0].id, rec));
-              } else if (!previouslyShownBooks.has(`ai-${rec.title}`)) {
-                // Fallback: create a minimal book entry if Google Books fails
-                const fallbackBook: EnhancedBookSuggestion = {
-                  id: `ai-${rec.title.replace(/\s+/g, '-').toLowerCase()}`,
-                  title: rec.title,
-                  author: rec.author,
-                  coverUrl: '',
-                  thumbnailUrl: '',
-                  smallThumbnailUrl: '',
-                  description: rec.reason,
-                  categories: [],
-                  subtitle: '',
-                  publishedDate: '',
-                  pageCount: 0,
-                  rating: 0,
-                  ratingsCount: 0,
-                  previewLink: '',
-                  infoLink: ''
-                };
-                allBooks.push(fallbackBook);
-                setAiRecommendations(prev => new Map(prev).set(fallbackBook.id, rec));
-                console.log(`Added AI book with fallback: ${rec.title}`);
-              }
-            } catch (e) {
-              console.warn(`Failed to find AI recommended book: ${rec.title}`, e);
-            }
-          }
-        }
         
         // 1. Load books from author_books database table with author names
         try {
@@ -195,7 +131,7 @@ export const useBookBrowser = () => {
         let attempts = 0;
         const maxAttempts = 8;
         
-        while (allBooks.length < 12 && attempts < maxAttempts) {
+        while (allBooks.length < 18 && attempts < maxAttempts) {
           const termIndex = attempts % searchTerms.length;
           const term = searchTerms[termIndex];
           const startIndex = Math.floor(attempts / searchTerms.length) * 10;
@@ -237,7 +173,7 @@ export const useBookBrowser = () => {
           
           const shuffled = filteredBooks
             .sort(() => Math.random() - 0.5)
-            .slice(0, 12);
+            .slice(0, 18);
             
           setBooks(shuffled);
           
@@ -335,6 +271,53 @@ export const useBookBrowser = () => {
     loadRandomBooks();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Deferred AI loading - loads AFTER books are displayed for fast initial render
+  useEffect(() => {
+    const loadAIRecommendations = async () => {
+      if (userTransmissionTitles.size < 5 || books.length === 0) return;
+      
+      try {
+        console.log('Loading AI recommendations in background...');
+        const transmissions = await getTransmissions();
+        const { data, error } = await supabase.functions.invoke('ai-book-recommendations', {
+          body: { 
+            userTransmissions: transmissions.map(t => ({
+              title: t.title,
+              author: t.author,
+              tags: t.tags.join(', '),
+              publication_year: t.publication_year
+            })),
+            limit: 10
+          }
+        });
+        
+        if (!error && data?.recommendations) {
+          console.log(`Received ${data.recommendations.length} AI recommendations`);
+          const newAiRecs = new Map<string, AIRecommendation>();
+          
+          // Match AI recommendations to displayed books
+          for (const rec of data.recommendations) {
+            const matchingBook = books.find(b => 
+              b.title.toLowerCase().includes(rec.title.toLowerCase()) ||
+              rec.title.toLowerCase().includes(b.title.toLowerCase())
+            );
+            if (matchingBook) {
+              newAiRecs.set(matchingBook.id, rec);
+            }
+          }
+          
+          setAiRecommendations(newAiRecs);
+        }
+      } catch (aiError) {
+        console.error('AI recommendations failed:', aiError);
+      }
+    };
+    
+    // Delay AI loading to ensure fast initial render
+    const timer = setTimeout(loadAIRecommendations, 500);
+    return () => clearTimeout(timer);
+  }, [books, userTransmissionTitles]);
 
   // Optimized visibility animation
   useEffect(() => {

@@ -20,7 +20,7 @@ serve(async (req) => {
   }
 
   try {
-    const { userTransmissions, limit = 6 } = await req.json();
+    const { userTransmissions, limit = 10 } = await req.json();
 
     if (!userTransmissions || !Array.isArray(userTransmissions)) {
       return new Response(
