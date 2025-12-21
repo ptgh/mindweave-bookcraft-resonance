@@ -361,6 +361,7 @@ async function filterUserTransmissions(
   });
 }
 
+async function logSearchQuery(
   supabase: ReturnType<typeof createClient>,
   query: string,
   embedding: number[] | null,
