@@ -65,9 +65,16 @@ const BookBrowser = () => {
       // Only require highlightId - searchQuery is optional
       if (!highlightId) return;
       
+      console.log('BookBrowser: Attempting to fetch highlighted transmission ID:', highlightId);
+      
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user) {
+          console.log('BookBrowser: No user logged in');
+          return;
+        }
+        
+        console.log('BookBrowser: Fetching transmission', highlightId, 'for user', user.id);
         
         // Fetch the transmission by ID
         const { data: transmission, error } = await supabase
@@ -78,9 +85,12 @@ const BookBrowser = () => {
           .single();
         
         if (error || !transmission) {
-          console.error('Error fetching highlighted transmission:', error);
+          console.error('BookBrowser: Error fetching highlighted transmission:', error);
+          console.log('BookBrowser: Transmission not found - it may belong to another user');
           return;
         }
+        
+        console.log('BookBrowser: Successfully fetched transmission:', transmission.title);
         
         // Safely parse tags - could be string or array
         let parsedTags: string[] = [];
