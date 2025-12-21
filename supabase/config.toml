@@ -82,3 +82,12 @@ verify_jwt = false
 
 [functions.semantic-search]
 verify_jwt = false
+
+[functions.generate-transmission-embeddings]
+verify_jwt = false
+
+[functions.search-free-ebooks]
+verify_jwt = false
+
+[functions.apple-books-proxy]
+verify_jwt = false

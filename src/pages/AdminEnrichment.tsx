@@ -6,13 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
-import { RefreshCw, Clock } from "lucide-react";
+import { generateTransmissionEmbeddings } from "@/services/semanticSearchService";
+import { RefreshCw, Clock, Sparkles } from "lucide-react";
 import { useState } from "react";
 
 const AdminEnrichment = () => {
   const { toast } = useEnhancedToast();
   const [isEnrichingTemporal, setIsEnrichingTemporal] = useState(false);
+  const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false);
   const [enrichmentProgress, setEnrichmentProgress] = useState({ processed: 0, total: 0 });
+  const [embeddingProgress, setEmbeddingProgress] = useState({ processed: 0, skipped: 0, total: 0 });
 
   const handleTemporalEnrichment = async () => {
     setIsEnrichingTemporal(true);
@@ -47,6 +50,41 @@ const AdminEnrichment = () => {
       });
     } finally {
       setIsEnrichingTemporal(false);
+    }
+  };
+
+  const handleGenerateEmbeddings = async () => {
+    setIsGeneratingEmbeddings(true);
+    setEmbeddingProgress({ processed: 0, skipped: 0, total: 0 });
+    
+    try {
+      toast({
+        title: "Generating Embeddings",
+        description: "Creating semantic embeddings for transmissions...",
+      });
+
+      const result = await generateTransmissionEmbeddings(100);
+
+      toast({
+        title: "Embedding Generation Complete",
+        description: `Created ${result.processed} new embeddings. ${result.skipped} already existed.`,
+        variant: "success",
+      });
+
+      setEmbeddingProgress({ 
+        processed: result.processed, 
+        skipped: result.skipped,
+        total: result.total 
+      });
+    } catch (error) {
+      console.error('Embedding generation error:', error);
+      toast({
+        title: "Embedding Generation Failed",
+        description: error instanceof Error ? error.message : "Failed to generate embeddings",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingEmbeddings(false);
     }
   };
 
@@ -124,6 +162,53 @@ const AdminEnrichment = () => {
                   <p>• Uses OpenAI tool calling with controlled vocabulary (95 tags)</p>
                   <p>• Includes: Golden Age, Cyberpunk Era, Cold War Tensions, Nuclear Age, PC Revolution, AI Emergence, etc.</p>
                   <p>• Rate limited to 1 request per second to avoid API throttling</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Semantic Embeddings Generation */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-blue-400" />
+                  <CardTitle>Semantic Search Embeddings</CardTitle>
+                </div>
+                <CardDescription>
+                  Generate OpenAI embeddings for transmissions to enable AI-powered semantic search
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <Button
+                    onClick={handleGenerateEmbeddings}
+                    disabled={isGeneratingEmbeddings}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {isGeneratingEmbeddings ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Generate Embeddings
+                      </>
+                    )}
+                  </Button>
+                  
+                  {embeddingProgress.total > 0 && (
+                    <span className="text-sm text-muted-foreground">
+                      Created: {embeddingProgress.processed} | Skipped: {embeddingProgress.skipped} | Total: {embeddingProgress.total}
+                    </span>
+                  )}
+                </div>
+                
+                <div className="text-xs text-slate-400 space-y-1">
+                  <p>• Uses OpenAI text-embedding-3-small model</p>
+                  <p>• Generates embeddings from title, author, notes, and tags</p>
+                  <p>• Skips transmissions that already have embeddings</p>
+                  <p>• Required for semantic search functionality</p>
                 </div>
               </CardContent>
             </Card>
