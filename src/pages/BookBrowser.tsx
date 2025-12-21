@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import Header from "@/components/Header";
 import BookBrowserHeader from "@/components/BookBrowserHeader";
 import BookGrid from "@/components/BookGrid";
@@ -11,14 +11,19 @@ import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 import { getAuthorByName, findOrCreateAuthor, ScifiAuthor } from "@/services/scifiAuthorsService";
 import { supabase } from "@/integrations/supabase/client";
 import { EnhancedBookSuggestion } from "@/services/googleBooksApi";
-import { getTransmissions } from "@/services/transmissionsService";
+import { getTransmissions, saveTransmission } from "@/services/transmissionsService";
+import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
+import type { SpotlightBook } from "./Discovery";
 
 const BookBrowser = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const highlightId = searchParams.get('highlight');
   const searchQuery = searchParams.get('search');
   const [highlightedBookId, setHighlightedBookId] = useState<string | null>(null);
   const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { toast } = useEnhancedToast();
+  
   const {
     books,
     loading,
@@ -38,7 +43,9 @@ const BookBrowser = () => {
   // Related books from transmissions when navigating from Neural Map
   const [relatedBooks, setRelatedBooks] = useState<EnhancedBookSuggestion[]>([]);
   const [fetchedTransmission, setFetchedTransmission] = useState<EnhancedBookSuggestion | null>(null);
+  const [spotlightBook, setSpotlightBook] = useState<EnhancedBookSuggestion | null>(null);
   const [highlightAnimating, setHighlightAnimating] = useState(false);
+  const [isAddingToLibrary, setIsAddingToLibrary] = useState(false);
   
   // Load user book count for AI toggle visibility
   useEffect(() => {
@@ -59,7 +66,48 @@ const BookBrowser = () => {
     loadUserBooksCount();
   }, []);
 
-  // Fetch highlighted transmission when navigating from search results
+  // Handle spotlight book from navigation state (new books from search)
+  useEffect(() => {
+    const state = location.state as { spotlightBook?: SpotlightBook } | null;
+    
+    if (state?.spotlightBook) {
+      const book = state.spotlightBook;
+      console.log('BookBrowser: Received spotlight book from navigation:', book);
+      
+      // Transform SpotlightBook to EnhancedBookSuggestion format
+      const enhancedBook: EnhancedBookSuggestion = {
+        id: `spotlight-${book.id}`,
+        title: book.title,
+        author: book.author,
+        coverUrl: book.coverUrl || book.metadata?.cover_url as string || '',
+        thumbnailUrl: book.coverUrl || book.metadata?.cover_url as string || '',
+        smallThumbnailUrl: book.coverUrl || book.metadata?.cover_url as string || '',
+        description: book.description || '',
+        categories: book.metadata?.categories as string[] || [],
+      };
+      
+      setSpotlightBook(enhancedBook);
+      setHighlightedBookId(enhancedBook.id);
+      setHighlightAnimating(true);
+      setTimeout(() => setHighlightAnimating(false), 600);
+      
+      // Clear highlight styling after 5 seconds but KEEP the book visible
+      highlightTimeoutRef.current = setTimeout(() => {
+        setHighlightedBookId(null);
+      }, 5000);
+      
+      // Clear location state to prevent re-showing on refresh
+      window.history.replaceState({}, document.title);
+    }
+    
+    return () => {
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+    };
+  }, [location.state]);
+
+  // Fetch highlighted transmission when navigating from search results (existing transmissions)
   useEffect(() => {
     const fetchHighlightedAndRelatedBooks = async () => {
       // Only require highlightId - searchQuery is optional
@@ -181,13 +229,65 @@ const BookBrowser = () => {
     };
   }, [highlightId, searchParams, setSearchParams]);
 
-  // Combine books: highlighted first, then related, then regular books
+  // Handler to add spotlight book to user's library
+  const handleAddSpotlightToLibrary = async () => {
+    if (!spotlightBook) return;
+    
+    setIsAddingToLibrary(true);
+    try {
+      await saveTransmission({
+        title: spotlightBook.title,
+        author: spotlightBook.author,
+        cover_url: spotlightBook.coverUrl || '',
+        notes: spotlightBook.description || '',
+        tags: spotlightBook.categories || [],
+        status: 'want-to-read',
+        rating: {},
+      });
+      
+      toast({
+        title: "Added to Library",
+        description: `"${spotlightBook.title}" has been added to your transmissions.`,
+      });
+      
+      // Clear spotlight after adding
+      setSpotlightBook(null);
+      setHighlightedBookId(null);
+      
+      // Refresh user book count
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { count } = await supabase
+          .from('transmissions')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+        setUserBooksCount(count || 0);
+      }
+    } catch (error) {
+      console.error('Error adding book to library:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add book to library. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingToLibrary(false);
+    }
+  };
+
+  // Combine books: spotlight/highlighted first, then related, then regular books
   const displayBooks = useCallback((): EnhancedBookSuggestion[] => {
     const result: EnhancedBookSuggestion[] = [];
     const seenIds = new Set<string>();
     
-    // Add highlighted book first
-    if (fetchedTransmission) {
+    // Add spotlight book first (new book from search)
+    if (spotlightBook) {
+      result.push(spotlightBook);
+      seenIds.add(spotlightBook.id);
+    }
+    
+    // Add highlighted transmission (existing book from user's library)
+    if (fetchedTransmission && !seenIds.has(fetchedTransmission.id)) {
       result.push(fetchedTransmission);
       seenIds.add(fetchedTransmission.id);
     }
@@ -209,7 +309,7 @@ const BookBrowser = () => {
     }
     
     return result;
-  }, [fetchedTransmission, relatedBooks, books]);
+  }, [spotlightBook, fetchedTransmission, relatedBooks, books]);
 
   const handleAuthorClick = async (authorName: string) => {
     console.log('Author clicked:', authorName);
@@ -258,15 +358,31 @@ const BookBrowser = () => {
             </div>
           ) : hasBooks ? (
             <div ref={addFeatureBlockRef} className="feature-block min-h-[60vh]">
-              {/* Show section header when displaying related books */}
-              {(fetchedTransmission || relatedBooks.length > 0) && (
-                <div className="mb-6 text-center">
-                  <p className="text-slate-400 text-sm">
-                    {relatedBooks.length > 0 
-                      ? `Showing "${fetchedTransmission?.title}" and ${relatedBooks.length} related signals`
-                      : `Showing "${fetchedTransmission?.title}"`
-                    }
-                  </p>
+          {/* Show section header when displaying spotlight or related books */}
+              {(spotlightBook || fetchedTransmission || relatedBooks.length > 0) && (
+                <div className="mb-6 text-center space-y-3">
+                  {spotlightBook && (
+                    <>
+                      <p className="text-slate-400 text-sm">
+                        Discovered: "{spotlightBook.title}" by {spotlightBook.author}
+                      </p>
+                      <button
+                        onClick={handleAddSpotlightToLibrary}
+                        disabled={isAddingToLibrary}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 text-white text-sm rounded-lg transition-colors"
+                      >
+                        {isAddingToLibrary ? 'Adding...' : '+ Add to My Library'}
+                      </button>
+                    </>
+                  )}
+                  {!spotlightBook && fetchedTransmission && (
+                    <p className="text-slate-400 text-sm">
+                      {relatedBooks.length > 0 
+                        ? `Showing "${fetchedTransmission?.title}" and ${relatedBooks.length} related signals`
+                        : `Showing "${fetchedTransmission?.title}"`
+                      }
+                    </p>
+                  )}
                 </div>
               )}
               <BookGrid

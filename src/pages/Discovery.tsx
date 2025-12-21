@@ -12,6 +12,17 @@ import { NaturalLanguageSearchBar, SearchResultsView, SearchFilters, QuerySugges
 import { semanticSearch, SemanticSearchResult, SearchFilters as SearchFiltersType } from "@/services/semanticSearchService";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 
+// Type for passing book data to Signal Archive
+export interface SpotlightBook {
+  id: string;
+  title: string;
+  author: string;
+  coverUrl: string;
+  description: string;
+  sourceType: string;
+  metadata?: Record<string, unknown>;
+}
+
 const Discovery: React.FC = () => {
   const [showContactModal, setShowContactModal] = useState(false);
   const [searchResults, setSearchResults] = useState<SemanticSearchResult[]>([]);
@@ -56,40 +67,51 @@ const Discovery: React.FC = () => {
   }, [searchFilters, toast]);
 
   const handleResultClick = useCallback((result: SemanticSearchResult) => {
-    // Navigate to Signal Archive with highlight for the matching transmission
-    // Check multiple places for the transmission ID:
-    // 1. metadata.transmission_id (from book_embeddings table)
-    // 2. result.id in format "transmission-123" (from fallback search)
-    // 3. result.bookIdentifier in format "transmission_123"
+    // Check if this is a user's transmission (can be highlighted directly)
+    const isTransmission = result.sourceType === 'transmission';
     
     let transmissionId: string | null = null;
     
-    // Check metadata first (most reliable for embeddings-based search)
-    if (result.metadata?.transmission_id) {
-      transmissionId = String(result.metadata.transmission_id);
-    }
-    
-    // Check result.id for "transmission-123" format
-    if (!transmissionId) {
-      const idMatch = result.id?.match(/transmission-(\d+)/);
-      if (idMatch) {
-        transmissionId = idMatch[1];
+    if (isTransmission) {
+      // Check metadata first (most reliable for embeddings-based search)
+      if (result.metadata?.transmission_id) {
+        transmissionId = String(result.metadata.transmission_id);
+      }
+      
+      // Check result.id for "transmission-123" format
+      if (!transmissionId) {
+        const idMatch = result.id?.match(/transmission-(\d+)/);
+        if (idMatch) {
+          transmissionId = idMatch[1];
+        }
+      }
+      
+      // Check bookIdentifier for "transmission_123" format
+      if (!transmissionId) {
+        const identifierMatch = result.bookIdentifier?.match(/transmission_(\d+)/);
+        if (identifierMatch) {
+          transmissionId = identifierMatch[1];
+        }
       }
     }
     
-    // Check bookIdentifier for "transmission_123" format
-    if (!transmissionId) {
-      const identifierMatch = result.bookIdentifier?.match(/transmission_(\d+)/);
-      if (identifierMatch) {
-        transmissionId = identifierMatch[1];
-      }
-    }
-    
-    if (transmissionId && result.sourceType === 'transmission') {
+    if (transmissionId && isTransmission) {
+      // Navigate with highlight ID for existing transmissions
       navigate(`/book-browser?highlight=${transmissionId}&search=${encodeURIComponent(result.title)}`);
     } else {
-      // For non-transmission results, search by title
-      navigate(`/book-browser?search=${encodeURIComponent(result.title)}`);
+      // For NEW books (author_books, publisher_books), pass full book data via state
+      const spotlightBook: SpotlightBook = {
+        id: result.id,
+        title: result.title,
+        author: result.author,
+        coverUrl: result.metadata?.cover_url as string || '',
+        description: result.metadata?.description as string || result.metadata?.editorial_note as string || '',
+        sourceType: result.sourceType,
+        metadata: result.metadata,
+      };
+      
+      console.log('Navigating to Signal Archive with new book:', spotlightBook);
+      navigate('/book-browser', { state: { spotlightBook } });
     }
   }, [navigate]);
 
