@@ -464,6 +464,9 @@ serve(async (req) => {
       }));
     }
 
+    // Filter results to only include user's own transmissions
+    results = await filterUserTransmissions(supabase, results, userId);
+
     const responseTimeMs = Date.now() - startTime;
 
     // Log the search query (async, don't await)
