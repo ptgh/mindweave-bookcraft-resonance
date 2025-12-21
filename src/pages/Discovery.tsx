@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Brain, BookOpen, Search, Map, Eye, Building, Mail } from "lucide-react";
 import Header from "@/components/Header";
 import { StandardButton } from "@/components/ui/standard-button";
@@ -23,6 +23,7 @@ const Discovery: React.FC = () => {
   
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
   const { toast } = useEnhancedToast();
+  const navigate = useNavigate();
 
   const handleSearch = useCallback(async (query: string) => {
     if (!query.trim()) return;
@@ -55,11 +56,17 @@ const Discovery: React.FC = () => {
   }, [searchFilters, toast]);
 
   const handleResultClick = useCallback((result: SemanticSearchResult) => {
-    toast({
-      title: result.title,
-      description: `by ${result.author}`,
-    });
-  }, [toast]);
+    // Navigate to Signal Archive with highlight for the matching transmission
+    // The result.id format is like "transmission-123" or a book_identifier
+    const transmissionMatch = result.id?.match(/transmission-(\d+)/);
+    if (transmissionMatch) {
+      const transmissionId = transmissionMatch[1];
+      navigate(`/book-browser?highlight=${transmissionId}&search=${encodeURIComponent(result.title)}`);
+    } else {
+      // For non-transmission results, search by title
+      navigate(`/book-browser?search=${encodeURIComponent(result.title)}`);
+    }
+  }, [navigate]);
 
   return (
     <>
