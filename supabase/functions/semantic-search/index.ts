@@ -465,8 +465,10 @@ serve(async (req) => {
       }));
     }
 
-    // Filter results to only include user's own transmissions
-    results = await filterUserTransmissions(supabase, results, userId);
+    // NOTE: We intentionally do NOT filter out non-user results here
+    // Semantic search is for DISCOVERY - users should see all books (author_books, publisher_books)
+    // Transmissions are already filtered by userId in fallbackKeywordSearch
+    // This allows users to discover new books and add them to their library
 
     const responseTimeMs = Date.now() - startTime;
 
