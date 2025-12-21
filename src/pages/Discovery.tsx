@@ -1,18 +1,64 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { Brain, BookOpen, Users, Search, Map, Eye, Building, Mail, Heart } from "lucide-react";
+import { Brain, BookOpen, Search, Map, Eye, Building, Mail } from "lucide-react";
 import Header from "@/components/Header";
-import { Button } from "@/components/ui/button";
 import { StandardButton } from "@/components/ui/standard-button";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 import ContactModal from "@/components/ContactModal";
 import ContributionButton from "@/components/ContributionButton";
 import { SEOHead } from "@/components/SEOHead";
 import { NewsletterSignup } from "@/components/NewsletterSignup";
+import { NaturalLanguageSearchBar, SearchResultsView, SearchFilters, QuerySuggestions } from "@/components/search";
+import { semanticSearch, SemanticSearchResult, SearchFilters as SearchFiltersType } from "@/services/semanticSearchService";
+import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 
 const Discovery: React.FC = () => {
   const [showContactModal, setShowContactModal] = useState(false);
+  const [searchResults, setSearchResults] = useState<SemanticSearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchFilters, setSearchFilters] = useState<SearchFiltersType>({});
+  const [responseTimeMs, setResponseTimeMs] = useState<number | undefined>();
+  const [hasSearched, setHasSearched] = useState(false);
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
+  const { toast } = useEnhancedToast();
+
+  const handleSearch = useCallback(async (query: string) => {
+    if (!query.trim()) return;
+    
+    setSearchQuery(query);
+    setIsSearching(true);
+    setHasSearched(true);
+    
+    try {
+      const response = await semanticSearch(query, {
+        limit: 20,
+        threshold: 0.3,
+        filters: searchFilters,
+        searchType: 'hybrid',
+      });
+      
+      setSearchResults(response.results);
+      setResponseTimeMs(response.responseTimeMs);
+    } catch (error) {
+      console.error('Search failed:', error);
+      toast({
+        title: "Search failed",
+        description: "Unable to perform search. Please try again.",
+        variant: "destructive",
+      });
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [searchFilters, toast]);
+
+  const handleResultClick = useCallback((result: SemanticSearchResult) => {
+    toast({
+      title: result.title,
+      description: `by ${result.author}`,
+    });
+  }, [toast]);
 
   return (
     <>
@@ -41,6 +87,46 @@ const Discovery: React.FC = () => {
             </p>
           </div>
 
+          {/* Semantic Search Section */}
+          <div ref={addFeatureBlockRef} className="feature-block max-w-4xl mx-auto mb-12">
+            <div className="bg-slate-800/20 border border-slate-700/30 rounded-xl p-6">
+              <h2 className="text-lg font-medium text-slate-300 mb-4 flex items-center gap-2">
+                <Search className="h-5 w-5 text-blue-400" />
+                Natural Language Search
+              </h2>
+              
+              <NaturalLanguageSearchBar
+                onSearch={handleSearch}
+                isSearching={isSearching}
+                placeholder="Describe what you're looking for..."
+              />
+              
+              {hasSearched && (
+                <div className="mt-6 space-y-4">
+                  <SearchFilters
+                    filters={searchFilters}
+                    onFiltersChange={setSearchFilters}
+                  />
+                  
+                  <SearchResultsView
+                    results={searchResults}
+                    query={searchQuery}
+                    isLoading={isSearching}
+                    responseTimeMs={responseTimeMs}
+                    onResultClick={handleResultClick}
+                  />
+                  
+                  {searchResults.length > 0 && (
+                    <QuerySuggestions
+                      currentQuery={searchQuery}
+                      results={searchResults.map(r => ({ title: r.title, author: r.author }))}
+                      onSuggestionClick={handleSearch}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
           
           <div className="flex flex-col space-y-8 max-w-4xl mx-auto">
             <div ref={addFeatureBlockRef} className="feature-block">
