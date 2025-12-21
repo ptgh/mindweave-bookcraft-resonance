@@ -263,13 +263,30 @@ const BookBrowser = () => {
           .eq('user_id', user.id);
         setUserBooksCount(count || 0);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding book to library:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add book to library. Please try again.",
-        variant: "destructive",
-      });
+      
+      // Check if it's a duplicate error
+      if (error?.message?.startsWith('DUPLICATE:')) {
+        const parts = error.message.split(':');
+        const title = parts[1] || spotlightBook.title;
+        const dateAdded = parts[2] || 'unknown date';
+        
+        toast({
+          title: "Already in Your Library",
+          description: `"${title}" was added on ${dateAdded}.`,
+        });
+        
+        // Clear spotlight since it's already in library
+        setSpotlightBook(null);
+        setHighlightedBookId(null);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to add book to library. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsAddingToLibrary(false);
     }

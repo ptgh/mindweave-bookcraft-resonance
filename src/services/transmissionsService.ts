@@ -47,7 +47,7 @@ export const saveTransmission = async (transmission: Omit<Transmission, 'id' | '
   // Check for existing transmission with same title and author to prevent duplicates
   const { data: existing } = await supabase
     .from('transmissions')
-    .select('id')
+    .select('id, created_at')
     .eq('user_id', user.id)
     .eq('title', transmission.title)
     .eq('author', transmission.author)
@@ -55,7 +55,13 @@ export const saveTransmission = async (transmission: Omit<Transmission, 'id' | '
 
   if (existing) {
     console.log('Transmission already exists, skipping duplicate:', transmission.title);
-    throw new Error(`"${transmission.title}" is already in your transmissions`);
+    const addedDate = new Date(existing.created_at).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    const error = new Error(`DUPLICATE:${transmission.title}:${addedDate}`);
+    throw error;
   }
 
   const { data, error } = await supabase
