@@ -94,12 +94,9 @@ export const NaturalLanguageSearchBar: React.FC<NaturalLanguageSearchBarProps> =
   }, []);
 
   const handleVoiceInput = useCallback(() => {
-    const windowWithSpeech = window as Window & { 
-      SpeechRecognition?: new () => SpeechRecognition; 
-      webkitSpeechRecognition?: new () => SpeechRecognition;
-    };
-    
-    const SpeechRecognitionConstructor = windowWithSpeech.SpeechRecognition || windowWithSpeech.webkitSpeechRecognition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const windowAny = window as any;
+    const SpeechRecognitionConstructor = windowAny.SpeechRecognition || windowAny.webkitSpeechRecognition;
     
     if (!SpeechRecognitionConstructor) {
       console.warn('Speech recognition not supported');
@@ -115,7 +112,8 @@ export const NaturalLanguageSearchBar: React.FC<NaturalLanguageSearchBarProps> =
     recognition.onend = () => setIsListening(false);
     recognition.onerror = () => setIsListening(false);
     
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
       setQuery(transcript);
       onSearch(transcript);
