@@ -24,6 +24,7 @@ export const useBookBrowser = () => {
   const [rotationCount, setRotationCount] = useState(0);
   const [userTransmissionTitles, setUserTransmissionTitles] = useState<Set<string>>(new Set());
   const [aiRecommendations, setAiRecommendations] = useState<Map<string, AIRecommendation>>(new Map());
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const { toast } = useEnhancedToast();
 
   // Load user's transmission titles on mount to filter them out
@@ -267,8 +268,18 @@ export const useBookBrowser = () => {
     }
   }, [toast]);
 
+  // Only auto-load on first visit to this page in session
   useEffect(() => {
-    loadRandomBooks();
+    const sessionKey = 'signalArchive_hasLoaded';
+    const hasLoaded = sessionStorage.getItem(sessionKey);
+    
+    if (!hasLoaded) {
+      loadRandomBooks();
+      sessionStorage.setItem(sessionKey, 'true');
+      setHasLoadedOnce(true);
+    } else {
+      setHasLoadedOnce(true);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -296,8 +307,13 @@ export const useBookBrowser = () => {
           console.log(`Received ${data.recommendations.length} AI recommendations`);
           const newAiRecs = new Map<string, AIRecommendation>();
           
-          // Match AI recommendations to displayed books
+          // Match AI recommendations to displayed books AND store by title for transmissions
           for (const rec of data.recommendations) {
+            // Store by lowercase title for transmissions matching
+            const titleKey = rec.title.toLowerCase().trim();
+            newAiRecs.set(titleKey, rec);
+            
+            // Also match to displayed books by ID
             const matchingBook = books.find(b => 
               b.title.toLowerCase().includes(rec.title.toLowerCase()) ||
               rec.title.toLowerCase().includes(b.title.toLowerCase())
@@ -353,6 +369,7 @@ export const useBookBrowser = () => {
     previouslyShownBooks,
     loadRandomBooks,
     addToTransmissions,
-    aiRecommendations
+    aiRecommendations,
+    hasLoadedOnce
   };
 };
