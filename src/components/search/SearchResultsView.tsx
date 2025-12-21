@@ -5,6 +5,41 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { SemanticSearchResult, submitSearchFeedback } from '@/services/semanticSearchService';
 
+function normalizeTags(value: unknown): string[] | undefined {
+  if (value == null) return undefined;
+
+  if (Array.isArray(value)) {
+    const tags = value.filter((v): v is string => typeof v === 'string');
+    return tags.length ? tags : undefined;
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          const tags = parsed.filter((v): v is string => typeof v === 'string');
+          return tags.length ? tags : undefined;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const tags = trimmed
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    return tags.length ? tags : undefined;
+  }
+
+  return undefined;
+}
+
 interface SearchResultsViewProps {
   results: SemanticSearchResult[];
   query: string;
@@ -39,8 +74,9 @@ const ResultCard: React.FC<{
 }> = ({ result, rank, onClick }) => {
   const coverUrl = result.metadata?.cover_url as string | undefined;
   const description = result.metadata?.description as string | undefined;
-  const tags = result.metadata?.tags as string[] | undefined;
+  const tags = normalizeTags(result.metadata?.tags);
   const publicationYear = result.metadata?.publication_year as number | undefined;
+  const score = Number.isFinite(result.combinedScore) ? result.combinedScore : 0;
 
   return (
     <div
@@ -96,7 +132,7 @@ const ResultCard: React.FC<{
         <div className="flex items-center gap-3 text-xs text-slate-500">
           <span className="flex items-center gap-1">
             <Sparkles className="h-3 w-3" />
-            {Math.round(result.combinedScore * 100)}% relevant
+            {Math.round(score * 100)}% relevant
           </span>
           
           {tags && tags.length > 0 && (

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, X, Mic, Loader2, Clock, TrendingUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -39,7 +40,8 @@ export const NaturalLanguageSearchBar: React.FC<NaturalLanguageSearchBarProps> =
   const [isListening, setIsListening] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
   // Rotate placeholder examples
   useEffect(() => {
     if (!placeholder) {
@@ -63,10 +65,14 @@ export const NaturalLanguageSearchBar: React.FC<NaturalLanguageSearchBarProps> =
     }
   }, [isFocused, query]);
 
-  // Handle click outside
+  // Handle click outside (needs to include the portal dropdown)
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const clickedInsideInput = containerRef.current?.contains(target);
+      const clickedInsideDropdown = dropdownRef.current?.contains(target);
+
+      if (!clickedInsideInput && !clickedInsideDropdown) {
         setShowSuggestions(false);
       }
     };
@@ -123,6 +129,38 @@ export const NaturalLanguageSearchBar: React.FC<NaturalLanguageSearchBarProps> =
   }, [onSearch]);
 
   const displayPlaceholder = placeholder || EXAMPLE_PLACEHOLDERS[currentPlaceholder];
+
+  const isDropdownOpen =
+    showSuggestions &&
+    query.length === 0 &&
+    (recentSearches.length > 0 || popularSearches.length > 0);
+
+  useLayoutEffect(() => {
+    if (!isDropdownOpen) {
+      setDropdownPos(null);
+      return;
+    }
+
+    const updatePos = () => {
+      const el = inputRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom + 8,
+        left: rect.left,
+        width: rect.width,
+      });
+    };
+
+    updatePos();
+    window.addEventListener('resize', updatePos);
+    window.addEventListener('scroll', updatePos, true);
+
+    return () => {
+      window.removeEventListener('resize', updatePos);
+      window.removeEventListener('scroll', updatePos, true);
+    };
+  }, [isDropdownOpen]);
 
   return (
     <div ref={containerRef} className={cn('relative w-full', className)}>
@@ -196,50 +234,63 @@ export const NaturalLanguageSearchBar: React.FC<NaturalLanguageSearchBarProps> =
         </div>
       </form>
 
-      {/* Suggestions Dropdown - Solid background with high z-index */}
-      {showSuggestions && query.length === 0 && (recentSearches.length > 0 || popularSearches.length > 0) && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-lg shadow-2xl z-[100] overflow-hidden backdrop-blur-none">
-          {recentSearches.length > 0 && (
-            <div className="p-3 border-b border-border bg-background">
-              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Clock className="h-3 w-3" />
-                Recent Searches
-              </h4>
-              <div className="space-y-1">
-                {recentSearches.map((search, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSuggestionClick(search)}
-                    className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
-                  >
-                    {search}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+      {isDropdownOpen && dropdownPos &&
+        createPortal(
+          <>
+            {/* Opaque overlay to prevent seeing/clicking underlying UI */}
+            <div
+              className="fixed inset-0 z-[9998] bg-background/90"
+              onMouseDown={() => setShowSuggestions(false)}
+            />
 
-          {popularSearches.length > 0 && (
-            <div className="p-3 bg-background">
-              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <TrendingUp className="h-3 w-3" />
-                Try Searching For
-              </h4>
-              <div className="space-y-1">
-                {popularSearches.map((search, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSuggestionClick(search)}
-                    className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
-                  >
-                    {search}
-                  </button>
-                ))}
-              </div>
+            <div
+              ref={dropdownRef}
+              style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width }}
+              className="fixed z-[9999] overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-2xl max-h-[50vh]"
+            >
+              {recentSearches.length > 0 && (
+                <div className="p-3 border-b border-border bg-card">
+                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <Clock className="h-3 w-3" />
+                    Recent Searches
+                  </h4>
+                  <div className="space-y-1">
+                    {recentSearches.map((search, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleSuggestionClick(search)}
+                        className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
+                      >
+                        {search}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {popularSearches.length > 0 && (
+                <div className="p-3 bg-card">
+                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <TrendingUp className="h-3 w-3" />
+                    Try Searching For
+                  </h4>
+                  <div className="space-y-1">
+                    {popularSearches.map((search, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleSuggestionClick(search)}
+                        className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
+                      >
+                        {search}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      )}
+          </>,
+          document.body
+        )}
     </div>
   );
 };
