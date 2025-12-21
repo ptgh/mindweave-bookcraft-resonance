@@ -39,6 +39,7 @@ interface BookCardProps {
   apple_link?: string;
   open_count?: number;
   is_favorite?: boolean;
+  aiRecommendation?: { reason: string; cluster_connection: string };
   onEdit?: () => void;
   onKeep?: () => void;
   onDiscard?: () => void;
@@ -60,6 +61,7 @@ const BookCard = ({
   apple_link,
   open_count,
   is_favorite = false,
+  aiRecommendation,
   onEdit,
   onKeep,
   onDiscard,
@@ -231,6 +233,20 @@ const BookCard = ({
                 </button>
               ) : (
                 <p className="text-slate-400 text-xs mb-1">{author}</p>
+              )}
+              
+              {/* AI recommendation badge - inline with author */}
+              {aiRecommendation && (
+                <div className="group relative z-[1] mt-1">
+                  <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#89b4fa]/10 border border-[#89b4fa]/20 rounded text-[10px] text-[#89b4fa]">
+                    <span>AI</span>
+                  </div>
+                  {/* Tooltip on hover */}
+                  <div className="absolute left-0 top-full mt-1 w-48 p-3 bg-slate-800/95 backdrop-blur-sm border border-slate-700 rounded text-xs text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[9999] shadow-xl">
+                    <div className="font-medium text-[#89b4fa] mb-1">{aiRecommendation.cluster_connection}</div>
+                    <div className="text-slate-400 text-[10px] leading-relaxed">{aiRecommendation.reason}</div>
+                  </div>
+                </div>
               )}
               {open_count && open_count > 0 && (
                 <p className="text-slate-500 text-xs">Opened {open_count} time{open_count !== 1 ? 's' : ''}</p>
