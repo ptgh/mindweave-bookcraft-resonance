@@ -173,6 +173,105 @@ export const curatedSciFiBooks: CuratedBook[] = [
   { title: "Triplanetary", author: "E.E. 'Doc' Smith", category: "Space Opera Classic", year: 1934 },
   { title: "Slan", author: "A.E. van Vogt", category: "Superhuman", year: 1940 },
   { title: "The Weapon Shops of Isher", author: "A.E. van Vogt", category: "Space Opera", year: 1941 },
+  { title: "The World of Null-A", author: "A.E. van Vogt", category: "Philosophical SF", year: 1948 },
+
+  // ===== Complete Stanisław Lem Bibliography =====
+  { title: "Solaris", author: "Stanisław Lem", category: "First Contact", year: 1961 },
+  { title: "The Cyberiad", author: "Stanisław Lem", category: "Comedic SF", year: 1967 },
+  { title: "The Futurological Congress", author: "Stanisław Lem", category: "Satirical SF", year: 1971 },
+  { title: "The Invincible", author: "Stanisław Lem", category: "Hard SF", year: 1964 },
+  { title: "His Master's Voice", author: "Stanisław Lem", category: "First Contact", year: 1968 },
+  { title: "Memoirs Found in a Bathtub", author: "Stanisław Lem", category: "Satirical SF", year: 1961 },
+  { title: "Eden", author: "Stanisław Lem", category: "First Contact", year: 1959 },
+  { title: "Return from the Stars", author: "Stanisław Lem", category: "Social SF", year: 1961 },
+  { title: "The Star Diaries", author: "Stanisław Lem", category: "Comedic SF", year: 1971 },
+  { title: "Tales of Pirx the Pilot", author: "Stanisław Lem", category: "Space Adventure", year: 1968 },
+  { title: "Fiasco", author: "Stanisław Lem", category: "First Contact", year: 1986 },
+  { title: "Peace on Earth", author: "Stanisław Lem", category: "Satirical SF", year: 1987 },
+  { title: "The Chain of Chance", author: "Stanisław Lem", category: "Mystery SF", year: 1976 },
+  { title: "A Perfect Vacuum", author: "Stanisław Lem", category: "Metafiction", year: 1971 },
+  { title: "Imaginary Magnitude", author: "Stanisław Lem", category: "Metafiction", year: 1973 },
+  { title: "Hospital of the Transfiguration", author: "Stanisław Lem", category: "Literary Fiction", year: 1955 },
+  { title: "Mortal Engines", author: "Stanisław Lem", category: "Short Stories", year: 1964 },
+
+  // ===== Iain M. Banks Culture Series =====
+  { title: "Consider Phlebas", author: "Iain M. Banks", category: "Space Opera", year: 1987 },
+  { title: "The Player of Games", author: "Iain M. Banks", category: "Space Opera", year: 1988 },
+  { title: "Use of Weapons", author: "Iain M. Banks", category: "Space Opera", year: 1990 },
+  { title: "The State of the Art", author: "Iain M. Banks", category: "Space Opera", year: 1991 },
+  { title: "Excession", author: "Iain M. Banks", category: "Space Opera", year: 1996 },
+  { title: "Inversions", author: "Iain M. Banks", category: "Space Opera", year: 1998 },
+  { title: "Look to Windward", author: "Iain M. Banks", category: "Space Opera", year: 2000 },
+  { title: "Matter", author: "Iain M. Banks", category: "Space Opera", year: 2008 },
+  { title: "Surface Detail", author: "Iain M. Banks", category: "Space Opera", year: 2010 },
+  { title: "The Hydrogen Sonata", author: "Iain M. Banks", category: "Space Opera", year: 2012 },
+
+  // ===== Additional Classic Authors =====
+  // Jack Vance
+  { title: "The Dying Earth", author: "Jack Vance", category: "Dying Earth", year: 1950 },
+  { title: "The Eyes of the Overworld", author: "Jack Vance", category: "Dying Earth", year: 1966 },
+  { title: "Cugel's Saga", author: "Jack Vance", category: "Dying Earth", year: 1983 },
+  { title: "The Languages of Pao", author: "Jack Vance", category: "Linguistics SF", year: 1958 },
+  { title: "The Dragon Masters", author: "Jack Vance", category: "Space Fantasy", year: 1962 },
+  { title: "The Last Castle", author: "Jack Vance", category: "Dying Earth", year: 1966 },
+  
+  // Cordwainer Smith
+  { title: "Norstrilia", author: "Cordwainer Smith", category: "Space Opera", year: 1975 },
+  { title: "The Rediscovery of Man", author: "Cordwainer Smith", category: "Short Stories", year: 1993 },
+  { title: "The Instrumentality of Mankind", author: "Cordwainer Smith", category: "Space Opera", year: 1979 },
+  
+  // Roger Zelazny
+  { title: "Lord of Light", author: "Roger Zelazny", category: "Mythological SF", year: 1967 },
+  { title: "The Dream Master", author: "Roger Zelazny", category: "Psychological SF", year: 1966 },
+  { title: "Creatures of Light and Darkness", author: "Roger Zelazny", category: "Mythological SF", year: 1969 },
+  { title: "Isle of the Dead", author: "Roger Zelazny", category: "Space Opera", year: 1969 },
+  { title: "Damnation Alley", author: "Roger Zelazny", category: "Post-Apocalyptic", year: 1969 },
+  { title: "Doorways in the Sand", author: "Roger Zelazny", category: "Adventure SF", year: 1976 },
+  
+  // Clifford D. Simak
+  { title: "City", author: "Clifford D. Simak", category: "Fix-up Novel", year: 1952 },
+  { title: "Time and Again", author: "Clifford D. Simak", category: "Time Travel", year: 1951 },
+  { title: "Ring Around the Sun", author: "Clifford D. Simak", category: "Parallel Worlds", year: 1953 },
+  { title: "The Goblin Reservation", author: "Clifford D. Simak", category: "Fantasy SF", year: 1968 },
+  { title: "A Heritage of Stars", author: "Clifford D. Simak", category: "Post-Apocalyptic", year: 1977 },
+  
+  // James Tiptree Jr.
+  { title: "Up the Walls of the World", author: "James Tiptree Jr.", category: "First Contact", year: 1978 },
+  { title: "Brightness Falls from the Air", author: "James Tiptree Jr.", category: "Space Opera", year: 1985 },
+  { title: "Her Smoke Rose Up Forever", author: "James Tiptree Jr.", category: "Short Stories", year: 1990 },
+  
+  // C.J. Cherryh
+  { title: "Downbelow Station", author: "C.J. Cherryh", category: "Space Opera", year: 1981 },
+  { title: "Cyteen", author: "C.J. Cherryh", category: "Cloning", year: 1988 },
+  { title: "Foreigner", author: "C.J. Cherryh", category: "First Contact", year: 1994 },
+  { title: "Merchanter's Luck", author: "C.J. Cherryh", category: "Space Opera", year: 1982 },
+  { title: "The Pride of Chanur", author: "C.J. Cherryh", category: "Space Opera", year: 1981 },
+  
+  // Larry Niven (additional)
+  { title: "The Mote in God's Eye", author: "Larry Niven and Jerry Pournelle", category: "First Contact", year: 1974 },
+  { title: "Lucifer's Hammer", author: "Larry Niven and Jerry Pournelle", category: "Disaster SF", year: 1977 },
+  { title: "Footfall", author: "Larry Niven and Jerry Pournelle", category: "Alien Invasion", year: 1985 },
+  { title: "The Integral Trees", author: "Larry Niven", category: "Hard SF", year: 1984 },
+  { title: "A World Out of Time", author: "Larry Niven", category: "Time Dilation", year: 1976 },
+  
+  // Hal Clement
+  { title: "Mission of Gravity", author: "Hal Clement", category: "Hard SF", year: 1954 },
+  { title: "Needle", author: "Hal Clement", category: "Alien Symbiosis", year: 1950 },
+  { title: "Close to Critical", author: "Hal Clement", category: "Hard SF", year: 1964 },
+  { title: "Iceworld", author: "Hal Clement", category: "Hard SF", year: 1953 },
+  
+  // Andre Norton
+  { title: "The Time Traders", author: "Andre Norton", category: "Time Travel", year: 1958 },
+  { title: "Star Man's Son", author: "Andre Norton", category: "Post-Apocalyptic", year: 1952 },
+  { title: "The Beast Master", author: "Andre Norton", category: "Space Western", year: 1959 },
+  { title: "Witch World", author: "Andre Norton", category: "Science Fantasy", year: 1963 },
+  
+  // Poul Anderson (additional)
+  { title: "The High Crusade", author: "Poul Anderson", category: "Alien Invasion", year: 1960 },
+  { title: "Brain Wave", author: "Poul Anderson", category: "Posthuman", year: 1954 },
+  { title: "The Boat of a Million Years", author: "Poul Anderson", category: "Immortality", year: 1989 },
+  { title: "Ensign Flandry", author: "Poul Anderson", category: "Space Opera", year: 1966 },
+  { title: "A Midsummer Tempest", author: "Poul Anderson", category: "Alternate History", year: 1974 },
 
   // ===== Complete Philip K. Dick Bibliography =====
   { title: "Solar Lottery", author: "Philip K. Dick", category: "Political SF", year: 1955 },
