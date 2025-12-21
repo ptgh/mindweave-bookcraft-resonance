@@ -309,7 +309,58 @@ function combineResults(
     }));
 }
 
-async function logSearchQuery(
+// Filter results to only include user's own transmissions
+async function filterUserTransmissions(
+  supabase: ReturnType<typeof createClient>,
+  results: Array<Record<string, unknown>>,
+  userId?: string
+): Promise<Array<Record<string, unknown>>> {
+  if (!userId) {
+    // If no user, filter out all transmission results (they're user-specific)
+    return results.filter(r => r.source_type !== 'transmission');
+  }
+  
+  // Get transmission IDs from results
+  const transmissionIds = results
+    .filter(r => r.source_type === 'transmission')
+    .map(r => {
+      // Extract transmission_id from metadata
+      const metadata = r.metadata as Record<string, unknown> | undefined;
+      return metadata?.transmission_id as number | undefined;
+    })
+    .filter((id): id is number => id !== undefined);
+  
+  if (transmissionIds.length === 0) {
+    return results;
+  }
+  
+  // Query to find which transmissions belong to this user
+  const { data: userTransmissions, error } = await supabase
+    .from('transmissions')
+    .select('id')
+    .eq('user_id', userId)
+    .in('id', transmissionIds);
+  
+  if (error) {
+    console.error('Error filtering user transmissions:', error);
+    // On error, filter out all transmissions to be safe
+    return results.filter(r => r.source_type !== 'transmission');
+  }
+  
+  const userTransmissionIds = new Set((userTransmissions || []).map(t => t.id));
+  console.log(`User owns ${userTransmissionIds.size} of ${transmissionIds.length} transmission results`);
+  
+  // Filter results: keep non-transmissions and only user's transmissions
+  return results.filter(r => {
+    if (r.source_type !== 'transmission') {
+      return true;
+    }
+    const metadata = r.metadata as Record<string, unknown> | undefined;
+    const transmissionId = metadata?.transmission_id as number | undefined;
+    return transmissionId !== undefined && userTransmissionIds.has(transmissionId);
+  });
+}
+
   supabase: ReturnType<typeof createClient>,
   query: string,
   embedding: number[] | null,
