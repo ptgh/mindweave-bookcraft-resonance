@@ -291,11 +291,24 @@ export const useBookBrowser = () => {
       });
     } catch (error: any) {
       console.error('Error adding to transmissions:', error);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      
+      // Check if it's a duplicate error
+      if (error?.message?.startsWith('DUPLICATE:')) {
+        const parts = error.message.split(':');
+        const title = parts[1] || book.title;
+        const dateAdded = parts[2] || 'unknown date';
+        
+        toast({
+          title: "Already in Your Library",
+          description: `"${title}" was added on ${dateAdded}.`,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to add book to library.",
+          variant: "destructive",
+        });
+      }
     }
   }, [toast]);
 
