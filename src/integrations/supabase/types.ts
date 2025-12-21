@@ -289,6 +289,48 @@ export type Database = {
           },
         ]
       }
+      book_embeddings: {
+        Row: {
+          author: string
+          book_identifier: string
+          created_at: string | null
+          embedding: string | null
+          embedding_text: string | null
+          id: string
+          metadata: Json | null
+          model_version: string | null
+          source_type: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author: string
+          book_identifier: string
+          created_at?: string | null
+          embedding?: string | null
+          embedding_text?: string | null
+          id?: string
+          metadata?: Json | null
+          model_version?: string | null
+          source_type?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author?: string
+          book_identifier?: string
+          created_at?: string | null
+          embedding?: string | null
+          embedding_text?: string | null
+          id?: string
+          metadata?: Json | null
+          model_version?: string | null
+          source_type?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       book_interactions: {
         Row: {
           book_author: string
@@ -972,6 +1014,48 @@ export type Database = {
         }
         Relationships: []
       }
+      search_queries: {
+        Row: {
+          clicked_book_identifier: string | null
+          created_at: string | null
+          filters_applied: Json | null
+          id: string
+          query_embedding: string | null
+          query_text: string
+          response_time_ms: number | null
+          result_count: number | null
+          search_type: string | null
+          user_id: string | null
+          was_helpful: boolean | null
+        }
+        Insert: {
+          clicked_book_identifier?: string | null
+          created_at?: string | null
+          filters_applied?: Json | null
+          id?: string
+          query_embedding?: string | null
+          query_text: string
+          response_time_ms?: number | null
+          result_count?: number | null
+          search_type?: string | null
+          user_id?: string | null
+          was_helpful?: boolean | null
+        }
+        Update: {
+          clicked_book_identifier?: string | null
+          created_at?: string | null
+          filters_applied?: Json | null
+          id?: string
+          query_embedding?: string | null
+          query_text?: string
+          response_time_ms?: number | null
+          result_count?: number | null
+          search_type?: string | null
+          user_id?: string | null
+          was_helpful?: boolean | null
+        }
+        Relationships: []
+      }
       temporal_analysis_cache: {
         Row: {
           analysis: Json
@@ -1214,6 +1298,23 @@ export type Database = {
         Returns: string
       }
       refresh_reading_analytics: { Args: never; Returns: undefined }
+      semantic_search: {
+        Args: {
+          filter_source?: string
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          author: string
+          book_identifier: string
+          id: string
+          metadata: Json
+          similarity: number
+          source_type: string
+          title: string
+        }[]
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }

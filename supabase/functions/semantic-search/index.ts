@@ -1,0 +1,283 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+interface SearchFilters {
+  sourceTypes?: string[];
+  yearRange?: [number, number];
+  minRating?: number;
+  excludeRead?: boolean;
+  genres?: string[];
+}
+
+interface SearchRequest {
+  query: string;
+  limit?: number;
+  threshold?: number;
+  filters?: SearchFilters;
+  userId?: string;
+  searchType?: 'semantic' | 'keyword' | 'hybrid';
+}
+
+async function generateQueryEmbedding(query: string): Promise<number[]> {
+  const response = await fetch('https://api.openai.com/v1/embeddings', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${openAIApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'text-embedding-3-small',
+      input: query,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    console.error('OpenAI embedding error:', error);
+    throw new Error(`OpenAI API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.data[0].embedding;
+}
+
+async function semanticSearch(
+  supabase: ReturnType<typeof createClient>,
+  embedding: number[],
+  limit: number,
+  threshold: number,
+  filters?: SearchFilters
+) {
+  // Use the database function for semantic search
+  const { data, error } = await supabase.rpc('semantic_search', {
+    query_embedding: embedding,
+    match_threshold: threshold,
+    match_count: limit,
+    filter_source: filters?.sourceTypes?.[0] || null,
+  });
+
+  if (error) {
+    console.error('Semantic search error:', error);
+    throw error;
+  }
+
+  return data || [];
+}
+
+async function keywordSearch(
+  supabase: ReturnType<typeof createClient>,
+  query: string,
+  limit: number
+) {
+  // Full-text search on title, author, and embedding_text
+  const searchTerms = query.toLowerCase().split(' ').filter(t => t.length > 2);
+  
+  if (searchTerms.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from('book_embeddings')
+    .select('id, book_identifier, title, author, source_type, metadata')
+    .or(searchTerms.map(term => 
+      `title.ilike.%${term}%,author.ilike.%${term}%,embedding_text.ilike.%${term}%`
+    ).join(','))
+    .limit(limit);
+
+  if (error) {
+    console.error('Keyword search error:', error);
+    return [];
+  }
+
+  // Add a keyword match score
+  return (data || []).map(item => ({
+    ...item,
+    similarity: 0.5, // Base score for keyword matches
+    match_type: 'keyword' as const,
+  }));
+}
+
+function combineResults(
+  semanticResults: Array<{ book_identifier: string; similarity: number; [key: string]: unknown }>,
+  keywordResults: Array<{ book_identifier: string; similarity: number; [key: string]: unknown }>,
+  limit: number
+) {
+  const combined = new Map<string, { result: unknown; score: number; matchType: string }>();
+
+  // Add semantic results with higher weight
+  for (const result of semanticResults) {
+    combined.set(result.book_identifier, {
+      result,
+      score: result.similarity * 0.7, // 70% weight for semantic
+      matchType: 'semantic',
+    });
+  }
+
+  // Merge keyword results
+  for (const result of keywordResults) {
+    const existing = combined.get(result.book_identifier);
+    if (existing) {
+      // Boost score for hybrid matches
+      existing.score += result.similarity * 0.3;
+      existing.matchType = 'hybrid';
+    } else {
+      combined.set(result.book_identifier, {
+        result,
+        score: result.similarity * 0.3,
+        matchType: 'keyword',
+      });
+    }
+  }
+
+  // Sort by combined score and return top results
+  return Array.from(combined.values())
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(item => ({
+      ...item.result as Record<string, unknown>,
+      combined_score: item.score,
+      match_type: item.matchType,
+    }));
+}
+
+async function logSearchQuery(
+  supabase: ReturnType<typeof createClient>,
+  query: string,
+  embedding: number[] | null,
+  resultCount: number,
+  searchType: string,
+  filters: SearchFilters | undefined,
+  responseTimeMs: number,
+  userId?: string
+) {
+  try {
+    await supabase.from('search_queries').insert({
+      user_id: userId || null,
+      query_text: query,
+      query_embedding: embedding,
+      result_count: resultCount,
+      search_type: searchType,
+      filters_applied: filters || {},
+      response_time_ms: responseTimeMs,
+    });
+  } catch (error) {
+    console.error('Error logging search query:', error);
+  }
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const startTime = Date.now();
+
+  try {
+    if (!openAIApiKey) {
+      throw new Error('OPENAI_API_KEY is not configured');
+    }
+
+    const body: SearchRequest = await req.json();
+    const {
+      query,
+      limit = 20,
+      threshold = 0.3,
+      filters,
+      userId,
+      searchType = 'hybrid',
+    } = body;
+
+    if (!query || query.trim().length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'Query is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Semantic search: "${query}" (type: ${searchType}, limit: ${limit})`);
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    let results: Array<Record<string, unknown>> = [];
+    let queryEmbedding: number[] | null = null;
+
+    if (searchType === 'semantic' || searchType === 'hybrid') {
+      // Generate query embedding
+      queryEmbedding = await generateQueryEmbedding(query);
+      
+      // Perform semantic search
+      const semanticResults = await semanticSearch(
+        supabase,
+        queryEmbedding,
+        limit,
+        threshold,
+        filters
+      );
+
+      if (searchType === 'hybrid') {
+        // Also perform keyword search
+        const keywordResults = await keywordSearch(supabase, query, limit);
+        results = combineResults(semanticResults, keywordResults, limit);
+      } else {
+        results = semanticResults.map((r: Record<string, unknown>) => ({
+          ...r,
+          combined_score: r.similarity,
+          match_type: 'semantic',
+        }));
+      }
+    } else {
+      // Keyword-only search
+      const keywordResults = await keywordSearch(supabase, query, limit);
+      results = keywordResults.map(r => ({
+        ...r,
+        combined_score: r.similarity,
+        match_type: 'keyword',
+      }));
+    }
+
+    const responseTimeMs = Date.now() - startTime;
+
+    // Log the search query (async, don't await)
+    logSearchQuery(
+      supabase,
+      query,
+      queryEmbedding,
+      results.length,
+      searchType,
+      filters,
+      responseTimeMs,
+      userId
+    );
+
+    console.log(`Search completed: ${results.length} results in ${responseTimeMs}ms`);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        query,
+        results,
+        resultCount: results.length,
+        searchType,
+        responseTimeMs,
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error('Error in semantic-search:', error);
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});
