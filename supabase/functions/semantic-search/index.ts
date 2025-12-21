@@ -28,6 +28,18 @@ interface SearchRequest {
   searchType?: 'semantic' | 'keyword' | 'hybrid';
 }
 
+interface SearchResult {
+  id: string;
+  book_identifier: string;
+  title: string;
+  author: string;
+  source_type: string;
+  metadata: Record<string, unknown>;
+  similarity?: number;
+  combined_score?: number;
+  match_type?: string;
+}
+
 async function generateQueryEmbedding(query: string): Promise<number[]> {
   const response = await fetch('https://api.openai.com/v1/embeddings', {
     method: 'POST',
@@ -72,6 +84,145 @@ async function semanticSearch(
   }
 
   return data || [];
+}
+
+// Fallback keyword search across multiple tables when embeddings are empty
+async function fallbackKeywordSearch(
+  supabase: ReturnType<typeof createClient>,
+  query: string,
+  limit: number
+): Promise<SearchResult[]> {
+  const searchTerms = query.toLowerCase().split(' ').filter(t => t.length > 2);
+  
+  if (searchTerms.length === 0) {
+    return [];
+  }
+
+  const results: SearchResult[] = [];
+  
+  // Search author_books table
+  try {
+    const { data: authorBooks, error } = await supabase
+      .from('author_books')
+      .select(`
+        id,
+        title,
+        description,
+        cover_url,
+        published_date,
+        categories,
+        rating,
+        author:scifi_authors(name)
+      `)
+      .or(searchTerms.map(term => 
+        `title.ilike.%${term}%,description.ilike.%${term}%`
+      ).join(','))
+      .limit(limit);
+
+    if (!error && authorBooks) {
+      for (const book of authorBooks) {
+        const authorName = (book.author as { name: string } | null)?.name || 'Unknown Author';
+        results.push({
+          id: book.id,
+          book_identifier: `author_book_${book.id}`,
+          title: book.title,
+          author: authorName,
+          source_type: 'author_books',
+          metadata: {
+            description: book.description,
+            cover_url: book.cover_url,
+            published_date: book.published_date,
+            categories: book.categories,
+            rating: book.rating,
+          },
+          similarity: 0.6,
+          match_type: 'keyword',
+        });
+      }
+      console.log(`Found ${authorBooks.length} results in author_books`);
+    }
+  } catch (e) {
+    console.error('Error searching author_books:', e);
+  }
+
+  // Search publisher_books table
+  try {
+    const { data: publisherBooks, error } = await supabase
+      .from('publisher_books')
+      .select('id, title, author, cover_url, isbn, publication_year, editorial_note')
+      .or(searchTerms.map(term => 
+        `title.ilike.%${term}%,author.ilike.%${term}%`
+      ).join(','))
+      .limit(limit);
+
+    if (!error && publisherBooks) {
+      for (const book of publisherBooks) {
+        results.push({
+          id: book.id,
+          book_identifier: `publisher_${book.id}`,
+          title: book.title,
+          author: book.author,
+          source_type: 'publisher_books',
+          metadata: {
+            cover_url: book.cover_url,
+            isbn: book.isbn,
+            publication_year: book.publication_year,
+            editorial_note: book.editorial_note,
+          },
+          similarity: 0.55,
+          match_type: 'keyword',
+        });
+      }
+      console.log(`Found ${publisherBooks.length} results in publisher_books`);
+    }
+  } catch (e) {
+    console.error('Error searching publisher_books:', e);
+  }
+
+  // Search transmissions (public books only - no user filtering here)
+  try {
+    const { data: transmissions, error } = await supabase
+      .from('transmissions')
+      .select('id, title, author, cover_url, tags, notes, publication_year')
+      .or(searchTerms.map(term => 
+        `title.ilike.%${term}%,author.ilike.%${term}%,notes.ilike.%${term}%`
+      ).join(','))
+      .limit(limit);
+
+    if (!error && transmissions) {
+      for (const t of transmissions) {
+        results.push({
+          id: String(t.id),
+          book_identifier: `transmission_${t.id}`,
+          title: t.title || 'Unknown Title',
+          author: t.author || 'Unknown Author',
+          source_type: 'transmissions',
+          metadata: {
+            cover_url: t.cover_url,
+            tags: t.tags,
+            notes: t.notes,
+            publication_year: t.publication_year,
+          },
+          similarity: 0.5,
+          match_type: 'keyword',
+        });
+      }
+      console.log(`Found ${transmissions.length} results in transmissions`);
+    }
+  } catch (e) {
+    console.error('Error searching transmissions:', e);
+  }
+
+  // Dedupe by title
+  const seen = new Set<string>();
+  const deduped = results.filter(r => {
+    const key = r.title.toLowerCase().trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return deduped.slice(0, limit);
 }
 
 async function keywordSearch(
@@ -211,7 +362,15 @@ serve(async (req) => {
     let results: Array<Record<string, unknown>> = [];
     let queryEmbedding: number[] | null = null;
 
-    if (searchType === 'semantic' || searchType === 'hybrid') {
+    // Check if book_embeddings has any data
+    const { count: embeddingsCount } = await supabase
+      .from('book_embeddings')
+      .select('*', { count: 'exact', head: true });
+
+    const hasEmbeddings = (embeddingsCount || 0) > 0;
+    console.log(`Book embeddings count: ${embeddingsCount}, hasEmbeddings: ${hasEmbeddings}`);
+
+    if (hasEmbeddings && (searchType === 'semantic' || searchType === 'hybrid')) {
       // Generate query embedding
       queryEmbedding = await generateQueryEmbedding(query);
       
@@ -236,11 +395,12 @@ serve(async (req) => {
         }));
       }
     } else {
-      // Keyword-only search
-      const keywordResults = await keywordSearch(supabase, query, limit);
-      results = keywordResults.map(r => ({
+      // Fallback: search across multiple tables when embeddings are empty
+      console.log('Using fallback keyword search across author_books, publisher_books, transmissions');
+      const fallbackResults = await fallbackKeywordSearch(supabase, query, limit);
+      results = fallbackResults.map(r => ({
         ...r,
-        combined_score: r.similarity,
+        combined_score: r.similarity || 0.5,
         match_type: 'keyword',
       }));
     }
@@ -267,7 +427,7 @@ serve(async (req) => {
         query,
         results,
         resultCount: results.length,
-        searchType,
+        searchType: hasEmbeddings ? searchType : 'fallback_keyword',
         responseTimeMs,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

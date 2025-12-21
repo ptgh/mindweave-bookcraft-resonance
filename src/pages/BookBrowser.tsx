@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import BookBrowserHeader from "@/components/BookBrowserHeader";
@@ -11,6 +11,7 @@ import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 import { getAuthorByName, findOrCreateAuthor, ScifiAuthor } from "@/services/scifiAuthorsService";
 import { supabase } from "@/integrations/supabase/client";
 import { EnhancedBookSuggestion } from "@/services/googleBooksApi";
+import { getTransmissions } from "@/services/transmissionsService";
 
 const BookBrowser = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -34,6 +35,11 @@ const BookBrowser = () => {
   const [authorPopupVisible, setAuthorPopupVisible] = useState(false);
   const [userBooksCount, setUserBooksCount] = useState(0);
   
+  // Related books from transmissions when navigating from Neural Map
+  const [relatedBooks, setRelatedBooks] = useState<EnhancedBookSuggestion[]>([]);
+  const [fetchedTransmission, setFetchedTransmission] = useState<EnhancedBookSuggestion | null>(null);
+  const [highlightAnimating, setHighlightAnimating] = useState(false);
+  
   // Load user book count for AI toggle visibility
   useEffect(() => {
     const loadUserBooksCount = async () => {
@@ -53,83 +59,136 @@ const BookBrowser = () => {
     loadUserBooksCount();
   }, []);
 
-  // Handle highlight from URL parameter (from Neural Map navigation)
-  // Fetch the transmission directly and show it first
-  const [reorderedBooks, setReorderedBooks] = useState<EnhancedBookSuggestion[]>([]);
-  const [highlightAnimating, setHighlightAnimating] = useState(false);
-  const [fetchedTransmission, setFetchedTransmission] = useState<EnhancedBookSuggestion | null>(null);
-  
-  // Fetch the highlighted transmission from the database
+  // Fetch highlighted transmission and related books when navigating from Neural Map
   useEffect(() => {
-    const fetchHighlightedTransmission = async () => {
-      if (highlightId && searchQuery) {
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            // Fetch the transmission by ID
-            const { data: transmission, error } = await supabase
-              .from('transmissions')
-              .select('*')
-              .eq('id', parseInt(highlightId))
-              .eq('user_id', user.id)
-              .single();
-            
-            if (!error && transmission) {
-              // Transform transmission to EnhancedBookSuggestion format
-              const bookSuggestion: EnhancedBookSuggestion = {
-                id: `transmission-${transmission.id}`,
-                title: transmission.title || '',
-                author: transmission.author || 'Unknown Author',
-                coverUrl: transmission.cover_url || '',
-                thumbnailUrl: transmission.cover_url || '',
-                smallThumbnailUrl: transmission.cover_url || '',
-                description: transmission.notes || '',
-                categories: transmission.tags ? JSON.parse(transmission.tags) : [],
-              };
-              setFetchedTransmission(bookSuggestion);
-              setHighlightedBookId(bookSuggestion.id);
-              console.log('Fetched highlighted transmission:', bookSuggestion.title);
-            }
-          }
-        } catch (error) {
+    const fetchHighlightedAndRelatedBooks = async () => {
+      if (!highlightId || !searchQuery) return;
+      
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        // Fetch the transmission by ID
+        const { data: transmission, error } = await supabase
+          .from('transmissions')
+          .select('*')
+          .eq('id', parseInt(highlightId))
+          .eq('user_id', user.id)
+          .single();
+        
+        if (error || !transmission) {
           console.error('Error fetching highlighted transmission:', error);
+          return;
         }
+        
+        // Transform transmission to EnhancedBookSuggestion format
+        const bookSuggestion: EnhancedBookSuggestion = {
+          id: `transmission-${transmission.id}`,
+          title: transmission.title || '',
+          author: transmission.author || 'Unknown Author',
+          coverUrl: transmission.cover_url || '',
+          thumbnailUrl: transmission.cover_url || '',
+          smallThumbnailUrl: transmission.cover_url || '',
+          description: transmission.notes || '',
+          categories: transmission.tags ? JSON.parse(transmission.tags) : [],
+        };
+        
+        setFetchedTransmission(bookSuggestion);
+        setHighlightedBookId(bookSuggestion.id);
+        console.log('Fetched highlighted transmission:', bookSuggestion.title);
+        
+        // Load related books based on shared tags
+        const transmissionTags = transmission.tags ? JSON.parse(transmission.tags) : [];
+        
+        if (transmissionTags.length > 0) {
+          // Get all user transmissions to find related ones
+          const allTransmissions = await getTransmissions();
+          
+          // Find transmissions with matching tags (excluding the highlighted one)
+          const related = allTransmissions
+            .filter(t => t.id !== transmission.id)
+            .map(t => {
+              const tTags = t.tags || [];
+              const matchingTags = tTags.filter((tag: string) => 
+                transmissionTags.some((hTag: string) => 
+                  tag.toLowerCase() === hTag.toLowerCase()
+                )
+              );
+              return { transmission: t, matchCount: matchingTags.length };
+            })
+            .filter(item => item.matchCount > 0)
+            .sort((a, b) => b.matchCount - a.matchCount)
+            .slice(0, 12) // Get top 12 related books
+            .map(item => ({
+              id: `transmission-${item.transmission.id}`,
+              title: item.transmission.title,
+              author: item.transmission.author,
+              coverUrl: item.transmission.cover_url || '',
+              thumbnailUrl: item.transmission.cover_url || '',
+              smallThumbnailUrl: item.transmission.cover_url || '',
+              description: item.transmission.notes || '',
+              categories: item.transmission.tags || [],
+            }));
+          
+          console.log(`Found ${related.length} related books with matching tags`);
+          setRelatedBooks(related);
+        }
+        
+        setHighlightAnimating(true);
+        setTimeout(() => setHighlightAnimating(false), 600);
+        
+        // Clear highlight styling after 5 seconds but KEEP the book visible
+        highlightTimeoutRef.current = setTimeout(() => {
+          setHighlightedBookId(null);
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete('highlight');
+          newParams.delete('search');
+          setSearchParams(newParams, { replace: true });
+        }, 5000);
+        
+      } catch (error) {
+        console.error('Error fetching highlighted transmission:', error);
       }
     };
     
-    fetchHighlightedTransmission();
-  }, [highlightId, searchQuery]);
-  
-  // Reorder books with fetched transmission first - PERSIST the book in the list
-  useEffect(() => {
-    if (fetchedTransmission && !loading) {
-      // Put the fetched transmission first, then the rest of the books
-      const reordered = [fetchedTransmission, ...books.filter(b => b.id !== fetchedTransmission.id)];
-      setHighlightAnimating(true);
-      setReorderedBooks(reordered);
-      
-      // Reset animation state after transition
-      setTimeout(() => setHighlightAnimating(false), 600);
-      
-      // Clear ONLY the highlight styling after 5 seconds, but KEEP the book visible
-      highlightTimeoutRef.current = setTimeout(() => {
-        setHighlightedBookId(null);
-        const newParams = new URLSearchParams(searchParams);
-        newParams.delete('highlight');
-        newParams.delete('search');
-        setSearchParams(newParams, { replace: true });
-        // NOTE: Do NOT clear fetchedTransmission - keep the book in the list
-      }, 5000);
-    } else if (!fetchedTransmission) {
-      setReorderedBooks(books);
-    }
+    fetchHighlightedAndRelatedBooks();
     
     return () => {
       if (highlightTimeoutRef.current) {
         clearTimeout(highlightTimeoutRef.current);
       }
     };
-  }, [fetchedTransmission, loading, books, searchParams, setSearchParams]);
+  }, [highlightId, searchQuery, searchParams, setSearchParams]);
+
+  // Combine books: highlighted first, then related, then regular books
+  const displayBooks = useCallback((): EnhancedBookSuggestion[] => {
+    const result: EnhancedBookSuggestion[] = [];
+    const seenIds = new Set<string>();
+    
+    // Add highlighted book first
+    if (fetchedTransmission) {
+      result.push(fetchedTransmission);
+      seenIds.add(fetchedTransmission.id);
+    }
+    
+    // Add related books from transmissions
+    for (const book of relatedBooks) {
+      if (!seenIds.has(book.id)) {
+        result.push(book);
+        seenIds.add(book.id);
+      }
+    }
+    
+    // Add regular Signal Collection books
+    for (const book of books) {
+      if (!seenIds.has(book.id)) {
+        result.push(book);
+        seenIds.add(book.id);
+      }
+    }
+    
+    return result;
+  }, [fetchedTransmission, relatedBooks, books]);
 
   const handleAuthorClick = async (authorName: string) => {
     console.log('Author clicked:', authorName);
@@ -152,6 +211,9 @@ const BookBrowser = () => {
     setAuthorPopupVisible(false);
   };
 
+  const combinedBooks = displayBooks();
+  const hasBooks = combinedBooks.length > 0 || books.length > 0;
+
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-x-hidden">
@@ -173,10 +235,21 @@ const BookBrowser = () => {
               </div>
               <p className="text-slate-400">Scanning the consciousness archive...</p>
             </div>
-          ) : books.length > 0 ? (
-          <div ref={addFeatureBlockRef} className="feature-block min-h-[60vh]">
+          ) : hasBooks ? (
+            <div ref={addFeatureBlockRef} className="feature-block min-h-[60vh]">
+              {/* Show section header when displaying related books */}
+              {(fetchedTransmission || relatedBooks.length > 0) && (
+                <div className="mb-6 text-center">
+                  <p className="text-slate-400 text-sm">
+                    {relatedBooks.length > 0 
+                      ? `Showing "${fetchedTransmission?.title}" and ${relatedBooks.length} related signals`
+                      : `Showing "${fetchedTransmission?.title}"`
+                    }
+                  </p>
+                </div>
+              )}
               <BookGrid
-                books={reorderedBooks.length > 0 ? reorderedBooks : books}
+                books={combinedBooks}
                 visibleBooks={visibleBooks}
                 onAddToTransmissions={addToTransmissions}
                 onAuthorClick={handleAuthorClick}
@@ -201,7 +274,7 @@ const BookBrowser = () => {
 
           <div ref={addFeatureBlockRef} className="feature-block">
             <BookBrowserStatus 
-              booksCount={books.length}
+              booksCount={combinedBooks.length}
               previouslyShownCount={previouslyShownBooks.size}
             />
           </div>

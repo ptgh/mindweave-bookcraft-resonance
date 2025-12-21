@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { searchBooksEnhanced, EnhancedBookSuggestion } from "@/services/googleBooksApi";
@@ -6,7 +5,7 @@ import { saveTransmission, getTransmissions } from "@/services/transmissionsServ
 import { searchAppleBooks } from "@/services/appleBooks";
 import { imageService } from "@/services/image-service";
 import { debounce } from "@/utils/performance";
-import { getRandomCuratedBooks, CuratedBook } from "@/services/curatedSciFiLists";
+import { getRandomCuratedBooks } from "@/services/curatedSciFiLists";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AIRecommendation {
@@ -15,6 +14,9 @@ interface AIRecommendation {
   reason: string;
   cluster_connection: string;
 }
+
+const STORAGE_KEY = 'signalArchive_books';
+const LOADED_KEY = 'signalArchive_hasLoaded';
 
 export const useBookBrowser = () => {
   const [books, setBooks] = useState<EnhancedBookSuggestion[]>([]);
@@ -59,6 +61,31 @@ export const useBookBrowser = () => {
     'subject:alien invasion science fiction',
     'subject:interstellar science fiction'
   ], []);
+
+  // Save books to sessionStorage for persistence
+  const persistBooks = useCallback((booksToSave: EnhancedBookSuggestion[]) => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(booksToSave));
+    } catch (e) {
+      console.warn('Failed to persist books to sessionStorage:', e);
+    }
+  }, []);
+
+  // Restore books from sessionStorage
+  const restoreBooks = useCallback((): EnhancedBookSuggestion[] | null => {
+    try {
+      const stored = sessionStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to restore books from sessionStorage:', e);
+    }
+    return null;
+  }, []);
 
   // Enhanced loading with curated books mixed in + AI recommendations when enabled
   const debouncedLoadBooks = useMemo(
@@ -177,6 +204,7 @@ export const useBookBrowser = () => {
             .slice(0, 18);
             
           setBooks(shuffled);
+          persistBooks(shuffled); // Persist to sessionStorage
           
           const newBookIds = new Set(shuffled.map(book => book.id));
           setPreviouslyShownBooks(prev => new Set([...prev, ...newBookIds]));
@@ -216,9 +244,11 @@ export const useBookBrowser = () => {
         });
       } finally {
         setLoading(false);
+        sessionStorage.setItem(LOADED_KEY, 'true');
+        setHasLoadedOnce(true);
       }
     }, 300),
-    [previouslyShownBooks, toast, searchTerms, rotationCount, userTransmissionTitles]
+    [previouslyShownBooks, toast, searchTerms, rotationCount, userTransmissionTitles, persistBooks]
   );
 
   const loadRandomBooks = useCallback(() => {
@@ -268,18 +298,24 @@ export const useBookBrowser = () => {
     }
   }, [toast]);
 
-  // Only auto-load on first visit to this page in session
+  // Auto-load on first visit OR restore from sessionStorage on return
   useEffect(() => {
-    const sessionKey = 'signalArchive_hasLoaded';
-    const hasLoaded = sessionStorage.getItem(sessionKey);
+    const hasLoaded = sessionStorage.getItem(LOADED_KEY);
     
-    if (!hasLoaded) {
-      loadRandomBooks();
-      sessionStorage.setItem(sessionKey, 'true');
-      setHasLoadedOnce(true);
-    } else {
-      setHasLoadedOnce(true);
+    if (hasLoaded) {
+      // Try to restore from sessionStorage
+      const restoredBooks = restoreBooks();
+      if (restoredBooks && restoredBooks.length > 0) {
+        console.log(`Restored ${restoredBooks.length} books from sessionStorage`);
+        setBooks(restoredBooks);
+        setHasLoadedOnce(true);
+        return;
+      }
     }
+    
+    // Auto-load if no stored books or first visit
+    console.log('Auto-loading books on page visit');
+    loadRandomBooks();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
