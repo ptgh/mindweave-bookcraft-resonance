@@ -192,12 +192,13 @@ async function fallbackKeywordSearch(
     if (!error && transmissions) {
       for (const t of transmissions) {
         results.push({
-          id: String(t.id),
+          id: `transmission-${t.id}`,
           book_identifier: `transmission_${t.id}`,
           title: t.title || 'Unknown Title',
           author: t.author || 'Unknown Author',
           source_type: 'transmissions',
           metadata: {
+            transmission_id: t.id,
             cover_url: t.cover_url,
             tags: t.tags,
             notes: t.notes,

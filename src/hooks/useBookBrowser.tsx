@@ -17,6 +17,7 @@ interface AIRecommendation {
 
 const STORAGE_KEY = 'signalArchive_books';
 const LOADED_KEY = 'signalArchive_hasLoaded';
+const AUTO_LOADED_KEY = 'signalArchive_autoLoaded';
 
 export const useBookBrowser = () => {
   const [books, setBooks] = useState<EnhancedBookSuggestion[]>([]);
@@ -298,12 +299,13 @@ export const useBookBrowser = () => {
     }
   }, [toast]);
 
-  // Auto-load on first visit OR restore from sessionStorage on return
+  // On mount: restore from sessionStorage if available, otherwise wait for user to click Scan
   useEffect(() => {
     const hasLoaded = sessionStorage.getItem(LOADED_KEY);
+    const autoLoaded = sessionStorage.getItem(AUTO_LOADED_KEY);
     
     if (hasLoaded) {
-      // Try to restore from sessionStorage
+      // Try to restore from sessionStorage - retain books until user clicks Scan again
       const restoredBooks = restoreBooks();
       if (restoredBooks && restoredBooks.length > 0) {
         console.log(`Restored ${restoredBooks.length} books from sessionStorage`);
@@ -313,9 +315,15 @@ export const useBookBrowser = () => {
       }
     }
     
-    // Auto-load if no stored books or first visit
-    console.log('Auto-loading books on page visit');
-    loadRandomBooks();
+    // Only auto-load once per session (first ever visit), then wait for user interaction
+    if (!autoLoaded) {
+      console.log('First visit - auto-loading books');
+      sessionStorage.setItem(AUTO_LOADED_KEY, 'true');
+      loadRandomBooks();
+    } else {
+      // Not first visit but no stored books - set hasLoadedOnce so empty state shows
+      setHasLoadedOnce(true);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
