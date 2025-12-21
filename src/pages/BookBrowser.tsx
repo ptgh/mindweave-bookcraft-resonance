@@ -59,10 +59,11 @@ const BookBrowser = () => {
     loadUserBooksCount();
   }, []);
 
-  // Fetch highlighted transmission and related books when navigating from Neural Map
+  // Fetch highlighted transmission when navigating from search results
   useEffect(() => {
     const fetchHighlightedAndRelatedBooks = async () => {
-      if (!highlightId || !searchQuery) return;
+      // Only require highlightId - searchQuery is optional
+      if (!highlightId) return;
       
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -81,6 +82,18 @@ const BookBrowser = () => {
           return;
         }
         
+        // Safely parse tags - could be string or array
+        let parsedTags: string[] = [];
+        if (transmission.tags) {
+          try {
+            parsedTags = typeof transmission.tags === 'string' 
+              ? JSON.parse(transmission.tags) 
+              : transmission.tags;
+          } catch {
+            parsedTags = [];
+          }
+        }
+        
         // Transform transmission to EnhancedBookSuggestion format
         const bookSuggestion: EnhancedBookSuggestion = {
           id: `transmission-${transmission.id}`,
@@ -90,7 +103,7 @@ const BookBrowser = () => {
           thumbnailUrl: transmission.cover_url || '',
           smallThumbnailUrl: transmission.cover_url || '',
           description: transmission.notes || '',
-          categories: transmission.tags ? JSON.parse(transmission.tags) : [],
+          categories: parsedTags,
         };
         
         setFetchedTransmission(bookSuggestion);
@@ -98,9 +111,7 @@ const BookBrowser = () => {
         console.log('Fetched highlighted transmission:', bookSuggestion.title);
         
         // Load related books based on shared tags
-        const transmissionTags = transmission.tags ? JSON.parse(transmission.tags) : [];
-        
-        if (transmissionTags.length > 0) {
+        if (parsedTags.length > 0) {
           // Get all user transmissions to find related ones
           const allTransmissions = await getTransmissions();
           
@@ -110,7 +121,7 @@ const BookBrowser = () => {
             .map(t => {
               const tTags = t.tags || [];
               const matchingTags = tTags.filter((tag: string) => 
-                transmissionTags.some((hTag: string) => 
+                parsedTags.some((hTag: string) => 
                   tag.toLowerCase() === hTag.toLowerCase()
                 )
               );
@@ -158,7 +169,7 @@ const BookBrowser = () => {
         clearTimeout(highlightTimeoutRef.current);
       }
     };
-  }, [highlightId, searchQuery, searchParams, setSearchParams]);
+  }, [highlightId, searchParams, setSearchParams]);
 
   // Combine books: highlighted first, then related, then regular books
   const displayBooks = useCallback((): EnhancedBookSuggestion[] => {
