@@ -90,7 +90,8 @@ async function semanticSearch(
 async function fallbackKeywordSearch(
   supabase: ReturnType<typeof createClient>,
   query: string,
-  limit: number
+  limit: number,
+  userId?: string
 ): Promise<SearchResult[]> {
   const searchTerms = query.toLowerCase().split(' ').filter(t => t.length > 2);
   
@@ -179,15 +180,21 @@ async function fallbackKeywordSearch(
     console.error('Error searching publisher_books:', e);
   }
 
-  // Search transmissions (public books only - no user filtering here)
+  // Search user's transmissions only (filtered by userId if available)
   try {
-    const { data: transmissions, error } = await supabase
+    let transmissionQuery = supabase
       .from('transmissions')
       .select('id, title, author, cover_url, tags, notes, publication_year')
       .or(searchTerms.map(term => 
         `title.ilike.%${term}%,author.ilike.%${term}%,notes.ilike.%${term}%`
-      ).join(','))
-      .limit(limit);
+      ).join(','));
+    
+    // Only show user's own transmissions if userId is provided
+    if (userId) {
+      transmissionQuery = transmissionQuery.eq('user_id', userId);
+    }
+    
+    const { data: transmissions, error } = await transmissionQuery.limit(limit);
 
     if (!error && transmissions) {
       for (const t of transmissions) {
@@ -302,6 +309,58 @@ function combineResults(
     }));
 }
 
+// Filter results to only include user's own transmissions
+async function filterUserTransmissions(
+  supabase: ReturnType<typeof createClient>,
+  results: Array<Record<string, unknown>>,
+  userId?: string
+): Promise<Array<Record<string, unknown>>> {
+  if (!userId) {
+    // If no user, filter out all transmission results (they're user-specific)
+    return results.filter(r => r.source_type !== 'transmission');
+  }
+  
+  // Get transmission IDs from results
+  const transmissionIds = results
+    .filter(r => r.source_type === 'transmission')
+    .map(r => {
+      // Extract transmission_id from metadata
+      const metadata = r.metadata as Record<string, unknown> | undefined;
+      return metadata?.transmission_id as number | undefined;
+    })
+    .filter((id): id is number => id !== undefined);
+  
+  if (transmissionIds.length === 0) {
+    return results;
+  }
+  
+  // Query to find which transmissions belong to this user
+  const { data: userTransmissions, error } = await supabase
+    .from('transmissions')
+    .select('id')
+    .eq('user_id', userId)
+    .in('id', transmissionIds);
+  
+  if (error) {
+    console.error('Error filtering user transmissions:', error);
+    // On error, filter out all transmissions to be safe
+    return results.filter(r => r.source_type !== 'transmission');
+  }
+  
+  const userTransmissionIds = new Set((userTransmissions || []).map(t => t.id));
+  console.log(`User owns ${userTransmissionIds.size} of ${transmissionIds.length} transmission results`);
+  
+  // Filter results: keep non-transmissions and only user's transmissions
+  return results.filter(r => {
+    if (r.source_type !== 'transmission') {
+      return true;
+    }
+    const metadata = r.metadata as Record<string, unknown> | undefined;
+    const transmissionId = metadata?.transmission_id as number | undefined;
+    return transmissionId !== undefined && userTransmissionIds.has(transmissionId);
+  });
+}
+
 async function logSearchQuery(
   supabase: ReturnType<typeof createClient>,
   query: string,
@@ -398,13 +457,16 @@ serve(async (req) => {
     } else {
       // Fallback: search across multiple tables when embeddings are empty
       console.log('Using fallback keyword search across author_books, publisher_books, transmissions');
-      const fallbackResults = await fallbackKeywordSearch(supabase, query, limit);
+      const fallbackResults = await fallbackKeywordSearch(supabase, query, limit, userId);
       results = fallbackResults.map(r => ({
         ...r,
         combined_score: r.similarity || 0.5,
         match_type: 'keyword',
       }));
     }
+
+    // Filter results to only include user's own transmissions
+    results = await filterUserTransmissions(supabase, results, userId);
 
     const responseTimeMs = Date.now() - startTime;
 

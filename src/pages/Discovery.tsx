@@ -57,10 +57,35 @@ const Discovery: React.FC = () => {
 
   const handleResultClick = useCallback((result: SemanticSearchResult) => {
     // Navigate to Signal Archive with highlight for the matching transmission
-    // The result.id format is like "transmission-123" or a book_identifier
-    const transmissionMatch = result.id?.match(/transmission-(\d+)/);
-    if (transmissionMatch) {
-      const transmissionId = transmissionMatch[1];
+    // Check multiple places for the transmission ID:
+    // 1. metadata.transmission_id (from book_embeddings table)
+    // 2. result.id in format "transmission-123" (from fallback search)
+    // 3. result.bookIdentifier in format "transmission_123"
+    
+    let transmissionId: string | null = null;
+    
+    // Check metadata first (most reliable for embeddings-based search)
+    if (result.metadata?.transmission_id) {
+      transmissionId = String(result.metadata.transmission_id);
+    }
+    
+    // Check result.id for "transmission-123" format
+    if (!transmissionId) {
+      const idMatch = result.id?.match(/transmission-(\d+)/);
+      if (idMatch) {
+        transmissionId = idMatch[1];
+      }
+    }
+    
+    // Check bookIdentifier for "transmission_123" format
+    if (!transmissionId) {
+      const identifierMatch = result.bookIdentifier?.match(/transmission_(\d+)/);
+      if (identifierMatch) {
+        transmissionId = identifierMatch[1];
+      }
+    }
+    
+    if (transmissionId && result.sourceType === 'transmission') {
       navigate(`/book-browser?highlight=${transmissionId}&search=${encodeURIComponent(result.title)}`);
     } else {
       // For non-transmission results, search by title
