@@ -265,6 +265,103 @@ export const curatedSciFiBooks: CuratedBook[] = [
   { title: "Embassytown", author: "China Miéville", category: "Linguistic Science Fiction", year: 2011 },
   { title: "Diaspora", author: "Greg Egan", category: "Hard Science Fiction", year: 1997 },
 
+  // ===== Goodreads Best Science Fiction Additions =====
+  // Douglas Adams Collection
+  { title: "The Hitchhiker's Guide to the Galaxy", author: "Douglas Adams", category: "Comedic SF", year: 1979 },
+  { title: "The Restaurant at the End of the Universe", author: "Douglas Adams", category: "Comedic SF", year: 1980 },
+  { title: "Life, the Universe and Everything", author: "Douglas Adams", category: "Comedic SF", year: 1982 },
+  { title: "So Long, and Thanks for All the Fish", author: "Douglas Adams", category: "Comedic SF", year: 1984 },
+  { title: "Mostly Harmless", author: "Douglas Adams", category: "Comedic SF", year: 1992 },
+  { title: "Dirk Gently's Holistic Detective Agency", author: "Douglas Adams", category: "Comedic SF", year: 1987 },
+  { title: "The Long Dark Tea-Time of the Soul", author: "Douglas Adams", category: "Comedic SF", year: 1988 },
+  
+  // Contemporary Bestsellers
+  { title: "Ready Player One", author: "Ernest Cline", category: "Virtual Reality", year: 2011 },
+  { title: "Ready Player Two", author: "Ernest Cline", category: "Virtual Reality", year: 2020 },
+  { title: "Armada", author: "Ernest Cline", category: "Alien Invasion", year: 2015 },
+  { title: "The Hunger Games", author: "Suzanne Collins", category: "YA Dystopian", year: 2008 },
+  { title: "Catching Fire", author: "Suzanne Collins", category: "YA Dystopian", year: 2009 },
+  { title: "Mockingjay", author: "Suzanne Collins", category: "YA Dystopian", year: 2010 },
+  { title: "Dark Matter", author: "Blake Crouch", category: "Multiverse Thriller", year: 2016 },
+  { title: "Recursion", author: "Blake Crouch", category: "Memory SF", year: 2019 },
+  { title: "Upgrade", author: "Blake Crouch", category: "Genetic Engineering", year: 2022 },
+  
+  // Michael Crichton Collection
+  { title: "Jurassic Park", author: "Michael Crichton", category: "Techno-Thriller", year: 1990 },
+  { title: "The Lost World", author: "Michael Crichton", category: "Techno-Thriller", year: 1995 },
+  { title: "Sphere", author: "Michael Crichton", category: "First Contact", year: 1987 },
+  { title: "Timeline", author: "Michael Crichton", category: "Time Travel", year: 1999 },
+  { title: "Prey", author: "Michael Crichton", category: "Nanotechnology", year: 2002 },
+  { title: "The Andromeda Strain", author: "Michael Crichton", category: "Techno-Thriller", year: 1969 },
+  { title: "Congo", author: "Michael Crichton", category: "Techno-Thriller", year: 1980 },
+  { title: "Eaters of the Dead", author: "Michael Crichton", category: "Historical SF", year: 1976 },
+  { title: "Next", author: "Michael Crichton", category: "Genetic Engineering", year: 2006 },
+  
+  // Carl Sagan
+  { title: "Contact", author: "Carl Sagan", category: "First Contact", year: 1985 },
+  
+  // Additional Award Winners
+  { title: "A Wrinkle in Time", author: "Madeleine L'Engle", category: "YA SF", year: 1962 },
+  { title: "A Wind in the Door", author: "Madeleine L'Engle", category: "YA SF", year: 1973 },
+  { title: "A Swiftly Tilting Planet", author: "Madeleine L'Engle", category: "YA SF", year: 1978 },
+  { title: "Ender's Shadow", author: "Orson Scott Card", category: "Military SF", year: 1999 },
+  { title: "Xenocide", author: "Orson Scott Card", category: "Xenobiology", year: 1991 },
+  { title: "Children of the Mind", author: "Orson Scott Card", category: "Xenobiology", year: 1996 },
+  { title: "Piranesi", author: "Susanna Clarke", category: "Surrealist Fiction", year: 2020 },
+  { title: "Jonathan Strange & Mr Norrell", author: "Susanna Clarke", category: "Historical Fantasy", year: 2004 },
+  
+  // Ted Chiang Short Story Collections
+  { title: "Stories of Your Life and Others", author: "Ted Chiang", category: "Short Stories", year: 2002 },
+  { title: "Exhalation: Stories", author: "Ted Chiang", category: "Short Stories", year: 2019 },
+  
+  // Murderbot Diaries
+  { title: "All Systems Red", author: "Martha Wells", category: "AI Fiction", year: 2017 },
+  { title: "Artificial Condition", author: "Martha Wells", category: "AI Fiction", year: 2018 },
+  { title: "Rogue Protocol", author: "Martha Wells", category: "AI Fiction", year: 2018 },
+  { title: "Exit Strategy", author: "Martha Wells", category: "AI Fiction", year: 2018 },
+  { title: "Fugitive Telemetry", author: "Martha Wells", category: "AI Fiction", year: 2021 },
+  
+  // R.F. Kuang
+  { title: "Babel", author: "R.F. Kuang", category: "Historical Fantasy", year: 2022 },
+  { title: "The Poppy War", author: "R.F. Kuang", category: "Military Fantasy", year: 2018 },
+  
+  // Additional Popular SF
+  { title: "The Time Traveler's Wife", author: "Audrey Niffenegger", category: "Time Travel Romance", year: 2003 },
+  { title: "Never Let Me Go", author: "Kazuo Ishiguro", category: "Dystopian", year: 2005 },
+  { title: "I, Robot", author: "Isaac Asimov", category: "Robot Fiction", year: 1950 },
+  { title: "11/22/63", author: "Stephen King", category: "Time Travel", year: 2011 },
+  { title: "The Stand", author: "Stephen King", category: "Post-Apocalyptic", year: 1978 },
+  { title: "Fahrenheit 451", author: "Ray Bradbury", category: "Dystopian Classic", year: 1953 },
+  { title: "World War Z", author: "Max Brooks", category: "Post-Apocalyptic", year: 2006 },
+  { title: "The Giver", author: "Lois Lowry", category: "YA Dystopian", year: 1993 },
+  { title: "Flowers for Algernon", author: "Daniel Keyes", category: "Posthuman", year: 1966 },
+  { title: "I Am Legend", author: "Richard Matheson", category: "Post-Apocalyptic", year: 1954 },
+  { title: "The Host", author: "Stephenie Meyer", category: "Alien Invasion", year: 2008 },
+  { title: "2001: A Space Odyssey", author: "Arthur C. Clarke", category: "Hard SF Classic", year: 1968 },
+  { title: "The Sirens of Titan", author: "Kurt Vonnegut", category: "Space Opera", year: 1959 },
+  { title: "Cat's Cradle", author: "Kurt Vonnegut", category: "Satirical SF", year: 1963 },
+  { title: "Oryx and Crake", author: "Margaret Atwood", category: "Dystopian", year: 2003 },
+  { title: "The Year of the Flood", author: "Margaret Atwood", category: "Dystopian", year: 2009 },
+  { title: "MaddAddam", author: "Margaret Atwood", category: "Dystopian", year: 2013 },
+  
+  // Red Rising Series
+  { title: "Red Rising", author: "Pierce Brown", category: "Dystopian", year: 2014 },
+  { title: "Golden Son", author: "Pierce Brown", category: "Dystopian", year: 2015 },
+  { title: "Morning Star", author: "Pierce Brown", category: "Dystopian", year: 2016 },
+  
+  // Remembrance of Earth's Past Trilogy (Liu Cixin)
+  { title: "The Dark Forest", author: "Liu Cixin", category: "Hard SF", year: 2008 },
+  { title: "Death's End", author: "Liu Cixin", category: "Hard SF", year: 2010 },
+  
+  // More Contemporary Favorites
+  { title: "Wool", author: "Hugh Howey", category: "Post-Apocalyptic", year: 2011 },
+  { title: "Shift", author: "Hugh Howey", category: "Post-Apocalyptic", year: 2013 },
+  { title: "Dust", author: "Hugh Howey", category: "Post-Apocalyptic", year: 2013 },
+  { title: "The Girl with All the Gifts", author: "M.R. Carey", category: "Post-Apocalyptic", year: 2014 },
+  { title: "Sea of Rust", author: "C. Robert Cargill", category: "AI Fiction", year: 2017 },
+  { title: "An Absolutely Remarkable Thing", author: "Hank Green", category: "First Contact", year: 2018 },
+  { title: "A Beautifully Foolish Endeavor", author: "Hank Green", category: "First Contact", year: 2020 },
+
   // ===== Notable Non-Fiction =====
   { title: "Sapiens: A Brief History of Humankind", author: "Yuval Noah Harari", category: "Popular Science Non-Fiction", year: 2011 },
   { title: "Homo Deus: A Brief History of Tomorrow", author: "Yuval Noah Harari", category: "Futurism Non-Fiction", year: 2015 },
