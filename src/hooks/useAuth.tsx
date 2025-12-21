@@ -1,8 +1,9 @@
-
-import { useState, useEffect, useRef } from "react";
-import { User, Session } from "@supabase/supabase-js";
+// Authentication hook for Supabase session management
+import { useState, useEffect } from "react";
+import type { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+// Custom hook to manage authentication state
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
