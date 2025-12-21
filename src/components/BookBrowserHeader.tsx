@@ -4,19 +4,15 @@ import { StandardButton } from "./ui/standard-button";
 interface BookBrowserHeaderProps {
   loading: boolean;
   onDiscover: () => void;
-  aiMode?: boolean;
-  onAiModeToggle?: (enabled: boolean) => void;
   userBooksCount?: number;
 }
 
 const BookBrowserHeader = ({ 
   loading, 
   onDiscover, 
-  aiMode = false, 
-  onAiModeToggle,
   userBooksCount = 0 
 }: BookBrowserHeaderProps) => {
-  const showAiToggle = userBooksCount >= 5;
+  const isAiEnabled = userBooksCount >= 5;
   
   return (
     <div className="text-center mb-8">
@@ -27,26 +23,19 @@ const BookBrowserHeader = ({
         Discover your next science fiction transmission through the quantum field of possibilities
       </p>
       
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex items-center justify-center gap-2">
         <StandardButton
           onClick={onDiscover}
           disabled={loading}
-          className="flex items-center space-x-1"
+          className="flex items-center space-x-2"
         >
-          <span>{loading ? 'Scanning Signals...' : 'Discover Scan Signal Collection'}</span>
+          <span>{loading ? 'Scanning Signals...' : 'Scan Signal Collection'}</span>
+          {isAiEnabled && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#89b4fa]/20 border border-[#89b4fa]/30 rounded text-[10px] text-[#89b4fa] ml-2">
+              ✨ AI
+            </span>
+          )}
         </StandardButton>
-        
-        {showAiToggle && onAiModeToggle && (
-          <StandardButton
-            onClick={() => onAiModeToggle(!aiMode)}
-            variant="standard"
-            size="default"
-            className={aiMode ? 'border-[#89b4fa] text-[#89b4fa] shadow-[0_0_10px_rgba(137,180,250,0.3)]' : ''}
-            title="AI analyzes your collection to suggest books that bridge your interests"
-          >
-            Neural {aiMode ? 'ON' : 'OFF'}
-          </StandardButton>
-        )}
       </div>
     </div>
   );

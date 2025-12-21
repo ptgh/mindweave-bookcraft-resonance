@@ -25,8 +25,6 @@ const BookBrowser = () => {
     previouslyShownBooks,
     loadRandomBooks,
     addToTransmissions,
-    aiMode,
-    setAiMode,
     aiRecommendations
   } = useBookBrowser();
 
@@ -163,8 +161,6 @@ const BookBrowser = () => {
             <BookBrowserHeader 
               loading={loading}
               onDiscover={loadRandomBooks}
-              aiMode={aiMode}
-              onAiModeToggle={setAiMode}
               userBooksCount={userBooksCount}
             />
           </div>

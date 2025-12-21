@@ -23,7 +23,6 @@ export const useBookBrowser = () => {
   const [previouslyShownBooks, setPreviouslyShownBooks] = useState<Set<string>>(new Set());
   const [rotationCount, setRotationCount] = useState(0);
   const [userTransmissionTitles, setUserTransmissionTitles] = useState<Set<string>>(new Set());
-  const [aiMode, setAiMode] = useState(false);
   const [aiRecommendations, setAiRecommendations] = useState<Map<string, AIRecommendation>>(new Map());
   const { toast } = useEnhancedToast();
 
@@ -63,7 +62,7 @@ export const useBookBrowser = () => {
   // Enhanced loading with curated books mixed in + AI recommendations when enabled
   const debouncedLoadBooks = useMemo(
     () => debounce(async () => {
-      console.log('Loading sci-fi books...', 'Rotation:', rotationCount, 'AI Mode:', aiMode);
+      console.log('Loading sci-fi books...', 'Rotation:', rotationCount);
       setLoading(true);
       setVisibleBooks(new Set());
       
@@ -71,8 +70,8 @@ export const useBookBrowser = () => {
         let allBooks: EnhancedBookSuggestion[] = [];
         let aiRecs: AIRecommendation[] = [];
         
-        // If AI mode is enabled and user has 5+ books, fetch AI recommendations
-        if (aiMode && userTransmissionTitles.size >= 5) {
+        // Always fetch AI recommendations when user has 5+ books
+        if (userTransmissionTitles.size >= 5) {
           try {
             const transmissions = await getTransmissions();
             const { data, error } = await supabase.functions.invoke('ai-book-recommendations', {
@@ -96,7 +95,7 @@ export const useBookBrowser = () => {
           }
         }
         
-        // Search for AI recommended books if we have any
+        // Search for AI recommended books if we have any - with fallback for books not found
         if (aiRecs.length > 0) {
           for (const rec of aiRecs) {
             try {
@@ -105,6 +104,28 @@ export const useBookBrowser = () => {
               if (results.length > 0 && !previouslyShownBooks.has(results[0].id)) {
                 allBooks.push(results[0]);
                 setAiRecommendations(prev => new Map(prev).set(results[0].id, rec));
+              } else if (!previouslyShownBooks.has(`ai-${rec.title}`)) {
+                // Fallback: create a minimal book entry if Google Books fails
+                const fallbackBook: EnhancedBookSuggestion = {
+                  id: `ai-${rec.title.replace(/\s+/g, '-').toLowerCase()}`,
+                  title: rec.title,
+                  author: rec.author,
+                  coverUrl: '',
+                  thumbnailUrl: '',
+                  smallThumbnailUrl: '',
+                  description: rec.reason,
+                  categories: [],
+                  subtitle: '',
+                  publishedDate: '',
+                  pageCount: 0,
+                  rating: 0,
+                  ratingsCount: 0,
+                  previewLink: '',
+                  infoLink: ''
+                };
+                allBooks.push(fallbackBook);
+                setAiRecommendations(prev => new Map(prev).set(fallbackBook.id, rec));
+                console.log(`Added AI book with fallback: ${rec.title}`);
               }
             } catch (e) {
               console.warn(`Failed to find AI recommended book: ${rec.title}`, e);
@@ -174,7 +195,7 @@ export const useBookBrowser = () => {
         let attempts = 0;
         const maxAttempts = 8;
         
-        while (allBooks.length < 18 && attempts < maxAttempts) {
+        while (allBooks.length < 12 && attempts < maxAttempts) {
           const termIndex = attempts % searchTerms.length;
           const term = searchTerms[termIndex];
           const startIndex = Math.floor(attempts / searchTerms.length) * 10;
@@ -216,7 +237,7 @@ export const useBookBrowser = () => {
           
           const shuffled = filteredBooks
             .sort(() => Math.random() - 0.5)
-            .slice(0, 18);
+            .slice(0, 12);
             
           setBooks(shuffled);
           
@@ -260,7 +281,7 @@ export const useBookBrowser = () => {
         setLoading(false);
       }
     }, 300),
-    [previouslyShownBooks, toast, searchTerms, rotationCount, userTransmissionTitles, aiMode]
+    [previouslyShownBooks, toast, searchTerms, rotationCount, userTransmissionTitles]
   );
 
   const loadRandomBooks = useCallback(() => {
@@ -349,8 +370,6 @@ export const useBookBrowser = () => {
     previouslyShownBooks,
     loadRandomBooks,
     addToTransmissions,
-    aiMode,
-    setAiMode,
     aiRecommendations
   };
 };
