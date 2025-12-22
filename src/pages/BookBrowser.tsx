@@ -22,6 +22,7 @@ const BookBrowser = () => {
   const searchQuery = searchParams.get('search');
   const [highlightedBookId, setHighlightedBookId] = useState<string | null>(null);
   const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasProcessedSpotlight = useRef(false);
   const { toast } = useEnhancedToast();
   
   const {
@@ -70,9 +71,11 @@ const BookBrowser = () => {
   useEffect(() => {
     const state = location.state as { spotlightBook?: SpotlightBook } | null;
     
-    if (state?.spotlightBook) {
+    // Only process once per navigation - prevents React Strict Mode double-run issues
+    if (state?.spotlightBook && !hasProcessedSpotlight.current) {
+      hasProcessedSpotlight.current = true;
       const book = state.spotlightBook;
-      console.log('BookBrowser: Received spotlight book from navigation:', book);
+      console.log('BookBrowser: Processing spotlight book:', book.title);
       
       // Transform SpotlightBook to EnhancedBookSuggestion format
       const enhancedBook: EnhancedBookSuggestion = {
@@ -91,13 +94,13 @@ const BookBrowser = () => {
       setHighlightAnimating(true);
       setTimeout(() => setHighlightAnimating(false), 600);
       
-      // Clear highlight styling after 5 seconds but KEEP the book visible
+      // Clear highlight styling after 5 seconds, then clear navigation state
       highlightTimeoutRef.current = setTimeout(() => {
         setHighlightedBookId(null);
+        // Only clear navigation state AFTER the timeout
+        window.history.replaceState({}, document.title);
+        hasProcessedSpotlight.current = false;
       }, 5000);
-      
-      // Clear location state to prevent re-showing on refresh
-      window.history.replaceState({}, document.title);
     }
     
     return () => {
