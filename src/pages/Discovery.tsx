@@ -99,7 +99,9 @@ const Discovery: React.FC = () => {
       // Navigate with highlight ID for existing transmissions
       navigate(`/book-browser?highlight=${transmissionId}&search=${encodeURIComponent(result.title)}`);
     } else {
-      // For NEW books (author_books, publisher_books), pass full book data via state
+      // For NEW books (author_books, publisher_books), store in sessionStorage and pass key in URL
+      // This avoids React navigation state race conditions
+      const spotlightKey = `spotlight_${Date.now()}`;
       const spotlightBook: SpotlightBook = {
         id: result.id,
         title: result.title,
@@ -110,8 +112,9 @@ const Discovery: React.FC = () => {
         metadata: result.metadata,
       };
       
-      console.log('Navigating to Signal Archive with new book:', spotlightBook);
-      navigate('/book-browser', { state: { spotlightBook } });
+      console.log('Storing spotlight book in sessionStorage:', spotlightBook.title, 'key:', spotlightKey);
+      sessionStorage.setItem(spotlightKey, JSON.stringify(spotlightBook));
+      navigate(`/book-browser?spotlight=${spotlightKey}`);
     }
   }, [navigate]);
 

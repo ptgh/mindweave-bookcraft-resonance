@@ -110,11 +110,13 @@ const ResultCard: React.FC<{
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <h3 className="font-medium text-slate-200 group-hover:text-blue-300 transition-colors line-clamp-1">
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="font-medium text-slate-200 group-hover:text-blue-300 transition-colors truncate flex-1 min-w-0">
             {result.title}
           </h3>
-          <MatchTypeBadge matchType={result.matchType} />
+          <div className="flex-shrink-0">
+            <MatchTypeBadge matchType={result.matchType} />
+          </div>
         </div>
 
         <p className="text-sm text-slate-400 mb-2">

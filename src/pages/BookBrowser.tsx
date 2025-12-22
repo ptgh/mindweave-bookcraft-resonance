@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useSearchParams, useLocation } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import BookBrowserHeader from "@/components/BookBrowserHeader";
 import BookGrid from "@/components/BookGrid";
@@ -17,13 +17,41 @@ import type { SpotlightBook } from "./Discovery";
 
 const BookBrowser = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const location = useLocation();
   const highlightId = searchParams.get('highlight');
-  const searchQuery = searchParams.get('search');
+  const spotlightKey = searchParams.get('spotlight');
   const [highlightedBookId, setHighlightedBookId] = useState<string | null>(null);
   const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const hasProcessedSpotlight = useRef(false);
   const { toast } = useEnhancedToast();
+  
+  // Read spotlight from sessionStorage IMMEDIATELY on mount (before any async operations)
+  // This is the critical fix - useState initializer runs synchronously before render
+  const [spotlightBook, setSpotlightBook] = useState<EnhancedBookSuggestion | null>(() => {
+    if (spotlightKey) {
+      const stored = sessionStorage.getItem(spotlightKey);
+      if (stored) {
+        try {
+          const book = JSON.parse(stored);
+          sessionStorage.removeItem(spotlightKey); // Clean up immediately
+          console.log('BookBrowser: Loaded spotlight from sessionStorage:', book.title);
+          
+          // Transform SpotlightBook to EnhancedBookSuggestion
+          return {
+            id: `spotlight-${book.id}`,
+            title: book.title,
+            author: book.author,
+            coverUrl: book.coverUrl || book.metadata?.cover_url || '',
+            thumbnailUrl: book.coverUrl || book.metadata?.cover_url || '',
+            smallThumbnailUrl: book.coverUrl || book.metadata?.cover_url || '',
+            description: book.description || '',
+            categories: book.metadata?.categories || [],
+          } as EnhancedBookSuggestion;
+        } catch (e) {
+          console.error('Failed to parse spotlight from sessionStorage:', e);
+        }
+      }
+    }
+    return null;
+  });
   
   const {
     books,
@@ -44,7 +72,6 @@ const BookBrowser = () => {
   // Related books from transmissions when navigating from Neural Map
   const [relatedBooks, setRelatedBooks] = useState<EnhancedBookSuggestion[]>([]);
   const [fetchedTransmission, setFetchedTransmission] = useState<EnhancedBookSuggestion | null>(null);
-  const [spotlightBook, setSpotlightBook] = useState<EnhancedBookSuggestion | null>(null);
   const [highlightAnimating, setHighlightAnimating] = useState(false);
   const [isAddingToLibrary, setIsAddingToLibrary] = useState(false);
   
@@ -67,39 +94,21 @@ const BookBrowser = () => {
     loadUserBooksCount();
   }, []);
 
-  // Handle spotlight book from navigation state (new books from search)
+  // Handle spotlight book highlighting and URL cleanup
   useEffect(() => {
-    const state = location.state as { spotlightBook?: SpotlightBook } | null;
-    
-    // Only process once per navigation - prevents React Strict Mode double-run issues
-    if (state?.spotlightBook && !hasProcessedSpotlight.current) {
-      hasProcessedSpotlight.current = true;
-      const book = state.spotlightBook;
-      console.log('BookBrowser: Processing spotlight book:', book.title);
-      
-      // Transform SpotlightBook to EnhancedBookSuggestion format
-      const enhancedBook: EnhancedBookSuggestion = {
-        id: `spotlight-${book.id}`,
-        title: book.title,
-        author: book.author,
-        coverUrl: book.coverUrl || book.metadata?.cover_url as string || '',
-        thumbnailUrl: book.coverUrl || book.metadata?.cover_url as string || '',
-        smallThumbnailUrl: book.coverUrl || book.metadata?.cover_url as string || '',
-        description: book.description || '',
-        categories: book.metadata?.categories as string[] || [],
-      };
-      
-      setSpotlightBook(enhancedBook);
-      setHighlightedBookId(enhancedBook.id);
+    if (spotlightBook) {
+      console.log('BookBrowser: Setting up spotlight highlight for:', spotlightBook.title);
+      setHighlightedBookId(spotlightBook.id);
       setHighlightAnimating(true);
       setTimeout(() => setHighlightAnimating(false), 600);
       
-      // Clear highlight styling after 5 seconds, then clear navigation state
+      // Clear highlight styling after 5 seconds
       highlightTimeoutRef.current = setTimeout(() => {
         setHighlightedBookId(null);
-        // Only clear navigation state AFTER the timeout
-        window.history.replaceState({}, document.title);
-        hasProcessedSpotlight.current = false;
+        // Clean up URL parameter
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('spotlight');
+        setSearchParams(newParams, { replace: true });
       }, 5000);
     }
     
@@ -108,7 +117,7 @@ const BookBrowser = () => {
         clearTimeout(highlightTimeoutRef.current);
       }
     };
-  }, [location.state]);
+  }, [spotlightBook, searchParams, setSearchParams]);
 
   // Fetch highlighted transmission when navigating from search results (existing transmissions)
   useEffect(() => {
