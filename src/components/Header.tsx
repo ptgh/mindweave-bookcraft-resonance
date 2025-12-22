@@ -12,28 +12,42 @@ const Header = () => {
     <header className="bg-slate-900">
       <div className="container mx-auto px-4 py-2 md:px-6 md:py-2">
         <div className="flex items-center justify-between">
-          <Link 
-            to="/" 
-            className="flex items-center space-x-2 md:space-x-3 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-lg p-1"
-            aria-label="Leafnode - Home"
-          >
-            <div className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center">
-              <div className="w-4 h-4 md:w-6 md:h-6 bg-blue-400 rounded-full animate-pulse" />
-            </div>
-            <div className="hidden sm:block">
-              <h1 className="text-lg md:text-xl font-light text-slate-200 tracking-wider">
-                LEAFNODE
-              </h1>
-              <p className="text-xs text-slate-400 -mt-1">for the future-literate</p>
-            </div>
-          </Link>
-          
-          <div className="flex items-center space-x-2 md:space-x-6">
+          <div className="flex items-center space-x-3">
+            <Link 
+              to="/" 
+              className="flex items-center space-x-2 md:space-x-3 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-lg p-1"
+              aria-label="Leafnode - Home"
+            >
+              <div className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center">
+                <div className="w-4 h-4 md:w-6 md:h-6 bg-blue-400 rounded-full animate-pulse" />
+              </div>
+              <div className="hidden sm:block">
+                <h1 className="text-lg md:text-xl font-light text-slate-200 tracking-wider">
+                  LEAFNODE
+                </h1>
+                <p className="text-xs text-slate-400 -mt-1">for the future-literate</p>
+              </div>
+            </Link>
+            
+            {/* Instagram icon on mobile - next to dot */}
             <a
               href="https://instagram.com/leafnode.scifi"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-slate-400 hover:text-blue-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded p-1"
+              className="lg:hidden text-slate-400 hover:text-blue-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded p-1"
+              aria-label="Follow us on Instagram"
+            >
+              <Instagram className="w-4 h-4" />
+            </a>
+          </div>
+          
+          <div className="flex items-center space-x-2 md:space-x-6">
+            {/* Instagram icon on desktop - stays in header right area */}
+            <a
+              href="https://instagram.com/leafnode.scifi"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden lg:block text-slate-400 hover:text-blue-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded p-1"
               aria-label="Follow us on Instagram"
             >
               <Instagram className="w-4 h-4" />
