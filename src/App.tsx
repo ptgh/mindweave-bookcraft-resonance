@@ -12,8 +12,8 @@ import { WebsiteStructuredData } from "@/components/StructuredData";
 // Lazy load route components for code splitting
 const Index = lazy(() => import("./pages/Index"));
 const Discovery = lazy(() => import("./pages/Discovery"));
-const ThreadMap = lazy(() => import("./pages/ThreadMap"));
 const AuthorMatrix = lazy(() => import("./pages/AuthorMatrix"));
+const ReadingInsights = lazy(() => import("./pages/ReadingInsights"));
 const Search = lazy(() => import("./pages/Search"));
 const BookBrowser = lazy(() => import("./pages/BookBrowser"));
 const PublisherResonance = lazy(() => import("./pages/PublisherResonance"));
@@ -74,7 +74,8 @@ const AppRoutes = () => {
       <Routes>
         <Route path="/" element={<Discovery />} />
         <Route path="/library" element={<Index />} />
-        <Route path="/thread-map" element={<ThreadMap />} />
+        <Route path="/thread-map" element={<Navigate to="/book-browser" replace />} />
+        <Route path="/insights" element={<ReadingInsights />} />
         <Route path="/author-matrix" element={<AuthorMatrix />} />
         <Route path="/search" element={<Search />} />
         <Route path="/book-browser" element={<BookBrowser />} />

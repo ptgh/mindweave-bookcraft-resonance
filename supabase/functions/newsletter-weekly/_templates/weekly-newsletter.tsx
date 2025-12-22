@@ -59,47 +59,41 @@ export const WeeklyNewsletterEmail = ({
           </Text>
         </Section>
 
-        {recommendations.map((book, index) => (
-          <Section key={index} style={bookSection}>
-            <table style={{ width: '100%' }}>
-              <tr>
-                <td style={{ width: '100px', verticalAlign: 'top', paddingRight: '16px' }}>
-                  {book.coverUrl && (
-                    <Img
-                      src={book.coverUrl}
-                      alt={`${book.title} cover`}
-                      style={bookCover}
-                    />
-                  )}
-                </td>
-                <td style={{ verticalAlign: 'top' }}>
-                  <Heading style={bookTitle}>{book.title}</Heading>
-                  <Text style={bookAuthor}>{book.author}</Text>
-                  {book.tags && book.tags.length > 0 && (
-                    <div style={tagsContainer}>
-                      {book.tags.map((tag, tagIndex) => (
-                        <span key={tagIndex} style={tag}>
-                          {tag}
-                        </span>
-                      ))}
+        {/* Compact 2x2 grid for 4 books */}
+        <table style={booksGrid}>
+          <tbody>
+            {[0, 2].map((rowStart) => (
+              <tr key={rowStart}>
+                {recommendations.slice(rowStart, rowStart + 2).map((book, index) => (
+                  <td key={index} style={bookCell}>
+                    <div style={bookCard}>
+                      {book.coverUrl && (
+                        <Img
+                          src={book.coverUrl}
+                          alt={`${book.title} cover`}
+                          style={bookCover}
+                        />
+                      )}
+                      <Heading style={bookTitle}>{book.title}</Heading>
+                      <Text style={bookAuthor}>{book.author}</Text>
+                      <Text style={bookDescription}>{book.description}</Text>
+                      <Link href={book.addUrl} style={button}>
+                        Add Signal →
+                      </Link>
                     </div>
-                  )}
-                  <Text style={bookDescription}>{book.description}</Text>
-                  <Link href={book.addUrl} style={button}>
-                    Add Signal →
-                  </Link>
-                </td>
+                  </td>
+                ))}
               </tr>
-            </table>
-          </Section>
-        ))}
+            ))}
+          </tbody>
+        </table>
 
         <Section style={ctaSection}>
           <Text style={ctaText}>
             🧠 Explore your full reading network and discover patterns in your collection
           </Text>
-          <Link href="https://leafnode.co.uk/thread-map" style={secondaryButton}>
-            View Thread Map
+          <Link href="https://leafnode.co.uk/book-browser" style={secondaryButton}>
+            View Signal Archive
           </Link>
         </Section>
 
@@ -128,23 +122,25 @@ export const WeeklyNewsletterEmail = ({
         </Text>
         
         <table style={socialTable}>
-          <tr>
-            <td style={socialTd}>
-              <Link href="https://leafnode.co.uk" target="_blank" style={socialLinkStyle}>
-                leafnode.co.uk
-              </Link>
-            </td>
-            <td style={socialTd}>
-              <Link href="https://www.instagram.com/leafnode.scifi" target="_blank" style={socialLinkStyle}>
-                <img 
-                  src="https://cdn-icons-png.flaticon.com/512/174/174855.png" 
-                  alt="Instagram" 
-                  style={instagramIconStyle}
-                />
-                @leafnode.scifi
-              </Link>
-            </td>
-          </tr>
+          <tbody>
+            <tr>
+              <td style={socialTd}>
+                <Link href="https://leafnode.co.uk" target="_blank" style={socialLinkStyle}>
+                  leafnode.co.uk
+                </Link>
+              </td>
+              <td style={socialTd}>
+                <Link href="https://www.instagram.com/leafnode.scifi" target="_blank" style={socialLinkStyle}>
+                  <img 
+                    src="https://cdn-icons-png.flaticon.com/512/174/174855.png" 
+                    alt="Instagram" 
+                    style={instagramIconStyle}
+                  />
+                  @leafnode.scifi
+                </Link>
+              </td>
+            </tr>
+          </tbody>
         </table>
 
         <Section style={footerLinks}>
@@ -176,196 +172,164 @@ const container = {
 
 const logoSection = {
   textAlign: 'center' as const,
-  marginBottom: '32px',
+  marginBottom: '24px',
 };
 
 const logo = {
-  width: '80px',
+  width: '60px',
   height: 'auto',
-  borderRadius: '12px',
-};
-
-const socialTable = {
-  width: '100%',
-  maxWidth: '400px',
-  margin: '24px auto 16px',
-};
-
-const socialTd = {
-  textAlign: 'center' as const,
-  padding: '0 40px',
-  width: '50%',
-};
-
-const socialLinkStyle = {
-  color: '#22d3ee',
-  fontSize: '13px',
-  textDecoration: 'none',
-  whiteSpace: 'nowrap' as const,
-  display: 'inline-block',
-};
-
-const instagramIconStyle = {
-  width: '14px',
-  height: '14px',
-  verticalAlign: 'middle',
-  marginRight: '6px',
-  display: 'inline-block',
+  borderRadius: '10px',
 };
 
 const h1 = {
   color: '#22d3ee',
-  fontSize: '28px',
+  fontSize: '24px',
   fontWeight: '700',
   lineHeight: '1.3',
-  margin: '0 0 24px',
+  margin: '0 0 16px',
   letterSpacing: '-0.5px',
 };
 
 const text = {
   color: '#cbd5e1',
-  fontSize: '16px',
-  lineHeight: '26px',
-  margin: '0 0 24px',
+  fontSize: '14px',
+  lineHeight: '22px',
+  margin: '0 0 16px',
 };
 
 const statsSection = {
   backgroundColor: 'rgba(15, 23, 42, 0.5)',
-  borderRadius: '8px',
-  padding: '16px 24px',
-  margin: '24px 0',
+  borderRadius: '6px',
+  padding: '12px 16px',
+  margin: '16px 0',
   border: '1px solid rgba(100, 116, 139, 0.2)',
   textAlign: 'center' as const,
 };
 
 const statText = {
   color: '#22d3ee',
-  fontSize: '14px',
+  fontSize: '13px',
   fontWeight: '500',
   margin: '0',
   letterSpacing: '0.5px',
 };
 
-const bookSection = {
+const booksGrid = {
+  width: '100%',
+  borderCollapse: 'separate' as const,
+  borderSpacing: '8px',
+  margin: '16px 0',
+};
+
+const bookCell = {
+  width: '50%',
+  verticalAlign: 'top',
+  padding: '0',
+};
+
+const bookCard = {
   backgroundColor: 'rgba(15, 23, 42, 0.5)',
-  borderRadius: '12px',
-  padding: '24px',
-  margin: '20px 0',
+  borderRadius: '8px',
+  padding: '12px',
   border: '1px solid rgba(100, 116, 139, 0.2)',
+  textAlign: 'center' as const,
 };
 
 const bookCover = {
-  width: '100px',
+  width: '70px',
   height: 'auto',
   borderRadius: '4px',
   border: '1px solid rgba(51, 65, 85, 0.5)',
+  margin: '0 auto 8px',
+  display: 'block',
 };
 
 const bookTitle = {
   color: '#f1f5f9',
-  fontSize: '18px',
+  fontSize: '13px',
   fontWeight: '600',
-  margin: '0 0 6px',
-  lineHeight: '1.3',
+  margin: '0 0 4px',
+  lineHeight: '1.2',
 };
 
 const bookAuthor = {
   color: '#94a3b8',
-  fontSize: '14px',
+  fontSize: '11px',
   fontWeight: '400',
-  margin: '0 0 12px',
-};
-
-const tagsContainer = {
-  display: 'flex',
-  flexWrap: 'wrap' as const,
-  gap: '8px',
-  marginBottom: '12px',
-};
-
-const tagStyle = {
-  backgroundColor: 'rgba(6, 182, 212, 0.1)',
-  color: '#22d3ee',
-  fontSize: '12px',
-  padding: '4px 12px',
-  borderRadius: '4px',
-  border: '1px solid rgba(6, 182, 212, 0.2)',
-  display: 'inline-block',
-  marginRight: '6px',
-  marginBottom: '6px',
+  margin: '0 0 6px',
 };
 
 const bookDescription = {
   color: '#94a3b8',
-  fontSize: '14px',
-  lineHeight: '20px',
-  margin: '0 0 16px',
+  fontSize: '10px',
+  lineHeight: '14px',
+  margin: '0 0 8px',
 };
 
 const button = {
   backgroundColor: 'rgba(6, 182, 212, 0.15)',
-  borderRadius: '6px',
+  borderRadius: '4px',
   color: '#22d3ee',
-  fontSize: '13px',
+  fontSize: '11px',
   fontWeight: '500',
   textDecoration: 'none',
   textAlign: 'center' as const,
   display: 'inline-block',
-  padding: '10px 24px',
+  padding: '6px 12px',
   border: '1px solid rgba(6, 182, 212, 0.25)',
   letterSpacing: '0.3px',
 };
 
 const ctaSection = {
   backgroundColor: 'rgba(6, 182, 212, 0.05)',
-  borderRadius: '8px',
-  padding: '24px',
-  margin: '32px 0',
+  borderRadius: '6px',
+  padding: '16px',
+  margin: '20px 0',
   border: '1px solid rgba(6, 182, 212, 0.15)',
   textAlign: 'center' as const,
 };
 
 const ctaText = {
   color: '#cbd5e1',
-  fontSize: '15px',
-  lineHeight: '24px',
-  margin: '0 0 16px',
+  fontSize: '13px',
+  lineHeight: '20px',
+  margin: '0 0 12px',
 };
 
 const secondaryButton = {
   backgroundColor: 'transparent',
-  borderRadius: '6px',
+  borderRadius: '4px',
   color: '#22d3ee',
-  fontSize: '14px',
+  fontSize: '12px',
   fontWeight: '500',
   textDecoration: 'none',
   textAlign: 'center' as const,
   display: 'inline-block',
-  padding: '10px 28px',
+  padding: '8px 20px',
   border: '1px solid rgba(6, 182, 212, 0.3)',
   letterSpacing: '0.3px',
 };
 
 const featuresSection = {
-  margin: '32px 0',
-  padding: '24px 0',
+  margin: '24px 0',
+  padding: '16px 0',
   borderTop: '1px solid rgba(100, 116, 139, 0.2)',
 };
 
 const sectionTitle = {
   color: '#22d3ee',
-  fontSize: '12px',
+  fontSize: '11px',
   fontWeight: '400',
   textTransform: 'uppercase' as const,
   letterSpacing: '1.5px',
-  margin: '0 0 16px',
+  margin: '0 0 12px',
 };
 
 const featureText = {
   color: '#94a3b8',
-  fontSize: '14px',
-  lineHeight: '24px',
-  margin: '0 0 12px',
+  fontSize: '12px',
+  lineHeight: '20px',
+  margin: '0 0 8px',
 };
 
 const inlineLink = {
@@ -375,17 +339,17 @@ const inlineLink = {
 
 const footer = {
   color: '#64748b',
-  fontSize: '13px',
-  lineHeight: '22px',
-  marginTop: '32px',
+  fontSize: '12px',
+  lineHeight: '20px',
+  marginTop: '24px',
   fontStyle: 'italic' as const,
 };
 
 const contactText = {
   color: '#94a3b8',
-  fontSize: '13px',
-  lineHeight: '22px',
-  marginTop: '16px',
+  fontSize: '12px',
+  lineHeight: '20px',
+  marginTop: '12px',
   textAlign: 'center' as const,
 };
 
@@ -394,12 +358,40 @@ const contactLink = {
   textDecoration: 'none',
 };
 
+const socialTable = {
+  width: '100%',
+  maxWidth: '400px',
+  margin: '16px auto 12px',
+};
+
+const socialTd = {
+  textAlign: 'center' as const,
+  padding: '0 30px',
+  width: '50%',
+};
+
+const socialLinkStyle = {
+  color: '#22d3ee',
+  fontSize: '12px',
+  textDecoration: 'none',
+  whiteSpace: 'nowrap' as const,
+  display: 'inline-block',
+};
+
+const instagramIconStyle = {
+  width: '12px',
+  height: '12px',
+  verticalAlign: 'middle',
+  marginRight: '5px',
+  display: 'inline-block',
+};
+
 const footerLinks = {
   color: '#475569',
-  fontSize: '12px',
-  lineHeight: '20px',
-  marginTop: '24px',
-  paddingTop: '24px',
+  fontSize: '11px',
+  lineHeight: '18px',
+  marginTop: '16px',
+  paddingTop: '16px',
   borderTop: '1px solid rgba(51, 65, 85, 0.3)',
   textAlign: 'center' as const,
 };

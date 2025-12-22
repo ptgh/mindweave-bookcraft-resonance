@@ -81,14 +81,14 @@ const Header = () => {
                 Author Matrix
               </Link>
               <Link
-                to="/thread-map"
+                to="/insights"
                 className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
-                  location.pathname === '/thread-map' 
+                  location.pathname === '/insights' 
                     ? 'text-blue-400' 
                     : 'text-slate-300 hover:text-blue-400'
                 }`}
               >
-                Chrono Thread
+                Reading Insights
               </Link>
               <Link
                 to="/publisher-resonance"
@@ -175,11 +175,11 @@ const Header = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/thread-map" className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 rounded-md">
+                  <Link to="/insights" className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 rounded-md">
                     <div className="w-4 h-4 flex items-center justify-center">
                       <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
                     </div>
-                    Chrono Thread
+                    Reading Insights
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
