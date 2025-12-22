@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Brain, BookOpen, Search, Map, Eye, Building, Mail } from "lucide-react";
+import { Brain, BookOpen, Search, Eye, Building, Mail } from "lucide-react";
 import Header from "@/components/Header";
 import { StandardButton } from "@/components/ui/standard-button";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
@@ -237,16 +237,16 @@ const Discovery: React.FC = () => {
 
             <div ref={addFeatureBlockRef} className="feature-block">
               <Link 
-                to="/thread-map" 
+                to="/insights" 
                 className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-blue-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10 flex items-center space-x-6 w-full"
               >
                 <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
-                  <Map className="w-6 h-6 text-blue-400" />
+                  <Brain className="w-6 h-6 text-blue-400" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-medium text-slate-200 mb-2">Chrono Thread</h2>
+                  <h2 className="text-xl font-medium text-slate-200 mb-2">Reading Insights</h2>
                   <p className="text-slate-400 leading-relaxed text-sm">
-                    Timeline consciousness map
+                    AI-powered reading analysis
                   </p>
                 </div>
               </Link>
