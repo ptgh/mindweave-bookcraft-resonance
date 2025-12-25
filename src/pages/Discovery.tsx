@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Brain, BookOpen, Search, Eye, Building, Mail } from "lucide-react";
+import { Brain, BookOpen, Search, Eye, Building, Mail, Users } from "lucide-react";
 import Header from "@/components/Header";
 import { StandardButton } from "@/components/ui/standard-button";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
@@ -11,6 +11,7 @@ import { NewsletterSignup } from "@/components/NewsletterSignup";
 import { NaturalLanguageSearchBar, SearchResultsView, SearchFilters, QuerySuggestions } from "@/components/search";
 import { semanticSearch, SemanticSearchResult, SearchFilters as SearchFiltersType } from "@/services/semanticSearchService";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
+import { CommunityModal } from "@/components/CommunityModal";
 
 // Type for passing book data to Signal Archive
 export interface SpotlightBook {
@@ -25,6 +26,7 @@ export interface SpotlightBook {
 
 const Discovery: React.FC = () => {
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showCommunityModal, setShowCommunityModal] = useState(false);
   const [searchResults, setSearchResults] = useState<SemanticSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -289,6 +291,23 @@ const Discovery: React.FC = () => {
               </Link>
             </div>
 
+            <div ref={addFeatureBlockRef} className="feature-block">
+              <button 
+                onClick={() => setShowCommunityModal(true)}
+                className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-emerald-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-emerald-500/10 flex items-center space-x-6 w-full text-left"
+              >
+                <div className="w-12 h-12 bg-emerald-500/20 rounded-lg flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
+                  <Users className="w-6 h-6 text-emerald-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-medium text-slate-200 mb-2">Community</h2>
+                  <p className="text-slate-400 leading-relaxed text-sm">
+                    Connect with other readers
+                  </p>
+                </div>
+              </button>
+            </div>
+
           </div>
 
           <div className="max-w-4xl mx-auto mt-16">
@@ -330,6 +349,10 @@ const Discovery: React.FC = () => {
         <ContactModal
           isOpen={showContactModal} 
           onClose={() => setShowContactModal(false)} 
+        />
+        <CommunityModal
+          isOpen={showCommunityModal}
+          onClose={() => setShowCommunityModal(false)}
         />
       </div>
     </>

@@ -50,7 +50,14 @@ export default function ReadingInsights() {
         return;
       }
 
-      setTransmissions(transmissionsData);
+      // Parse transmission data to match Transmission interface
+      const parsedTransmissions = transmissionsData.map(t => ({
+        ...t,
+        tags: t.tags ? (typeof t.tags === 'string' ? JSON.parse(t.tags) : t.tags) : [],
+        rating: t.resonance_labels ? (typeof t.resonance_labels === 'string' ? JSON.parse(t.resonance_labels) : t.resonance_labels) : {},
+      }));
+
+      setTransmissions(parsedTransmissions);
 
       // Get the current session for auth
       const { data: { session } } = await supabase.auth.getSession();
