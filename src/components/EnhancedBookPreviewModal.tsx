@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X, ExternalLink, Smartphone, Globe, Plus } from "lucide-react";
+import { X, ExternalLink, Smartphone, Globe, Plus, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EnrichedPublisherBook } from "@/services/publisherService";
@@ -11,6 +11,7 @@ import { searchFreeEbooks, EbookSearchResult } from "@/services/freeEbookService
 import { gsap } from "gsap";
 import { analyticsService } from "@/services/analyticsService";
 import { getOptimizedSettings } from "@/utils/performance";
+import ShareBookModal from "@/components/ShareBookModal";
 
 interface EnhancedBookPreviewModalProps {
   book: EnrichedPublisherBook;
@@ -24,6 +25,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   const [freeEbooks, setFreeEbooks] = useState<EbookSearchResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
   const { toast } = useEnhancedToast();
   const digitalCopyButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -502,6 +504,16 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
             Close
           </button>
           <button
+            onClick={() => setShowShareModal(true)}
+            className="h-9 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] text-xs rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa] flex items-center justify-center"
+            style={{
+              boxShadow: "0 0 0px transparent"
+            }}
+          >
+            <Share2 className="w-3 h-3 mr-1" />
+            Share
+          </button>
+          <button
             onClick={async () => {
               await analyticsService.logBookAdd(
                 { title: book.title, author: book.author, isbn: book.isbn },
@@ -520,6 +532,18 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
           </button>
         </div>
       </div>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <ShareBookModal
+          book={{
+            title: book.title,
+            author: book.author,
+            cover_url: coverUrl,
+          }}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
     </div>
   );
 
