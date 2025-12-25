@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useEnhancedToast } from './use-enhanced-toast';
@@ -41,17 +41,20 @@ export const useProfile = () => {
 
   useEffect(() => {
     const loadUserData = async () => {
-      if (user) {
-        setLoading(true);
-        try {
-          // Fetch both profile and role in parallel, wait for both
-          await Promise.all([fetchProfile(), fetchUserRole()]);
-        } finally {
-          setLoading(false);
-        }
-      } else {
+      if (!user) {
         setProfile(null);
         setUserRole(null);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        // Fetch both profile and role in parallel, then commit state together
+        const [nextProfile, nextRole] = await Promise.all([fetchProfile(), fetchUserRole()]);
+        setProfile(nextProfile);
+        setUserRole(nextRole);
+      } finally {
         setLoading(false);
       }
     };
@@ -85,29 +88,30 @@ export const useProfile = () => {
     }
   }, [user]);
 
-  const fetchProfile = async () => {
-    if (!user) return;
+  const fetchProfile = async (): Promise<UserProfile | null> => {
+    if (!user) return null;
 
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching profile:', error);
-        return;
+        return null;
       }
 
-      setProfile(data as UserProfile);
+      return (data as UserProfile) ?? null;
     } catch (error) {
       console.error('Error fetching profile:', error);
+      return null;
     }
   };
 
-  const fetchUserRole = async () => {
-    if (!user) return;
+  const fetchUserRole = async (): Promise<UserRole | null> => {
+    if (!user) return null;
 
     try {
       const { data, error } = await supabase
@@ -116,16 +120,17 @@ export const useProfile = () => {
         .eq('user_id', user.id)
         .order('granted_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error fetching user role:', error);
-        return;
+        return null;
       }
 
-      setUserRole(data);
+      return (data as UserRole) ?? null;
     } catch (error) {
       console.error('Error fetching user role:', error);
+      return null;
     }
   };
 
@@ -183,19 +188,19 @@ export const useProfile = () => {
     }
   };
 
-  const hasRole = (role: 'admin' | 'moderator' | 'user' | 'premium'): boolean => {
+  const hasRole = useCallback((role: 'admin' | 'moderator' | 'user' | 'premium'): boolean => {
     if (!userRole) return false;
-    
+
     // Admin has access to everything
     if (userRole.role === 'admin') return true;
-    
+
     // Check for specific role or higher
-    const roleHierarchy = { admin: 4, moderator: 3, premium: 2, user: 1 };
+    const roleHierarchy = { admin: 4, moderator: 3, premium: 2, user: 1 } as const;
     const userLevel = roleHierarchy[userRole.role];
     const requiredLevel = roleHierarchy[role];
-    
+
     return userLevel >= requiredLevel;
-  };
+  }, [userRole]);
 
   return {
     profile,
@@ -204,6 +209,10 @@ export const useProfile = () => {
     updateProfile,
     updateLastActive,
     hasRole,
-    refetch: fetchProfile
+    refetch: async () => {
+      const next = await fetchProfile();
+      setProfile(next);
+      return next;
+    }
   };
 };

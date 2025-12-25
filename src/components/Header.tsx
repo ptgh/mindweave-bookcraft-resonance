@@ -170,7 +170,7 @@ const Header = () => {
               <DropdownMenuContent 
                 align="end" 
                 sideOffset={8} 
-                className="z-[9999] min-w-56 bg-slate-900/95 backdrop-blur-xl border border-blue-500/20 shadow-2xl shadow-blue-500/10"
+                className="z-[9999] min-w-56 max-h-[calc(100vh-6rem)] overflow-y-auto overscroll-contain bg-slate-900/95 backdrop-blur-xl border border-blue-500/20 shadow-2xl shadow-blue-500/10 [webkit-overflow-scrolling:touch]"
               >
                 <DropdownMenuItem asChild>
                   <Link to="/" className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 rounded-md">
