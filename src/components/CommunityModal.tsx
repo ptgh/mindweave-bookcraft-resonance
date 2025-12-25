@@ -218,14 +218,15 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
     }
   };
 
-  if (!isOpen) return null;
-
   // Check if user is a mutual follow (they follow you back)
-  const isMutualFollow = useCallback((userId: string) => {
+  const isMutualFollow = (userId: string) => {
     const theyFollowYou = followers.some(f => f.id === userId);
     const youFollowThem = isFollowing(userId);
     return theyFollowYou && youFollowThem;
-  }, [followers, isFollowing]);
+  };
+
+  if (!isOpen) return null;
+
 
   const UserCard = ({ user, showFollow = true, onClick }: { user: UserWithStats; showFollow?: boolean; onClick?: () => void }) => {
     const mutual = isMutualFollow(user.id);
