@@ -10,6 +10,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { queueAuthorForEnrichment, triggerEnrichmentJob, checkEnrichmentStatus } from '@/services/authorEnrichmentService';
 import { useEnhancedToast } from '@/hooks/use-enhanced-toast';
 import { AuthorRelationshipModal } from './AuthorRelationshipModal';
+import EnhancedBookPreviewModal from './EnhancedBookPreviewModal';
+import { EnrichedPublisherBook } from '@/services/publisherService';
 
 interface AuthorPopupProps {
   author: ScifiAuthor | null;
@@ -34,6 +36,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
   const [enrichmentStatus, setEnrichmentStatus] = useState<string>('');
   const [fallbackWorks, setFallbackWorks] = useState<string[]>([]);
   const [isRelationshipModalOpen, setIsRelationshipModalOpen] = useState(false);
+  const [selectedWork, setSelectedWork] = useState<EnrichedPublisherBook | null>(null);
   const { toast } = useEnhancedToast();
 
   // Update current author when prop changes
@@ -399,9 +402,25 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
                 {(currentAuthor.notable_works && currentAuthor.notable_works.length > 0 ? currentAuthor.notable_works : fallbackWorks)
                   .slice(0, 4)
                   .map((work, index) => (
-                    <div key={index} className="text-sm text-slate-300">
-                      • {work}
-                    </div>
+                    <button
+                      key={index}
+                      onClick={() => {
+                        const bookPreview: EnrichedPublisherBook = {
+                          id: `notable-${index}`,
+                          title: work,
+                          author: currentAuthor.name,
+                          series_id: '',
+                          created_at: new Date().toISOString(),
+                        };
+                        setSelectedWork(bookPreview);
+                      }}
+                      className="text-sm text-slate-300 hover:text-blue-300 transition-colors text-left w-full group relative"
+                    >
+                      <span className="relative">
+                        • {work}
+                        <span className="absolute bottom-0 left-2 w-0 h-0.5 bg-blue-400 group-hover:w-[calc(100%-8px)] transition-all duration-300 ease-out" />
+                      </span>
+                    </button>
                   ))}
                 {((currentAuthor.notable_works?.length || fallbackWorks.length) > 4) && (
                   <div className="text-sm text-slate-400 italic">
@@ -458,6 +477,20 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
           isOpen={isRelationshipModalOpen}
           onClose={() => setIsRelationshipModalOpen(false)}
           author={currentAuthor}
+        />
+      )}
+
+      {selectedWork && (
+        <EnhancedBookPreviewModal
+          book={selectedWork}
+          onClose={() => setSelectedWork(null)}
+          onAddBook={() => {
+            setSelectedWork(null);
+            toast({
+              title: "Book Added",
+              description: `"${selectedWork.title}" has been noted.`,
+            });
+          }}
         />
       )}
     </div>
