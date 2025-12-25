@@ -388,6 +388,140 @@ export type Database = {
         }
         Relationships: []
       }
+      book_post_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "book_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "book_post_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_post_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "book_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "book_post_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_posts: {
+        Row: {
+          book_author: string
+          book_cover_url: string | null
+          book_isbn: string | null
+          book_title: string
+          comments_count: number | null
+          content: string
+          created_at: string | null
+          id: string
+          is_featured: boolean | null
+          likes_count: number | null
+          post_type: string | null
+          transmission_id: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          book_author: string
+          book_cover_url?: string | null
+          book_isbn?: string | null
+          book_title: string
+          comments_count?: number | null
+          content: string
+          created_at?: string | null
+          id?: string
+          is_featured?: boolean | null
+          likes_count?: number | null
+          post_type?: string | null
+          transmission_id?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          book_author?: string
+          book_cover_url?: string | null
+          book_isbn?: string | null
+          book_title?: string
+          comments_count?: number | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_featured?: boolean | null
+          likes_count?: number | null
+          post_type?: string | null
+          transmission_id?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       book_recommendations_cache: {
         Row: {
           cached_at: string | null
@@ -1301,6 +1435,8 @@ export type Database = {
         Args: { author_name: string }
         Returns: string
       }
+      get_community_featured: { Args: never; Returns: Json }
+      get_community_stats: { Args: never; Returns: Json }
       get_current_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]

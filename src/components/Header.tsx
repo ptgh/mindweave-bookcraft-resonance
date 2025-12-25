@@ -164,6 +164,16 @@ const Header = () => {
               >
                 Neural Map
               </Link>
+              <Link
+                to="/community"
+                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
+                  location.pathname === '/community' 
+                    ? 'text-emerald-400' 
+                    : 'text-slate-300 hover:text-emerald-400'
+                }`}
+              >
+                Community
+              </Link>
               
               {/* Desktop Admin Dropdown */}
               {hasRole('admin') && (
