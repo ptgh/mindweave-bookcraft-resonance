@@ -33,29 +33,38 @@ export interface UserRole {
 }
 
 export const useProfile = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useEnhancedToast();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(false);
+
+  // Combined loading: true if auth is loading OR if we have a user and data is still being fetched
+  const loading = authLoading || (!!user && dataLoading && userRole === null);
 
   useEffect(() => {
     const loadUserData = async () => {
+      if (authLoading) {
+        // Wait for auth to finish
+        return;
+      }
+      
       if (!user) {
         setProfile(null);
         setUserRole(null);
-        setLoading(false);
+        setDataLoading(false);
         return;
       }
 
-      setLoading(true);
+      setDataLoading(true);
       try {
         // Fetch both profile and role in parallel, then commit state together
         const [nextProfile, nextRole] = await Promise.all([fetchProfile(), fetchUserRole()]);
+        console.log('Profile/Role loaded:', { profile: !!nextProfile, role: nextRole?.role });
         setProfile(nextProfile);
         setUserRole(nextRole);
       } finally {
-        setLoading(false);
+        setDataLoading(false);
       }
     };
 
