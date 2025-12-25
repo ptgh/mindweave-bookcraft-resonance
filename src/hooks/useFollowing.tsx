@@ -20,13 +20,16 @@ export interface FollowedTransmission {
 }
 
 export const useFollowing = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [following, setFollowing] = useState<UserProfile[]>([]);
   const [followers, setFollowers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchFollowing = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setFollowing([]);
+      return;
+    }
     
     setLoading(true);
     try {
@@ -35,7 +38,11 @@ export const useFollowing = () => {
         .select('following_id')
         .eq('follower_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching following:', error);
+        setFollowing([]);
+        return;
+      }
 
       if (data && data.length > 0) {
         const followingIds = data.map(f => f.following_id);
@@ -44,20 +51,28 @@ export const useFollowing = () => {
           .select('id, display_name, avatar_url, bio')
           .in('id', followingIds);
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Error fetching following profiles:', profileError);
+          setFollowing([]);
+          return;
+        }
         setFollowing(profiles || []);
       } else {
         setFollowing([]);
       }
     } catch (error) {
       console.error('Error fetching following:', error);
+      setFollowing([]);
     } finally {
       setLoading(false);
     }
   }, [user]);
 
   const fetchFollowers = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setFollowers([]);
+      return;
+    }
 
     try {
       const { data, error } = await supabase
@@ -65,7 +80,11 @@ export const useFollowing = () => {
         .select('follower_id')
         .eq('following_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching followers:', error);
+        setFollowers([]);
+        return;
+      }
 
       if (data && data.length > 0) {
         const followerIds = data.map(f => f.follower_id);
@@ -74,13 +93,18 @@ export const useFollowing = () => {
           .select('id, display_name, avatar_url, bio')
           .in('id', followerIds);
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Error fetching follower profiles:', profileError);
+          setFollowers([]);
+          return;
+        }
         setFollowers(profiles || []);
       } else {
         setFollowers([]);
       }
     } catch (error) {
       console.error('Error fetching followers:', error);
+      setFollowers([]);
     }
   }, [user]);
 
@@ -179,9 +203,18 @@ export const useFollowing = () => {
   }, [user, following]);
 
   useEffect(() => {
+    // Only fetch if auth is ready and we have a user
+    if (authLoading) return;
+    
+    if (!user) {
+      setFollowing([]);
+      setFollowers([]);
+      return;
+    }
+    
     fetchFollowing();
     fetchFollowers();
-  }, [fetchFollowing, fetchFollowers]);
+  }, [fetchFollowing, fetchFollowers, user, authLoading]);
 
   return {
     following,

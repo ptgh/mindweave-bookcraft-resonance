@@ -149,6 +149,7 @@ interface BookPreviewModalProps {
 const BookPreviewModal = ({ transmission, onClose }: BookPreviewModalProps) => {
   const [googleUrl, setGoogleUrl] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const isClosingRef = useRef(false);
 
   useEffect(() => {
     const fetchGoogle = async () => {
@@ -171,19 +172,26 @@ const BookPreviewModal = ({ transmission, onClose }: BookPreviewModalProps) => {
     }
   }, []);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
+    if (isClosingRef.current) return;
+    isClosingRef.current = true;
+    
     if (modalRef.current) {
       gsap.to(modalRef.current, {
         opacity: 0,
         scale: 0.95,
         duration: 0.2,
         ease: "power2.in",
-        onComplete: onClose
+        onComplete: () => {
+          isClosingRef.current = false;
+          onClose();
+        }
       });
     } else {
+      isClosingRef.current = false;
       onClose();
     }
-  };
+  }, [onClose]);
 
   const handleBackdropClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();

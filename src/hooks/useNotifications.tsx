@@ -16,13 +16,17 @@ export interface Notification {
 }
 
 export const useNotifications = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const fetchNotifications = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
     
     setLoading(true);
     try {
@@ -33,7 +37,12 @@ export const useNotifications = () => {
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        setNotifications([]);
+        setUnreadCount(0);
+        return;
+      }
 
       // Fetch additional data for notifications
       const enrichedNotifications = await Promise.all((data || []).map(async (n) => {
@@ -45,7 +54,7 @@ export const useNotifications = () => {
             .from('profiles')
             .select('display_name')
             .eq('id', n.from_user_id)
-            .single();
+            .maybeSingle();
           from_user_name = profile?.display_name || 'Someone';
         }
 
@@ -54,7 +63,7 @@ export const useNotifications = () => {
             .from('transmissions')
             .select('title')
             .eq('id', n.transmission_id)
-            .single();
+            .maybeSingle();
           transmission_title = transmission?.title || 'a book';
         }
 
@@ -65,6 +74,8 @@ export const useNotifications = () => {
       setUnreadCount(enrichedNotifications.filter(n => !n.is_read).length);
     } catch (error) {
       console.error('Error fetching notifications:', error);
+      setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setLoading(false);
     }
@@ -127,31 +138,38 @@ export const useNotifications = () => {
   }, [user]);
 
   useEffect(() => {
+    // Only fetch if auth is done loading and we have a user
+    if (authLoading) return;
+    
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
+
     fetchNotifications();
 
     // Set up realtime subscription
-    if (user) {
-      const channel = supabase
-        .channel('notifications-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${user.id}`
-          },
-          () => {
-            fetchNotifications();
-          }
-        )
-        .subscribe();
+    const channel = supabase
+      .channel('notifications-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          fetchNotifications();
+        }
+      )
+      .subscribe();
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [user, fetchNotifications]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, authLoading, fetchNotifications]);
 
   return {
     notifications,

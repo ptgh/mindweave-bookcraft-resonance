@@ -2,13 +2,18 @@ import { useState, useRef, useEffect } from 'react';
 import { Bell, Check, UserPlus, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNotifications, Notification } from '@/hooks/useNotifications';
+import { useAuth } from '@/hooks/useAuth';
 import { formatDistanceToNow } from 'date-fns';
 import gsap from 'gsap';
 
 export const NotificationsDropdown = () => {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { user } = useAuth();
+  const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Don't render if no user
+  if (!user) return null;
 
   useEffect(() => {
     if (isOpen && dropdownRef.current) {
