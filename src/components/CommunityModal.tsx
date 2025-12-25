@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Search, UserPlus, UserMinus, Users, Compass, ArrowLeft, BookOpen } from 'lucide-react';
+import { X, Search, UserPlus, UserMinus, Users, Compass, ArrowLeft, BookOpen, ArrowLeftRight } from 'lucide-react';
 import { useFollowing, UserProfile, FollowedTransmission } from '@/hooks/useFollowing';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -210,53 +210,78 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
 
   if (!isOpen) return null;
 
-  const UserCard = ({ user, showFollow = true, onClick }: { user: UserWithStats; showFollow?: boolean; onClick?: () => void }) => (
-    <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
-      <button 
-        onClick={onClick}
-        className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
-      >
-        <Avatar className="w-10 h-10">
-          <AvatarImage src={user.avatar_url || undefined} />
-          <AvatarFallback className="bg-slate-700 text-slate-300">
-            {user.display_name?.charAt(0).toUpperCase() || '?'}
-          </AvatarFallback>
-        </Avatar>
-        <div>
-          <p className="text-slate-200 font-medium">{user.display_name || 'Anonymous'}</p>
-          {user.transmission_count !== undefined ? (
-            <p className="text-slate-400 text-xs">{user.transmission_count} books</p>
-          ) : user.bio && (
-            <p className="text-slate-400 text-xs line-clamp-1">{user.bio}</p>
-          )}
-        </div>
-      </button>
-      {showFollow && (
-        <div onClick={(e) => e.stopPropagation()}>
-          {isFollowing(user.id) ? (
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={() => handleUnfollow(user.id)}
-              className="gap-1"
-            >
-              <UserMinus className="w-4 h-4" />
-              Unfollow
-            </Button>
-          ) : (
-            <Button 
-              size="sm" 
-              onClick={() => handleFollow(user.id)}
-              className="gap-1"
-            >
-              <UserPlus className="w-4 h-4" />
-              Follow
-            </Button>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  // Check if user is a mutual follow (they follow you back)
+  const isMutualFollow = useCallback((userId: string) => {
+    const theyFollowYou = followers.some(f => f.id === userId);
+    const youFollowThem = isFollowing(userId);
+    return theyFollowYou && youFollowThem;
+  }, [followers, isFollowing]);
+
+  const UserCard = ({ user, showFollow = true, onClick }: { user: UserWithStats; showFollow?: boolean; onClick?: () => void }) => {
+    const mutual = isMutualFollow(user.id);
+    
+    return (
+      <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+        <button 
+          onClick={onClick}
+          className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
+        >
+          <div className="relative">
+            <Avatar className="w-10 h-10">
+              <AvatarImage src={user.avatar_url || undefined} />
+              <AvatarFallback className="bg-slate-700 text-slate-300">
+                {user.display_name?.charAt(0).toUpperCase() || '?'}
+              </AvatarFallback>
+            </Avatar>
+            {mutual && (
+              <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-slate-800" title="Mutual follow">
+                <ArrowLeftRight className="w-3 h-3 text-white" />
+              </span>
+            )}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="text-slate-200 font-medium">{user.display_name || 'Anonymous'}</p>
+              {mutual && (
+                <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full font-medium">
+                  Mutual
+                </span>
+              )}
+            </div>
+            {user.transmission_count !== undefined ? (
+              <p className="text-slate-400 text-xs">{user.transmission_count} books</p>
+            ) : user.bio && (
+              <p className="text-slate-400 text-xs line-clamp-1">{user.bio}</p>
+            )}
+          </div>
+        </button>
+        {showFollow && (
+          <div onClick={(e) => e.stopPropagation()}>
+            {isFollowing(user.id) ? (
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => handleUnfollow(user.id)}
+                className="gap-1"
+              >
+                <UserMinus className="w-4 h-4" />
+                Unfollow
+              </Button>
+            ) : (
+              <Button 
+                size="sm" 
+                onClick={() => handleFollow(user.id)}
+                className="gap-1"
+              >
+                <UserPlus className="w-4 h-4" />
+                Follow
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // User Profile View
   if (selectedUser) {
