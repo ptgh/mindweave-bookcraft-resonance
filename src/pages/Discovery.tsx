@@ -292,8 +292,8 @@ const Discovery: React.FC = () => {
             </div>
 
             <div ref={addFeatureBlockRef} className="feature-block">
-              <button 
-                onClick={() => setShowCommunityModal(true)}
+              <Link 
+                to="/community"
                 className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-emerald-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-emerald-500/10 flex items-center space-x-6 w-full text-left"
               >
                 <div className="w-12 h-12 bg-emerald-500/20 rounded-lg flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
@@ -305,7 +305,7 @@ const Discovery: React.FC = () => {
                     Connect with other readers
                   </p>
                 </div>
-              </button>
+              </Link>
             </div>
 
           </div>
