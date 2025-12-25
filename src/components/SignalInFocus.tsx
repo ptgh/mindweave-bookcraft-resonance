@@ -1,7 +1,8 @@
 
-import { Circle } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { Circle, Users } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
+import { CommunityModal } from "./CommunityModal";
 
 interface SignalInFocusProps {
   book: {
@@ -10,11 +11,13 @@ interface SignalInFocusProps {
     coverUrl?: string;
   };
   onClick?: () => void;
+  showCommunity?: boolean;
 }
 
-const SignalInFocus = ({ book, onClick }: SignalInFocusProps) => {
+const SignalInFocus = ({ book, onClick, showCommunity = true }: SignalInFocusProps) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const leftButtonRef = useRef<HTMLButtonElement>(null);
+  const [showCommunityModal, setShowCommunityModal] = useState(false);
 
   useEffect(() => {
     if (!onClick) return;
@@ -50,12 +53,23 @@ const SignalInFocus = ({ book, onClick }: SignalInFocusProps) => {
   }, [onClick]);
 
   return (
+    <>
     <div className="bg-slate-800/30 border border-slate-600 rounded-lg p-6 mb-8">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-slate-400 text-sm font-medium tracking-wider">
           SIGNAL IN FOCUS
         </h2>
         <div className="flex items-center space-x-2">
+          {showCommunity && (
+            <button
+              onClick={() => setShowCommunityModal(true)}
+              className="relative z-10 cursor-pointer hover:scale-110 transition-transform duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded-full p-1 -m-1"
+              aria-label="Community"
+              title="Explore Community"
+            >
+              <Users className="w-4 h-4 text-emerald-400" />
+            </button>
+          )}
           {onClick ? (
             <button
               ref={buttonRef}
@@ -122,6 +136,12 @@ const SignalInFocus = ({ book, onClick }: SignalInFocusProps) => {
         </div>
       </div>
     </div>
+    
+    <CommunityModal 
+      isOpen={showCommunityModal} 
+      onClose={() => setShowCommunityModal(false)} 
+    />
+    </>
   );
 };
 
