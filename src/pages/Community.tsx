@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Users, Plus, Filter } from 'lucide-react';
+import { Users, Plus, MessageCircle, Star, Quote, ThumbsUp } from 'lucide-react';
 import Header from '@/components/Header';
 import { SEOHead } from '@/components/SEOHead';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BookPostCard, BookPostForm, FeaturedSection, CommunityStats, NetworkSection } from '@/components/community';
 import { useBookPosts } from '@/hooks/useBookPosts';
 import { useAuth } from '@/hooks/useAuth';
@@ -166,12 +166,24 @@ const Community: React.FC = () => {
                 </div>
 
                 <div className="p-5 rounded-xl bg-gradient-to-br from-emerald-500/10 to-blue-500/10 border border-emerald-500/20">
-                  <h3 className="text-sm font-medium text-emerald-400 mb-2">Post Types</h3>
-                  <ul className="text-xs text-slate-400 space-y-1">
-                    <li>💬 <strong>Discussion</strong> - Start a conversation</li>
-                    <li>⭐ <strong>Review</strong> - Share your verdict</li>
-                    <li>💡 <strong>Quote</strong> - Highlight a passage</li>
-                    <li>📚 <strong>Recommendation</strong> - Suggest to others</li>
+                  <h3 className="text-sm font-medium text-emerald-400 mb-3">Post Types</h3>
+                  <ul className="text-xs text-slate-400 space-y-2">
+                    <li className="flex items-center gap-2">
+                      <MessageCircle className="w-3.5 h-3.5 text-slate-500" />
+                      <span><strong className="text-slate-300">Discussion</strong> - Start a conversation</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Star className="w-3.5 h-3.5 text-slate-500" />
+                      <span><strong className="text-slate-300">Review</strong> - Share your verdict</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Quote className="w-3.5 h-3.5 text-slate-500" />
+                      <span><strong className="text-slate-300">Quote</strong> - Highlight a passage</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <ThumbsUp className="w-3.5 h-3.5 text-slate-500" />
+                      <span><strong className="text-slate-300">Recommendation</strong> - Suggest to others</span>
+                    </li>
                   </ul>
                 </div>
               </div>
