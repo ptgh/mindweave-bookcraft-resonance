@@ -37,6 +37,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
   const [fallbackWorks, setFallbackWorks] = useState<string[]>([]);
   const [isRelationshipModalOpen, setIsRelationshipModalOpen] = useState(false);
   const [selectedWork, setSelectedWork] = useState<EnrichedPublisherBook | null>(null);
+  const [showAllWorks, setShowAllWorks] = useState(false);
   const { toast } = useEnhancedToast();
 
   // Update current author when prop changes
@@ -419,9 +420,9 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
                   <BookOpen className="w-4 h-4 text-blue-400" />
                   <span className="text-sm font-medium text-blue-300">Notable Works</span>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   {validWorks
-                    .slice(0, 4)
+                    .slice(0, showAllWorks ? validWorks.length : 4)
                     .map((work, index) => (
                       <button
                         key={index}
@@ -435,7 +436,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
                           };
                           setSelectedWork(bookPreview);
                         }}
-                        className="text-sm text-slate-300 hover:text-blue-300 transition-colors text-left w-full group relative"
+                        className="text-sm text-slate-300 hover:text-blue-300 transition-colors text-left w-full group relative py-0.5"
                       >
                         <span className="relative">
                           • {work}
@@ -443,10 +444,21 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
                         </span>
                       </button>
                     ))}
-                  {validWorks.length > 4 && (
-                    <div className="text-sm text-slate-400 italic">
+                  {validWorks.length > 4 && !showAllWorks && (
+                    <button
+                      onClick={() => setShowAllWorks(true)}
+                      className="text-sm text-blue-400 hover:text-blue-300 italic transition-colors pt-0.5"
+                    >
                       ...and {validWorks.length - 4} more works
-                    </div>
+                    </button>
+                  )}
+                  {showAllWorks && validWorks.length > 4 && (
+                    <button
+                      onClick={() => setShowAllWorks(false)}
+                      className="text-sm text-slate-400 hover:text-slate-300 italic transition-colors pt-0.5"
+                    >
+                      Show less
+                    </button>
                   )}
                 </div>
               </div>
