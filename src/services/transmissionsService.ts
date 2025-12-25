@@ -88,6 +88,29 @@ export const saveTransmission = async (transmission: Omit<Transmission, 'id' | '
   }
   
   console.log('Transmission saved successfully:', data);
+  
+  // Notify followers about the new transmission
+  try {
+    const { data: followers } = await supabase
+      .from('user_follows')
+      .select('follower_id')
+      .eq('following_id', user.id);
+    
+    if (followers && followers.length > 0) {
+      const notifications = followers.map(f => ({
+        user_id: f.follower_id,
+        type: 'new_transmission',
+        from_user_id: user.id,
+        transmission_id: data.id
+      }));
+      
+      await supabase.from('notifications').insert(notifications);
+    }
+  } catch (notifError) {
+    console.error('Error creating notifications:', notifError);
+    // Don't fail the transmission save for notification errors
+  }
+  
   return data;
 };
 
