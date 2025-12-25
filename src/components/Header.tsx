@@ -1,52 +1,36 @@
-import { BookOpen, LogOut, Instagram, Menu, Shield, X } from "lucide-react";
-import { useState, useCallback } from "react";
+import { BookOpen, LogOut, Instagram, Menu, Shield } from "lucide-react";
+import { useCallback } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { StandardButton } from "./ui/standard-button";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
-import { useSwipeGesture } from "@/hooks/useSwipeGesture";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { hasRole } = useProfile();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const haptic = useHapticFeedback();
-
-  const closeMobileMenu = useCallback(() => {
-    haptic.impact.light();
-    setMobileMenuOpen(false);
-  }, [haptic]);
 
   const handleMenuItemTap = useCallback(() => {
     haptic.selection();
-    closeMobileMenu();
-  }, [haptic, closeMobileMenu]);
+  }, [haptic]);
 
   const handleSignOut = useCallback(() => {
     haptic.impact.medium();
-    closeMobileMenu();
     signOut();
-  }, [haptic, closeMobileMenu, signOut]);
+  }, [haptic, signOut]);
 
   const handleOpenMenu = useCallback(() => {
     haptic.impact.light();
-    setMobileMenuOpen(true);
   }, [haptic]);
-
-  // Swipe right to close the menu (since it slides in from right)
-  const { handlers: swipeHandlers } = useSwipeGesture(
-    {
-      onSwipeRight: closeMobileMenu,
-    },
-    {
-      threshold: 50,
-      velocityThreshold: 0.3,
-      direction: 'right',
-    }
-  );
   
   return (
     <header className="bg-slate-900">
@@ -196,9 +180,9 @@ const Header = () => {
               </div>
             )}
 
-            {/* Mobile Menu - Full-height Sheet with swipe support */}
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild>
+            {/* Mobile Menu - Dropdown with scroll support */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <button 
                   onClick={handleOpenMenu}
                   className="lg:hidden inline-flex items-center justify-center rounded p-2 text-slate-300 hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
@@ -206,181 +190,168 @@ const Header = () => {
                 >
                   <Menu className="w-6 h-6" />
                 </button>
-              </SheetTrigger>
-              <SheetContent 
-                side="right" 
-                className="w-full sm:w-80 bg-slate-900/98 backdrop-blur-xl border-l border-blue-500/20 p-0 overflow-hidden"
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align="end" 
+                sideOffset={8} 
+                className="z-[9999] min-w-56 max-h-[calc(100vh-6rem)] overflow-y-auto overscroll-contain bg-slate-900/95 backdrop-blur-xl border border-blue-500/20 shadow-2xl shadow-blue-500/10 [webkit-overflow-scrolling:touch]"
               >
-                <div 
-                  className="flex flex-col h-full touch-pan-y"
-                  {...swipeHandlers}
-                >
-                  {/* Sheet Header */}
-                  <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-blue-400 rounded-full animate-pulse" />
-                      <span className="text-lg font-light text-slate-200 tracking-wider">LEAFNODE</span>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/"
+                    onClick={handleMenuItemTap}
+                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                      location.pathname === '/'
+                        ? 'text-blue-400'
+                        : 'text-slate-200'
+                    }`}
+                  >
+                    <div className="w-2.5 h-2.5 rounded-full bg-blue-400/50" />
+                    Home
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/library"
+                    onClick={handleMenuItemTap}
+                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                      location.pathname === '/library'
+                        ? 'text-blue-400'
+                        : 'text-slate-200'
+                    }`}
+                  >
+                    <BookOpen className="w-4 h-4 text-blue-400/70" />
+                    Transmissions
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/book-browser"
+                    onClick={handleMenuItemTap}
+                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                      location.pathname === '/book-browser'
+                        ? 'text-blue-400'
+                        : 'text-slate-200'
+                    }`}
+                  >
+                    <div className="w-4 h-4 rounded-full border-2 border-dashed border-blue-400/50 flex items-center justify-center">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
                     </div>
-                    <button
-                      onClick={closeMobileMenu}
-                      className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors active:scale-95"
-                      aria-label="Close menu"
+                    Signal Archive
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/author-matrix"
+                    onClick={handleMenuItemTap}
+                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                      location.pathname === '/author-matrix'
+                        ? 'text-blue-400'
+                        : 'text-slate-200'
+                    }`}
+                  >
+                    <div className="w-4 h-4 grid grid-cols-2 gap-0.5">
+                      <div className="w-1.5 h-1.5 rounded-sm bg-blue-400/50" />
+                      <div className="w-1.5 h-1.5 rounded-sm bg-blue-400/70" />
+                      <div className="w-1.5 h-1.5 rounded-sm bg-blue-400/70" />
+                      <div className="w-1.5 h-1.5 rounded-sm bg-blue-400/50" />
+                    </div>
+                    Author Matrix
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/insights"
+                    onClick={handleMenuItemTap}
+                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                      location.pathname === '/insights'
+                        ? 'text-blue-400'
+                        : 'text-slate-200'
+                    }`}
+                  >
+                    <div className="w-4 h-4 flex items-center justify-center">
+                      <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
+                    </div>
+                    Reading Insights
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/publisher-resonance"
+                    onClick={handleMenuItemTap}
+                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                      location.pathname === '/publisher-resonance'
+                        ? 'text-blue-400'
+                        : 'text-slate-200'
+                    }`}
+                  >
+                    <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-400/30 to-purple-400/30 border border-blue-400/50" />
+                    Publisher Resonance
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator className="bg-blue-500/20" />
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/test-brain"
+                    onClick={handleMenuItemTap}
+                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                      location.pathname === '/test-brain'
+                        ? 'text-blue-400'
+                        : 'text-slate-200'
+                    }`}
+                  >
+                    <div className="w-4 h-4 relative">
+                      <div className="absolute inset-0 rounded-full bg-blue-400/20 animate-pulse" />
+                      <div className="absolute inset-0.5 rounded-full bg-blue-400/40" />
+                    </div>
+                    Neural Map
+                  </Link>
+                </DropdownMenuItem>
+
+                {hasRole('admin') && (
+                  <>
+                    <DropdownMenuSeparator className="bg-amber-500/20" />
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/admin/enrichment"
+                        onClick={handleMenuItemTap}
+                        className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                          location.pathname.startsWith('/admin')
+                            ? 'text-amber-400'
+                            : 'text-amber-300/70 hover:text-amber-400'
+                        }`}
+                      >
+                        <Shield className="w-4 h-4 text-amber-400/70" />
+                        Admin
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+
+                {user && (
+                  <>
+                    <DropdownMenuSeparator className="bg-slate-700/50" />
+                    <div className="px-3 py-2 text-xs text-slate-400 truncate">
+                      {user.email}
+                    </div>
+                    <DropdownMenuItem 
+                      onClick={handleSignOut}
+                      className="flex items-center gap-3 px-3 py-2.5 cursor-pointer text-slate-200 hover:text-red-400 active:scale-[0.98]"
                     >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-
-                  {/* Swipe indicator */}
-                  <div className="flex justify-center py-2">
-                    <div className="w-10 h-1 rounded-full bg-slate-700" />
-                  </div>
-
-                  {/* Scrollable Nav Items */}
-                  <nav className="flex-1 overflow-y-auto overscroll-contain py-2 px-2" role="navigation" aria-label="Mobile navigation">
-                    <div className="space-y-1">
-                      <Link
-                        to="/"
-                        onClick={handleMenuItemTap}
-                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 active:scale-[0.98] ${
-                          location.pathname === '/'
-                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400 active:bg-slate-700'
-                        }`}
-                      >
-                        <div className="w-3 h-3 rounded-full bg-blue-400/50" />
-                        Home
-                      </Link>
-
-                      <Link
-                        to="/library"
-                        onClick={handleMenuItemTap}
-                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 active:scale-[0.98] ${
-                          location.pathname === '/library'
-                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400 active:bg-slate-700'
-                        }`}
-                      >
-                        <BookOpen className="w-5 h-5 text-blue-400/70" />
-                        Transmissions
-                      </Link>
-
-                      <Link
-                        to="/book-browser"
-                        onClick={handleMenuItemTap}
-                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 active:scale-[0.98] ${
-                          location.pathname === '/book-browser'
-                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400 active:bg-slate-700'
-                        }`}
-                      >
-                        <div className="w-5 h-5 rounded-full border-2 border-dashed border-blue-400/50 flex items-center justify-center">
-                          <div className="w-2 h-2 rounded-full bg-blue-400" />
-                        </div>
-                        Signal Archive
-                      </Link>
-
-                      <Link
-                        to="/author-matrix"
-                        onClick={handleMenuItemTap}
-                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 active:scale-[0.98] ${
-                          location.pathname === '/author-matrix'
-                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400 active:bg-slate-700'
-                        }`}
-                      >
-                        <div className="w-5 h-5 grid grid-cols-2 gap-0.5">
-                          <div className="w-2 h-2 rounded-sm bg-blue-400/50" />
-                          <div className="w-2 h-2 rounded-sm bg-blue-400/70" />
-                          <div className="w-2 h-2 rounded-sm bg-blue-400/70" />
-                          <div className="w-2 h-2 rounded-sm bg-blue-400/50" />
-                        </div>
-                        Author Matrix
-                      </Link>
-
-                      <Link
-                        to="/insights"
-                        onClick={handleMenuItemTap}
-                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 active:scale-[0.98] ${
-                          location.pathname === '/insights'
-                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400 active:bg-slate-700'
-                        }`}
-                      >
-                        <div className="w-5 h-5 flex items-center justify-center">
-                          <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
-                        </div>
-                        Reading Insights
-                      </Link>
-
-                      <Link
-                        to="/publisher-resonance"
-                        onClick={handleMenuItemTap}
-                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 active:scale-[0.98] ${
-                          location.pathname === '/publisher-resonance'
-                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400 active:bg-slate-700'
-                        }`}
-                      >
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-400/30 to-purple-400/30 border border-blue-400/50" />
-                        Publisher Resonance
-                      </Link>
-
-                      <div className="h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent my-3" />
-
-                      <Link
-                        to="/test-brain"
-                        onClick={handleMenuItemTap}
-                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 active:scale-[0.98] ${
-                          location.pathname === '/test-brain'
-                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400 active:bg-slate-700'
-                        }`}
-                      >
-                        <div className="w-5 h-5 relative">
-                          <div className="absolute inset-0 rounded-full bg-blue-400/20 animate-pulse" />
-                          <div className="absolute inset-1 rounded-full bg-blue-400/40" />
-                        </div>
-                        Neural Map
-                      </Link>
-
-                      {hasRole('admin') && (
-                        <>
-                          <div className="h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent my-3" />
-                          <Link
-                            to="/admin/enrichment"
-                            onClick={handleMenuItemTap}
-                            className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 active:scale-[0.98] ${
-                              location.pathname.startsWith('/admin')
-                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                                : 'text-amber-300 hover:bg-amber-500/10 hover:text-amber-400 active:bg-amber-500/20'
-                            }`}
-                          >
-                            <Shield className="w-5 h-5 text-amber-400/70" />
-                            Admin Panel
-                          </Link>
-                        </>
-                      )}
-                    </div>
-                  </nav>
-
-                  {/* Footer with User Info & Sign Out */}
-                  {user && (
-                    <div className="border-t border-slate-700/50 p-4 space-y-3">
-                      <div className="text-sm text-slate-400 truncate px-2">
-                        {user.email}
-                      </div>
-                      <button
-                        onClick={handleSignOut}
-                        className="flex items-center justify-center gap-2 w-full min-h-[52px] px-4 py-3 rounded-xl text-base font-medium text-slate-200 bg-slate-800 hover:bg-red-500/20 hover:text-red-400 active:scale-[0.98] active:bg-red-500/30 transition-all duration-200"
-                      >
-                        <LogOut className="w-5 h-5" />
-                        Sign Out
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </SheetContent>
-            </Sheet>
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
