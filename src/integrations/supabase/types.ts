@@ -662,6 +662,44 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          from_user_id: string | null
+          id: string
+          is_read: boolean | null
+          transmission_id: number | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          from_user_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          transmission_id?: number | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          from_user_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          transmission_id?: number | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_transmission_id_fkey"
+            columns: ["transmission_id"]
+            isOneToOne: false
+            referencedRelation: "transmissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       performance_metrics: {
         Row: {
           context: string | null

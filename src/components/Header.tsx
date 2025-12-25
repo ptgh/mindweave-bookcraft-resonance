@@ -1,10 +1,12 @@
-import { BookOpen, LogOut, Instagram, Menu, Shield, ChevronDown, Database, Sparkles } from "lucide-react";
+import { BookOpen, LogOut, Instagram, Menu, Shield, ChevronDown, Database, Sparkles, User } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { StandardButton } from "./ui/standard-button";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
+import { NotificationsDropdown } from "./NotificationsDropdown";
+import { ProfileEditModal } from "./ProfileEditModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +25,7 @@ const Header = () => {
   const { hasRole } = useProfile();
   const haptic = useHapticFeedback();
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+  const [showProfileEdit, setShowProfileEdit] = useState(false);
 
   const handleMenuItemTap = useCallback(() => {
     haptic.selection();
@@ -203,10 +206,15 @@ const Header = () => {
             </nav>
 
             {user && (
-              <div className="flex items-center space-x-1 md:space-x-4">
-                <span className="hidden md:inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-xs font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 py-1 px-2 bg-transparent border border-[rgba(255,255,255,0.15)] text-[#cdd6f4] hover:border-[#89b4fa] hover:text-[#89b4fa] hover:shadow-[0_0_10px_rgba(137,180,250,0.3)]">
-                  {user.email}
-                </span>
+              <div className="flex items-center space-x-1 md:space-x-3">
+                <NotificationsDropdown />
+                <button
+                  onClick={() => setShowProfileEdit(true)}
+                  className="hidden md:flex items-center gap-2 px-2 py-1 text-xs font-medium rounded-lg transition-all duration-200 bg-transparent border border-slate-600 text-slate-300 hover:border-blue-400 hover:text-blue-400"
+                >
+                  <User className="w-3 h-3" />
+                  <span className="max-w-[120px] truncate">{user.email}</span>
+                </button>
                 <StandardButton
                   onClick={signOut}
                   variant="standard"
@@ -218,6 +226,12 @@ const Header = () => {
                 </StandardButton>
               </div>
             )}
+
+            {/* Profile Edit Modal */}
+            <ProfileEditModal 
+              isOpen={showProfileEdit} 
+              onClose={() => setShowProfileEdit(false)} 
+            />
 
             {/* Mobile Menu - Dropdown with scroll support */}
             <DropdownMenu>
