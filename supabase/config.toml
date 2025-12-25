@@ -93,3 +93,6 @@ verify_jwt = false
 
 [functions.populate-publisher-books]
 verify_jwt = false
+
+[functions.fetch-publisher-events]
+verify_jwt = false
