@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Edit, Archive, X } from "lucide-react";
+import { Edit, Archive, X, Share2 } from "lucide-react";
+import ShareBookModal from "./ShareBookModal";
 import { gsap } from "gsap";
 import PublisherResonanceBadge from "./PublisherResonanceBadge";
 import PenguinPublisherBadge from "./PenguinPublisherBadge";
@@ -73,6 +74,7 @@ const BookCard = ({
   const [hasFreeEbook, setHasFreeEbook] = useState(false);
   const [appleUrl, setAppleUrl] = useState<string | null>(null);
   const [googleUrl, setGoogleUrl] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const authorUnderlineRef = useRef<HTMLSpanElement>(null);
   const [isInView, setIsInView] = useState(false);
@@ -378,44 +380,67 @@ const BookCard = ({
       </div>
       
       {/* Action buttons - moved to bottom horizontal layout */}
-      <div className="grid grid-cols-3 gap-2">
-        {onEdit && (
-          <button
-            onClick={onEdit}
-            className="flex items-center justify-center px-3 py-1.5 bg-transparent border border-slate-700/40 text-slate-300 text-[10px] rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300"
-            title="Edit"
-          >
-            <Edit className="w-3 h-3 mr-1.5 flex-shrink-0" />
-            <span className="whitespace-nowrap">Edit</span>
-          </button>
-        )}
-              {onKeep && (
-                <button
-                  onClick={onKeep}
-                  className={`flex items-center justify-center px-3 py-1.5 bg-transparent border text-[10px] rounded-lg transition-all duration-300 ease-in-out ${
-                    is_favorite 
-                      ? 'border-cyan-400/80 bg-cyan-400/20 text-cyan-300' 
-                      : 'border-slate-700/40 text-slate-300 hover:border-cyan-400/60 hover:text-cyan-300'
-                  }`}
-                  title={is_favorite ? "Marked as Kept" : "Keep"}
-                >
-                  <Archive className={`w-3 h-3 mr-1.5 flex-shrink-0 ${is_favorite ? 'fill-cyan-400/50' : ''}`} />
-                  <span className="whitespace-nowrap">
-                    {is_favorite ? "Kept" : "Keep"}
-                  </span>
-                </button>
-              )}
-        {onDiscard && (
-          <button
-            onClick={onDiscard}
-            className="flex items-center justify-center px-3 py-1.5 bg-transparent border border-slate-700/40 text-slate-300 text-[10px] rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300"
-            title="Discard"
-          >
-            <X className="w-3 h-3 mr-1.5 flex-shrink-0" />
-            <span className="whitespace-nowrap">Discard</span>
-          </button>
-        )}
+      <div className="flex items-center gap-2">
+        <div className="grid grid-cols-3 gap-2 flex-1">
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="flex items-center justify-center px-3 py-1.5 bg-transparent border border-slate-700/40 text-slate-300 text-[10px] rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300"
+              title="Edit"
+            >
+              <Edit className="w-3 h-3 mr-1.5 flex-shrink-0" />
+              <span className="whitespace-nowrap">Edit</span>
+            </button>
+          )}
+          {onKeep && (
+            <button
+              onClick={onKeep}
+              className={`flex items-center justify-center px-3 py-1.5 bg-transparent border text-[10px] rounded-lg transition-all duration-300 ease-in-out ${
+                is_favorite 
+                  ? 'border-cyan-400/80 bg-cyan-400/20 text-cyan-300' 
+                  : 'border-slate-700/40 text-slate-300 hover:border-cyan-400/60 hover:text-cyan-300'
+              }`}
+              title={is_favorite ? "Marked as Kept" : "Keep"}
+            >
+              <Archive className={`w-3 h-3 mr-1.5 flex-shrink-0 ${is_favorite ? 'fill-cyan-400/50' : ''}`} />
+              <span className="whitespace-nowrap">
+                {is_favorite ? "Kept" : "Keep"}
+              </span>
+            </button>
+          )}
+          {onDiscard && (
+            <button
+              onClick={onDiscard}
+              className="flex items-center justify-center px-3 py-1.5 bg-transparent border border-slate-700/40 text-slate-300 text-[10px] rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300"
+              title="Discard"
+            >
+              <X className="w-3 h-3 mr-1.5 flex-shrink-0" />
+              <span className="whitespace-nowrap">Discard</span>
+            </button>
+          )}
+        </div>
+        
+        {/* Share button - subtle icon only */}
+        <button
+          onClick={() => setShowShareModal(true)}
+          className="flex items-center justify-center p-1.5 bg-transparent border border-slate-700/40 text-slate-400 rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300"
+          title="Share"
+        >
+          <Share2 className="w-3 h-3" />
+        </button>
       </div>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <ShareBookModal
+          onClose={() => setShowShareModal(false)}
+          book={{
+            title,
+            author,
+            cover_url: coverUrl || ''
+          }}
+        />
+      )}
     </div>
   );
 };
