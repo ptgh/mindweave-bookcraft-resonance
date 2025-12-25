@@ -1,12 +1,14 @@
-import { BookOpen, LogOut, Instagram, Menu } from "lucide-react";
+import { BookOpen, LogOut, Instagram, Menu, Shield } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 import { StandardButton } from "./ui/standard-button";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { hasRole } = useProfile();
   
   return (
     <header className="bg-slate-900">
@@ -124,6 +126,19 @@ const Header = () => {
               >
                 Neural Map
               </Link>
+              {hasRole('admin') && (
+                <Link
+                  to="/admin/enrichment"
+                  className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap flex items-center gap-1 ${
+                    location.pathname.startsWith('/admin') 
+                      ? 'text-amber-400' 
+                      : 'text-amber-300/70 hover:text-amber-400'
+                  }`}
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  Admin
+                </Link>
+              )}
             </nav>
 
             {user && (
@@ -212,6 +227,17 @@ const Header = () => {
                     Neural Map
                   </Link>
                 </DropdownMenuItem>
+                {hasRole('admin') && (
+                  <>
+                    <div className="h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent my-2" />
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/enrichment" className="flex items-center gap-3 py-3 px-4 text-amber-300 hover:text-amber-400 hover:bg-amber-500/10 transition-all duration-200 rounded-md">
+                        <Shield className="w-4 h-4 text-amber-400/70" />
+                        Admin Panel
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
                 {user && (
                   <>
                     <div className="h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent my-2" />
