@@ -33,17 +33,25 @@ export const WhoToFollow: React.FC<WhoToFollowProps> = ({ className }) => {
     const fetchSuggestions = async () => {
       if (!user) {
         setLoading(false);
+        setSuggestions([]);
         return;
       }
 
       setLoading(true);
       try {
         // Get current user's authors from their transmissions
-        const { data: userTransmissions } = await supabase
+        const { data: userTransmissions, error: transError } = await supabase
           .from('transmissions')
           .select('author')
           .eq('user_id', user.id)
           .not('author', 'is', null);
+
+        if (transError) {
+          console.error('Error fetching user transmissions:', transError);
+          setLoading(false);
+          setSuggestions([]);
+          return;
+        }
 
         const userAuthors = new Set(
           (userTransmissions || [])
@@ -53,21 +61,32 @@ export const WhoToFollow: React.FC<WhoToFollowProps> = ({ className }) => {
 
         // Get users who have similar authors (excluding current user and already following)
         const followingIds = following.map(f => f.id);
-        const excludeIds = [user.id, ...followingIds];
-
-        // Get other users' transmissions with their authors
-        const { data: otherTransmissions } = await supabase
+        
+        // Build a simple query - just exclude current user first
+        let query = supabase
           .from('transmissions')
           .select('user_id, author')
-          .not('user_id', 'in', `(${excludeIds.join(',')})`)
+          .neq('user_id', user.id)
           .not('author', 'is', null)
           .limit(500);
+
+        const { data: otherTransmissions, error: otherError } = await query;
+
+        if (otherError) {
+          console.error('Error fetching other transmissions:', otherError);
+          setLoading(false);
+          setSuggestions([]);
+          return;
+        }
+
+        // Filter out already followed users in JS
+        const excludeSet = new Set([user.id, ...followingIds]);
 
         // Calculate shared authors per user
         const userScores: Map<string, { shared: number; total: number }> = new Map();
         
         (otherTransmissions || []).forEach(t => {
-          if (!t.user_id || !t.author) return;
+          if (!t.user_id || !t.author || excludeSet.has(t.user_id)) return;
           
           const current = userScores.get(t.user_id) || { shared: 0, total: 0 };
           current.total++;
@@ -87,17 +106,10 @@ export const WhoToFollow: React.FC<WhoToFollowProps> = ({ className }) => {
           .map(([userId]) => userId);
 
         if (sortedUsers.length === 0) {
-          // Fallback: get users with most transmissions
-          const { data: activeUsers } = await supabase
-            .from('transmissions')
-            .select('user_id')
-            .not('user_id', 'eq', user.id)
-            .not('user_id', 'in', `(${followingIds.join(',') || 'null'})`)
-            .limit(100);
-
+          // Fallback: get users with most transmissions from the data we already have
           const userCounts: Map<string, number> = new Map();
-          (activeUsers || []).forEach(t => {
-            if (t.user_id) {
+          (otherTransmissions || []).forEach(t => {
+            if (t.user_id && !excludeSet.has(t.user_id)) {
               userCounts.set(t.user_id, (userCounts.get(t.user_id) || 0) + 1);
             }
           });
@@ -120,6 +132,8 @@ export const WhoToFollow: React.FC<WhoToFollowProps> = ({ className }) => {
                 transmission_count: userCounts.get(p.id) || 0
               }))
             );
+          } else {
+            setSuggestions([]);
           }
         } else {
           // Get profiles for suggested users
