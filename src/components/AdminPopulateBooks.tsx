@@ -156,12 +156,12 @@ export const AdminPopulateBooks = () => {
       {/* Penguin Science Fiction Population */}
       <Card className="border-amber-700/50 bg-gradient-to-br from-amber-900/20 to-slate-800/50">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-amber-100">
+        <CardTitle className="flex items-center gap-2 text-amber-100">
             <span className="text-xl">🐧</span>
             Populate Penguin Science Fiction
           </CardTitle>
           <CardDescription className="text-amber-200/70">
-            Add all 19 official Penguin Science Fiction titles with authentic cover art from the Penguin CDN
+            Add 16 official Penguin Science Fiction titles with covers from penguin.co.uk
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -186,7 +186,7 @@ export const AdminPopulateBooks = () => {
           {renderResultsList(penguinResults, 'text-amber-300')}
 
           <p className="mt-4 text-xs text-amber-200/50">
-            This will add the official 19 Penguin Science Fiction series titles to the Publisher Resonance section with authentic cover artwork.
+            Data sourced from penguin.co.uk/series/PENGSCIFI with official cover art CDN links.
           </p>
         </CardContent>
       </Card>
@@ -224,7 +224,7 @@ export const AdminPopulateBooks = () => {
           {renderResultsList(gollanczResults, 'text-yellow-300')}
 
           <p className="mt-4 text-xs text-yellow-200/50">
-            This will add 20 curated SF Masterworks titles featuring iconic works like Dune, Neuromancer, Hyperion, and more with official Gollancz cover artwork.
+            Data sourced from store.gollancz.co.uk/collections/best-of-masterworks with official cover art.
           </p>
         </CardContent>
       </Card>
