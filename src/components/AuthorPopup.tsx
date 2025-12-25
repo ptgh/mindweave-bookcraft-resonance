@@ -392,44 +392,66 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
           </div>
 
           {/* Notable Works */}
-          {(currentAuthor.notable_works && currentAuthor.notable_works.length > 0) || fallbackWorks.length > 0 ? (
-            <div className="bg-slate-800/70 rounded-lg p-4 border border-slate-700/50 max-h-48 overflow-y-auto scrollbar-hide">
-              <div className="flex items-center gap-2 mb-2">
-                <BookOpen className="w-4 h-4 text-blue-400" />
-                <span className="text-sm font-medium text-blue-300">Notable Works</span>
+          {(() => {
+            // Filter out invalid notable work entries
+            const invalidWorkPatterns = [
+              'none found', 'not found', 'n/a', 'unknown', 'no works', 'no data',
+              'no notable works', 'unavailable', 'no information'
+            ];
+            
+            const isValidWork = (work: string): boolean => {
+              if (!work || typeof work !== 'string') return false;
+              const trimmed = work.trim().toLowerCase();
+              if (trimmed.length < 2) return false;
+              return !invalidWorkPatterns.some(pattern => trimmed === pattern || trimmed.includes(pattern));
+            };
+            
+            const rawWorks = currentAuthor.notable_works && currentAuthor.notable_works.length > 0 
+              ? currentAuthor.notable_works 
+              : fallbackWorks;
+            const validWorks = rawWorks.filter(isValidWork);
+            
+            if (validWorks.length === 0) return null;
+            
+            return (
+              <div className="bg-slate-800/70 rounded-lg p-4 border border-slate-700/50 max-h-48 overflow-y-auto scrollbar-hide">
+                <div className="flex items-center gap-2 mb-2">
+                  <BookOpen className="w-4 h-4 text-blue-400" />
+                  <span className="text-sm font-medium text-blue-300">Notable Works</span>
+                </div>
+                <div className="space-y-1">
+                  {validWorks
+                    .slice(0, 4)
+                    .map((work, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          const bookPreview: EnrichedPublisherBook = {
+                            id: `notable-${index}`,
+                            title: work,
+                            author: currentAuthor.name,
+                            series_id: '',
+                            created_at: new Date().toISOString(),
+                          };
+                          setSelectedWork(bookPreview);
+                        }}
+                        className="text-sm text-slate-300 hover:text-blue-300 transition-colors text-left w-full group relative"
+                      >
+                        <span className="relative">
+                          • {work}
+                          <span className="absolute bottom-0 left-2 w-0 h-0.5 bg-blue-400 group-hover:w-[calc(100%-8px)] transition-all duration-300 ease-out" />
+                        </span>
+                      </button>
+                    ))}
+                  {validWorks.length > 4 && (
+                    <div className="text-sm text-slate-400 italic">
+                      ...and {validWorks.length - 4} more works
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="space-y-1">
-                {(currentAuthor.notable_works && currentAuthor.notable_works.length > 0 ? currentAuthor.notable_works : fallbackWorks)
-                  .slice(0, 4)
-                  .map((work, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        const bookPreview: EnrichedPublisherBook = {
-                          id: `notable-${index}`,
-                          title: work,
-                          author: currentAuthor.name,
-                          series_id: '',
-                          created_at: new Date().toISOString(),
-                        };
-                        setSelectedWork(bookPreview);
-                      }}
-                      className="text-sm text-slate-300 hover:text-blue-300 transition-colors text-left w-full group relative"
-                    >
-                      <span className="relative">
-                        • {work}
-                        <span className="absolute bottom-0 left-2 w-0 h-0.5 bg-blue-400 group-hover:w-[calc(100%-8px)] transition-all duration-300 ease-out" />
-                      </span>
-                    </button>
-                  ))}
-                {((currentAuthor.notable_works?.length || fallbackWorks.length) > 4) && (
-                  <div className="text-sm text-slate-400 italic">
-                    ...and {(currentAuthor.notable_works?.length || fallbackWorks.length) - 4} more works
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : null}
+            );
+          })()}
 
           {/* Data Source Info */}
           {currentAuthor.data_source && (
