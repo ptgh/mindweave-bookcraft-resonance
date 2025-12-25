@@ -1,14 +1,23 @@
-import { BookOpen, LogOut, Instagram, Menu, Shield } from "lucide-react";
+import { BookOpen, LogOut, Instagram, Menu, Shield, X } from "lucide-react";
+import { useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { StandardButton } from "./ui/standard-button";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const Header = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { hasRole } = useProfile();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
+  const handleSignOut = () => {
+    closeMobileMenu();
+    signOut();
+  };
   
   return (
     <header className="bg-slate-900">
@@ -158,98 +167,182 @@ const Header = () => {
               </div>
             )}
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            {/* Mobile Menu - Full-height Sheet */}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
                 <button 
                   className="lg:hidden inline-flex items-center justify-center rounded p-2 text-slate-300 hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
                   aria-label="Open navigation menu"
                 >
                   <Menu className="w-6 h-6" />
                 </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                align="end" 
-                sideOffset={8} 
-                className="z-[9999] min-w-56 max-h-[calc(100vh-6rem)] overflow-y-auto overscroll-contain bg-slate-900/95 backdrop-blur-xl border border-blue-500/20 shadow-2xl shadow-blue-500/10 [webkit-overflow-scrolling:touch]"
+              </SheetTrigger>
+              <SheetContent 
+                side="right" 
+                className="w-full sm:w-80 bg-slate-900/98 backdrop-blur-xl border-l border-blue-500/20 p-0 overflow-hidden"
               >
-                <DropdownMenuItem asChild>
-                  <Link to="/" className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 rounded-md">
-                    <div className="w-2 h-2 rounded-full bg-blue-400/50" />
-                    Home
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/library" className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 rounded-md">
-                    <BookOpen className="w-4 h-4 text-blue-400/70" />
-                    Transmissions
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/book-browser" className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 rounded-md">
-                    <div className="w-4 h-4 rounded-full border-2 border-dashed border-blue-400/50 flex items-center justify-center">
-                      <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                <div className="flex flex-col h-full">
+                  {/* Sheet Header */}
+                  <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-blue-400 rounded-full animate-pulse" />
+                      <span className="text-lg font-light text-slate-200 tracking-wider">LEAFNODE</span>
                     </div>
-                    Signal Archive
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/author-matrix" className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 rounded-md">
-                    <div className="w-4 h-4 grid grid-cols-2 gap-0.5">
-                      <div className="w-1.5 h-1.5 rounded-sm bg-blue-400/50" />
-                      <div className="w-1.5 h-1.5 rounded-sm bg-blue-400/70" />
-                      <div className="w-1.5 h-1.5 rounded-sm bg-blue-400/70" />
-                      <div className="w-1.5 h-1.5 rounded-sm bg-blue-400/50" />
-                    </div>
-                    Author Matrix
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/insights" className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 rounded-md">
-                    <div className="w-4 h-4 flex items-center justify-center">
-                      <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
-                    </div>
-                    Reading Insights
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/publisher-resonance" className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 rounded-md">
-                    <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-400/30 to-purple-400/30 border border-blue-400/50" />
-                    Publisher Resonance
-                  </Link>
-                </DropdownMenuItem>
-                <div className="h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent my-2" />
-                <DropdownMenuItem asChild>
-                  <Link to="/test-brain" className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200 rounded-md">
-                    <div className="w-4 h-4 relative">
-                      <div className="absolute inset-0 rounded-full bg-blue-400/20 animate-pulse" />
-                      <div className="absolute inset-1 rounded-full bg-blue-400/40" />
-                    </div>
-                    Neural Map
-                  </Link>
-                </DropdownMenuItem>
-                {hasRole('admin') && (
-                  <>
-                    <div className="h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent my-2" />
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin/enrichment" className="flex items-center gap-3 py-3 px-4 text-amber-300 hover:text-amber-400 hover:bg-amber-500/10 transition-all duration-200 rounded-md">
-                        <Shield className="w-4 h-4 text-amber-400/70" />
-                        Admin Panel
-                      </Link>
-                    </DropdownMenuItem>
-                  </>
-                )}
-                {user && (
-                  <>
-                    <div className="h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent my-2" />
-                    <DropdownMenuItem onSelect={signOut} className="flex items-center gap-3 py-3 px-4 text-slate-200 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 rounded-md">
-                      <LogOut className="w-4 h-4" />
-                      Sign Out
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    <button
+                      onClick={closeMobileMenu}
+                      className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                      aria-label="Close menu"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
 
+                  {/* Scrollable Nav Items */}
+                  <nav className="flex-1 overflow-y-auto overscroll-contain py-4 px-2" role="navigation" aria-label="Mobile navigation">
+                    <div className="space-y-1">
+                      <Link
+                        to="/"
+                        onClick={closeMobileMenu}
+                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
+                          location.pathname === '/'
+                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400'
+                        }`}
+                      >
+                        <div className="w-3 h-3 rounded-full bg-blue-400/50" />
+                        Home
+                      </Link>
+
+                      <Link
+                        to="/library"
+                        onClick={closeMobileMenu}
+                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
+                          location.pathname === '/library'
+                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400'
+                        }`}
+                      >
+                        <BookOpen className="w-5 h-5 text-blue-400/70" />
+                        Transmissions
+                      </Link>
+
+                      <Link
+                        to="/book-browser"
+                        onClick={closeMobileMenu}
+                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
+                          location.pathname === '/book-browser'
+                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400'
+                        }`}
+                      >
+                        <div className="w-5 h-5 rounded-full border-2 border-dashed border-blue-400/50 flex items-center justify-center">
+                          <div className="w-2 h-2 rounded-full bg-blue-400" />
+                        </div>
+                        Signal Archive
+                      </Link>
+
+                      <Link
+                        to="/author-matrix"
+                        onClick={closeMobileMenu}
+                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
+                          location.pathname === '/author-matrix'
+                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400'
+                        }`}
+                      >
+                        <div className="w-5 h-5 grid grid-cols-2 gap-0.5">
+                          <div className="w-2 h-2 rounded-sm bg-blue-400/50" />
+                          <div className="w-2 h-2 rounded-sm bg-blue-400/70" />
+                          <div className="w-2 h-2 rounded-sm bg-blue-400/70" />
+                          <div className="w-2 h-2 rounded-sm bg-blue-400/50" />
+                        </div>
+                        Author Matrix
+                      </Link>
+
+                      <Link
+                        to="/insights"
+                        onClick={closeMobileMenu}
+                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
+                          location.pathname === '/insights'
+                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400'
+                        }`}
+                      >
+                        <div className="w-5 h-5 flex items-center justify-center">
+                          <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
+                        </div>
+                        Reading Insights
+                      </Link>
+
+                      <Link
+                        to="/publisher-resonance"
+                        onClick={closeMobileMenu}
+                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
+                          location.pathname === '/publisher-resonance'
+                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400'
+                        }`}
+                      >
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-400/30 to-purple-400/30 border border-blue-400/50" />
+                        Publisher Resonance
+                      </Link>
+
+                      <div className="h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent my-3" />
+
+                      <Link
+                        to="/test-brain"
+                        onClick={closeMobileMenu}
+                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
+                          location.pathname === '/test-brain'
+                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400'
+                        }`}
+                      >
+                        <div className="w-5 h-5 relative">
+                          <div className="absolute inset-0 rounded-full bg-blue-400/20 animate-pulse" />
+                          <div className="absolute inset-1 rounded-full bg-blue-400/40" />
+                        </div>
+                        Neural Map
+                      </Link>
+
+                      {hasRole('admin') && (
+                        <>
+                          <div className="h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent my-3" />
+                          <Link
+                            to="/admin/enrichment"
+                            onClick={closeMobileMenu}
+                            className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
+                              location.pathname.startsWith('/admin')
+                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                : 'text-amber-300 hover:bg-amber-500/10 hover:text-amber-400'
+                            }`}
+                          >
+                            <Shield className="w-5 h-5 text-amber-400/70" />
+                            Admin Panel
+                          </Link>
+                        </>
+                      )}
+                    </div>
+                  </nav>
+
+                  {/* Footer with User Info & Sign Out */}
+                  {user && (
+                    <div className="border-t border-slate-700/50 p-4 space-y-3">
+                      <div className="text-sm text-slate-400 truncate px-2">
+                        {user.email}
+                      </div>
+                      <button
+                        onClick={handleSignOut}
+                        className="flex items-center justify-center gap-2 w-full min-h-[52px] px-4 py-3 rounded-xl text-base font-medium text-slate-200 bg-slate-800 hover:bg-red-500/20 hover:text-red-400 transition-all duration-200"
+                      >
+                        <LogOut className="w-5 h-5" />
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>
