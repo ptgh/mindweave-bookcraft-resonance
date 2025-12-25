@@ -126,13 +126,65 @@ const PublisherResonance = () => {
     setShowPreviewModal(true);
   }, []);
 
-  const handleAddToTransmissions = useCallback((book: EnrichedPublisherBook) => {
-    toast({
-      title: "Signal Added",
-      description: `"${book.title}" has been added to your transmissions.`,
-      variant: "success"
-    });
-    setShowPreviewModal(false);
+  const handleAddToTransmissions = useCallback(async (book: EnrichedPublisherBook) => {
+    try {
+      // Import saveTransmission and searchAppleBooks
+      const { saveTransmission } = await import('@/services/transmissionsService');
+      const { searchAppleBooks } = await import('@/services/appleBooks');
+      
+      // Try to enrich with Apple Books link
+      let appleLink: string | undefined;
+      try {
+        const found = await searchAppleBooks(book.title, book.author, book.isbn);
+        if (found?.storeUrl) {
+          appleLink = found.storeUrl;
+        }
+      } catch (e) {
+        console.warn('Apple Books lookup failed, proceeding without link:', e);
+      }
+
+      await saveTransmission({
+        title: book.title,
+        author: book.author,
+        cover_url: book.cover_url || '',
+        tags: [],
+        rating: {},
+        notes: book.editorial_note || '',
+        status: 'want-to-read',
+        apple_link: appleLink,
+        isbn: book.isbn,
+        publisher_series_id: book.series_id,
+        open_count: 0
+      });
+      
+      toast({
+        title: "Signal Added",
+        description: `"${book.title}" has been added to your transmissions.`,
+        variant: "success"
+      });
+      setShowPreviewModal(false);
+    } catch (error: any) {
+      console.error('Error adding to transmissions:', error);
+      
+      // Check if it's a duplicate error
+      if (error?.message?.startsWith('DUPLICATE:')) {
+        const parts = error.message.split(':');
+        const title = parts[1] || book.title;
+        const dateAdded = parts[2] || 'unknown date';
+        
+        toast({
+          title: "Already in Your Library",
+          description: `"${title}" was added on ${dateAdded}.`,
+        });
+        setShowPreviewModal(false);
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to add book to library.",
+          variant: "destructive",
+        });
+      }
+    }
   }, [toast]);
 
   const handleClosePreview = useCallback(() => {

@@ -139,6 +139,44 @@ export const useBookBrowser = () => {
           console.error('Error loading database books:', dbError);
         }
         
+        // 1b. Also load books from publisher_books table
+        try {
+          const { data: publisherBooks, error: pubError } = await supabase
+            .from('publisher_books')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(30);
+          
+          if (pubError) throw pubError;
+          
+          console.log(`Found ${publisherBooks?.length || 0} books in publisher_books table`);
+          
+          const transformedPubBooks: EnhancedBookSuggestion[] = (publisherBooks || [])
+            .filter(book => !previouslyShownBooks.has(book.id))
+            .map((book: any) => ({
+              id: book.id,
+              title: book.title,
+              author: book.author || 'Unknown Author',
+              coverUrl: book.cover_url || '',
+              thumbnailUrl: book.cover_url || '',
+              smallThumbnailUrl: book.cover_url || '',
+              subtitle: '',
+              description: book.editorial_note || '',
+              publishedDate: book.publication_year?.toString() || '',
+              pageCount: undefined,
+              categories: ['Science Fiction'],
+              rating: undefined,
+              ratingsCount: undefined,
+              previewLink: book.penguin_url || '',
+              infoLink: book.penguin_url || ''
+            }));
+          
+          allBooks.push(...transformedPubBooks);
+          console.log(`Added ${transformedPubBooks.length} publisher books to pool`);
+        } catch (pubError) {
+          console.error('Error loading publisher books:', pubError);
+        }
+        
         // 2. Mix in curated books every rotation
         const curatedBooks = getRandomCuratedBooks(6);
         console.log(`Including ${curatedBooks.length} curated books`);
