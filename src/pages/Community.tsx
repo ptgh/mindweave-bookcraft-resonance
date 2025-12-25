@@ -4,7 +4,7 @@ import Header from '@/components/Header';
 import { SEOHead } from '@/components/SEOHead';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookPostCard, BookPostForm, FeaturedSection, CommunityStats, NetworkSection } from '@/components/community';
+import { BookPostCard, BookPostForm, FeaturedSection, CommunityStats, NetworkSection, WhoToFollow } from '@/components/community';
 import { useBookPosts } from '@/hooks/useBookPosts';
 import { useAuth } from '@/hooks/useAuth';
 import gsap from 'gsap';
@@ -157,6 +157,9 @@ const Community: React.FC = () => {
 
               {/* Sidebar */}
               <div className="space-y-4">
+                {/* Who to Follow */}
+                <WhoToFollow />
+
                 <div className="p-5 rounded-xl bg-slate-800/30 border border-slate-700/50">
                   <h3 className="text-sm font-medium text-slate-300 mb-3">About Community</h3>
                   <p className="text-sm text-slate-500 leading-relaxed">

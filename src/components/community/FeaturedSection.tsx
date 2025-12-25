@@ -15,10 +15,11 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const workRefs = useRef<(HTMLButtonElement | null)[]>([]);
   
-  // Modal state for notable works
-  const [selectedWork, setSelectedWork] = useState<{
+  // Modal state for notable works and featured book
+  const [selectedBook, setSelectedBook] = useState<{
     title: string;
     author: string;
+    cover_url?: string;
   } | null>(null);
 
   useEffect(() => {
@@ -68,9 +69,19 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
   const handleWorkClick = (workTitle: string) => {
     if (!featuredContent?.featured_author?.name) return;
     
-    setSelectedWork({
+    setSelectedBook({
       title: workTitle,
       author: featuredContent.featured_author.name
+    });
+  };
+
+  const handleBookClick = () => {
+    if (!featuredContent?.featured_book) return;
+    
+    setSelectedBook({
+      title: featuredContent.featured_book.title,
+      author: featuredContent.featured_book.author,
+      cover_url: featuredContent.featured_book.cover_url || undefined
     });
   };
 
@@ -187,14 +198,16 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
           )}
         </div>
 
-        {/* Featured Book Card */}
+        {/* Featured Book Card - Clickable */}
         <div
           ref={el => { cardsRef.current[1] = el; }}
+          onClick={featuredContent?.featured_book ? handleBookClick : undefined}
           className={cn(
             "rounded-xl border p-5 transition-all duration-300 hover:shadow-lg",
             colorClasses.purple.bg,
             colorClasses.purple.border,
-            colorClasses.purple.glow
+            colorClasses.purple.glow,
+            featuredContent?.featured_book && "cursor-pointer"
           )}
         >
           <div className="flex items-center gap-3 mb-4">
@@ -211,7 +224,7 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
                 <img 
                   src={featuredContent.featured_book.cover_url}
                   alt={featuredContent.featured_book.title}
-                  className="w-16 h-24 object-cover rounded-md shadow-md flex-shrink-0"
+                  className="w-16 h-24 object-cover rounded-md shadow-md flex-shrink-0 group-hover:scale-105 transition-transform"
                 />
               ) : (
                 <div className="w-16 h-24 bg-slate-700 rounded-md flex items-center justify-center flex-shrink-0">
@@ -220,7 +233,7 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
               )}
               
               <div className="flex-1 min-w-0 flex flex-col justify-center">
-                <p className="text-lg font-medium text-slate-200 line-clamp-2">
+                <p className="text-lg font-medium text-slate-200 line-clamp-2 hover:text-purple-300 transition-colors">
                   {featuredContent.featured_book.title}
                 </p>
                 <p className="text-sm text-slate-400 truncate">
@@ -271,17 +284,18 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
         </div>
       </div>
 
-      {/* Book Preview Modal for Notable Works */}
-      {selectedWork && (
+      {/* Book Preview Modal */}
+      {selectedBook && (
         <EnhancedBookPreviewModal
           book={{
-            id: `notable-${selectedWork.title.replace(/\s+/g, '-').toLowerCase()}`,
-            title: selectedWork.title,
-            author: selectedWork.author,
-            series_id: 'featured-author-works',
+            id: `book-${selectedBook.title.replace(/\s+/g, '-').toLowerCase()}`,
+            title: selectedBook.title,
+            author: selectedBook.author,
+            cover_url: selectedBook.cover_url,
+            series_id: 'featured-content',
             created_at: new Date().toISOString()
           }}
-          onClose={() => setSelectedWork(null)}
+          onClose={() => setSelectedBook(null)}
           onAddBook={() => {}}
         />
       )}
