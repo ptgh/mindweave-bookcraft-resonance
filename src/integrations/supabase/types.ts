@@ -1319,6 +1319,14 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_user_stats: {
+        Args: { user_ids: string[] }
+        Returns: {
+          follower_count: number
+          transmission_count: number
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
