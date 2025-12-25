@@ -1,6 +1,5 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { X } from "lucide-react";
 import { StandardButton } from "@/components/ui/standard-button";
 import BookSearchSection from "./BookSearchSection";
 import StatusSection from "./StatusSection";
@@ -181,18 +180,17 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModal
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-800 border border-slate-600 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-hide">
-        <div className="flex items-center justify-between p-6 border-b border-slate-700">
+    <div 
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center p-4 pt-20 sm:pt-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-slate-800 border border-slate-600 rounded-lg w-full max-w-2xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto scrollbar-hide">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-700">
           <h2 className="text-slate-200 text-lg font-medium">
             {editingBook ? "Edit Signal" : "Log Signal"}
           </h2>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-200 transition-colors touch-manipulation"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
         
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
