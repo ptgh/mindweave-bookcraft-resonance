@@ -41,7 +41,7 @@ export const CommunityStats: React.FC<CommunityStatsProps> = ({ className }) => 
             onUpdate: function() {
               if (ref) ref.textContent = Math.round(obj.val).toString();
             }
-          );
+          });
         }
       });
     }, statsRef);
