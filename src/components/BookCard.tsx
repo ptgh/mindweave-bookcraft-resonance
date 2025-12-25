@@ -1,6 +1,6 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Edit, Archive, X } from "lucide-react";
+import { gsap } from "gsap";
 import PublisherResonanceBadge from "./PublisherResonanceBadge";
 import PenguinPublisherBadge from "./PenguinPublisherBadge";
 import EnhancedBookCover from "./EnhancedBookCover";
@@ -74,7 +74,9 @@ const BookCard = ({
   const [appleUrl, setAppleUrl] = useState<string | null>(null);
   const [googleUrl, setGoogleUrl] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const authorUnderlineRef = useRef<HTMLSpanElement>(null);
   const [isInView, setIsInView] = useState(false);
+  const [hasAnimated, setHasAnimated] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -153,7 +155,7 @@ const BookCard = ({
     return () => { cancelled = true; };
   }, [title, author]);
 
-  // Observe when card becomes visible, then check free-ebook availability once
+  // Observe when card becomes visible, then check free-ebook availability once and animate author underline
   useEffect(() => {
     const el = rootRef.current;
     if (!el) return;
@@ -162,6 +164,29 @@ const BookCard = ({
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setIsInView(true);
+            
+            // GSAP animate author underline on scroll into view
+            if (authorUnderlineRef.current && onAuthorClick && !hasAnimated) {
+              setHasAnimated(true);
+              gsap.fromTo(
+                authorUnderlineRef.current,
+                { scaleX: 0, transformOrigin: 'left' },
+                { 
+                  scaleX: 1, 
+                  duration: 0.6, 
+                  ease: "power2.out",
+                  delay: 0.2
+                }
+              );
+              // Then reset to 0 after animation completes for hover effect to work
+              gsap.to(authorUnderlineRef.current, {
+                scaleX: 0,
+                duration: 0.3,
+                ease: "power2.in",
+                delay: 1.2
+              });
+            }
+            
             observer.disconnect();
           }
         });
@@ -170,7 +195,7 @@ const BookCard = ({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [onAuthorClick, hasAnimated]);
 
   useEffect(() => {
     let cancelled = false;
@@ -218,16 +243,23 @@ const BookCard = ({
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.color = '#60a5fa';
+                    if (authorUnderlineRef.current) {
+                      gsap.to(authorUnderlineRef.current, { scaleX: 1, duration: 0.3, ease: "power2.out" });
+                    }
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.color = 'rgb(148, 163, 184)';
+                    if (authorUnderlineRef.current) {
+                      gsap.to(authorUnderlineRef.current, { scaleX: 0, duration: 0.3, ease: "power2.in" });
+                    }
                   }}
                 >
                   <span className="relative">
                     {author}
                     <span 
-                      className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300 ease-out"
-                      style={{ transformOrigin: 'left' }}
+                      ref={authorUnderlineRef}
+                      className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-400"
+                      style={{ transformOrigin: 'left', transform: 'scaleX(0)' }}
                     />
                   </span>
                 </button>
