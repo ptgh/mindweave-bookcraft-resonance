@@ -416,11 +416,11 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
             
             return (
               <div className="bg-slate-800/70 rounded-lg p-4 border border-slate-700/50 max-h-48 overflow-y-auto scrollbar-hide">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-1">
                   <BookOpen className="w-4 h-4 text-blue-400" />
                   <span className="text-sm font-medium text-blue-300">Notable Works</span>
                 </div>
-                <div className="space-y-0.5">
+                <div className="flex flex-col">
                   {validWorks
                     .slice(0, showAllWorks ? validWorks.length : 4)
                     .map((work, index) => (
@@ -436,7 +436,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
                           };
                           setSelectedWork(bookPreview);
                         }}
-                        className="text-sm text-slate-300 hover:text-blue-300 transition-colors text-left w-full group relative py-0.5"
+                        className="text-sm text-slate-300 hover:text-blue-300 transition-colors text-left w-full group relative leading-tight"
                       >
                         <span className="relative">
                           • {work}
@@ -447,7 +447,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
                   {validWorks.length > 4 && !showAllWorks && (
                     <button
                       onClick={() => setShowAllWorks(true)}
-                      className="text-sm text-blue-400 hover:text-blue-300 italic transition-colors pt-0.5"
+                      className="text-sm text-blue-400 hover:text-blue-300 italic transition-colors"
                     >
                       ...and {validWorks.length - 4} more works
                     </button>
@@ -455,7 +455,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
                   {showAllWorks && validWorks.length > 4 && (
                     <button
                       onClick={() => setShowAllWorks(false)}
-                      className="text-sm text-slate-400 hover:text-slate-300 italic transition-colors pt-0.5"
+                      className="text-sm text-slate-400 hover:text-slate-300 italic transition-colors"
                     >
                       Show less
                     </button>
@@ -500,10 +500,15 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
               size="sm"
               className="w-full bg-blue-500/10 border-blue-400/30 text-blue-300 hover:bg-blue-500/20 transition-all duration-300"
               onClick={() => {
-                // Try to construct direct Wikipedia URL, fallback to stored URL or search
-                const wikiUrl = currentAuthor.wikipedia_url || 
-                  `https://en.wikipedia.org/wiki/${encodeURIComponent(currentAuthor.name.replace(/ /g, '_'))}`;
-                window.open(wikiUrl, '_blank');
+                // Priority 1: Use stored Wikipedia URL if it looks valid
+                if (currentAuthor.wikipedia_url && currentAuthor.wikipedia_url.includes('wikipedia.org')) {
+                  window.open(currentAuthor.wikipedia_url, '_blank');
+                  return;
+                }
+                // Priority 2: Use Wikipedia search (always works - redirects to article if found or shows search results)
+                const searchQuery = `${currentAuthor.name} science fiction author`;
+                const wikiSearchUrl = `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(searchQuery)}`;
+                window.open(wikiSearchUrl, '_blank');
               }}
             >
               <ExternalLink className="w-4 h-4 mr-2" />
