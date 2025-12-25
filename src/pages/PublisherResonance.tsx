@@ -32,10 +32,24 @@ const PublisherResonance = () => {
   const { user, loading: authLoading } = useAuth();
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
 
-  const currentSeries = useMemo(() => 
-    publisherSeries.find(series => series.publisher === selectedPublisher),
-    [publisherSeries, selectedPublisher]
-  );
+  const currentSeries = useMemo(() => {
+    // Find series matching publisher (case-insensitive), prefer series with most books
+    const matchingSeries = publisherSeries.filter(
+      series => series.publisher.toLowerCase() === selectedPublisher.toLowerCase()
+    );
+    
+    if (matchingSeries.length === 0) return undefined;
+    if (matchingSeries.length === 1) return matchingSeries[0];
+    
+    // If multiple matches, pick the one with more books
+    const seriesWithBookCounts = matchingSeries.map(series => ({
+      series,
+      bookCount: books.filter(b => b.series_id === series.id).length
+    }));
+    
+    seriesWithBookCounts.sort((a, b) => b.bookCount - a.bookCount);
+    return seriesWithBookCounts[0].series;
+  }, [publisherSeries, selectedPublisher, books]);
 
   const filteredBooks = useMemo(() => {
     if (!currentSeries) return [];

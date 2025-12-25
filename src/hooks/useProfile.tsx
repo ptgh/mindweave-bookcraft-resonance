@@ -95,7 +95,7 @@ export const useProfile = () => {
         supabase.removeChannel(profileChannel);
       };
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchProfile = async (): Promise<UserProfile | null> => {
     if (!user) return null;
