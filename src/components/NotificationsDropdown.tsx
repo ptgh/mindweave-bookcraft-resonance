@@ -12,9 +12,6 @@ export const NotificationsDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Don't render if no user
-  if (!user) return null;
-
   useEffect(() => {
     if (isOpen && dropdownRef.current) {
       gsap.fromTo(dropdownRef.current, 
@@ -36,6 +33,9 @@ export const NotificationsDropdown = () => {
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [isOpen]);
+
+  // Don't render if no user - AFTER all hooks
+  if (!user) return null;
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
