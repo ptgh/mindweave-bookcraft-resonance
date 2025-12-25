@@ -165,11 +165,14 @@ const BookCard = ({
           if (entry.isIntersecting) {
             setIsInView(true);
             
-            // GSAP animate author underline on scroll into view
+            // GSAP animate author underline on scroll into view with pulsing glow
             if (authorUnderlineRef.current && onAuthorClick && !hasAnimated) {
               setHasAnimated(true);
+              const underline = authorUnderlineRef.current;
+              
+              // Animate underline width
               gsap.fromTo(
-                authorUnderlineRef.current,
+                underline,
                 { scaleX: 0, transformOrigin: 'left' },
                 { 
                   scaleX: 1, 
@@ -178,12 +181,33 @@ const BookCard = ({
                   delay: 0.2
                 }
               );
-              // Then reset to 0 after animation completes for hover effect to work
-              gsap.to(authorUnderlineRef.current, {
+              
+              // Add pulsing glow effect
+              gsap.fromTo(
+                underline,
+                { boxShadow: "0 0 0px 0px hsl(217 91% 60% / 0)" },
+                { 
+                  boxShadow: "0 0 10px 3px hsl(217 91% 60% / 0.7)",
+                  duration: 0.4,
+                  delay: 0.4,
+                  ease: "power2.out",
+                  onComplete: () => {
+                    // Pulse out the glow
+                    gsap.to(underline, {
+                      boxShadow: "0 0 0px 0px hsl(217 91% 60% / 0)",
+                      duration: 0.6,
+                      ease: "power2.inOut"
+                    });
+                  }
+                }
+              );
+              
+              // Then reset underline to 0 after animation completes for hover effect to work
+              gsap.to(underline, {
                 scaleX: 0,
                 duration: 0.3,
                 ease: "power2.in",
-                delay: 1.2
+                delay: 1.4
               });
             }
             
