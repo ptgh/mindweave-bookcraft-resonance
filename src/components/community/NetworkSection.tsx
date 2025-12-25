@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from 'react';
-import { Users, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Users } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useFollowing } from '@/hooks/useFollowing';
+import { useFollowing, UserProfile } from '@/hooks/useFollowing';
+import { UserTransmissionsPanel } from './UserTransmissionsPanel';
 import { cn } from '@/lib/utils';
 import gsap from 'gsap';
-import { Link } from 'react-router-dom';
 
 interface NetworkSectionProps {
   className?: string;
@@ -12,8 +12,20 @@ interface NetworkSectionProps {
 
 export const NetworkSection: React.FC<NetworkSectionProps> = ({ className }) => {
   const { following, loading } = useFollowing();
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
   const avatarsRef = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Auto-select first user on load
+  useEffect(() => {
+    if (!loading && following.length > 0 && !selectedUser) {
+      // Small delay to let the UI render first
+      const timer = setTimeout(() => {
+        setSelectedUser(following[0]);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, following, selectedUser]);
 
   useEffect(() => {
     if (!sectionRef.current || loading || following.length === 0) return;
@@ -35,6 +47,14 @@ export const NetworkSection: React.FC<NetworkSectionProps> = ({ className }) => 
 
     return () => ctx.revert();
   }, [loading, following]);
+
+  const handleUserClick = (user: UserProfile) => {
+    if (selectedUser?.id === user.id) {
+      setSelectedUser(null);
+    } else {
+      setSelectedUser(user);
+    }
+  };
 
   if (loading) {
     return (
@@ -76,6 +96,7 @@ export const NetworkSection: React.FC<NetworkSectionProps> = ({ className }) => 
           <h3 className="text-sm font-medium text-slate-300">Following</h3>
           <span className="text-xs text-slate-500">({following.length})</span>
         </div>
+        <span className="text-xs text-slate-500">Click to view library</span>
       </div>
 
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-700">
@@ -83,16 +104,30 @@ export const NetworkSection: React.FC<NetworkSectionProps> = ({ className }) => 
           <div
             key={user.id}
             ref={el => { avatarsRef.current[index] = el; }}
-            className="flex flex-col items-center gap-1 group cursor-pointer flex-shrink-0"
+            onClick={() => handleUserClick(user)}
+            className={cn(
+              "flex flex-col items-center gap-1 group cursor-pointer flex-shrink-0 transition-all duration-200",
+              selectedUser?.id === user.id && "scale-110"
+            )}
             title={user.display_name || 'Reader'}
           >
-            <Avatar className="h-12 w-12 border-2 border-slate-700 group-hover:border-emerald-500/50 transition-colors">
+            <Avatar className={cn(
+              "h-12 w-12 border-2 transition-colors",
+              selectedUser?.id === user.id 
+                ? "border-emerald-500 ring-2 ring-emerald-500/30" 
+                : "border-slate-700 group-hover:border-emerald-500/50"
+            )}>
               <AvatarImage src={user.avatar_url || undefined} />
               <AvatarFallback className="bg-slate-700 text-slate-300">
                 {(user.display_name || 'R').charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <span className="text-xs text-slate-500 truncate max-w-[60px] group-hover:text-slate-300 transition-colors">
+            <span className={cn(
+              "text-xs truncate max-w-[60px] transition-colors",
+              selectedUser?.id === user.id 
+                ? "text-emerald-400" 
+                : "text-slate-500 group-hover:text-slate-300"
+            )}>
               {user.display_name?.split(' ')[0] || 'Reader'}
             </span>
           </div>
@@ -107,6 +142,15 @@ export const NetworkSection: React.FC<NetworkSectionProps> = ({ className }) => 
           </div>
         )}
       </div>
+
+      {/* User Transmissions Panel */}
+      {selectedUser && (
+        <UserTransmissionsPanel
+          user={selectedUser}
+          isOpen={!!selectedUser}
+          onClose={() => setSelectedUser(null)}
+        />
+      )}
     </div>
   );
 };

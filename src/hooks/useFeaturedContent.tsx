@@ -4,6 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 export interface FeaturedAuthor {
   name: string;
   transmission_count: number;
+  nationality?: string;
+  notable_works?: string[];
+  bio?: string;
+  wikipedia_url?: string;
 }
 
 export interface FeaturedBook {

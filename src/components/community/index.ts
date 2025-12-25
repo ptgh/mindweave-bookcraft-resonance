@@ -3,3 +3,5 @@ export { BookPostForm } from './BookPostForm';
 export { FeaturedSection } from './FeaturedSection';
 export { CommunityStats } from './CommunityStats';
 export { NetworkSection } from './NetworkSection';
+export { BookSearchAutocomplete } from './BookSearchAutocomplete';
+export { UserTransmissionsPanel } from './UserTransmissionsPanel';
