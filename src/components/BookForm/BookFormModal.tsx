@@ -11,6 +11,7 @@ import { BookSuggestion } from "@/services/googleBooksApi";
 import { findMatchingPublisherSeries, PublisherSeries } from "@/services/publisherService";
 import { useToast } from "@/hooks/use-toast";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { z } from "zod";
 
 // Local form validation schema matching BookFormData
@@ -54,8 +55,14 @@ interface BookFormModalProps {
 
 const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModalProps) => {
   const { toast } = useToast();
-  const { impact } = useHapticFeedback();
+  const { impact, notification } = useHapticFeedback();
   const wasOpen = useRef(false);
+  
+  // Swipe down to close
+  const { handlers: swipeHandlers } = useSwipeGesture(
+    { onSwipeDown: onClose },
+    { direction: 'down', threshold: 80 }
+  );
   
   const [formData, setFormData] = useState<BookFormData>({
     title: "",
@@ -168,10 +175,16 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModal
       // Call onSubmit and wait for completion
       await Promise.resolve(onSubmit(formData));
       
+      // Success haptic
+      notification.success();
+      
       // Reset form and close modal after successful submission
       resetForm();
       onClose();
     } catch (error) {
+      // Error haptic
+      notification.error();
+      
       if (error instanceof z.ZodError) {
         const firstError = error.errors[0];
         toast({
@@ -189,7 +202,7 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModal
       }
       // Keep modal open so user can correct issues
     }
-  }, [formData, onSubmit, onClose, toast, resetForm]);
+  }, [formData, onSubmit, onClose, toast, resetForm, notification]);
 
   if (!isOpen) return null;
 
@@ -201,8 +214,12 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModal
       }}
     >
       <div className="bg-slate-800 border border-slate-600 rounded-lg w-full max-w-2xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto scrollbar-hide">
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-700">
-          <h2 className="text-slate-200 text-lg font-medium">
+        <div 
+          className="flex items-center justify-center p-4 sm:p-6 border-b border-slate-700 cursor-grab active:cursor-grabbing"
+          {...swipeHandlers}
+        >
+          <div className="w-10 h-1 bg-slate-500 rounded-full mb-2 sm:hidden" />
+          <h2 className="text-slate-200 text-lg font-medium w-full text-center sm:text-left">
             {editingBook ? "Edit Signal" : "Log Signal"}
           </h2>
         </div>
