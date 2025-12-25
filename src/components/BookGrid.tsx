@@ -7,8 +7,9 @@ import PenguinPublisherBadge from "./PenguinPublisherBadge";
 import AppleBooksLink from "./AppleBooksLink";
 import GoogleBooksLink from "./GoogleBooksLink";
 import FreeEbookDownloadIcon from "./FreeEbookDownloadIcon";
+import ShareBookModal from "./ShareBookModal";
 import { Button } from "./ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Share2 } from "lucide-react";
 import { useDeepLinking } from "@/hooks/useDeepLinking";
 import { searchAppleBooks } from "@/services/appleBooks";
 import { gsap } from "gsap";
@@ -231,6 +232,7 @@ const BookGridItem = memo(({
   addToAddRefs
 }: BookGridItemProps) => {
   const itemRef = useRef<HTMLDivElement>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
   
   // Featured entrance animation when book moves to first position
   useEffect(() => {
@@ -279,17 +281,18 @@ const BookGridItem = memo(({
   }, [book.title, book.author, book.isbn]);
 
   return (
-            <div
-              ref={itemRef}
-              key={book.id}
-              data-book-id={book.id}
-              className={`transition-all duration-500 ${
-                isVisible 
-                  ? 'opacity-100 translate-y-0' 
-                  : 'opacity-0 translate-y-4'
-              } ${isHighlighted ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900 animate-pulse' : ''}`}
-            >
-              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3 sm:p-4 hover:bg-slate-800/70 transition-colors h-full flex flex-col relative overflow-visible">
+    <>
+      <div
+        ref={itemRef}
+        key={book.id}
+        data-book-id={book.id}
+        className={`transition-all duration-500 ${
+          isVisible 
+            ? 'opacity-100 translate-y-0' 
+            : 'opacity-0 translate-y-4'
+        } ${isHighlighted ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900 animate-pulse' : ''}`}
+      >
+        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3 sm:p-4 hover:bg-slate-800/70 transition-colors h-full flex flex-col relative overflow-visible">
                 <div className="flex items-start space-x-3 sm:space-x-4 flex-1 mb-3 sm:mb-4">
                   <EnhancedBookCover
                     title={book.title}
@@ -404,9 +407,32 @@ const BookGridItem = memo(({
                     Preview
                   </button>
                 )}
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  className="px-2 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 bg-transparent border border-[rgba(255,255,255,0.15)] text-slate-400 rounded-lg transition-all duration-300 ease-in-out hover:border-[#89b4fa] hover:text-[#89b4fa] touch-manipulation"
+                  title="Share"
+                  style={{
+                    boxShadow: "0 0 0px transparent"
+                  }}
+                >
+                  <Share2 className="w-3 h-3" />
+                </button>
               </div>
             </div>
           </div>
+
+          {/* Share Modal */}
+          {showShareModal && (
+            <ShareBookModal
+              onClose={() => setShowShareModal(false)}
+              book={{
+                title: book.title,
+                author: book.author,
+                cover_url: book.coverUrl || book.thumbnailUrl || ''
+              }}
+            />
+          )}
+    </>
   );
 });
 
