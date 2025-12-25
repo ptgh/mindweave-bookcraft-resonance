@@ -1,5 +1,5 @@
-import { BookOpen, LogOut, Instagram, Menu, Shield } from "lucide-react";
-import { useCallback } from "react";
+import { BookOpen, LogOut, Instagram, Menu, Shield, ChevronDown, Database, Sparkles } from "lucide-react";
+import { useCallback, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { StandardButton } from "./ui/standard-button";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,6 +11,10 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 
 const Header = () => {
@@ -18,6 +22,7 @@ const Header = () => {
   const { user, signOut } = useAuth();
   const { hasRole } = useProfile();
   const haptic = useHapticFeedback();
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
 
   const handleMenuItemTap = useCallback(() => {
     haptic.selection();
@@ -31,6 +36,14 @@ const Header = () => {
   const handleOpenMenu = useCallback(() => {
     haptic.impact.light();
   }, [haptic]);
+
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
+  // Admin submenu items
+  const adminMenuItems = [
+    { to: '/admin/enrichment', label: 'Data Enrichment', icon: Sparkles },
+    { to: '/admin/populate', label: 'Populate Publishers', icon: Database },
+  ];
   
   return (
     <header className="bg-slate-900">
@@ -148,18 +161,44 @@ const Header = () => {
               >
                 Neural Map
               </Link>
+              
+              {/* Desktop Admin Dropdown */}
               {hasRole('admin') && (
-                <Link
-                  to="/admin/enrichment"
-                  className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap flex items-center gap-1 ${
-                    location.pathname.startsWith('/admin') 
-                      ? 'text-amber-400' 
-                      : 'text-amber-300/70 hover:text-amber-400'
-                  }`}
-                >
-                  <Shield className="w-3.5 h-3.5" />
-                  Admin
-                </Link>
+                <DropdownMenu open={adminMenuOpen} onOpenChange={setAdminMenuOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap flex items-center gap-1 ${
+                        isAdminRoute 
+                          ? 'text-amber-400' 
+                          : 'text-amber-300/70 hover:text-amber-400'
+                      }`}
+                    >
+                      <Shield className="w-3.5 h-3.5" />
+                      Admin
+                      <ChevronDown className={`w-3 h-3 transition-transform ${adminMenuOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent 
+                    align="end" 
+                    className="bg-slate-900/95 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10"
+                  >
+                    {adminMenuItems.map((item) => (
+                      <DropdownMenuItem key={item.to} asChild>
+                        <Link
+                          to={item.to}
+                          className={`flex items-center gap-2 px-3 py-2 cursor-pointer ${
+                            location.pathname === item.to
+                              ? 'text-amber-400'
+                              : 'text-slate-200 hover:text-amber-400'
+                          }`}
+                        >
+                          <item.icon className="w-4 h-4 text-amber-400/70" />
+                          {item.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </nav>
 
@@ -315,23 +354,36 @@ const Header = () => {
                   </Link>
                 </DropdownMenuItem>
 
+                {/* Mobile Admin Submenu */}
                 {hasRole('admin') && (
                   <>
                     <DropdownMenuSeparator className="bg-amber-500/20" />
-                    <DropdownMenuItem asChild>
-                      <Link
-                        to="/admin/enrichment"
-                        onClick={handleMenuItemTap}
-                        className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
-                          location.pathname.startsWith('/admin')
-                            ? 'text-amber-400'
-                            : 'text-amber-300/70 hover:text-amber-400'
-                        }`}
-                      >
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="flex items-center gap-3 px-3 py-2.5 cursor-pointer text-amber-300/70 hover:text-amber-400 data-[state=open]:text-amber-400">
                         <Shield className="w-4 h-4 text-amber-400/70" />
                         Admin
-                      </Link>
-                    </DropdownMenuItem>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent className="bg-slate-900/95 backdrop-blur-xl border border-amber-500/20 shadow-2xl">
+                          {adminMenuItems.map((item) => (
+                            <DropdownMenuItem key={item.to} asChild>
+                              <Link
+                                to={item.to}
+                                onClick={handleMenuItemTap}
+                                className={`flex items-center gap-2 px-3 py-2.5 cursor-pointer ${
+                                  location.pathname === item.to
+                                    ? 'text-amber-400'
+                                    : 'text-slate-200 hover:text-amber-400'
+                                }`}
+                              >
+                                <item.icon className="w-4 h-4 text-amber-400/70" />
+                                {item.label}
+                              </Link>
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
                   </>
                 )}
 
