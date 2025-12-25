@@ -97,14 +97,24 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
         .sort(() => Math.random() - 0.5)
         .slice(0, 10);
 
-      // Get transmission counts for each user
+      // Get transmission counts and follower counts for each user
       const usersWithStats = await Promise.all(filtered.map(async (p) => {
-        const { count } = await supabase
-          .from('transmissions')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', p.id);
+        const [transmissionResult, followerResult] = await Promise.all([
+          supabase
+            .from('transmissions')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', p.id),
+          supabase
+            .from('user_follows')
+            .select('*', { count: 'exact', head: true })
+            .eq('following_id', p.id)
+        ]);
         
-        return { ...p, transmission_count: count || 0 } as UserWithStats;
+        return { 
+          ...p, 
+          transmission_count: transmissionResult.count || 0,
+          follower_count: followerResult.count || 0
+        } as UserWithStats;
       }));
 
       // Sort by transmission count (most active first)
@@ -248,11 +258,20 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
                 </span>
               )}
             </div>
-            {user.transmission_count !== undefined ? (
-              <p className="text-slate-400 text-xs">{user.transmission_count} books</p>
-            ) : user.bio && (
-              <p className="text-slate-400 text-xs line-clamp-1">{user.bio}</p>
-            )}
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              {user.transmission_count !== undefined && (
+                <span>{user.transmission_count} books</span>
+              )}
+              {user.transmission_count !== undefined && user.follower_count !== undefined && (
+                <span>•</span>
+              )}
+              {user.follower_count !== undefined && (
+                <span>{user.follower_count} followers</span>
+              )}
+              {user.transmission_count === undefined && user.follower_count === undefined && user.bio && (
+                <span className="line-clamp-1">{user.bio}</span>
+              )}
+            </div>
           </div>
         </button>
         {showFollow && (
@@ -408,16 +427,19 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
           <Tabs defaultValue="discover" className="w-full" onValueChange={(v) => {
             if (v === 'discover') loadDiscoverUsers();
           }}>
-            <TabsList className="w-full mb-4 grid grid-cols-4">
-              <TabsTrigger value="discover" className="gap-1">
+            <TabsList className="w-full mb-4 grid grid-cols-5">
+              <TabsTrigger value="discover" className="gap-1 text-xs sm:text-sm">
                 <Compass className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Discover</span>
               </TabsTrigger>
-              <TabsTrigger value="search">Find</TabsTrigger>
-              <TabsTrigger value="following">
+              <TabsTrigger value="search" className="text-xs sm:text-sm">Find</TabsTrigger>
+              <TabsTrigger value="following" className="text-xs sm:text-sm">
                 Following ({following.length})
               </TabsTrigger>
-              <TabsTrigger value="feed">Feed</TabsTrigger>
+              <TabsTrigger value="followers" className="text-xs sm:text-sm">
+                Followers ({followers.length})
+              </TabsTrigger>
+              <TabsTrigger value="feed" className="text-xs sm:text-sm">Feed</TabsTrigger>
             </TabsList>
 
             <TabsContent value="discover" className="space-y-4">
@@ -504,6 +526,24 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
               ) : (
                 <p className="text-center text-slate-400 py-4">
                   You're not following anyone yet
+                </p>
+              )}
+            </TabsContent>
+
+            <TabsContent value="followers" className="space-y-2">
+              {loading ? (
+                <p className="text-center text-slate-400 py-4">Loading...</p>
+              ) : followers.length > 0 ? (
+                followers.map(user => (
+                  <UserCard 
+                    key={user.id} 
+                    user={user} 
+                    onClick={() => handleViewUserProfile(user)}
+                  />
+                ))
+              ) : (
+                <p className="text-center text-slate-400 py-4">
+                  No followers yet. Share your profile to grow your community!
                 </p>
               )}
             </TabsContent>
