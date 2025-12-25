@@ -469,7 +469,14 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
           {currentAuthor.data_source && (
             <div className="text-xs text-slate-400 border-t border-slate-700/50 pt-3">
               <div className="flex items-center justify-between">
-                <span>Source: {currentAuthor.data_source}</span>
+                <span>Source: {(() => {
+                  const source = currentAuthor.data_source?.toLowerCase() || 'unknown';
+                  if (source.includes('transmission') || source.includes('auto')) return 'Library';
+                  if (source.includes('wikipedia')) return 'Wikipedia';
+                  if (source.includes('manual')) return 'Manual Entry';
+                  if (source.includes('ai') || source.includes('gemini')) return 'AI Analysis';
+                  return 'Archive';
+                })()}</span>
                 {currentAuthor.last_enriched && (
                   <span>Updated: {new Date(currentAuthor.last_enriched).toLocaleDateString()}</span>
                 )}
