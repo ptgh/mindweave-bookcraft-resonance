@@ -170,6 +170,16 @@ const BookCard = ({
               setHasAnimated(true);
               const underline = authorUnderlineRef.current;
               
+              // Get glow color based on status
+              const getGlowColor = () => {
+                switch (status) {
+                  case "reading": return "217 91% 60%"; // blue-400
+                  case "read": return "142 71% 45%"; // green-400
+                  default: return "217 91% 60%"; // default blue
+                }
+              };
+              const glowHsl = getGlowColor();
+              
               // Animate underline width
               gsap.fromTo(
                 underline,
@@ -182,19 +192,19 @@ const BookCard = ({
                 }
               );
               
-              // Add pulsing glow effect
+              // Add pulsing glow effect with status-matched color
               gsap.fromTo(
                 underline,
-                { boxShadow: "0 0 0px 0px hsl(217 91% 60% / 0)" },
+                { boxShadow: `0 0 0px 0px hsl(${glowHsl} / 0)` },
                 { 
-                  boxShadow: "0 0 10px 3px hsl(217 91% 60% / 0.7)",
+                  boxShadow: `0 0 10px 3px hsl(${glowHsl} / 0.7)`,
                   duration: 0.4,
                   delay: 0.4,
                   ease: "power2.out",
                   onComplete: () => {
                     // Pulse out the glow
                     gsap.to(underline, {
-                      boxShadow: "0 0 0px 0px hsl(217 91% 60% / 0)",
+                      boxShadow: `0 0 0px 0px hsl(${glowHsl} / 0)`,
                       duration: 0.6,
                       ease: "power2.inOut"
                     });
