@@ -51,27 +51,6 @@ const fetchImageAsBase64 = async (url: string): Promise<string | null> => {
   }
 };
 
-// Load leafnode logo as base64
-const loadLeafnodeLogo = async (): Promise<HTMLImageElement | null> => {
-  try {
-    const response = await fetch('/leafnode-email-logo.png');
-    const blob = await response.blob();
-    const base64 = await new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(blob);
-    });
-    
-    const img = new Image();
-    return new Promise((resolve) => {
-      img.onload = () => resolve(img);
-      img.onerror = () => resolve(null);
-      img.src = base64;
-    });
-  } catch {
-    return null;
-  }
-};
 
 const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateStyle>('gradient');
@@ -233,28 +212,12 @@ const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
     ctx.font = '36px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.fillText(`by ${book.author}`, width / 2, y + 70);
 
-    // Branding at bottom - leafnode logo + URL
-    const logoImg = await loadLeafnodeLogo();
+    // Branding at bottom - just website URL, clean and minimal
     const brandingY = height - 100;
-    
-    if (logoImg) {
-      // Draw small logo
-      const logoSize = 32;
-      const logoX = (width / 2) - 90;
-      ctx.drawImage(logoImg, logoX, brandingY - 24, logoSize, logoSize);
-      
-      // Draw URL next to logo
-      ctx.fillStyle = subtextColor;
-      ctx.font = '28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText('leafnode.app', logoX + logoSize + 12, brandingY);
-    } else {
-      // Fallback: just text
-      ctx.fillStyle = subtextColor;
-      ctx.font = '28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('🌿 leafnode.app', width / 2, brandingY);
-    }
+    ctx.fillStyle = subtextColor;
+    ctx.font = '28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('www.leafnode.co.uk', width / 2, brandingY);
 
     // Generate data URL
     const dataUrl = canvas.toDataURL('image/png', 1.0);
@@ -303,11 +266,11 @@ const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
         }
       }
       
-      // Fallback to text-only share
+      // Fallback to text-only share with actionable link
       await navigator.share({
         title: book.title,
         text: `Reading "${book.title}" by ${book.author}`,
-        url: 'https://leafnode.app',
+        url: 'https://www.leafnode.co.uk',
       });
       
       toast({
