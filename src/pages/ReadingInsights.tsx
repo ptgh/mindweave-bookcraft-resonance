@@ -106,7 +106,7 @@ export default function ReadingInsights() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="min-h-screen flex flex-col bg-slate-900">
         <Header />
         <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
           <div className="text-center">
@@ -122,26 +122,26 @@ export default function ReadingInsights() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-slate-900">
       <Header />
       
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-3 sm:px-4 py-6 sm:py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between gap-3 mb-6 sm:mb-8">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/discovery')}
-                className="gap-2"
+                className="gap-1.5 px-2 sm:px-3"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back to Discovery
+                <span className="hidden sm:inline">Back to Discovery</span>
               </Button>
               <div className="flex items-center gap-2">
-                <Brain className="h-6 w-6 text-primary" />
-                <h1 className="text-3xl font-bold">Reading Insights</h1>
+                <Brain className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
+                <h1 className="text-xl sm:text-3xl font-bold whitespace-nowrap">Reading Insights</h1>
               </div>
             </div>
             
@@ -151,10 +151,10 @@ export default function ReadingInsights() {
                 size="sm"
                 onClick={handleRegenerate}
                 disabled={isRegenerating}
-                className="gap-2"
+                className="gap-1.5 flex-shrink-0"
               >
                 <RefreshCw className={`h-4 w-4 ${isRegenerating ? 'animate-spin' : ''}`} />
-                Regenerate
+                <span className="hidden sm:inline">Regenerate</span>
               </Button>
             )}
           </div>
