@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { StandardButton } from "@/components/ui/standard-button";
 import BookSearchSection from "./BookSearchSection";
 import StatusSection from "./StatusSection";
@@ -10,6 +10,7 @@ import PublisherResonanceBadge from "../PublisherResonanceBadge";
 import { BookSuggestion } from "@/services/googleBooksApi";
 import { findMatchingPublisherSeries, PublisherSeries } from "@/services/publisherService";
 import { useToast } from "@/hooks/use-toast";
+import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 import { z } from "zod";
 
 // Local form validation schema matching BookFormData
@@ -53,6 +54,9 @@ interface BookFormModalProps {
 
 const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModalProps) => {
   const { toast } = useToast();
+  const { impact } = useHapticFeedback();
+  const wasOpen = useRef(false);
+  
   const [formData, setFormData] = useState<BookFormData>({
     title: "",
     author: "",
@@ -68,6 +72,16 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModal
   const [authorSearch, setAuthorSearch] = useState("");
   const [detectedSeries, setDetectedSeries] = useState<PublisherSeries | null>(null);
   const [selectedAuthorName, setSelectedAuthorName] = useState<string>("");
+
+  // Haptic feedback on open/close
+  useEffect(() => {
+    if (isOpen && !wasOpen.current) {
+      impact.medium();
+    } else if (!isOpen && wasOpen.current) {
+      impact.light();
+    }
+    wasOpen.current = isOpen;
+  }, [isOpen, impact]);
 
   const resetForm = useCallback(() => {
     setFormData({
