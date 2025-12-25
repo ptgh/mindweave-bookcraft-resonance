@@ -40,11 +40,26 @@ export const useProfile = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const loadUserData = async () => {
+      if (user) {
+        setLoading(true);
+        try {
+          // Fetch both profile and role in parallel, wait for both
+          await Promise.all([fetchProfile(), fetchUserRole()]);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setProfile(null);
+        setUserRole(null);
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
+
+    // Set up real-time subscription for profile updates
     if (user) {
-      fetchProfile();
-      fetchUserRole();
-      
-      // Set up real-time subscription for profile updates
       const profileChannel = supabase
         .channel('profile-changes')
         .on(
@@ -67,10 +82,6 @@ export const useProfile = () => {
       return () => {
         supabase.removeChannel(profileChannel);
       };
-    } else {
-      setProfile(null);
-      setUserRole(null);
-      setLoading(false);
     }
   }, [user]);
 
@@ -92,8 +103,6 @@ export const useProfile = () => {
       setProfile(data as UserProfile);
     } catch (error) {
       console.error('Error fetching profile:', error);
-    } finally {
-      setLoading(false);
     }
   };
 

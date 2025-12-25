@@ -3,13 +3,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
-import { Loader2, Database, CheckCircle2, BookOpen } from "lucide-react";
+import { Loader2, Database, CheckCircle2, BookOpen, Star } from "lucide-react";
+
+interface PopulateResult {
+  booksAdded: number;
+  seriesName?: string;
+  books?: Array<{ title: string; author: string; isbn: string }>;
+}
 
 export const AdminPopulateBooks = () => {
   const [loading, setLoading] = useState(false);
   const [loadingPenguin, setLoadingPenguin] = useState(false);
+  const [loadingGollancz, setLoadingGollancz] = useState(false);
   const [results, setResults] = useState<any>(null);
-  const [penguinResults, setPenguinResults] = useState<any>(null);
+  const [penguinResults, setPenguinResults] = useState<PopulateResult | null>(null);
+  const [gollanczResults, setGollanczResults] = useState<PopulateResult | null>(null);
   const { toast } = useEnhancedToast();
 
   const handlePopulate = async () => {
@@ -56,7 +64,9 @@ export const AdminPopulateBooks = () => {
         description: "Adding official Penguin Science Fiction titles with cover art...",
       });
 
-      const { data, error } = await supabase.functions.invoke('populate-publisher-books');
+      const { data, error } = await supabase.functions.invoke('populate-publisher-books', {
+        body: { series: 'penguin' }
+      });
 
       if (error) throw error;
 
@@ -78,6 +88,67 @@ export const AdminPopulateBooks = () => {
     } finally {
       setLoadingPenguin(false);
     }
+  };
+
+  const handlePopulateGollanczSF = async () => {
+    setLoadingGollancz(true);
+    setGollanczResults(null);
+    
+    try {
+      toast({
+        title: "Starting Gollancz SF Masterworks population",
+        description: "Adding iconic SF Masterworks titles with official cover art...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('populate-publisher-books', {
+        body: { series: 'gollancz' }
+      });
+
+      if (error) throw error;
+
+      setGollanczResults(data);
+      
+      toast({
+        title: "Gollancz SF Masterworks Complete!",
+        description: `Added ${data.booksAdded} SF Masterworks titles.`,
+        duration: 5000,
+        variant: "success"
+      });
+    } catch (error: any) {
+      console.error('Error populating Gollancz SF books:', error);
+      toast({
+        title: "Gollancz SF Masterworks population failed",
+        description: error.message || "Failed to populate Gollancz SF Masterworks books",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingGollancz(false);
+    }
+  };
+
+  const renderResultsList = (resultData: PopulateResult | null, colorClass: string) => {
+    if (!resultData) return null;
+    
+    return (
+      <div className="mt-4 space-y-2 text-sm">
+        <div className="flex items-center gap-2 text-green-400">
+          <CheckCircle2 className="w-4 h-4" />
+          <span>Successfully added {resultData.booksAdded} books</span>
+        </div>
+        {resultData.books && (
+          <div className="bg-slate-900/50 p-3 rounded max-h-48 overflow-y-auto">
+            <div className={`${colorClass} font-semibold mb-2`}>Added Titles:</div>
+            <div className="space-y-1">
+              {resultData.books.map((book, i) => (
+                <div key={i} className="text-slate-300 text-xs">
+                  • {book.title} by {book.author}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -112,29 +183,48 @@ export const AdminPopulateBooks = () => {
             )}
           </Button>
 
-          {penguinResults && (
-            <div className="mt-4 space-y-2 text-sm">
-              <div className="flex items-center gap-2 text-green-400">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Successfully added {penguinResults.booksAdded} Penguin SF books</span>
-              </div>
-              {penguinResults.books && (
-                <div className="bg-slate-900/50 p-3 rounded max-h-48 overflow-y-auto">
-                  <div className="text-amber-300 font-semibold mb-2">Added Titles:</div>
-                  <div className="space-y-1">
-                    {penguinResults.books.map((book: any, i: number) => (
-                      <div key={i} className="text-slate-300 text-xs">
-                        • {book.title} by {book.author}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          {renderResultsList(penguinResults, 'text-amber-300')}
 
           <p className="mt-4 text-xs text-amber-200/50">
             This will add the official 19 Penguin Science Fiction series titles to the Publisher Resonance section with authentic cover artwork.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Gollancz SF Masterworks Population */}
+      <Card className="border-yellow-600/50 bg-gradient-to-br from-yellow-900/20 to-slate-800/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-yellow-100">
+            <Star className="w-5 h-5 text-yellow-400" />
+            Populate Gollancz SF Masterworks
+          </CardTitle>
+          <CardDescription className="text-yellow-200/70">
+            Add 20 iconic SF Masterworks titles with official Gollancz cover art featuring the classic yellow-spine designs
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            onClick={handlePopulateGollanczSF}
+            disabled={loadingGollancz}
+            className="w-full bg-yellow-600 hover:bg-yellow-700 text-white"
+          >
+            {loadingGollancz ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Populating Gollancz SF Masterworks...
+              </>
+            ) : (
+              <>
+                <Star className="w-4 h-4 mr-2" />
+                Populate Gollancz SF Masterworks
+              </>
+            )}
+          </Button>
+
+          {renderResultsList(gollanczResults, 'text-yellow-300')}
+
+          <p className="mt-4 text-xs text-yellow-200/50">
+            This will add 20 curated SF Masterworks titles featuring iconic works like Dune, Neuromancer, Hyperion, and more with official Gollancz cover artwork.
           </p>
         </CardContent>
       </Card>
