@@ -8,6 +8,7 @@ import EmptyState from "@/components/EmptyState";
 import EnhancedBookPreviewModal from "@/components/EnhancedBookPreviewModal";
 import PublisherBookCard from "@/components/PublisherBookCard";
 import PublisherSelector from "@/components/PublisherSelector";
+import SciFiEventsSection from "@/components/SciFiEventsSection";
 import { EnrichedPublisherBook } from "@/services/publisherService";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 import { supabase } from "@/integrations/supabase/client";
@@ -218,6 +219,9 @@ const PublisherResonance = () => {
               />
             )}
           </div>
+
+          {/* Sci-Fi Events Section */}
+          <SciFiEventsSection />
           
           <div className="mt-12 pb-8">
             <footer className="text-center">
