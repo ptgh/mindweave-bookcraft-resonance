@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Download, Instagram, Twitter, Link2, Check, Palette, Share2 } from 'lucide-react';
+import { X, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEnhancedToast } from '@/hooks/use-enhanced-toast';
 
@@ -13,19 +13,17 @@ interface ShareBookModalProps {
   onClose: () => void;
 }
 
-type TemplateStyle = 'minimal' | 'gradient' | 'dark' | 'polaroid';
+type TemplateStyle = 'minimal' | 'gradient' | 'dark';
 
 const TEMPLATE_STYLES: { id: TemplateStyle; name: string; description: string }[] = [
-  { id: 'minimal', name: 'Minimal', description: 'Clean white background' },
-  { id: 'gradient', name: 'Cosmic', description: 'Space gradient theme' },
-  { id: 'dark', name: 'Dark', description: 'Dark sophisticated style' },
-  { id: 'polaroid', name: 'Polaroid', description: 'Vintage polaroid frame' },
+  { id: 'minimal', name: 'Minimal', description: 'Clean white' },
+  { id: 'gradient', name: 'Cosmic', description: 'Space gradient' },
+  { id: 'dark', name: 'Dark', description: 'Sophisticated' },
 ];
 
 // Helper to convert image URL to base64 to bypass CORS
 const fetchImageAsBase64 = async (url: string): Promise<string | null> => {
   try {
-    // Try fetching through a proxy or directly
     const response = await fetch(url);
     if (!response.ok) throw new Error('Failed to fetch');
     const blob = await response.blob();
@@ -36,7 +34,6 @@ const fetchImageAsBase64 = async (url: string): Promise<string | null> => {
       reader.readAsDataURL(blob);
     });
   } catch {
-    // If direct fetch fails, try through a CORS proxy
     try {
       const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
       const response = await fetch(proxyUrl);
@@ -54,14 +51,41 @@ const fetchImageAsBase64 = async (url: string): Promise<string | null> => {
   }
 };
 
+// Load leafnode logo as base64
+const loadLeafnodeLogo = async (): Promise<HTMLImageElement | null> => {
+  try {
+    const response = await fetch('/leafnode-email-logo.png');
+    const blob = await response.blob();
+    const base64 = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+    
+    const img = new Image();
+    return new Promise((resolve) => {
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = base64;
+    });
+  } catch {
+    return null;
+  }
+};
+
 const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateStyle>('gradient');
   const [generatingImage, setGeneratingImage] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [imageLoadError, setImageLoadError] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [canShare, setCanShare] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useEnhancedToast();
+
+  // Check if native sharing is available
+  useEffect(() => {
+    setCanShare(typeof navigator !== 'undefined' && 'share' in navigator);
+  }, []);
 
   const generateShareImage = useCallback(async () => {
     const canvas = canvasRef.current;
@@ -85,7 +109,7 @@ const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
     // Draw background based on template
     switch (selectedTemplate) {
       case 'minimal':
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = '#fafafa';
         ctx.fillRect(0, 0, width, height);
         break;
       case 'gradient':
@@ -95,12 +119,12 @@ const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
         gradient.addColorStop(1, '#0f172a');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
-        // Add stars
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        for (let i = 0; i < 100; i++) {
+        // Add subtle stars
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+        for (let i = 0; i < 80; i++) {
           const x = Math.random() * width;
           const y = Math.random() * height;
-          const size = Math.random() * 2 + 1;
+          const size = Math.random() * 2 + 0.5;
           ctx.beginPath();
           ctx.arc(x, y, size, 0, Math.PI * 2);
           ctx.fill();
@@ -109,29 +133,15 @@ const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
       case 'dark':
         ctx.fillStyle = '#0a0a0a';
         ctx.fillRect(0, 0, width, height);
-        // Add subtle border
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(40, 40, width - 80, height - 80);
-        break;
-      case 'polaroid':
-        ctx.fillStyle = '#f5f5f0';
-        ctx.fillRect(0, 0, width, height);
-        // Draw polaroid frame
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
-        ctx.shadowBlur = 40;
-        ctx.shadowOffsetY = 20;
-        ctx.fillRect(140, 200, 800, 1000);
-        ctx.shadowColor = 'transparent';
         break;
     }
 
-    // Load and draw book cover
+    // Load and draw book cover - centered and larger
     let coverDrawn = false;
+    let coverBottomY = 1100;
+    
     if (book.cover_url) {
       try {
-        // Fetch image as base64 to bypass CORS
         const base64Image = await fetchImageAsBase64(book.cover_url);
         
         if (base64Image) {
@@ -143,36 +153,29 @@ const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
             img.src = base64Image;
           });
 
-          // Position based on template
-          let coverX, coverY, coverWidth, coverHeight;
+          // Calculate cover dimensions - make it prominent and centered
+          const maxCoverWidth = 600;
+          const maxCoverHeight = 900;
           
-          if (selectedTemplate === 'polaroid') {
-            coverX = 180;
-            coverY = 240;
-            coverWidth = 720;
-            coverHeight = 720 * (img.height / img.width);
-            if (coverHeight > 700) {
-              coverHeight = 700;
-              coverWidth = coverHeight * (img.width / img.height);
-              coverX = (width - coverWidth) / 2;
-            }
-          } else {
-            coverWidth = 500;
-            coverHeight = 500 * (img.height / img.width);
-            if (coverHeight > 750) {
-              coverHeight = 750;
-              coverWidth = coverHeight * (img.width / img.height);
-            }
-            coverX = (width - coverWidth) / 2;
-            coverY = selectedTemplate === 'minimal' ? 400 : 350;
+          let coverWidth = maxCoverWidth;
+          let coverHeight = coverWidth * (img.height / img.width);
+          
+          if (coverHeight > maxCoverHeight) {
+            coverHeight = maxCoverHeight;
+            coverWidth = coverHeight * (img.width / img.height);
           }
+          
+          const coverX = (width - coverWidth) / 2;
+          const coverY = (height - coverHeight) / 2 - 150; // Slightly above center
 
-          // Add shadow to cover
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-          ctx.shadowBlur = 30;
-          ctx.shadowOffsetY = 15;
+          // Add subtle shadow
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+          ctx.shadowBlur = 40;
+          ctx.shadowOffsetY = 20;
           ctx.drawImage(img, coverX, coverY, coverWidth, coverHeight);
           ctx.shadowColor = 'transparent';
+          
+          coverBottomY = coverY + coverHeight;
           coverDrawn = true;
         }
       } catch (error) {
@@ -183,35 +186,34 @@ const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
     // Draw placeholder if cover failed to load
     if (!coverDrawn) {
       setImageLoadError(true);
-      const placeholderX = (width - 400) / 2;
-      const placeholderY = 400;
-      ctx.fillStyle = selectedTemplate === 'minimal' ? '#e5e5e5' : 'rgba(255, 255, 255, 0.1)';
-      ctx.fillRect(placeholderX, placeholderY, 400, 600);
+      const placeholderWidth = 400;
+      const placeholderHeight = 600;
+      const placeholderX = (width - placeholderWidth) / 2;
+      const placeholderY = (height - placeholderHeight) / 2 - 150;
       
-      // Add book icon placeholder
-      ctx.fillStyle = selectedTemplate === 'minimal' ? '#999999' : 'rgba(255, 255, 255, 0.3)';
-      ctx.font = '120px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('📚', width / 2, placeholderY + 350);
+      ctx.fillStyle = selectedTemplate === 'minimal' ? '#e5e5e5' : 'rgba(255, 255, 255, 0.1)';
+      ctx.fillRect(placeholderX, placeholderY, placeholderWidth, placeholderHeight);
+      
+      coverBottomY = placeholderY + placeholderHeight;
     }
 
-    // Draw text
+    // Draw title and author below cover
     const textColor = selectedTemplate === 'minimal' ? '#1a1a1a' : '#ffffff';
     const subtextColor = selectedTemplate === 'minimal' ? '#666666' : 'rgba(255, 255, 255, 0.7)';
 
     // Title
     ctx.fillStyle = textColor;
-    ctx.font = 'bold 56px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.font = 'bold 52px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.textAlign = 'center';
     
-    const titleY = selectedTemplate === 'polaroid' ? 1050 : 1300;
-    const maxWidth = selectedTemplate === 'polaroid' ? 700 : 900;
+    const titleY = coverBottomY + 80;
+    const maxWidth = 900;
     
     // Word wrap title
     const words = book.title.split(' ');
     let line = '';
     let y = titleY;
-    const lineHeight = 70;
+    const lineHeight = 65;
     
     for (const word of words) {
       const testLine = line + word + ' ';
@@ -228,20 +230,31 @@ const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
 
     // Author
     ctx.fillStyle = subtextColor;
-    ctx.font = '40px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillText(`by ${book.author}`, width / 2, y + 80);
+    ctx.font = '36px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText(`by ${book.author}`, width / 2, y + 70);
 
-    // Branding
-    ctx.fillStyle = subtextColor;
-    ctx.font = '28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    const brandingY = selectedTemplate === 'polaroid' ? 1150 : height - 120;
-    ctx.fillText('📚 leafnode.app', width / 2, brandingY);
-
-    // Currently reading tag
-    ctx.fillStyle = selectedTemplate === 'minimal' ? '#3b82f6' : '#60a5fa';
-    ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    const tagY = selectedTemplate === 'polaroid' ? 180 : 200;
-    ctx.fillText('📖 Currently Reading', width / 2, tagY);
+    // Branding at bottom - leafnode logo + URL
+    const logoImg = await loadLeafnodeLogo();
+    const brandingY = height - 100;
+    
+    if (logoImg) {
+      // Draw small logo
+      const logoSize = 32;
+      const logoX = (width / 2) - 90;
+      ctx.drawImage(logoImg, logoX, brandingY - 24, logoSize, logoSize);
+      
+      // Draw URL next to logo
+      ctx.fillStyle = subtextColor;
+      ctx.font = '28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('leafnode.app', logoX + logoSize + 12, brandingY);
+    } else {
+      // Fallback: just text
+      ctx.fillStyle = subtextColor;
+      ctx.font = '28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🌿 leafnode.app', width / 2, brandingY);
+    }
 
     // Generate data URL
     const dataUrl = canvas.toDataURL('image/png', 1.0);
@@ -256,87 +269,35 @@ const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
     generateShareImage();
   }, [generateShareImage]);
 
-  const handleDownload = async () => {
-    const imageUrl = generatedImageUrl || await generateShareImage();
-    if (!imageUrl) {
-      toast({
-        title: 'Error',
-        description: 'Failed to generate image',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Convert to blob and create download
-    try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.download = `${book.title.replace(/[^a-z0-9]/gi, '_')}_share.png`;
-      link.href = url;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      toast({
-        title: 'Downloaded!',
-        description: 'Share image saved. Open Instagram and add to your story!',
-        variant: 'success',
-      });
-    } catch (error) {
-      console.error('Download failed:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to download image',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleCopyLink = async () => {
-    const shareUrl = `${window.location.origin}/publisher?book=${encodeURIComponent(book.title)}`;
-    await navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-    
-    toast({
-      title: 'Link Copied!',
-      description: 'Share link copied to clipboard',
-      variant: 'success',
-    });
-  };
-
-  const handleTwitterShare = () => {
-    const text = `📚 Currently reading "${book.title}" by ${book.author}`;
-    const url = `${window.location.origin}/publisher`;
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
-    window.open(twitterUrl, '_blank', 'width=600,height=400');
-  };
-
   const handleNativeShare = async () => {
-    if (!navigator.share) {
+    if (!canShare) {
       toast({
-        title: 'Not supported',
-        description: 'Native sharing not available on this device',
+        title: 'Not available',
+        description: 'Sharing is not supported on this device',
         variant: 'destructive',
       });
       return;
     }
 
     try {
-      // Always try sharing with image first
-      if (generatedImageUrl) {
-        const response = await fetch(generatedImageUrl);
+      const imageUrl = generatedImageUrl || await generateShareImage();
+      
+      if (imageUrl) {
+        // Convert base64 to blob
+        const response = await fetch(imageUrl);
         const blob = await response.blob();
-        const file = new File([blob], 'book-share.png', { type: 'image/png' });
+        const file = new File([blob], `${book.title.replace(/[^a-z0-9]/gi, '_')}_leafnode.png`, { type: 'image/png' });
         
+        // Check if we can share files
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
-            title: book.title,
-            text: `📚 Currently reading "${book.title}" by ${book.author}`,
             files: [file],
+          });
+          
+          toast({
+            title: 'Shared!',
+            description: 'Book cover shared successfully',
+            variant: 'success',
           });
           return;
         }
@@ -345,143 +306,102 @@ const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
       // Fallback to text-only share
       await navigator.share({
         title: book.title,
-        text: `📚 Currently reading "${book.title}" by ${book.author}`,
-        url: `${window.location.origin}/publisher`,
+        text: `Reading "${book.title}" by ${book.author}`,
+        url: 'https://leafnode.app',
+      });
+      
+      toast({
+        title: 'Shared!',
+        description: 'Book link shared successfully',
+        variant: 'success',
       });
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
         console.error('Share failed:', error);
+        toast({
+          title: 'Share failed',
+          description: 'Unable to share. Please try again.',
+          variant: 'destructive',
+        });
       }
     }
   };
 
   const modal = (
-    <div className="fixed inset-0 z-[2000] flex h-[100dvh] w-screen items-center justify-center bg-background/50 backdrop-blur-sm p-4">
-      <div className="bg-slate-800/95 border border-slate-700 rounded-xl w-full max-w-2xl shadow-2xl max-h-[calc(100dvh-2rem)] flex flex-col">
+    <div 
+      className="fixed inset-0 z-[2000] flex h-[100dvh] w-screen items-center justify-center bg-background/60 backdrop-blur-sm p-3"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-slate-800/95 border border-slate-700 rounded-xl w-full max-w-sm shadow-2xl max-h-[calc(100dvh-1.5rem)] flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-slate-700 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <Palette className="w-5 h-5 text-primary" />
-            <h2 className="text-slate-200 font-medium">Share Book</h2>
-          </div>
+        <div className="p-3 border-b border-slate-700 flex items-center justify-between flex-shrink-0">
+          <h2 className="text-slate-200 font-medium text-sm">Share Book</h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-200 transition-colors p-1 rounded hover:bg-slate-700/50"
+            className="text-slate-400 hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-700/50 active:scale-95"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {/* Template Selection */}
-          <div>
-            <h3 className="text-sm font-medium text-slate-300 mb-3">Choose Template</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {TEMPLATE_STYLES.map((template) => (
-                <button
-                  key={template.id}
-                  onClick={() => setSelectedTemplate(template.id)}
-                  className={`p-3 rounded-lg border transition-all text-left ${
-                    selectedTemplate === template.id
-                      ? 'border-primary bg-primary/10'
-                      : 'border-slate-700 hover:border-slate-600'
-                  }`}
-                >
-                  <div className="text-sm font-medium text-slate-200">{template.name}</div>
-                  <div className="text-xs text-slate-400">{template.description}</div>
-                </button>
-              ))}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Template Selection - Compact */}
+          <div className="flex gap-2">
+            {TEMPLATE_STYLES.map((template) => (
+              <button
+                key={template.id}
+                onClick={() => setSelectedTemplate(template.id)}
+                className={`flex-1 py-2 px-3 rounded-lg border transition-all text-center ${
+                  selectedTemplate === template.id
+                    ? 'border-primary bg-primary/10 text-slate-200'
+                    : 'border-slate-700 text-slate-400 hover:border-slate-600'
+                }`}
+              >
+                <span className="text-xs font-medium">{template.name}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Preview - Centered */}
+          <div className="flex justify-center py-2">
+            <div className="relative w-[160px] h-[284px] rounded-lg overflow-hidden bg-slate-900 border border-slate-700 shadow-lg">
+              {generatingImage ? (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-6 h-6 border-2 border-slate-600 border-t-primary rounded-full animate-spin" />
+                </div>
+              ) : generatedImageUrl ? (
+                <img
+                  src={generatedImageUrl}
+                  alt="Share preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : null}
             </div>
           </div>
 
-          {/* Preview */}
-          <div>
-            <h3 className="text-sm font-medium text-slate-300 mb-3">Preview</h3>
-            <div className="flex justify-center">
-              <div className="relative w-[180px] h-[320px] rounded-lg overflow-hidden bg-slate-900 border border-slate-700 shadow-lg">
-                {generatingImage ? (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-8 h-8 border-2 border-slate-600 border-t-primary rounded-full animate-spin" />
-                  </div>
-                ) : generatedImageUrl ? (
-                  <img
-                    src={generatedImageUrl}
-                    alt="Share preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : null}
-              </div>
-            </div>
-            {imageLoadError && (
-              <p className="text-xs text-amber-400 text-center mt-2">
-                Cover image couldn't be loaded. A placeholder will be used.
-              </p>
-            )}
-          </div>
-
-          {/* Native Share - Primary on mobile */}
-          {typeof navigator !== 'undefined' && 'share' in navigator && (
-            <Button
-              onClick={handleNativeShare}
-              className="w-full bg-primary hover:bg-primary/90"
-              size="lg"
-            >
-              <Share2 className="w-5 h-5 mr-2" />
-              Share to Apps
-            </Button>
+          {imageLoadError && (
+            <p className="text-xs text-amber-400/80 text-center">
+              Cover couldn't be loaded. A placeholder will be used.
+            </p>
           )}
 
-          {/* Share Options */}
-          <div>
-            <h3 className="text-sm font-medium text-slate-300 mb-3">Share To</h3>
-            <div className="grid grid-cols-3 gap-3">
-              {/* Instagram (Download) */}
-              <Button
-                variant="outline"
-                onClick={handleDownload}
-                className="flex flex-col items-center gap-2 h-auto py-4 border-slate-700 hover:border-pink-500 hover:bg-pink-500/10"
-              >
-                <Instagram className="w-6 h-6 text-pink-500" />
-                <span className="text-xs">Instagram</span>
-              </Button>
-
-              {/* Twitter/X */}
-              <Button
-                variant="outline"
-                onClick={handleTwitterShare}
-                className="flex flex-col items-center gap-2 h-auto py-4 border-slate-700 hover:border-slate-400 hover:bg-slate-400/10"
-              >
-                <Twitter className="w-6 h-6" />
-                <span className="text-xs">X / Twitter</span>
-              </Button>
-
-              {/* Copy Link */}
-              <Button
-                variant="outline"
-                onClick={handleCopyLink}
-                className="flex flex-col items-center gap-2 h-auto py-4 border-slate-700 hover:border-emerald-500 hover:bg-emerald-500/10"
-              >
-                {copied ? (
-                  <Check className="w-6 h-6 text-emerald-500" />
-                ) : (
-                  <Link2 className="w-6 h-6 text-slate-400" />
-                )}
-                <span className="text-xs">{copied ? 'Copied!' : 'Copy Link'}</span>
-              </Button>
-            </div>
-          </div>
-
-          {/* Download Button */}
+          {/* Share Button - Primary Action */}
           <Button
-            onClick={handleDownload}
-            className="w-full"
-            variant="secondary"
-            disabled={generatingImage}
+            onClick={handleNativeShare}
+            className="w-full h-12 text-base active:scale-[0.98] transition-transform"
+            size="lg"
+            disabled={!canShare || generatingImage}
           >
-            <Download className="w-4 h-4 mr-2" />
-            Download Image for Sharing
+            <Share2 className="w-5 h-5 mr-2" />
+            Share to Apps
           </Button>
+
+          {!canShare && (
+            <p className="text-xs text-slate-500 text-center">
+              Sharing is not available on this device
+            </p>
+          )}
         </div>
 
         {/* Hidden Canvas */}
