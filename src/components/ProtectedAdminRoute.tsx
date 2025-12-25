@@ -10,43 +10,65 @@ interface ProtectedAdminRouteProps {
 
 export const ProtectedAdminRoute = ({ children }: ProtectedAdminRouteProps) => {
   const { user, loading: authLoading } = useAuth();
-  const { hasRole, loading: profileLoading, userRole } = useProfile();
+  const { hasRole, loading: profileLoading } = useProfile();
   const navigate = useNavigate();
   const { toast } = useEnhancedToast();
   const hasShownToast = useRef(false);
+  const hasRedirected = useRef(false);
 
-  // Combined loading state
+  // Combined loading state - must wait for BOTH auth AND profile to finish
   const isLoading = authLoading || profileLoading;
+
+  // Debug logging for role verification (dev only)
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[ProtectedAdminRoute] State:', {
+        authLoading,
+        profileLoading,
+        isLoading,
+        hasUser: !!user,
+        isAdmin: hasRole('admin'),
+      });
+    }
+  }, [authLoading, profileLoading, isLoading, user, hasRole]);
 
   useEffect(() => {
     // Don't do anything while still loading
-    if (isLoading) return;
+    if (isLoading) {
+      return;
+    }
     
     // If no user at all, redirect to auth
-    if (!user) {
+    if (!user && !hasRedirected.current) {
+      hasRedirected.current = true;
       navigate('/auth');
       return;
     }
 
     // If user exists but not admin, show error and redirect
-    if (!hasRole('admin') && !hasShownToast.current) {
-      hasShownToast.current = true;
-      toast({
-        title: "Access Denied",
-        description: "Administrator privileges required to access this page.",
-        variant: "destructive",
-      });
+    if (user && !hasRole('admin') && !hasRedirected.current) {
+      hasRedirected.current = true;
+      if (!hasShownToast.current) {
+        hasShownToast.current = true;
+        toast({
+          title: "Access Denied",
+          description: "Administrator privileges required to access this page.",
+          variant: "destructive",
+        });
+      }
       navigate('/');
     }
   }, [user, hasRole, isLoading, navigate, toast]);
 
-  // Reset toast flag when component unmounts or user changes
+  // Reset refs when component unmounts
   useEffect(() => {
     return () => {
       hasShownToast.current = false;
+      hasRedirected.current = false;
     };
-  }, [user]);
+  }, []);
 
+  // Show loading spinner while checking
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
