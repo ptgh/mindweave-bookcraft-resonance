@@ -39,9 +39,10 @@ export const useProfile = () => {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [dataLoading, setDataLoading] = useState(false);
 
-  // Combined loading: true if auth is loading OR if we have a user and data is still being fetched
-  const loading = authLoading || (!!user && dataLoading && userRole === null);
-
+  // Combined loading: true if auth is loading OR if we have a user and role data is not ready yet
+  // NOTE: we must treat "userRole === null" as loading even if dataLoading flipped false in the same render,
+  // otherwise protected routes can redirect before role state commits.
+  const loading = authLoading || (!!user && (dataLoading || userRole === null));
   useEffect(() => {
     const loadUserData = async () => {
       if (authLoading) {
