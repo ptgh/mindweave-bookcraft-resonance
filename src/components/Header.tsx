@@ -1,9 +1,11 @@
 import { BookOpen, LogOut, Instagram, Menu, Shield, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { StandardButton } from "./ui/standard-button";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useHapticFeedback } from "@/hooks/useHapticFeedback";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const Header = () => {
@@ -11,13 +13,40 @@ const Header = () => {
   const { user, signOut } = useAuth();
   const { hasRole } = useProfile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const haptic = useHapticFeedback();
 
-  const closeMobileMenu = () => setMobileMenuOpen(false);
+  const closeMobileMenu = useCallback(() => {
+    haptic.impact.light();
+    setMobileMenuOpen(false);
+  }, [haptic]);
 
-  const handleSignOut = () => {
+  const handleMenuItemTap = useCallback(() => {
+    haptic.selection();
+    closeMobileMenu();
+  }, [haptic, closeMobileMenu]);
+
+  const handleSignOut = useCallback(() => {
+    haptic.impact.medium();
     closeMobileMenu();
     signOut();
-  };
+  }, [haptic, closeMobileMenu, signOut]);
+
+  const handleOpenMenu = useCallback(() => {
+    haptic.impact.light();
+    setMobileMenuOpen(true);
+  }, [haptic]);
+
+  // Swipe right to close the menu (since it slides in from right)
+  const { handlers: swipeHandlers } = useSwipeGesture(
+    {
+      onSwipeRight: closeMobileMenu,
+    },
+    {
+      threshold: 50,
+      velocityThreshold: 0.3,
+      direction: 'right',
+    }
+  );
   
   return (
     <header className="bg-slate-900">
@@ -167,10 +196,11 @@ const Header = () => {
               </div>
             )}
 
-            {/* Mobile Menu - Full-height Sheet */}
+            {/* Mobile Menu - Full-height Sheet with swipe support */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
                 <button 
+                  onClick={handleOpenMenu}
                   className="lg:hidden inline-flex items-center justify-center rounded p-2 text-slate-300 hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
                   aria-label="Open navigation menu"
                 >
@@ -181,7 +211,10 @@ const Header = () => {
                 side="right" 
                 className="w-full sm:w-80 bg-slate-900/98 backdrop-blur-xl border-l border-blue-500/20 p-0 overflow-hidden"
               >
-                <div className="flex flex-col h-full">
+                <div 
+                  className="flex flex-col h-full touch-pan-y"
+                  {...swipeHandlers}
+                >
                   {/* Sheet Header */}
                   <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
                     <div className="flex items-center gap-2">
@@ -190,23 +223,28 @@ const Header = () => {
                     </div>
                     <button
                       onClick={closeMobileMenu}
-                      className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                      className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors active:scale-95"
                       aria-label="Close menu"
                     >
                       <X className="w-5 h-5" />
                     </button>
                   </div>
 
+                  {/* Swipe indicator */}
+                  <div className="flex justify-center py-2">
+                    <div className="w-10 h-1 rounded-full bg-slate-700" />
+                  </div>
+
                   {/* Scrollable Nav Items */}
-                  <nav className="flex-1 overflow-y-auto overscroll-contain py-4 px-2" role="navigation" aria-label="Mobile navigation">
+                  <nav className="flex-1 overflow-y-auto overscroll-contain py-2 px-2" role="navigation" aria-label="Mobile navigation">
                     <div className="space-y-1">
                       <Link
                         to="/"
-                        onClick={closeMobileMenu}
-                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
+                        onClick={handleMenuItemTap}
+                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 active:scale-[0.98] ${
                           location.pathname === '/'
                             ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400'
+                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400 active:bg-slate-700'
                         }`}
                       >
                         <div className="w-3 h-3 rounded-full bg-blue-400/50" />
@@ -215,11 +253,11 @@ const Header = () => {
 
                       <Link
                         to="/library"
-                        onClick={closeMobileMenu}
-                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
+                        onClick={handleMenuItemTap}
+                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 active:scale-[0.98] ${
                           location.pathname === '/library'
                             ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400'
+                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400 active:bg-slate-700'
                         }`}
                       >
                         <BookOpen className="w-5 h-5 text-blue-400/70" />
@@ -228,11 +266,11 @@ const Header = () => {
 
                       <Link
                         to="/book-browser"
-                        onClick={closeMobileMenu}
-                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
+                        onClick={handleMenuItemTap}
+                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 active:scale-[0.98] ${
                           location.pathname === '/book-browser'
                             ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400'
+                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400 active:bg-slate-700'
                         }`}
                       >
                         <div className="w-5 h-5 rounded-full border-2 border-dashed border-blue-400/50 flex items-center justify-center">
@@ -243,11 +281,11 @@ const Header = () => {
 
                       <Link
                         to="/author-matrix"
-                        onClick={closeMobileMenu}
-                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
+                        onClick={handleMenuItemTap}
+                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 active:scale-[0.98] ${
                           location.pathname === '/author-matrix'
                             ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400'
+                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400 active:bg-slate-700'
                         }`}
                       >
                         <div className="w-5 h-5 grid grid-cols-2 gap-0.5">
@@ -261,11 +299,11 @@ const Header = () => {
 
                       <Link
                         to="/insights"
-                        onClick={closeMobileMenu}
-                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
+                        onClick={handleMenuItemTap}
+                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 active:scale-[0.98] ${
                           location.pathname === '/insights'
                             ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400'
+                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400 active:bg-slate-700'
                         }`}
                       >
                         <div className="w-5 h-5 flex items-center justify-center">
@@ -276,11 +314,11 @@ const Header = () => {
 
                       <Link
                         to="/publisher-resonance"
-                        onClick={closeMobileMenu}
-                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
+                        onClick={handleMenuItemTap}
+                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 active:scale-[0.98] ${
                           location.pathname === '/publisher-resonance'
                             ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400'
+                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400 active:bg-slate-700'
                         }`}
                       >
                         <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-400/30 to-purple-400/30 border border-blue-400/50" />
@@ -291,11 +329,11 @@ const Header = () => {
 
                       <Link
                         to="/test-brain"
-                        onClick={closeMobileMenu}
-                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
+                        onClick={handleMenuItemTap}
+                        className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 active:scale-[0.98] ${
                           location.pathname === '/test-brain'
                             ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400'
+                            : 'text-slate-200 hover:bg-slate-800 hover:text-blue-400 active:bg-slate-700'
                         }`}
                       >
                         <div className="w-5 h-5 relative">
@@ -310,11 +348,11 @@ const Header = () => {
                           <div className="h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent my-3" />
                           <Link
                             to="/admin/enrichment"
-                            onClick={closeMobileMenu}
-                            className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
+                            onClick={handleMenuItemTap}
+                            className={`flex items-center gap-4 min-h-[56px] px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 active:scale-[0.98] ${
                               location.pathname.startsWith('/admin')
                                 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                                : 'text-amber-300 hover:bg-amber-500/10 hover:text-amber-400'
+                                : 'text-amber-300 hover:bg-amber-500/10 hover:text-amber-400 active:bg-amber-500/20'
                             }`}
                           >
                             <Shield className="w-5 h-5 text-amber-400/70" />
@@ -333,7 +371,7 @@ const Header = () => {
                       </div>
                       <button
                         onClick={handleSignOut}
-                        className="flex items-center justify-center gap-2 w-full min-h-[52px] px-4 py-3 rounded-xl text-base font-medium text-slate-200 bg-slate-800 hover:bg-red-500/20 hover:text-red-400 transition-all duration-200"
+                        className="flex items-center justify-center gap-2 w-full min-h-[52px] px-4 py-3 rounded-xl text-base font-medium text-slate-200 bg-slate-800 hover:bg-red-500/20 hover:text-red-400 active:scale-[0.98] active:bg-red-500/30 transition-all duration-200"
                       >
                         <LogOut className="w-5 h-5" />
                         Sign Out
