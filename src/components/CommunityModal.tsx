@@ -97,25 +97,32 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
         .sort(() => Math.random() - 0.5)
         .slice(0, 10);
 
-      // Get transmission counts and follower counts for each user
-      const usersWithStats = await Promise.all(filtered.map(async (p) => {
-        const [transmissionResult, followerResult] = await Promise.all([
-          supabase
-            .from('transmissions')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', p.id),
-          supabase
-            .from('user_follows')
-            .select('*', { count: 'exact', head: true })
-            .eq('following_id', p.id)
-        ]);
-        
-        return { 
-          ...p, 
-          transmission_count: transmissionResult.count || 0,
-          follower_count: followerResult.count || 0
+      if (filtered.length === 0) {
+        setDiscoverUsers([]);
+        return;
+      }
+
+      // Use secure RPC to get stats for all users at once
+      const userIds = filtered.map(p => p.id);
+      const { data: stats, error: statsError } = await supabase
+        .rpc('get_user_stats', { user_ids: userIds });
+
+      if (statsError) {
+        console.error('Error fetching user stats:', statsError);
+        // Fallback to profiles without stats
+        setDiscoverUsers(filtered.map(p => ({ ...p, transmission_count: 0, follower_count: 0 })));
+        return;
+      }
+
+      // Merge stats with profiles
+      const usersWithStats = filtered.map(p => {
+        const userStats = (stats || []).find((s: any) => s.user_id === p.id);
+        return {
+          ...p,
+          transmission_count: userStats?.transmission_count || 0,
+          follower_count: userStats?.follower_count || 0
         } as UserWithStats;
-      }));
+      });
 
       // Sort by transmission count (most active first)
       usersWithStats.sort((a, b) => (b.transmission_count || 0) - (a.transmission_count || 0));
