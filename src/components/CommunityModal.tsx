@@ -231,28 +231,46 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
               )}
             </TabsContent>
 
-            <TabsContent value="feed" className="space-y-4">
+            <TabsContent value="feed" className="space-y-6">
               {loadingTransmissions ? (
                 <p className="text-center text-slate-400 py-4">Loading feed...</p>
               ) : followedTransmissions.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {followedTransmissions.map(t => (
-                    <div key={t.id} className="group">
-                      <EnhancedBookCover
-                        title={t.title || ''}
-                        author={t.author || ''}
-                        coverUrl={t.cover_url || undefined}
-                        className="w-full aspect-[2/3] rounded-lg"
-                      />
-                      <p className="text-xs text-slate-300 mt-2 line-clamp-1 font-medium">
-                        {t.title}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        by {t.user_display_name}
-                      </p>
+                // Group transmissions by user
+                Object.entries(
+                  followedTransmissions.reduce((acc, t) => {
+                    const key = t.user_display_name || 'Unknown';
+                    if (!acc[key]) acc[key] = [];
+                    acc[key].push(t);
+                    return acc;
+                  }, {} as Record<string, FollowedTransmission[]>)
+                ).map(([userName, userTransmissions]) => (
+                  <div key={userName} className="space-y-3">
+                    <div className="flex items-center gap-2 pb-2 border-b border-slate-700">
+                      <Avatar className="w-6 h-6">
+                        <AvatarFallback className="bg-slate-700 text-slate-300 text-xs">
+                          {userName.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium text-slate-200">{userName}</span>
+                      <span className="text-xs text-slate-500">({userTransmissions.length} books)</span>
                     </div>
-                  ))}
-                </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                      {userTransmissions.slice(0, 8).map(t => (
+                        <div key={t.id} className="group">
+                          <EnhancedBookCover
+                            title={t.title || ''}
+                            author={t.author || ''}
+                            coverUrl={t.cover_url || undefined}
+                            className="w-full aspect-[2/3] rounded-lg"
+                          />
+                          <p className="text-xs text-slate-300 mt-1.5 line-clamp-2 font-medium">
+                            {t.title}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
               ) : following.length === 0 ? (
                 <p className="text-center text-slate-400 py-4">
                   Follow other readers to see their transmissions

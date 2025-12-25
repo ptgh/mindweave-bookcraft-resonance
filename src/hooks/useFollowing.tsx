@@ -93,6 +93,16 @@ export const useFollowing = () => {
         .insert({ follower_id: user.id, following_id: targetUserId });
 
       if (error) throw error;
+      
+      // Create notification for the followed user
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: targetUserId,
+          type: 'new_follower',
+          from_user_id: user.id
+        });
+      
       await fetchFollowing();
       return true;
     } catch (error) {

@@ -107,12 +107,19 @@ const HighlightedName = ({ name, type, onClick }: HighlightedNameProps) => {
     }
   };
 
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClick();
+  }, [onClick]);
+
   return (
     <button
       ref={containerRef}
-      onClick={onClick}
+      onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      type="button"
       className={`relative inline text-left transition-colors duration-300 ${
         type === 'book' 
           ? 'text-blue-300 hover:text-blue-200' 
@@ -178,20 +185,37 @@ const BookPreviewModal = ({ transmission, onClose }: BookPreviewModalProps) => {
     }
   };
 
+  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleClose();
+  }, [handleClose]);
+
+  const handleContentClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
+
+  const handleCloseClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleClose();
+  }, [handleClose]);
+
   return createPortal(
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={handleClose}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      onClick={handleBackdropClick}
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div 
         ref={modalRef}
         className="relative bg-slate-800 border border-slate-600 rounded-lg p-6 max-w-md w-full shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
+        onClick={handleContentClick}
       >
         <button
-          onClick={handleClose}
-          className="absolute top-3 right-3 text-slate-400 hover:text-slate-200 transition-colors"
+          type="button"
+          onClick={handleCloseClick}
+          className="absolute top-3 right-3 text-slate-400 hover:text-slate-200 transition-colors z-10"
         >
           <X className="w-5 h-5" />
         </button>
