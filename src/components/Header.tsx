@@ -22,10 +22,15 @@ import {
 const Header = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { hasRole } = useProfile();
+  const { hasRole, profile } = useProfile();
   const haptic = useHapticFeedback();
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
+
+  const userLabel =
+    profile?.display_name?.trim() ||
+    [profile?.first_name, profile?.last_name].filter(Boolean).join(' ').trim() ||
+    (user?.id ? `User ${user.id.slice(0, 8)}` : 'Account');
 
   const handleMenuItemTap = useCallback(() => {
     haptic.selection();
@@ -55,7 +60,7 @@ const Header = () => {
           <div className="flex items-center space-x-3">
             <Link 
               to="/" 
-              className="flex items-center space-x-2 md:space-x-3 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-lg p-1"
+              className="flex items-center space-x-2 md:space-x-3 hover:opacity-80 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded-lg p-1"
               aria-label="Leafnode - Home"
             >
               <div className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center">
@@ -74,26 +79,26 @@ const Header = () => {
               href="https://instagram.com/leafnode.scifi"
               target="_blank"
               rel="noopener noreferrer"
-              className="lg:hidden text-slate-400 hover:text-blue-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded p-1"
+              className="lg:hidden text-slate-400 hover:text-blue-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded p-1"
               aria-label="Follow us on Instagram"
             >
               <Instagram className="w-4 h-4" />
             </a>
           </div>
           
-          <div className="flex items-center space-x-2 md:space-x-6">
+          <div className="flex items-center gap-2 md:gap-6 min-w-0">
             {/* Instagram icon on desktop - stays in header right area */}
             <a
               href="https://instagram.com/leafnode.scifi"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden lg:block text-slate-400 hover:text-blue-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded p-1"
+              className="hidden lg:block text-slate-400 hover:text-blue-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded p-1"
               aria-label="Follow us on Instagram"
             >
               <Instagram className="w-4 h-4" />
             </a>
             
-            <nav className="hidden lg:flex items-center space-x-3 xl:space-x-4 overflow-x-auto scrollbar-hide max-w-[calc(100vw-400px)]" role="navigation" aria-label="Main navigation">
+            <nav className="hidden lg:flex flex-1 min-w-0 items-center gap-3 xl:gap-4 overflow-x-auto overscroll-x-contain scrollbar-hide smooth-scroll pr-2" role="navigation" aria-label="Main navigation">
               <Link
                 to="/"
                 className={`transition-colors text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
@@ -223,7 +228,7 @@ const Header = () => {
                   className="hidden md:flex items-center gap-2 px-2 py-1 text-xs font-medium rounded-lg transition-all duration-200 bg-transparent border border-slate-600 text-slate-300 hover:border-blue-400 hover:text-blue-400"
                 >
                   <User className="w-3 h-3" />
-                  <span className="max-w-[120px] truncate">{user.email}</span>
+                  <span className="max-w-[140px] truncate">{userLabel}</span>
                 </button>
                 <StandardButton
                   onClick={signOut}
