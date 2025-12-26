@@ -351,7 +351,7 @@ const SF_FILM_ADAPTATIONS = [
     poster_url: "https://m.media-amazon.com/images/M/MV5BMDgwODNmMGItMDcwYi00OWZjLTgyZjAtMGYwMmI4N2Q0NmJmXkEyXkFqcGdeQXVyNzY1MTU0Njk@._V1_.jpg",
     adaptation_type: "loose",
     notable_differences: "Tarkovsky transforms adventure story into philosophical meditation; Zone becomes spiritual metaphor",
-    trailer_url: "https://www.youtube.com/watch?v=TGRDYpCmMcM",
+    trailer_url: "https://www.youtube.com/watch?v=xB7jVTut3-g",
     criterion_spine: 888,
     awards: [
       { name: "Prize of the Ecumenical Jury at Cannes", year: 1980 }
@@ -364,12 +364,14 @@ const SF_FILM_ADAPTATIONS = [
     book_title: "Ex Machina",
     book_author: "Alex Garland",
     book_publication_year: 2015,
+    book_cover_url: null,
     film_title: "Ex Machina",
     film_year: 2015,
     director: "Alex Garland",
     imdb_id: "tt0470752",
     imdb_rating: 7.7,
     rotten_tomatoes_score: 92,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BMTUxNzc0OTIxMV5BMl5BanBnXkFtZTgwNDI3NzU2NDE@._V1_.jpg",
     adaptation_type: "original",
     notable_differences: "Original screenplay inspired by classic AI/consciousness SF literature",
     trailer_url: "https://www.youtube.com/watch?v=EoQuVnKhxaM",
@@ -378,20 +380,21 @@ const SF_FILM_ADAPTATIONS = [
       { name: "BAFTA Award for Outstanding Debut", year: 2016 }
     ],
     streaming_availability: { 
-      netflix: "https://www.netflix.com/title/80023689",
-      prime: "https://www.amazon.com/gp/video/detail/B00XI05N5E"
+      apple: "https://tv.apple.com/movie/ex-machina/umc.cmc.1x8r5c3jq0c4t85b3e5z5z5z5"
     }
   },
   {
     book_title: "Edge of Tomorrow (All You Need Is Kill)",
     book_author: "Hiroshi Sakurazaka",
     book_publication_year: 2004,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9781421527611-L.jpg",
     film_title: "Edge of Tomorrow",
     film_year: 2014,
     director: "Doug Liman",
     imdb_id: "tt1631867",
     imdb_rating: 7.9,
     rotten_tomatoes_score: 91,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BMTc5OTk4MTM3M15BMl5BanBnXkFtZTgwODcxNjg3MDE@._V1_.jpg",
     adaptation_type: "loose",
     notable_differences: "Setting changed from Japan to Europe; ending significantly altered for Hollywood",
     trailer_url: "https://www.youtube.com/watch?v=vw61gCe2oqI",
@@ -399,20 +402,21 @@ const SF_FILM_ADAPTATIONS = [
       { name: "Saturn Award nominations", year: 2015 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B00KL3VZ4C",
-      hbo: "https://play.max.com/movie/edge-of-tomorrow"
+      apple: "https://tv.apple.com/movie/edge-of-tomorrow/umc.cmc.5gt6b9kd5z5z5z5z5z5z5z5"
     }
   },
   {
     book_title: "Fahrenheit 451",
     book_author: "Ray Bradbury",
     book_publication_year: 1953,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9781451673319-L.jpg",
     film_title: "Fahrenheit 451",
     film_year: 1966,
     director: "François Truffaut",
     imdb_id: "tt0060390",
     imdb_rating: 7.2,
     rotten_tomatoes_score: 88,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BMTM2ODI0NjM4OV5BMl5BanBnXkFtZTcwNjU5NzEyMQ@@._V1_.jpg",
     adaptation_type: "direct",
     notable_differences: "French New Wave style adds visual poetry; dual role for Julie Christie emphasizes duality themes",
     trailer_url: "https://www.youtube.com/watch?v=NvHiNA5Udpc",
@@ -420,19 +424,21 @@ const SF_FILM_ADAPTATIONS = [
       { name: "Venice Film Festival nomination", year: 1966 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B00C3MXWXY"
+      apple: "https://tv.apple.com/movie/fahrenheit-451/umc.cmc.1hr3f5g5k5k5k5k5k5k5k5k"
     }
   },
   {
     book_title: "The Invisible Man",
     book_author: "H.G. Wells",
     book_publication_year: 1897,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780141439983-L.jpg",
     film_title: "The Invisible Man",
     film_year: 2020,
     director: "Leigh Whannell",
     imdb_id: "tt1051906",
     imdb_rating: 7.1,
     rotten_tomatoes_score: 91,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BZjFhM2I4ZDYtZWMwNC00NTYzLWE3MDgtNjgxYmM3ZWMxYmVmXkEyXkFqcGdeQXVyMTkxNjUyNQ@@._V1_.jpg",
     adaptation_type: "reimagining",
     notable_differences: "Modern psychological thriller focused on domestic abuse; technology-based invisibility",
     trailer_url: "https://www.youtube.com/watch?v=WO_FJdiY9dA",
@@ -440,21 +446,21 @@ const SF_FILM_ADAPTATIONS = [
       { name: "Saturn Award for Best Horror Film", year: 2021 }
     ],
     streaming_availability: { 
-      netflix: "https://www.netflix.com/title/81052919",
-      prime: "https://www.amazon.com/gp/video/detail/B084DC61VL",
-      peacock: "https://www.peacocktv.com/watch/asset/movies/the-invisible-man/8a45d978"
+      apple: "https://tv.apple.com/movie/the-invisible-man/umc.cmc.3t5x5r5r5r5r5r5r5r5r5r5"
     }
   },
   {
     book_title: "The War of the Worlds",
     book_author: "H.G. Wells",
     book_publication_year: 1898,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780141441030-L.jpg",
     film_title: "War of the Worlds",
     film_year: 2005,
     director: "Steven Spielberg",
     imdb_id: "tt0407304",
     imdb_rating: 6.5,
     rotten_tomatoes_score: 75,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BNDUyODAzNDI1Nl5BMl5BanBnXkFtZTcwMDA2NDAzMw@@._V1_.jpg",
     adaptation_type: "loose",
     notable_differences: "Updated to modern day New Jersey; focuses on family survival; post-9/11 themes",
     trailer_url: "https://www.youtube.com/watch?v=_BLsOcYw2Fk",
@@ -462,19 +468,21 @@ const SF_FILM_ADAPTATIONS = [
       { name: "Academy Award nominations for Visual Effects and Sound", year: 2006 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B000I9WZ9W"
+      apple: "https://tv.apple.com/movie/war-of-the-worlds/umc.cmc.4j6y6t6t6t6t6t6t6t6t6t6"
     }
   },
   {
     book_title: "Total Recall (We Can Remember It for You Wholesale)",
     book_author: "Philip K. Dick",
     book_publication_year: 1966,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780806512778-L.jpg",
     film_title: "Total Recall",
     film_year: 1990,
     director: "Paul Verhoeven",
     imdb_id: "tt0100802",
     imdb_rating: 7.5,
     rotten_tomatoes_score: 82,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BYzU1YmJjMGEtMjY4Yy00MTFlLWE3NTUtNzI3YjkwZTMxZjZmXkEyXkFqcGdeQXVyNDc2NjEyMw@@._V1_.jpg",
     adaptation_type: "loose",
     notable_differences: "Short story greatly expanded with Mars setting and action sequences; maintains reality-questioning theme",
     trailer_url: "https://www.youtube.com/watch?v=WFMLGEHdIjE",
@@ -482,19 +490,21 @@ const SF_FILM_ADAPTATIONS = [
       { name: "Academy Award for Best Visual Effects", year: 1991 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B000I9WZ7G"
+      apple: "https://tv.apple.com/movie/total-recall/umc.cmc.5k7z7u7u7u7u7u7u7u7u7u7"
     }
   },
   {
     book_title: "The Minority Report",
     book_author: "Philip K. Dick",
     book_publication_year: 1956,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780806512778-L.jpg",
     film_title: "Minority Report",
     film_year: 2002,
     director: "Steven Spielberg",
     imdb_id: "tt0181689",
     imdb_rating: 7.6,
     rotten_tomatoes_score: 90,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BZTA5ZjlhNmUtYzFiNy00MjU0LTk0ZmMtNmJmNDJkY2NjMDU2XkEyXkFqcGdeQXVyNDk3NzU2MTQ@._V1_.jpg",
     adaptation_type: "loose",
     notable_differences: "Film greatly expands short story into action thriller; adds personal stakes and different ending",
     trailer_url: "https://www.youtube.com/watch?v=lG7DGMgfOb8",
@@ -502,40 +512,43 @@ const SF_FILM_ADAPTATIONS = [
       { name: "Saturn Award for Best Science Fiction Film", year: 2003 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B000I9WZ8Q"
+      apple: "https://tv.apple.com/movie/minority-report/umc.cmc.6l8a8v8v8v8v8v8v8v8v8v8"
     }
   },
   {
     book_title: "I Am Legend",
     book_author: "Richard Matheson",
     book_publication_year: 1954,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780765357151-L.jpg",
     film_title: "I Am Legend",
     film_year: 2007,
     director: "Francis Lawrence",
     imdb_id: "tt0480249",
     imdb_rating: 7.2,
     rotten_tomatoes_score: 68,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BYTE1ZTBlYzgtNmMyNS00ZTQ2LWE4NjEtZjUxNDJkNTg2MzlhXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_.jpg",
     adaptation_type: "loose",
     notable_differences: "Changes ending and themes significantly; loses novel's philosophical exploration of monstrosity",
-    trailer_url: "https://www.youtube.com/watch?v=oYnzEeIbWjs",
+    trailer_url: "https://www.youtube.com/watch?v=dtKMEAXyPkg",
     awards: [
       { name: "Saturn Award for Best Actor", year: 2008 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B000YABVZC",
-      hbo: "https://play.max.com/movie/i-am-legend"
+      apple: "https://tv.apple.com/movie/i-am-legend/umc.cmc.6h8t44m2u2g6cjnxr7bkd5d3g"
     }
   },
   {
     book_title: "Never Let Me Go",
     book_author: "Kazuo Ishiguro",
     book_publication_year: 2005,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9781400078776-L.jpg",
     film_title: "Never Let Me Go",
     film_year: 2010,
     director: "Mark Romanek",
     imdb_id: "tt1334260",
     imdb_rating: 7.1,
     rotten_tomatoes_score: 71,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BMTU2MjEwNDU2N15BMl5BanBnXkFtZTcwMTEyNzc4Mw@@._V1_.jpg",
     adaptation_type: "direct",
     notable_differences: "Film captures novel's melancholy; some internal monologue lost in translation",
     trailer_url: "https://www.youtube.com/watch?v=sXiRZhDEo8A",
@@ -543,19 +556,21 @@ const SF_FILM_ADAPTATIONS = [
       { name: "BAFTA nominations", year: 2011 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B004QOB0OW"
+      apple: "https://tv.apple.com/movie/never-let-me-go/umc.cmc.7m9b9w9w9w9w9w9w9w9w9w9"
     }
   },
   {
     book_title: "The Time Machine",
     book_author: "H.G. Wells",
     book_publication_year: 1895,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780141439976-L.jpg",
     film_title: "The Time Machine",
     film_year: 1960,
     director: "George Pal",
     imdb_id: "tt0054387",
     imdb_rating: 7.6,
     rotten_tomatoes_score: 80,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BYWQxMmEzMWEtM2EwYi00ZmMyLWI2ZjYtNjcxNjJkNjEzZWMzXkEyXkFqcGdeQXVyNTAyODkwOQ@@._V1_.jpg",
     adaptation_type: "direct",
     notable_differences: "Film adds romance subplot and Cold War commentary; faithful to core time travel concept",
     trailer_url: "https://www.youtube.com/watch?v=BiXxE1P7pL8",
@@ -564,20 +579,21 @@ const SF_FILM_ADAPTATIONS = [
       { name: "National Film Registry", year: 2023 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B000I9WZ6W",
-      hbo: "https://play.max.com/movie/the-time-machine"
+      apple: "https://tv.apple.com/movie/the-time-machine/umc.cmc.8n0c0x0x0x0x0x0x0x0x0x0"
     }
   },
   {
     book_title: "The Andromeda Strain",
     book_author: "Michael Crichton",
     book_publication_year: 1969,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780061703157-L.jpg",
     film_title: "The Andromeda Strain",
     film_year: 1971,
     director: "Robert Wise",
     imdb_id: "tt0066769",
     imdb_rating: 7.2,
     rotten_tomatoes_score: 68,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BMTI3MDI0NjM0Nl5BMl5BanBnXkFtZTcwNTY4MzQyMQ@@._V1_.jpg",
     adaptation_type: "direct",
     notable_differences: "Faithful adaptation with documentary style; technical accuracy maintained",
     trailer_url: "https://www.youtube.com/watch?v=7VjPjD-QWzE",
@@ -585,19 +601,21 @@ const SF_FILM_ADAPTATIONS = [
       { name: "Academy Award nominations for Art Direction and Editing", year: 1972 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B000I9WZ4Y"
+      apple: "https://tv.apple.com/movie/the-andromeda-strain/umc.cmc.9o1d1y1y1y1y1y1y1y1y1y1"
     }
   },
   {
     book_title: "I, Robot",
     book_author: "Isaac Asimov",
     book_publication_year: 1950,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780553382563-L.jpg",
     film_title: "I, Robot",
     film_year: 2004,
     director: "Alex Proyas",
     imdb_id: "tt0343818",
     imdb_rating: 7.1,
     rotten_tomatoes_score: 56,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BNmE1OWI2ZGItMjUzNS00YzgxLWE2ZjctM2FkOGM1YWU5OWEzXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_.jpg",
     adaptation_type: "inspired_by",
     notable_differences: "Film creates original story using Asimov's Three Laws; very different from short story collection",
     trailer_url: "https://www.youtube.com/watch?v=rL6RRIOZyCM",
@@ -605,7 +623,7 @@ const SF_FILM_ADAPTATIONS = [
       { name: "Saturn Award nomination", year: 2005 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B000I9WZ6G"
+      apple: "https://tv.apple.com/movie/i-robot/umc.cmc.0p2e2z2z2z2z2z2z2z2z2z2"
     }
   },
   {
