@@ -83,6 +83,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [watchProviders, setWatchProviders] = useState<WatchProvidersData | null>(null);
+  const [tmdbTrailer, setTmdbTrailer] = useState<{ url: string; key: string } | null>(null);
   const [isLoadingProviders, setIsLoadingProviders] = useState(false);
 
   // Clean author names - remove encoding issues and truncate for display
@@ -278,8 +279,9 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     setSelectedFilm(film);
     setShowFilmModal(true);
     setWatchProviders(null);
+    setTmdbTrailer(null);
     
-    // Fetch watch providers from TMDB with auto-detected region
+    // Fetch watch providers and trailer from TMDB with auto-detected region
     setIsLoadingProviders(true);
     try {
       const region = getUserRegion();
@@ -289,6 +291,10 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
       
       if (!error && data?.success && data?.found) {
         setWatchProviders(data.providers);
+        // Use TMDB trailer if available
+        if (data.trailer?.key) {
+          setTmdbTrailer({ url: data.trailer.url, key: data.trailer.key });
+        }
       }
     } catch (e) {
       console.error('Failed to fetch watch providers:', e);
@@ -301,6 +307,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     setShowFilmModal(false);
     setSelectedFilm(null);
     setWatchProviders(null);
+    setTmdbTrailer(null);
   };
 
   const handleAuthorClick = async (authorName: string) => {
@@ -572,31 +579,51 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
 
             {/* Scrollable content */}
             <div className="flex-1 overflow-y-auto">
-              {/* Trailer - smaller */}
+              {/* Trailer - use TMDB trailer first, then fallback to stored URL */}
               <div className="aspect-video bg-black relative max-h-[280px]">
-                {selectedFilm.trailer_url && extractYouTubeId(selectedFilm.trailer_url) ? (
-                  <iframe
-                    src={`https://www.youtube.com/embed/${extractYouTubeId(selectedFilm.trailer_url)}?rel=0&autoplay=0`}
-                    title={`${selectedFilm.film_title} Trailer`}
-                    className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950">
-                    <Film className="w-10 h-10 text-amber-400/30 mb-2" />
-                    <a
-                      href={getYouTubeSearchUrl(selectedFilm.film_title)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg transition-colors"
-                    >
-                      <Play className="w-3 h-3 fill-white" />
-                      Watch on YouTube
-                    </a>
-                  </div>
-                )}
+                {(() => {
+                  // Priority: TMDB trailer > stored trailer_url > YouTube search fallback
+                  const trailerKey = tmdbTrailer?.key || extractYouTubeId(selectedFilm.trailer_url || '');
+                  
+                  if (trailerKey) {
+                    return (
+                      <iframe
+                        src={`https://www.youtube.com/embed/${trailerKey}?rel=0&autoplay=0`}
+                        title={`${selectedFilm.film_title} Trailer`}
+                        className="w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        loading="lazy"
+                      />
+                    );
+                  }
+                  
+                  // Loading state while fetching from TMDB
+                  if (isLoadingProviders) {
+                    return (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950">
+                        <Loader2 className="w-8 h-8 text-amber-400/50 animate-spin mb-2" />
+                        <span className="text-xs text-muted-foreground">Finding trailer...</span>
+                      </div>
+                    );
+                  }
+                  
+                  // Fallback to YouTube search
+                  return (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950">
+                      <Film className="w-10 h-10 text-amber-400/30 mb-2" />
+                      <a
+                        href={getYouTubeSearchUrl(selectedFilm.film_title)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg transition-colors"
+                      >
+                        <Play className="w-3 h-3 fill-white" />
+                        Watch on YouTube
+                      </a>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="p-4 space-y-3">
