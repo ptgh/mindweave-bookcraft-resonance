@@ -169,6 +169,7 @@ const SF_FILM_ADAPTATIONS = [
     adaptation_type: "loose",
     notable_differences: "Tarkovsky emphasizes human relationships over scientific mystery; Lem was critical of this approach",
     trailer_url: "https://www.youtube.com/watch?v=6-4KydP92ss",
+    criterion_spine: 164,
     awards: [
       { name: "Grand Prix at Cannes Film Festival", year: 1972 },
       { name: "FIPRESCI Prize", year: 1972 }
@@ -351,6 +352,7 @@ const SF_FILM_ADAPTATIONS = [
     adaptation_type: "loose",
     notable_differences: "Tarkovsky transforms adventure story into philosophical meditation; Zone becomes spiritual metaphor",
     trailer_url: "https://www.youtube.com/watch?v=TGRDYpCmMcM",
+    criterion_spine: 888,
     awards: [
       { name: "Prize of the Ecumenical Jury at Cannes", year: 1980 }
     ],
