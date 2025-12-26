@@ -138,7 +138,7 @@ export const UserTransmissionsPanel: React.FC<UserTransmissionsPanelProps> = ({
       </div>
 
       {loading ? (
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide smooth-scroll overscroll-x-contain">
           {[1, 2, 3, 4].map(i => (
             <div key={i} className="w-12 h-[72px] bg-slate-700/50 rounded animate-pulse flex-shrink-0" />
           ))}
@@ -149,7 +149,7 @@ export const UserTransmissionsPanel: React.FC<UserTransmissionsPanelProps> = ({
           <p className="text-sm text-slate-500">No books in library yet</p>
         </div>
       ) : (
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide smooth-scroll overscroll-x-contain">
           {transmissions.map((book, index) => (
             <button
               key={book.id}
@@ -169,7 +169,8 @@ export const UserTransmissionsPanel: React.FC<UserTransmissionsPanelProps> = ({
                 <img
                   src={book.cover_url}
                   alt={book.title || 'Book cover'}
-                  className="w-12 h-[72px] object-cover rounded shadow-md group-hover:scale-105 transition-transform"
+                  className="block w-12 h-[72px] bg-transparent object-cover rounded shadow-md group-hover:scale-105 transition-transform"
+                  loading="lazy"
                 />
               ) : (
                 <div className="w-12 h-[72px] bg-slate-700 rounded flex items-center justify-center shadow-md">
