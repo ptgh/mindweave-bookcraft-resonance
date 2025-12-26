@@ -72,9 +72,14 @@ export const useProfile = () => {
     loadUserData();
 
     // Set up real-time subscription for profile updates
+    // IMPORTANT: channel names must be unique per hook instance to avoid
+    // "subscribe can only be called a single time per channel instance" crashes
+    // when multiple components use useProfile at the same time.
     if (user) {
+      const channelName = `profile-changes:${user.id}:${Math.random().toString(36).slice(2, 8)}`;
+
       const profileChannel = supabase
-        .channel('profile-changes')
+        .channel(channelName)
         .on(
           'postgres_changes',
           {
