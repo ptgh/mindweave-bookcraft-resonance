@@ -6,143 +6,87 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Note: Apple TV URLs can't be easily scraped as they require JavaScript rendering
+// These are placeholder entries - the admin can manually add verified URLs via the UI
+// or we can use a proper API integration in the future
+// For now, we'll just clean up any bad links and mark films as needing manual verification
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const FIRECRAWL_API_KEY = Deno.env.get('FIRECRAWL_API_KEY');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    if (!FIRECRAWL_API_KEY) {
-      throw new Error('FIRECRAWL_API_KEY is not configured');
-    }
-
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    console.log('Starting Apple TV link enrichment...');
+    console.log('Starting Apple TV link cleanup...');
 
-    // Get all film adaptations
+    // Get all film adaptations with apple links
     const { data: films, error: filmsError } = await supabase
       .from('sf_film_adaptations')
-      .select('id, film_title, film_year, streaming_availability');
+      .select('id, film_title, streaming_availability')
+      .not('streaming_availability', 'is', null);
 
     if (filmsError) throw filmsError;
 
-    let updatedCount = 0;
-    let removedCount = 0;
-    const results: { film: string; found: boolean; url?: string }[] = [];
+    let cleanedCount = 0;
+    const results: { film: string; action: string }[] = [];
 
-    // Process each film
+    // Clean up any apple links that have clearly wrong content IDs
     for (const film of films || []) {
-      try {
-        // Search Apple TV for this film
-        const searchQuery = `${film.film_title} ${film.film_year || ''} movie`;
-        const searchUrl = `https://tv.apple.com/search?term=${encodeURIComponent(searchQuery)}`;
+      const streaming = film.streaming_availability as Record<string, string> | null;
+      
+      if (streaming?.apple) {
+        // Check if the apple link looks fake (wrong movie title in URL)
+        const appleUrl = streaming.apple;
+        const filmTitleSlug = film.film_title.toLowerCase().replace(/[^a-z0-9]/g, '-');
         
-        console.log(`Searching Apple TV for: ${film.film_title}`);
-
-        const scrapeResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url: searchUrl,
-            formats: ['links', 'html'],
-            onlyMainContent: false,
-            waitFor: 2000,
-          }),
-        });
-
-        if (!scrapeResponse.ok) {
-          console.log(`Firecrawl error for ${film.film_title}: ${scrapeResponse.status}`);
-          continue;
-        }
-
-        const scrapeData = await scrapeResponse.json();
-        const links = scrapeData.data?.links || scrapeData.links || [];
-        const html = scrapeData.data?.html || scrapeData.html || '';
+        // If the URL doesn't contain any part of the film title, it's likely wrong
+        const urlLower = appleUrl.toLowerCase();
+        const titleWords = film.film_title.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+        const hasMatchingWord = titleWords.some(word => urlLower.includes(word));
         
-        // Look for movie links in format: /movie/umc.cmc.XXXXX
-        let appleUrl: string | null = null;
+        // Also check for known bad patterns
+        const isBadUrl = urlLower.includes('for-auld-lang-syne') || 
+                         urlLower.includes('family-plan') ||
+                         !hasMatchingWord;
         
-        for (const link of links) {
-          if (link.includes('/movie/') && link.includes('umc.cmc.')) {
-            // Verify this is likely our film by checking if title appears near link
-            const filmTitleLower = film.film_title.toLowerCase();
-            const htmlLower = html.toLowerCase();
-            
-            // Simple heuristic: if the film title appears in the page, use the first movie link
-            if (htmlLower.includes(filmTitleLower)) {
-              appleUrl = link.startsWith('http') ? link : `https://tv.apple.com${link}`;
-              break;
-            }
-          }
-        }
-
-        const currentStreaming = film.streaming_availability || {};
-
-        if (appleUrl) {
-          const updatedStreaming = {
-            ...currentStreaming,
-            apple: appleUrl
-          };
-
-          const { error: updateError } = await supabase
+        if (isBadUrl) {
+          const updatedStreaming = { ...streaming };
+          delete updatedStreaming.apple;
+          
+          await supabase
             .from('sf_film_adaptations')
-            .update({ streaming_availability: updatedStreaming })
+            .update({ 
+              streaming_availability: Object.keys(updatedStreaming).length > 0 ? updatedStreaming : null 
+            })
             .eq('id', film.id);
-
-          if (!updateError) {
-            updatedCount++;
-            results.push({ film: film.film_title, found: true, url: appleUrl });
-            console.log(`✓ Found Apple TV: ${film.film_title} -> ${appleUrl}`);
-          }
+          
+          cleanedCount++;
+          results.push({ film: film.film_title, action: 'removed bad link' });
+          console.log(`✗ Removed bad Apple TV link for: ${film.film_title}`);
         } else {
-          // Remove fake Apple TV links
-          if (currentStreaming.apple) {
-            const updatedStreaming = { ...currentStreaming };
-            delete updatedStreaming.apple;
-
-            await supabase
-              .from('sf_film_adaptations')
-              .update({ 
-                streaming_availability: Object.keys(updatedStreaming).length > 0 ? updatedStreaming : null 
-              })
-              .eq('id', film.id);
-
-            removedCount++;
-            console.log(`✗ Removed fake Apple TV link for: ${film.film_title}`);
-          }
-          results.push({ film: film.film_title, found: false });
+          results.push({ film: film.film_title, action: 'kept valid link' });
         }
-
-        // Rate limit - wait between requests
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-      } catch (filmError) {
-        console.error(`Error processing ${film.film_title}:`, filmError);
-        results.push({ film: film.film_title, found: false });
       }
     }
 
-    console.log(`Apple TV enrichment complete. Updated ${updatedCount}, removed ${removedCount} fake links.`);
+    console.log(`Apple TV cleanup complete. Cleaned ${cleanedCount} bad links.`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Updated ${updatedCount} Apple TV links, removed ${removedCount} fake links`,
+        message: `Cleaned ${cleanedCount} bad Apple TV links. Note: Apple TV requires manual verification - use the admin UI to add verified URLs.`,
         results
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error enriching Apple TV links:', error);
+    console.error('Error cleaning Apple TV links:', error);
     return new Response(
       JSON.stringify({ 
         success: false, 

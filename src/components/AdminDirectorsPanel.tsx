@@ -18,7 +18,9 @@ import {
   User,
   ExternalLink,
   Image as ImageIcon,
-  RefreshCw
+  RefreshCw,
+  Sparkles,
+  Loader2
 } from "lucide-react";
 
 interface Director {
@@ -67,6 +69,7 @@ export const AdminDirectorsPanel = () => {
   const [editingDirector, setEditingDirector] = useState<Director | null>(null);
   const [formData, setFormData] = useState<DirectorFormData>(emptyFormData);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEnrichingAll, setIsEnrichingAll] = useState(false);
 
   // Statistics
   const stats = {
@@ -257,6 +260,49 @@ export const AdminDirectorsPanel = () => {
     }
   };
 
+  const handleEnrichAllDirectors = async () => {
+    setIsEnrichingAll(true);
+    const directorsNeedingEnrichment = directors.filter(d => !d.bio || !d.photo_url);
+    
+    toast({
+      title: "Starting Batch Enrichment",
+      description: `Enriching ${directorsNeedingEnrichment.length} directors from Wikipedia...`,
+    });
+
+    let enrichedCount = 0;
+    let errorCount = 0;
+
+    for (const director of directorsNeedingEnrichment) {
+      try {
+        const { data, error } = await supabase.functions.invoke("enrich-director-data", {
+          body: { directorName: director.name, directorId: director.id }
+        });
+
+        if (error) throw error;
+        
+        if (data.success) {
+          enrichedCount++;
+          console.log(`✓ Enriched: ${director.name}`);
+        }
+      } catch (error) {
+        console.error(`Error enriching ${director.name}:`, error);
+        errorCount++;
+      }
+      
+      // Small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    toast({
+      title: "Batch Enrichment Complete",
+      description: `Enriched ${enrichedCount} directors, ${errorCount} errors`,
+      variant: enrichedCount > 0 ? "success" : "destructive",
+    });
+    
+    setIsEnrichingAll(false);
+    fetchDirectors();
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -266,6 +312,16 @@ export const AdminDirectorsPanel = () => {
             <CardTitle>SF Directors Management</CardTitle>
           </div>
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleEnrichAllDirectors}
+              disabled={isEnrichingAll}
+              className="border-purple-500/30 text-purple-300"
+            >
+              {isEnrichingAll ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+              Enrich All
+            </Button>
             <Button
               variant="outline"
               size="sm"
