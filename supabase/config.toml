@@ -96,3 +96,15 @@ verify_jwt = false
 
 [functions.fetch-publisher-events]
 verify_jwt = false
+
+[functions.sf-knowledge-search]
+verify_jwt = false
+
+[functions.elevenlabs-tts]
+verify_jwt = true
+
+[functions.elevenlabs-stt]
+verify_jwt = true
+
+[functions.populate-film-adaptations]
+verify_jwt = false

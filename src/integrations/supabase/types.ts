@@ -1228,6 +1228,72 @@ export type Database = {
         }
         Relationships: []
       }
+      sf_film_adaptations: {
+        Row: {
+          adaptation_type: string | null
+          awards: Json | null
+          book_author: string
+          book_isbn: string | null
+          book_publication_year: number | null
+          book_title: string
+          created_at: string | null
+          director: string | null
+          film_title: string
+          film_year: number | null
+          id: string
+          imdb_id: string | null
+          imdb_rating: number | null
+          notable_differences: string | null
+          poster_url: string | null
+          rotten_tomatoes_score: number | null
+          streaming_availability: Json | null
+          trailer_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          adaptation_type?: string | null
+          awards?: Json | null
+          book_author: string
+          book_isbn?: string | null
+          book_publication_year?: number | null
+          book_title: string
+          created_at?: string | null
+          director?: string | null
+          film_title: string
+          film_year?: number | null
+          id?: string
+          imdb_id?: string | null
+          imdb_rating?: number | null
+          notable_differences?: string | null
+          poster_url?: string | null
+          rotten_tomatoes_score?: number | null
+          streaming_availability?: Json | null
+          trailer_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          adaptation_type?: string | null
+          awards?: Json | null
+          book_author?: string
+          book_isbn?: string | null
+          book_publication_year?: number | null
+          book_title?: string
+          created_at?: string | null
+          director?: string | null
+          film_title?: string
+          film_year?: number | null
+          id?: string
+          imdb_id?: string | null
+          imdb_rating?: number | null
+          notable_differences?: string | null
+          poster_url?: string | null
+          rotten_tomatoes_score?: number | null
+          streaming_availability?: Json | null
+          trailer_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       temporal_analysis_cache: {
         Row: {
           analysis: Json
