@@ -1320,6 +1320,7 @@ export type Database = {
           book_title: string
           created_at: string | null
           criterion_spine: number | null
+          criterion_url: string | null
           director: string | null
           film_title: string
           film_year: number | null
@@ -1343,6 +1344,7 @@ export type Database = {
           book_title: string
           created_at?: string | null
           criterion_spine?: number | null
+          criterion_url?: string | null
           director?: string | null
           film_title: string
           film_year?: number | null
@@ -1366,6 +1368,7 @@ export type Database = {
           book_title?: string
           created_at?: string | null
           criterion_spine?: number | null
+          criterion_url?: string | null
           director?: string | null
           film_title?: string
           film_year?: number | null

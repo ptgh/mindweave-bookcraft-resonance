@@ -3,8 +3,9 @@ import { gsap } from 'gsap';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, Film, Calendar, X, ExternalLink } from 'lucide-react';
+import { User, Film, Calendar, X, ExternalLink, Sparkles, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Director {
   id: string;
@@ -31,11 +32,13 @@ export const DirectorPopup: React.FC<DirectorPopupProps> = ({
   onClose,
   onFilmClick
 }) => {
+  const { toast } = useToast();
   const popupRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [fullDirector, setFullDirector] = useState<Director | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEnriching, setIsEnriching] = useState(false);
   const [showAllFilms, setShowAllFilms] = useState(false);
 
   // Fetch full director data when name is provided
@@ -152,10 +155,38 @@ export const DirectorPopup: React.FC<DirectorPopupProps> = ({
 
   const validFilms = (fullDirector?.notable_sf_films || []).filter(f => f && f.trim().length > 2);
 
+  const needsEnrichment = fullDirector && (!fullDirector.bio || !fullDirector.nationality);
+
+  const handleEnrichDirector = async () => {
+    if (!fullDirector || fullDirector.id === 'temp') {
+      toast({
+        title: 'Cannot enrich',
+        description: 'Director not found in database. Add via admin panel first.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsEnriching(true);
+    try {
+      // Simple enrichment - update that data is being requested
+      toast({
+        title: 'Enrichment requested',
+        description: `Looking up data for ${fullDirector.name}...`,
+      });
+      
+      // For now, open Wikipedia in new tab as a manual enrichment helper
+      const searchQuery = `${fullDirector.name} film director`;
+      window.open(`https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(searchQuery)}`, '_blank');
+    } finally {
+      setIsEnriching(false);
+    }
+  };
+
   return (
     <div
       ref={popupRef}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[150] flex items-center justify-center p-4"
       style={{ display: 'none' }}
     >
       {/* Overlay */}
@@ -228,9 +259,25 @@ export const DirectorPopup: React.FC<DirectorPopupProps> = ({
             </div>
           ) : (
             <div className="bg-slate-800/70 rounded-lg p-4 border border-slate-700/50">
-              <p className="text-sm text-slate-400 italic">
+              <p className="text-sm text-slate-400 italic mb-3">
                 Biographical information not yet available.
               </p>
+              {needsEnrichment && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleEnrichDirector}
+                  disabled={isEnriching}
+                  className="w-full bg-amber-500/10 border-amber-400/30 text-amber-300 hover:bg-amber-500/20"
+                >
+                  {isEnriching ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 mr-2" />
+                  )}
+                  Enrich Data
+                </Button>
+              )}
             </div>
           )}
 
