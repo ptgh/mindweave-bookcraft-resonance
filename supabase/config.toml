@@ -126,3 +126,6 @@ verify_jwt = false
 
 [functions.ai-film-recommendations]
 verify_jwt = false
+
+[functions.populate-criterion-sf-films]
+verify_jwt = false
