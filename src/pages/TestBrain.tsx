@@ -1321,7 +1321,7 @@ const TestBrain = () => {
         </div>
       )}
 
-      {/* Chat Interface */}
+      {/* Neural Assistant - Single unified chat interface */}
       <BrainChatInterface
         nodes={nodes}
         links={links}

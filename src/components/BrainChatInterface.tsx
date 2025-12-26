@@ -769,13 +769,14 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
 
   if (!isOpen) {
     return (
-      <Button
+      <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 right-12 z-30 bg-slate-900/60 hover:bg-slate-900/80 border border-slate-700/30 backdrop-blur-lg text-cyan-400 shadow-lg shadow-slate-900/20 rounded-full p-4 transition-all duration-300 hover:scale-110 hover:border-cyan-400/50"
-        size="icon"
+        className="fixed bottom-6 right-6 z-30 w-11 h-11 rounded-full bg-slate-900/70 hover:bg-slate-900/90 border border-slate-700/40 hover:border-cyan-400/40 backdrop-blur-md shadow-lg shadow-slate-900/30 transition-all duration-300 hover:scale-105 flex items-center justify-center group"
+        aria-label="Open Neural Assistant"
       >
-        <MessageCircle className="w-6 h-6" />
-      </Button>
+        <MessageCircle className="w-5 h-5 text-cyan-400/80 group-hover:text-cyan-400 transition-colors" />
+        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-cyan-400/60 rounded-full" />
+      </button>
     );
   }
 
@@ -863,7 +864,7 @@ const BrainChatInterface: React.FC<BrainChatInterfaceProps> = ({
               <div
                 className={`max-w-[80%] p-2.5 rounded-lg text-xs whitespace-pre-line ${
                   message.isUser
-                    ? 'bg-cyan-500/20 border border-cyan-400/30 text-slate-200'
+                    ? 'bg-cyan-600/25 border border-cyan-500/35 text-cyan-100'
                     : message.isError
                     ? 'bg-red-500/10 border border-red-400/30 text-slate-300'
                     : 'bg-slate-800/60 border border-slate-700/30 text-slate-200'
