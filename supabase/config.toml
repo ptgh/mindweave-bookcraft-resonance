@@ -129,3 +129,9 @@ verify_jwt = false
 
 [functions.populate-criterion-sf-films]
 verify_jwt = false
+
+[functions.enrich-film-artwork]
+verify_jwt = false
+
+[functions.enrich-trailer-urls]
+verify_jwt = false
