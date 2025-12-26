@@ -20,6 +20,7 @@ const PublisherResonance = lazy(() => import("./pages/PublisherResonance"));
 const Auth = lazy(() => import("./pages/Auth"));
 const TestBrain = lazy(() => import("./pages/TestBrain"));
 const Community = lazy(() => import("./pages/Community"));
+const BookToScreen = lazy(() => import("./pages/BookToScreen"));
 const AdminEnrichment = lazy(() => import("./pages/AdminEnrichment"));
 const AdminPopulate = lazy(() => import("./pages/AdminPopulate"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
@@ -97,6 +98,7 @@ const AppRoutes = () => {
           
           <Route path="/test-brain" element={<TestBrain />} />
           <Route path="/community" element={<Community />} />
+          <Route path="/book-to-screen" element={<BookToScreen />} />
           <Route path="/admin/enrichment" element={<AdminEnrichment />} />
           <Route path="/admin/populate" element={<AdminPopulate />} />
           <Route path="/unsubscribe/:token" element={<Unsubscribe />} />
