@@ -11,6 +11,13 @@ export function getGoogleWatchLink(filmTitle: string, year?: number | null): str
   return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
 }
 
+// Direct Google search for a specific provider (e.g., "Apple TV Children of Men rent")
+export function getProviderDirectLink(filmTitle: string, providerName: string, type: 'stream' | 'rent' | 'buy'): string {
+  const action = type === 'stream' ? 'watch' : type;
+  const query = `${providerName} ${filmTitle} ${action}`;
+  return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+}
+
 // Known Criterion SF films for filtering
 export const CRITERION_SF_FILMS = [
   'Solaris',
