@@ -342,7 +342,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
       {showFilmModal && selectedFilm && createPortal(
         <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4" onClick={closeFilmModal}>
           <div className="relative w-full max-w-2xl bg-slate-900/95 rounded-xl overflow-hidden shadow-2xl border border-amber-500/30" onClick={(e) => e.stopPropagation()}>
-            {/* Trailer - Search on Criterion's YouTube channel */}
+            {/* Trailer - Embed YouTube or provide search link */}
             <div className="aspect-video bg-black relative">
               {selectedFilm.trailer_url && extractYouTubeId(selectedFilm.trailer_url) ? (
                 <iframe
@@ -358,13 +358,13 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
                   <Film className="w-12 h-12 text-amber-400/30 mb-3" />
                   <p className="text-sm text-muted-foreground mb-3">Find official trailer</p>
                   <a
-                    href={`https://www.youtube.com/@Criterion/search?query=${encodeURIComponent(selectedFilm.film_title)}`}
+                    href={`https://www.youtube.com/results?search_query=${encodeURIComponent(selectedFilm.film_title + ' official trailer')}&sp=EgIQAQ%253D%253D`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     <Play className="w-4 h-4 fill-white" />
-                    Search Criterion Channel
+                    Watch on YouTube
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
@@ -412,36 +412,65 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {selectedFilm.awards.slice(0, 4).map((award, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-xs bg-amber-500/10 text-amber-400 border-amber-500/20">
+                      <a
+                        key={idx}
+                        href={`https://www.google.com/search?q=${encodeURIComponent(award.name + ' ' + award.year)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                      >
                         {award.name}
-                      </Badge>
+                        <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Where to Watch - Only Criterion (with specific film URL) */}
-              <div className="space-y-2 pt-2 border-t border-border/20">
-                <p className="text-sm font-medium text-foreground">Where to Watch</p>
-                <div className="flex flex-wrap gap-2">
-                  {/* Criterion - link to specific film search */}
-                  <a
-                    href={`https://www.criterion.com/search#stq=${encodeURIComponent(selectedFilm.film_title)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-400"
-                  >
-                    <img src="/images/criterion-logo.jpg" alt="Criterion" className="h-4 w-auto rounded" />
-                    Buy Physical
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
+              {/* Where to Watch - Only show if available */}
+              {(selectedFilm.criterion_spine || selectedFilm.streaming_availability?.apple) && (
+                <div className="space-y-2 pt-2 border-t border-border/20">
+                  <p className="text-sm font-medium text-foreground">Where to Watch</p>
+                  <div className="flex flex-wrap gap-2">
+                    {/* Apple TV - only if available */}
+                    {selectedFilm.streaming_availability?.apple && (
+                      <a
+                        href={selectedFilm.streaming_availability.apple}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border bg-slate-700/50 hover:bg-slate-600/50 border-slate-500/40 text-slate-200"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                        </svg>
+                        Apple TV
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                    {/* Criterion - only if has spine number */}
+                    {selectedFilm.criterion_spine && (
+                      <a
+                        href={`https://www.criterion.com/films/${selectedFilm.criterion_spine}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-400"
+                      >
+                        <img src="/images/criterion-logo.jpg" alt="Criterion" className="h-4 w-auto rounded" />
+                        Buy Physical
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <Button variant="outline" className="w-full mt-2 border-primary/30 text-primary hover:bg-primary/10" onClick={() => { closeFilmModal(); openBookPreview(selectedFilm); }}>
-                <Book className="w-4 h-4 mr-2" />
-                View Book Details
-              </Button>
+              <button 
+                onClick={() => { closeFilmModal(); openBookPreview(selectedFilm); }}
+                className="w-full mt-2 py-2 text-sm font-medium rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-2"
+              >
+                <Book className="w-3.5 h-3.5" />
+                View Book
+              </button>
             </div>
           </div>
         </div>,
