@@ -8,7 +8,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useEnhancedToast } from '@/hooks/use-enhanced-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { getAppleTVLink, getCriterionLink, hasValidStreamingLink, CRITERION_SF_FILMS } from '@/utils/streamingLinks';
+import { getGoogleWatchLink, isCriterionFilm, CRITERION_SF_FILMS } from '@/utils/streamingLinks';
+
+// Helper to check if streaming link is valid (has a URL)
+const hasValidStreamingLink = (streaming: Record<string, string> | null, service: 'apple' | 'criterion'): boolean => {
+  if (!streaming) return false;
+  return Boolean(streaming[service]);
+};
 
 interface FilmStreamingData {
   id: string;
@@ -167,11 +173,11 @@ export const AdminExternalLinksPanel: React.FC = () => {
   };
 
   const openAppleTVSearch = (filmTitle: string) => {
-    window.open(getAppleTVLink(filmTitle), '_blank');
+    window.open(`https://tv.apple.com/search?term=${encodeURIComponent(filmTitle)}`, '_blank');
   };
 
   const openCriterionSearch = (filmTitle: string) => {
-    window.open(getCriterionLink(filmTitle), '_blank');
+    window.open(`https://www.criterion.com/search#stq=${encodeURIComponent(filmTitle)}`, '_blank');
   };
 
   return (

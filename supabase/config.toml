@@ -123,3 +123,6 @@ verify_jwt = false
 
 [functions.enrich-director-data]
 verify_jwt = false
+
+[functions.ai-film-recommendations]
+verify_jwt = false
