@@ -689,89 +689,63 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                     Where to Watch
                   </h4>
                   
-                  {isLoadingProviders ? (
-                    <div className="flex items-center gap-2 text-muted-foreground py-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-sm">Finding streaming options...</span>
-                    </div>
-                  ) : watchProviders && (watchProviders.streaming.length > 0 || watchProviders.rent.length > 0 || watchProviders.buy.length > 0) ? (
-                    <div className="space-y-4">
-                      {/* Streaming */}
-                      {watchProviders.streaming.length > 0 && (
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs text-muted-foreground w-14 flex-shrink-0">Stream</span>
-                          <div className="flex items-center gap-3 flex-wrap">
-                            {watchProviders.streaming.slice(0, 6).map((provider) => (
-                              <a
-                                key={provider.id}
-                                href={getProviderDirectLink(selectedFilm.film_title, provider.name, 'stream')}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group"
-                                title={`Watch on ${provider.name}`}
-                              >
-                                {provider.logo ? (
-                                  <img src={provider.logo} alt={provider.name} className="w-10 h-10 rounded-lg hover:ring-2 ring-amber-400/50 transition-all" />
-                                ) : (
-                                  <span className="text-xs px-3 py-2 bg-muted/40 rounded-lg text-muted-foreground hover:bg-muted/60 transition-colors">{provider.name}</span>
-                                )}
-                              </a>
-                            ))}
-                          </div>
+                  {(() => {
+                    // Filter for Google Play only (provider_id: 3 = Google Play Movies, 192 = YouTube)
+                    const GOOGLE_PLAY_ID = 3;
+                    const googlePlayRent = watchProviders?.rent.find(p => p.id === GOOGLE_PLAY_ID);
+                    const googlePlayBuy = watchProviders?.buy.find(p => p.id === GOOGLE_PLAY_ID);
+                    const hasGooglePlay = googlePlayRent || googlePlayBuy;
+                    
+                    if (isLoadingProviders) {
+                      return (
+                        <div className="flex items-center gap-2 text-muted-foreground py-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="text-sm">Finding streaming options...</span>
                         </div>
-                      )}
+                      );
+                    }
+                    
+                    return (
+                      <div className="space-y-3">
+                        {/* Google Play - Rent/Buy */}
+                        {hasGooglePlay ? (
+                          <a
+                            href={`https://play.google.com/store/search?q=${encodeURIComponent(selectedFilm.film_title + ' ' + (selectedFilm.film_year || ''))}&c=movies`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border/30 hover:border-primary/30 transition-all group"
+                          >
+                            {(googlePlayRent?.logo || googlePlayBuy?.logo) && (
+                              <img 
+                                src={googlePlayRent?.logo || googlePlayBuy?.logo || ''} 
+                                alt="Google Play" 
+                                className="w-10 h-10 rounded-lg"
+                              />
+                            )}
+                            <div className="text-left">
+                              <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors block">
+                                Google Play Movies
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {googlePlayRent && googlePlayBuy ? 'Rent or Buy' : googlePlayRent ? 'Rent' : 'Buy'}
+                              </span>
+                            </div>
+                            <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary ml-auto" />
+                          </a>
+                        ) : (
+                          <a
+                            href={`https://play.google.com/store/search?q=${encodeURIComponent(selectedFilm.film_title + ' ' + (selectedFilm.film_year || ''))}&c=movies`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/30 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <Search className="w-4 h-4" />
+                            Search on Google Play
+                          </a>
+                        )}
 
-                      {/* Rent */}
-                      {watchProviders.rent.length > 0 && (
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs text-muted-foreground w-14 flex-shrink-0">Rent</span>
-                          <div className="flex items-center gap-3 flex-wrap">
-                            {watchProviders.rent.slice(0, 5).map((provider) => (
-                              <a
-                                key={provider.id}
-                                href={getProviderDirectLink(selectedFilm.film_title, provider.name, 'rent')}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                title={`Rent on ${provider.name}`}
-                              >
-                                {provider.logo ? (
-                                  <img src={provider.logo} alt={provider.name} className="w-9 h-9 rounded-lg opacity-90 hover:opacity-100 hover:ring-2 ring-primary/50 transition-all" />
-                                ) : (
-                                  <span className="text-xs px-2.5 py-1.5 bg-muted/30 rounded-lg text-muted-foreground hover:bg-muted/50">{provider.name}</span>
-                                )}
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Buy */}
-                      {watchProviders.buy.length > 0 && (
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs text-muted-foreground w-14 flex-shrink-0">Buy</span>
-                          <div className="flex items-center gap-3 flex-wrap">
-                            {watchProviders.buy.slice(0, 5).map((provider) => (
-                              <a
-                                key={provider.id}
-                                href={getProviderDirectLink(selectedFilm.film_title, provider.name, 'buy')}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                title={`Buy on ${provider.name}`}
-                              >
-                                {provider.logo ? (
-                                  <img src={provider.logo} alt={provider.name} className="w-9 h-9 rounded-lg opacity-90 hover:opacity-100 hover:ring-2 ring-primary/50 transition-all" />
-                                ) : (
-                                  <span className="text-xs px-2.5 py-1.5 bg-muted/30 rounded-lg text-muted-foreground hover:bg-muted/50">{provider.name}</span>
-                                )}
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Criterion link */}
-                      {selectedFilm.is_criterion_collection && selectedFilm.criterion_url && (
-                        <div className="pt-2">
+                        {/* Criterion link */}
+                        {selectedFilm.is_criterion_collection && selectedFilm.criterion_url && (
                           <a
                             href={selectedFilm.criterion_url}
                             target="_blank"
@@ -782,33 +756,10 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                             Buy from Criterion Collection
                             <ExternalLink className="w-3.5 h-3.5" />
                           </a>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap gap-3">
-                      <a
-                        href={getGoogleWatchLink(selectedFilm.film_title, selectedFilm.film_year)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-300 transition-colors"
-                      >
-                        <Search className="w-4 h-4" />
-                        Find Streaming Options
-                      </a>
-                      {selectedFilm.is_criterion_collection && selectedFilm.criterion_url && (
-                        <a
-                          href={selectedFilm.criterion_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-300 transition-colors"
-                        >
-                          <img src="/images/criterion-logo.jpg" alt="" className="h-4 w-auto rounded-sm" />
-                          Criterion Collection
-                        </a>
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* View Book button */}
