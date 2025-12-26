@@ -16,8 +16,12 @@ interface GoogleBooksItem {
 
 async function searchGoogleBooks(query: string, maxResults = 3): Promise<string | null> {
   try {
+    // Add API key if available for higher rate limits (10,000/day vs 1,000/day)
+    const GOOGLE_BOOKS_API_KEY = Deno.env.get('GOOGLE_BOOKS_API_KEY');
+    const apiKeyParam = GOOGLE_BOOKS_API_KEY ? `&key=${GOOGLE_BOOKS_API_KEY}` : '';
+    
     const response = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=${maxResults}`
+      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=${maxResults}${apiKeyParam}`
     );
     
     if (!response.ok) return null;

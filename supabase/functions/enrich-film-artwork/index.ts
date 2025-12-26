@@ -8,6 +8,7 @@ const corsHeaders = {
 };
 
 const TMDB_API_KEY = Deno.env.get('TMDB_API_KEY');
+const GOOGLE_BOOKS_API_KEY = Deno.env.get('GOOGLE_BOOKS_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -79,7 +80,9 @@ async function fetchGoogleBooksCover(title: string, author: string, isbn: string
       query = encodeURIComponent(`${title} ${cleanAuthor}`);
     }
     
-    const searchUrl = `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1`;
+    // Add API key if available for higher rate limits
+    const apiKeyParam = GOOGLE_BOOKS_API_KEY ? `&key=${GOOGLE_BOOKS_API_KEY}` : '';
+    const searchUrl = `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1${apiKeyParam}`;
     
     console.log(`Searching Google Books for: ${title} by ${author}`);
     
