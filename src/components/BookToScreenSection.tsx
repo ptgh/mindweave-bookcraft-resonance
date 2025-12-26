@@ -11,7 +11,18 @@ import { EnrichedPublisherBook } from '@/services/publisherService';
 import { AuthorPopup } from '@/components/AuthorPopup';
 import { DirectorPopup } from '@/components/DirectorPopup';
 import { ScifiAuthor } from '@/services/scifiAuthorsService';
-import { getYouTubeSearchUrl, extractYouTubeId, getCriterionBrowseUrl } from '@/utils/streamingLinks';
+import { 
+  getYouTubeSearchUrl, 
+  extractYouTubeId, 
+  getCriterionBrowseUrl, 
+  getArrowBrowseUrl,
+  getCriterionPurchaseUrl,
+  getArrowPurchaseUrl,
+  getCriterionFilm,
+  getArrowFilm,
+  CRITERION_SF_FILMS,
+  ARROW_SF_FILMS
+} from '@/utils/streamingLinks';
 import { FilterMode } from './BookToScreenSelector';
 
 
@@ -130,9 +141,13 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const filteredAdaptations = React.useMemo(() => {
     let result = adaptations;
     
-    // Filter by mode
+    // Filter by mode - using verified lists
     if (filterMode === 'criterion') {
-      result = result.filter(film => film.is_criterion_collection === true);
+      result = result.filter(film => 
+        getCriterionFilm(film.film_title) !== null || film.is_criterion_collection === true
+      );
+    } else if (filterMode === 'arrow') {
+      result = result.filter(film => getArrowFilm(film.film_title) !== null);
     }
     
     // Filter by search query
@@ -296,6 +311,29 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     setShowDirectorPopup(true);
   };
 
+  // Get mode-specific info
+  const getModeInfo = () => {
+    if (filterMode === 'criterion') {
+      return {
+        browseUrl: getCriterionBrowseUrl(),
+        browseText: 'Browse on Criterion',
+        count: CRITERION_SF_FILMS.length,
+        label: 'Criterion Collection'
+      };
+    }
+    if (filterMode === 'arrow') {
+      return {
+        browseUrl: getArrowBrowseUrl(),
+        browseText: 'Browse on Arrow',
+        count: ARROW_SF_FILMS.length,
+        label: 'Arrow Films'
+      };
+    }
+    return null;
+  };
+
+  const modeInfo = getModeInfo();
+
   if (isLoading) {
     return (
       <div className={cn("space-y-4", className)}>
@@ -321,7 +359,9 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
             ? `No films found matching "${searchQuery}"`
             : filterMode === 'criterion' 
               ? 'No Criterion Collection films found. Click "Scan Signal Collection ✨ AI" to populate with Criterion titles.'
-              : 'No film adaptations found'}
+              : filterMode === 'arrow'
+                ? 'No Arrow Films found in your collection.'
+                : 'No film adaptations found'}
         </p>
       </div>
     );
@@ -345,16 +385,16 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>
           Showing {visibleFilms.length} of {filteredAdaptations.length} films
-          {filterMode === 'criterion' && ' (Criterion Collection)'}
+          {modeInfo && ` (${modeInfo.label})`}
         </span>
-        {filterMode === 'criterion' && (
+        {modeInfo && (
           <a
-            href={getCriterionBrowseUrl()}
+            href={modeInfo.browseUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-amber-400 hover:text-amber-300 transition-colors inline-flex items-center gap-1 text-xs"
           >
-            Browse on Criterion
+            {modeInfo.browseText}
             <ExternalLink className="w-3 h-3" />
           </a>
         )}
@@ -362,8 +402,6 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {visibleFilms.map((film) => {
-          const isInCriterion = film.is_criterion_collection === true;
-          
           return (
             <Card 
               key={film.id} 
@@ -476,17 +514,6 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                     </div>
                   </button>
                 </div>
-
-                {/* Criterion Badge - compact */}
-                {isInCriterion && (
-                  <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border/20">
-                    <img src="/images/criterion-logo.jpg" alt="" className="h-2.5 w-auto rounded-sm opacity-70" />
-                    <span className="text-[9px] text-amber-400/80">Criterion</span>
-                    {film.criterion_spine && (
-                      <span className="text-[8px] text-muted-foreground">#{film.criterion_spine}</span>
-                    )}
-                  </div>
-                )}
 
                 {/* AI-suggested badge */}
                 {film.source === 'ai_suggested' && (
@@ -632,7 +659,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                   </div>
                 )}
 
-                {/* Where to Watch - Google search integration */}
+                {/* Where to Watch - Google search integration + Physical Media */}
                 <div className="space-y-4 pt-4 border-t border-border/30">
                   <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
                     <ExternalLink className="w-4 h-4 text-amber-400" />
@@ -666,33 +693,48 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                       <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
                     </a>
 
-                    {/* Criterion Collection - fixed URL format */}
-                    {selectedFilm.is_criterion_collection && (
-                      <a
-                        href={`https://www.criterion.com/search#stq=${encodeURIComponent(selectedFilm.film_title)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-all group"
-                      >
-                        <img src="/images/criterion-logo.jpg" alt="" className="h-5 w-auto rounded-sm" />
-                        <div className="text-left flex-1">
-                          <span className="text-sm font-medium text-amber-300 group-hover:text-amber-200 transition-colors">
-                            Criterion Collection
-                          </span>
-                          <span className="text-[10px] text-amber-400/60 block">
-                            Buy Blu-ray / 4K
-                          </span>
+                    {/* Physical Media Section */}
+                    {(getCriterionFilm(selectedFilm.film_title) || getArrowFilm(selectedFilm.film_title)) && (
+                      <div className="pt-2">
+                        <p className="text-xs text-muted-foreground mb-2">Buy Physical</p>
+                        <div className="flex gap-2 flex-wrap">
+                          {/* Criterion Collection */}
+                          {getCriterionFilm(selectedFilm.film_title) && (
+                            <a
+                              href={getCriterionPurchaseUrl(selectedFilm.film_title)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600/50 hover:border-slate-500 transition-all group"
+                            >
+                              <img src="/images/criterion-logo.jpg" alt="" className="h-4 w-auto rounded-sm" />
+                              <span className="text-xs font-medium text-slate-200">Criterion</span>
+                              <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-slate-200" />
+                            </a>
+                          )}
+
+                          {/* Arrow Films */}
+                          {getArrowFilm(selectedFilm.film_title) && (
+                            <a
+                              href={getArrowPurchaseUrl(selectedFilm.film_title)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-900/30 hover:bg-red-900/50 border border-red-600/30 hover:border-red-500/50 transition-all group"
+                            >
+                              <span className="text-red-500 font-bold text-sm">▶</span>
+                              <span className="text-xs font-medium text-red-200">Arrow</span>
+                              <ExternalLink className="w-3 h-3 text-red-400 group-hover:text-red-200" />
+                            </a>
+                          )}
                         </div>
-                        <ExternalLink className="w-3.5 h-3.5 text-amber-400/60" />
-                      </a>
+                      </div>
                     )}
                   </div>
                 </div>
 
-                {/* View Book button */}
+                {/* View Book button - styled consistently */}
                 <button 
                   onClick={() => { closeFilmModal(); openBookPreview(selectedFilm); }}
-                  className="w-full py-3 text-sm font-medium rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-3 text-sm font-medium rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 transition-colors flex items-center justify-center gap-2"
                 >
                   <Book className="w-4 h-4" />
                   View Book

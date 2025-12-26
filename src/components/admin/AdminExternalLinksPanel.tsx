@@ -81,8 +81,8 @@ export const AdminExternalLinksPanel: React.FC = () => {
       const validCriterion = mapped.filter(f => hasValidStreamingLink(f.streaming_availability, 'criterion')).length;
       const criterionPotential = mapped.filter(f => 
         CRITERION_SF_FILMS.some(cf => 
-          f.film_title.toLowerCase().includes(cf.toLowerCase()) ||
-          cf.toLowerCase().includes(f.film_title.toLowerCase())
+          f.film_title.toLowerCase().includes(cf.title.toLowerCase()) ||
+          cf.title.toLowerCase().includes(f.film_title.toLowerCase())
         )
       ).length;
       
@@ -267,8 +267,8 @@ export const AdminExternalLinksPanel: React.FC = () => {
               const hasApple = hasValidStreamingLink(film.streaming_availability, 'apple');
               const hasCriterion = hasValidStreamingLink(film.streaming_availability, 'criterion');
               const isCriterionCandidate = CRITERION_SF_FILMS.some(cf => 
-                film.film_title.toLowerCase().includes(cf.toLowerCase()) ||
-                cf.toLowerCase().includes(film.film_title.toLowerCase())
+                film.film_title.toLowerCase().includes(cf.title.toLowerCase()) ||
+                cf.title.toLowerCase().includes(film.film_title.toLowerCase())
               );
               
               return (
