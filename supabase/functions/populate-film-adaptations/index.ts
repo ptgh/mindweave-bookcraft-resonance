@@ -6,18 +6,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Classic SF film adaptations database with streaming URLs and awards
+// Classic SF film adaptations database with streaming URLs, awards, and images
 const SF_FILM_ADAPTATIONS = [
   {
     book_title: "Do Androids Dream of Electric Sheep?",
     book_author: "Philip K. Dick",
     book_publication_year: 1968,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780345404473-L.jpg",
     film_title: "Blade Runner",
     film_year: 1982,
     director: "Ridley Scott",
     imdb_id: "tt0083658",
     imdb_rating: 8.1,
     rotten_tomatoes_score: 89,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BNzQzMzJhZTEtOWM4NS00MTdhLTg0YjgtMjM4MDRkZjUwZDBlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_.jpg",
     adaptation_type: "loose",
     notable_differences: "Film focuses more on noir aesthetics and existential questions; book explores empathy and the Mercerism religion more deeply",
     trailer_url: "https://www.youtube.com/watch?v=eogpIG53Cis",
@@ -27,22 +29,22 @@ const SF_FILM_ADAPTATIONS = [
       { name: "National Film Registry", year: 1993 }
     ],
     streaming_availability: { 
-      netflix: "https://www.netflix.com/search?q=blade%20runner",
-      prime: "https://www.amazon.com/gp/video/detail/B00FZN0LQQ",
-      hbo: "https://play.max.com/movie/f6a123d3-50bb-4d2e-947a-a27bde2f3f93",
-      apple: "https://tv.apple.com/movie/blade-runner-the-final-cut/umc.cmc.7gw26y91mgu9u63m2pz1i84sp"
+      apple: "https://tv.apple.com/movie/blade-runner-the-final-cut/umc.cmc.7gw26y91mgu9u63m2pz1i84sp",
+      criterion: "https://www.criterion.com/shop/browse?genre=science-fiction"
     }
   },
   {
     book_title: "2001: A Space Odyssey",
     book_author: "Arthur C. Clarke",
     book_publication_year: 1968,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780451457998-L.jpg",
     film_title: "2001: A Space Odyssey",
     film_year: 1968,
     director: "Stanley Kubrick",
     imdb_id: "tt0062622",
     imdb_rating: 8.3,
     rotten_tomatoes_score: 92,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BMmNlYzRiNDctZWNhMi00MzI4LThkZTctMTUzMmZkMmFmNThmXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_.jpg",
     adaptation_type: "direct",
     notable_differences: "Novel and film were developed simultaneously; novel provides more exposition for HAL's malfunction and the Star Gate sequence",
     trailer_url: "https://www.youtube.com/watch?v=oR_e9y-bka0",
@@ -52,21 +54,22 @@ const SF_FILM_ADAPTATIONS = [
       { name: "National Film Registry", year: 1991 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B000QXDCCA",
-      hbo: "https://play.max.com/movie/4cdd9a0a-3c36-4c1d-a1ca-5ec86bf2e5a1",
-      apple: "https://tv.apple.com/movie/2001-a-space-odyssey/umc.cmc.1hk1n3sqb0gk04bcv8ychb7e4"
+      apple: "https://tv.apple.com/movie/2001-a-space-odyssey/umc.cmc.1hk1n3sqb0gk04bcv8ychb7e4",
+      criterion: "https://www.criterion.com/shop/browse?genre=science-fiction"
     }
   },
   {
     book_title: "Dune",
     book_author: "Frank Herbert",
     book_publication_year: 1965,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780441172719-L.jpg",
     film_title: "Dune",
     film_year: 2021,
     director: "Denis Villeneuve",
     imdb_id: "tt1160419",
     imdb_rating: 8.0,
     rotten_tomatoes_score: 83,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BMDQ0NjgyN2YtNWViNS00YjA3LTkxNDktYzFkZTExZGMxZDkxXkEyXkFqcGdeQXVyODE5NzE3OTE@._V1_.jpg",
     adaptation_type: "direct",
     notable_differences: "Film covers first half of novel; streamlines political complexity while maintaining visual grandeur",
     trailer_url: "https://www.youtube.com/watch?v=8g18jFHCLXk",
@@ -79,8 +82,6 @@ const SF_FILM_ADAPTATIONS = [
       { name: "Academy Award for Best Visual Effects", year: 2022 }
     ],
     streaming_availability: { 
-      hbo: "https://play.max.com/movie/e2eca96e-cdc0-4e11-84fd-f4d3cda87b0f",
-      prime: "https://www.amazon.com/gp/video/detail/B09MGB19KZ",
       apple: "https://tv.apple.com/movie/dune/umc.cmc.3h8cj8xb2qqp1s52e1q25ti9z"
     }
   },
@@ -88,12 +89,14 @@ const SF_FILM_ADAPTATIONS = [
     book_title: "Dune Messiah",
     book_author: "Frank Herbert",
     book_publication_year: 1969,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780441172696-L.jpg",
     film_title: "Dune: Part Two",
     film_year: 2024,
     director: "Denis Villeneuve",
     imdb_id: "tt15239678",
     imdb_rating: 8.5,
     rotten_tomatoes_score: 92,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BN2QyZGU4ZDctOWMzMy00NTc5LThlOGQtODhmNDI1NmY5YzAwXkEyXkFqcGdeQXVyMDM2NDM2MQ@@._V1_.jpg",
     adaptation_type: "direct",
     notable_differences: "Combines second half of first book with elements of Dune Messiah; adds romance and battle sequences",
     trailer_url: "https://www.youtube.com/watch?v=Way9Dexny3w",
@@ -101,8 +104,6 @@ const SF_FILM_ADAPTATIONS = [
       { name: "Academy Award nominations pending", year: 2025 }
     ],
     streaming_availability: { 
-      hbo: "https://play.max.com/movie/dune-part-two",
-      prime: "https://www.amazon.com/gp/video/detail/dune-part-two",
       apple: "https://tv.apple.com/movie/dune-part-two/umc.cmc.5dg9hpchz5rxc4m1d6z0t6z0"
     }
   },
@@ -110,12 +111,14 @@ const SF_FILM_ADAPTATIONS = [
     book_title: "Story of Your Life",
     book_author: "Ted Chiang",
     book_publication_year: 1998,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9781101972120-L.jpg",
     film_title: "Arrival",
     film_year: 2016,
     director: "Denis Villeneuve",
     imdb_id: "tt2543164",
     imdb_rating: 7.9,
     rotten_tomatoes_score: 94,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BMTExMzU0ODcxNDheQTJeQWpwZ15BbWU4MDE1OTI4MzAy._V1_.jpg",
     adaptation_type: "direct",
     notable_differences: "Film adds geopolitical tensions and military subplot; novella focuses more on linguistics and physics",
     trailer_url: "https://www.youtube.com/watch?v=tFMo3UJ4B4g",
@@ -125,7 +128,6 @@ const SF_FILM_ADAPTATIONS = [
       { name: "Nebula Award for Best Script", year: 2017 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B01M1NGAI1",
       apple: "https://tv.apple.com/movie/arrival/umc.cmc.6h3y4b7p99nxz8r6k3r4k3r4"
     }
   },
@@ -133,12 +135,14 @@ const SF_FILM_ADAPTATIONS = [
     book_title: "The Martian",
     book_author: "Andy Weir",
     book_publication_year: 2011,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780553418026-L.jpg",
     film_title: "The Martian",
     film_year: 2015,
     director: "Ridley Scott",
     imdb_id: "tt3659388",
     imdb_rating: 8.0,
     rotten_tomatoes_score: 91,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BMTc2MTQ3MDA1Nl5BMl5BanBnXkFtZTgwODA3OTI4NjE@._V1_.jpg",
     adaptation_type: "direct",
     notable_differences: "Film condenses timeline and simplifies some science; maintains humor and problem-solving focus",
     trailer_url: "https://www.youtube.com/watch?v=ej3ioOneTy8",
@@ -147,7 +151,6 @@ const SF_FILM_ADAPTATIONS = [
       { name: "Academy Award nominations for Best Picture and Best Actor", year: 2016 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B016WDBPF0",
       apple: "https://tv.apple.com/movie/the-martian/umc.cmc.6z2e9c8k6r3e6r3e6r3e6r3e"
     }
   },
@@ -155,12 +158,14 @@ const SF_FILM_ADAPTATIONS = [
     book_title: "Solaris",
     book_author: "Stanisław Lem",
     book_publication_year: 1961,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780156027601-L.jpg",
     film_title: "Solaris",
     film_year: 1972,
     director: "Andrei Tarkovsky",
     imdb_id: "tt0069293",
     imdb_rating: 8.1,
     rotten_tomatoes_score: 92,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BZmY4Yjc0OWQtZDRhMy00ODc2LWI2ZGYtMmNmYjA5MjkzODVlL2ltYWdlL2ltYWdlXkEyXkFqcGdeQXVyNjc1NTYyMjg@._V1_.jpg",
     adaptation_type: "loose",
     notable_differences: "Tarkovsky emphasizes human relationships over scientific mystery; Lem was critical of this approach",
     trailer_url: "https://www.youtube.com/watch?v=6-4KydP92ss",
@@ -169,20 +174,21 @@ const SF_FILM_ADAPTATIONS = [
       { name: "FIPRESCI Prize", year: 1972 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B00D5UMXRU",
-      criterion: "https://www.criterionchannel.com/solaris"
+      criterion: "https://www.criterion.com/films/27867-solaris"
     }
   },
   {
     book_title: "Annihilation",
     book_author: "Jeff VanderMeer",
     book_publication_year: 2014,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780374104092-L.jpg",
     film_title: "Annihilation",
     film_year: 2018,
     director: "Alex Garland",
     imdb_id: "tt2798920",
     imdb_rating: 6.8,
     rotten_tomatoes_score: 88,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BMTk2Mjc2NzYxNl5BMl5BanBnXkFtZTgwMTA2OTA1NDM@._V1_.jpg",
     adaptation_type: "loose",
     notable_differences: "Film takes significant liberties with plot and characters while maintaining cosmic horror atmosphere",
     trailer_url: "https://www.youtube.com/watch?v=89OP78l9oF0",
@@ -190,20 +196,21 @@ const SF_FILM_ADAPTATIONS = [
       { name: "Nebula Award for Best Script", year: 2019 }
     ],
     streaming_availability: { 
-      netflix: "https://www.netflix.com/title/80206300",
-      prime: "https://www.amazon.com/gp/video/detail/B079G1WFMV"
+      apple: "https://tv.apple.com/movie/annihilation/umc.cmc.4h83dk4r4r4dk4h83"
     }
   },
   {
     book_title: "A Clockwork Orange",
     book_author: "Anthony Burgess",
     book_publication_year: 1962,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780393312836-L.jpg",
     film_title: "A Clockwork Orange",
     film_year: 1971,
     director: "Stanley Kubrick",
     imdb_id: "tt0066921",
     imdb_rating: 8.3,
     rotten_tomatoes_score: 87,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BMTY3MjM1Mzc4N15BMl5BanBnXkFtZTgwODM0NzAxMDE@._V1_.jpg",
     adaptation_type: "direct",
     notable_differences: "Film omits novel's final redemptive chapter (US edition); Kubrick's visual style defines the work",
     trailer_url: "https://www.youtube.com/watch?v=SPRzm8ibDQ8",
@@ -212,20 +219,22 @@ const SF_FILM_ADAPTATIONS = [
       { name: "National Film Registry", year: 2020 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B000I9WZ9O",
-      hbo: "https://play.max.com/movie/a-clockwork-orange"
+      apple: "https://tv.apple.com/movie/a-clockwork-orange/umc.cmc.clockwork",
+      criterion: "https://www.criterion.com/shop/browse?genre=science-fiction"
     }
   },
   {
     book_title: "The Prestige",
     book_author: "Christopher Priest",
     book_publication_year: 1995,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780312858865-L.jpg",
     film_title: "The Prestige",
     film_year: 2006,
     director: "Christopher Nolan",
     imdb_id: "tt0482571",
     imdb_rating: 8.5,
     rotten_tomatoes_score: 76,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BMjA4NDI0MTIxNF5BMl5BanBnXkFtZTYwNTM0MzY2._V1_.jpg",
     adaptation_type: "loose",
     notable_differences: "Film restructures narrative and changes key plot elements; Tesla's machine works differently",
     trailer_url: "https://www.youtube.com/watch?v=o4gHCmTQDVI",
@@ -233,20 +242,21 @@ const SF_FILM_ADAPTATIONS = [
       { name: "Academy Award nominations for Cinematography and Art Direction", year: 2007 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B000QRIGNA",
-      netflix: "https://www.netflix.com/title/70052612"
+      apple: "https://tv.apple.com/movie/the-prestige/umc.cmc.prestige"
     }
   },
   {
     book_title: "Jurassic Park",
     book_author: "Michael Crichton",
     book_publication_year: 1990,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780345538987-L.jpg",
     film_title: "Jurassic Park",
     film_year: 1993,
     director: "Steven Spielberg",
     imdb_id: "tt0107290",
     imdb_rating: 8.2,
     rotten_tomatoes_score: 91,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BMjM2MDgxMDg0Nl5BMl5BanBnXkFtZTgwNTM2OTM5NDE@._V1_.jpg",
     adaptation_type: "direct",
     notable_differences: "Film softens darker elements; Hammond becomes sympathetic; some characters survive who die in book",
     trailer_url: "https://www.youtube.com/watch?v=lc0UehYemQA",
@@ -256,21 +266,21 @@ const SF_FILM_ADAPTATIONS = [
       { name: "Academy Award for Best Sound Editing", year: 1994 }
     ],
     streaming_availability: { 
-      netflix: "https://www.netflix.com/title/60010629",
-      prime: "https://www.amazon.com/gp/video/detail/B009CG9CSY",
-      peacock: "https://www.peacocktv.com/watch/asset/movies/jurassic-park/7b8d8b8a"
+      apple: "https://tv.apple.com/movie/jurassic-park/umc.cmc.jurassicpark"
     }
   },
   {
     book_title: "Children of Men",
     book_author: "P.D. James",
     book_publication_year: 1992,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780307279903-L.jpg",
     film_title: "Children of Men",
     film_year: 2006,
     director: "Alfonso Cuarón",
     imdb_id: "tt0206634",
     imdb_rating: 7.9,
     rotten_tomatoes_score: 92,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BMTQ5NTI2NTI4NF5BMl5BanBnXkFtZTcwNjk2NDA2OQ@@._V1_.jpg",
     adaptation_type: "loose",
     notable_differences: "Film shifts focus from religious themes to immigration and political chaos; famous long takes",
     trailer_url: "https://www.youtube.com/watch?v=2VT2apoX90o",
@@ -279,19 +289,21 @@ const SF_FILM_ADAPTATIONS = [
       { name: "BAFTA Award for Best Cinematography", year: 2007 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B000NEZ3H8"
+      apple: "https://tv.apple.com/movie/children-of-men/umc.cmc.childrenofmen"
     }
   },
   {
     book_title: "Contact",
     book_author: "Carl Sagan",
     book_publication_year: 1985,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9781501197987-L.jpg",
     film_title: "Contact",
     film_year: 1997,
     director: "Robert Zemeckis",
     imdb_id: "tt0118884",
     imdb_rating: 7.5,
     rotten_tomatoes_score: 66,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BYWNkYmFiZjUtYmI3Ni00NzEyLWFjNjUtZTNjZmNkYTFhN2YzXkEyXkFqcGdeQXVyNDk3NzU2MTQ@._V1_.jpg",
     adaptation_type: "direct",
     notable_differences: "Film simplifies multiple machines to one; romance subplot expanded; ending modified slightly",
     trailer_url: "https://www.youtube.com/watch?v=SRoj3jK37Vc",
@@ -299,20 +311,21 @@ const SF_FILM_ADAPTATIONS = [
       { name: "Hugo Award for Best Dramatic Presentation", year: 1998 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B001EC0MRU",
-      hbo: "https://play.max.com/movie/contact"
+      apple: "https://tv.apple.com/movie/contact/umc.cmc.contact1997"
     }
   },
   {
     book_title: "The Road",
     book_author: "Cormac McCarthy",
     book_publication_year: 2006,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9780307387899-L.jpg",
     film_title: "The Road",
     film_year: 2009,
     director: "John Hillcoat",
     imdb_id: "tt0898367",
     imdb_rating: 7.2,
     rotten_tomatoes_score: 75,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BMTAwNzk4NTQ0NjNeQTJeQWpwZ15BbWU3MDY2MjQ3MTM@._V1_.jpg",
     adaptation_type: "direct",
     notable_differences: "Film captures novel's bleak atmosphere; some flashbacks added for visual storytelling",
     trailer_url: "https://www.youtube.com/watch?v=bO2BLSEJf6Y",
@@ -320,19 +333,21 @@ const SF_FILM_ADAPTATIONS = [
       { name: "BAFTA nomination for Best Actor", year: 2010 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B00338QMUA"
+      apple: "https://tv.apple.com/movie/the-road/umc.cmc.theroad"
     }
   },
   {
     book_title: "Stalker (Roadside Picnic)",
     book_author: "Arkady and Boris Strugatsky",
     book_publication_year: 1972,
+    book_cover_url: "https://covers.openlibrary.org/b/isbn/9781613743416-L.jpg",
     film_title: "Stalker",
     film_year: 1979,
     director: "Andrei Tarkovsky",
     imdb_id: "tt0079944",
     imdb_rating: 8.2,
     rotten_tomatoes_score: 97,
+    poster_url: "https://m.media-amazon.com/images/M/MV5BMDgwODNmMGItMDcwYi00OWZjLTgyZjAtMGYwMmI4N2Q0NmJmXkEyXkFqcGdeQXVyNzY1MTU0Njk@._V1_.jpg",
     adaptation_type: "loose",
     notable_differences: "Tarkovsky transforms adventure story into philosophical meditation; Zone becomes spiritual metaphor",
     trailer_url: "https://www.youtube.com/watch?v=TGRDYpCmMcM",
@@ -340,8 +355,7 @@ const SF_FILM_ADAPTATIONS = [
       { name: "Prize of the Ecumenical Jury at Cannes", year: 1980 }
     ],
     streaming_availability: { 
-      prime: "https://www.amazon.com/gp/video/detail/B00D5UMXPU",
-      criterion: "https://www.criterionchannel.com/stalker"
+      criterion: "https://www.criterion.com/films/30167-stalker"
     }
   },
   {

@@ -38,13 +38,9 @@ interface BookToScreenSectionProps {
   showTitle?: boolean;
 }
 
-const streamingServices: Record<string, { color: string; bgColor: string; label: string }> = {
-  netflix: { color: 'text-red-500', bgColor: 'bg-red-500/10 hover:bg-red-500/20 border-red-500/30', label: 'Netflix' },
-  prime: { color: 'text-blue-400', bgColor: 'bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30', label: 'Prime' },
-  hbo: { color: 'text-purple-400', bgColor: 'bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30', label: 'Max' },
-  apple: { color: 'text-slate-300', bgColor: 'bg-slate-500/10 hover:bg-slate-500/20 border-slate-500/30', label: 'Apple TV+' },
-  disney: { color: 'text-blue-300', bgColor: 'bg-blue-400/10 hover:bg-blue-400/20 border-blue-400/30', label: 'Disney+' },
-  peacock: { color: 'text-yellow-400', bgColor: 'bg-yellow-500/10 hover:bg-yellow-500/20 border-yellow-500/30', label: 'Peacock' },
+// Only Criterion and Apple TV supported
+const streamingServices: Record<string, { color: string; bgColor: string; label: string; icon?: string }> = {
+  apple: { color: 'text-slate-200', bgColor: 'bg-slate-700/50 hover:bg-slate-600/50 border-slate-500/40', label: 'Apple TV+' },
   criterion: { color: 'text-amber-400', bgColor: 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30', label: 'Criterion' },
 };
 
@@ -211,95 +207,148 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {adaptations.map((film) => (
-          <Card key={film.id} className="bg-card/40 border-border/30 hover:border-amber-400/30 transition-all duration-300 overflow-hidden">
-            <div className="p-3">
-              <div className="flex gap-3">
-                {/* Book Card */}
-                <button
-                  onClick={() => openBookPreview(film)}
-                  className="flex-1 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border/20 hover:border-primary/40 transition-all text-left group"
-                >
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <Book className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Book</span>
-                  </div>
-                  <h4 className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                    {film.book_title}
-                  </h4>
+        {adaptations.map((film) => {
+          // Filter streaming to only show apple and criterion
+          const filteredStreaming = film.streaming_availability 
+            ? Object.entries(film.streaming_availability).filter(([platform]) => platform === 'apple' || platform === 'criterion')
+            : [];
+          
+          return (
+            <Card key={film.id} className="bg-card/40 border-border/30 hover:border-amber-400/30 transition-all duration-300 overflow-hidden">
+              <div className="p-3">
+                <div className="flex gap-2">
+                  {/* Book Card with Cover */}
                   <button
-                    ref={el => { if (el) authorRefs.current.set(film.id + '-author', el); }}
-                    onClick={(e) => { e.stopPropagation(); handleAuthorClick(film.book_author); }}
-                    className="text-xs text-emerald-400 mt-1 relative inline-block"
+                    onClick={() => openBookPreview(film)}
+                    className="flex-1 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-primary/40 transition-all text-left group overflow-hidden"
                   >
-                    {film.book_author}
-                    <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-400" />
-                  </button>
-                  {film.book_publication_year && (
-                    <p className="text-[10px] text-muted-foreground/70 mt-1">{film.book_publication_year}</p>
-                  )}
-                </button>
-
-                {/* Film Card */}
-                <button
-                  onClick={() => openFilmModal(film)}
-                  className="flex-1 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border/20 hover:border-amber-400/40 transition-all text-left group"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-1.5">
-                      <Film className="w-3.5 h-3.5 text-amber-400" />
-                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Film</span>
-                    </div>
-                    {film.imdb_rating && (
-                      <div className="flex items-center gap-0.5">
-                        <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                        <span className="text-xs font-medium text-amber-400">{film.imdb_rating}</span>
+                    <div className="flex gap-2">
+                      {/* Book Cover */}
+                      <div className="w-16 h-24 flex-shrink-0 bg-gradient-to-br from-primary/20 to-primary/5 overflow-hidden">
+                        {film.book_cover_url ? (
+                          <img 
+                            src={film.book_cover_url} 
+                            alt={film.book_title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Book className="w-6 h-6 text-primary/40" />
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <h4 className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-amber-400 transition-colors">
-                    {film.film_title}
-                  </h4>
-                  {film.director && (
-                    <button
-                      ref={el => { if (el) directorRefs.current.set(film.id + '-director', el); }}
-                      onClick={(e) => { e.stopPropagation(); handleDirectorClick(film.director!); }}
-                      className="text-xs text-amber-300 mt-1 relative inline-block"
-                    >
-                      {film.director}
-                      <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-amber-400" />
-                    </button>
-                  )}
-                  {film.film_year && (
-                    <p className="text-[10px] text-muted-foreground/70 mt-1">{film.film_year}</p>
-                  )}
-                </button>
-              </div>
+                      <div className="flex-1 p-2 min-w-0">
+                        <div className="flex items-center gap-1 mb-1">
+                          <Book className="w-3 h-3 text-primary" />
+                          <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">Book</span>
+                        </div>
+                        <h4 className="text-xs font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors leading-tight">
+                          {film.book_title}
+                        </h4>
+                        <button
+                          ref={el => { if (el) authorRefs.current.set(film.id + '-author', el); }}
+                          onClick={(e) => { e.stopPropagation(); handleAuthorClick(film.book_author); }}
+                          className="text-[10px] text-emerald-400 mt-1 relative inline-block"
+                        >
+                          {film.book_author}
+                          <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-400" />
+                        </button>
+                        {film.book_publication_year && (
+                          <p className="text-[9px] text-muted-foreground/70 mt-0.5">{film.book_publication_year}</p>
+                        )}
+                      </div>
+                    </div>
+                  </button>
 
-              {/* Streaming Links */}
-              {film.streaming_availability && Object.keys(film.streaming_availability).length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-border/20">
-                  {Object.entries(film.streaming_availability).map(([platform, url]) => {
-                    const service = streamingServices[platform];
-                    if (!service || !url) return null;
-                    return (
-                      <a
-                        key={platform}
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={cn("px-2 py-1 text-[10px] font-medium rounded border transition-all", service.bgColor, service.color)}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {service.label}
-                      </a>
-                    );
-                  })}
+                  {/* Film Card with Poster */}
+                  <button
+                    onClick={() => openFilmModal(film)}
+                    className="flex-1 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-amber-400/40 transition-all text-left group overflow-hidden"
+                  >
+                    <div className="flex gap-2">
+                      {/* Film Poster */}
+                      <div className="w-16 h-24 flex-shrink-0 bg-gradient-to-br from-amber-500/20 to-amber-500/5 overflow-hidden">
+                        {film.poster_url ? (
+                          <img 
+                            src={film.poster_url} 
+                            alt={film.film_title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Film className="w-6 h-6 text-amber-400/40" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 p-2 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-1">
+                            <Film className="w-3 h-3 text-amber-400" />
+                            <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">Film</span>
+                          </div>
+                          {film.imdb_rating && (
+                            <div className="flex items-center gap-0.5">
+                              <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
+                              <span className="text-[10px] font-medium text-amber-400">{film.imdb_rating}</span>
+                            </div>
+                          )}
+                        </div>
+                        <h4 className="text-xs font-medium text-foreground line-clamp-2 group-hover:text-amber-400 transition-colors leading-tight">
+                          {film.film_title}
+                        </h4>
+                        {film.director && (
+                          <button
+                            ref={el => { if (el) directorRefs.current.set(film.id + '-director', el); }}
+                            onClick={(e) => { e.stopPropagation(); handleDirectorClick(film.director!); }}
+                            className="text-[10px] text-amber-300 mt-1 relative inline-block"
+                          >
+                            {film.director}
+                            <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-amber-400" />
+                          </button>
+                        )}
+                        {film.film_year && (
+                          <p className="text-[9px] text-muted-foreground/70 mt-0.5">{film.film_year}</p>
+                        )}
+                      </div>
+                    </div>
+                  </button>
                 </div>
-              )}
-            </div>
-          </Card>
-        ))}
+
+                {/* Streaming Links - Only Apple TV and Criterion */}
+                {filteredStreaming.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/20">
+                    {filteredStreaming.map(([platform, url]) => {
+                      const service = streamingServices[platform];
+                      if (!service || !url) return null;
+                      return (
+                        <a
+                          key={platform}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cn(
+                            "inline-flex items-center gap-1.5 px-2 py-1 text-[10px] font-medium rounded border transition-all",
+                            service.bgColor, 
+                            service.color
+                          )}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {platform === 'criterion' && (
+                            <img src="/images/criterion-logo.jpg" alt="" className="h-3 w-auto rounded-sm" />
+                          )}
+                          {service.label}
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Film Preview Modal */}
@@ -310,25 +359,34 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
               <X className="w-5 h-5" />
             </Button>
 
-            {/* Trailer */}
-            {selectedFilm.trailer_url && extractYouTubeId(selectedFilm.trailer_url) ? (
-              <div className="aspect-video bg-black">
+            {/* Trailer - Always show YouTube embed or search link */}
+            <div className="aspect-video bg-black relative">
+              {selectedFilm.trailer_url && extractYouTubeId(selectedFilm.trailer_url) ? (
                 <iframe
-                  src={`https://www.youtube.com/embed/${extractYouTubeId(selectedFilm.trailer_url)}?rel=0`}
+                  src={`https://www.youtube.com/embed/${extractYouTubeId(selectedFilm.trailer_url)}?rel=0&autoplay=0`}
                   title={`${selectedFilm.film_title} Trailer`}
                   className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
+                  loading="lazy"
                 />
-              </div>
-            ) : (
-              <div className="aspect-video bg-muted/50 flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <Play className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Trailer loading...</p>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950">
+                  <Film className="w-12 h-12 text-amber-400/30 mb-3" />
+                  <p className="text-sm text-muted-foreground mb-3">Trailer not embedded</p>
+                  <a
+                    href={`https://www.youtube.com/results?search_query=${encodeURIComponent(selectedFilm.film_title + ' ' + (selectedFilm.film_year || '') + ' official trailer')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    <Play className="w-4 h-4 fill-white" />
+                    Watch on YouTube
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             <div className="p-6 space-y-4">
               <div>
@@ -379,12 +437,28 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
                 </div>
               )}
 
-              {/* Where to Watch */}
+              {/* Where to Watch - Only Criterion and Apple TV */}
               <div className="space-y-2 pt-2 border-t border-border/20">
                 <p className="text-sm font-medium text-foreground">Where to Watch</p>
                 <div className="flex flex-wrap gap-2">
+                  {/* Apple TV - only if available */}
+                  {selectedFilm.streaming_availability?.apple && (
+                    <a
+                      href={selectedFilm.streaming_availability.apple}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border bg-slate-700/50 hover:bg-slate-600/50 border-slate-500/40 text-slate-200"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                      </svg>
+                      Apple TV
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                  {/* Criterion - always show for SF films */}
                   <a
-                    href="https://www.criterion.com/shop/browse?genre=science-fiction"
+                    href={selectedFilm.streaming_availability?.criterion || "https://www.criterion.com/shop/browse?genre=science-fiction"}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-400"
@@ -393,16 +467,6 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
                     Buy Physical
                     <ExternalLink className="w-3 h-3" />
                   </a>
-                  {selectedFilm.streaming_availability && Object.entries(selectedFilm.streaming_availability).map(([platform, url]) => {
-                    const service = streamingServices[platform];
-                    if (!service || !url) return null;
-                    return (
-                      <a key={platform} href={url} target="_blank" rel="noopener noreferrer" className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all", service.bgColor, service.color)}>
-                        {service.label}
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    );
-                  })}
                 </div>
               </div>
 
