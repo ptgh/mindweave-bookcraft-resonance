@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, BookOpen, ChevronRight } from 'lucide-react';
+import { X, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -38,7 +38,7 @@ export const UserTransmissionsPanel: React.FC<UserTransmissionsPanelProps> = ({
   const [selectedBook, setSelectedBook] = useState<EnrichedPublisherBook | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const booksRef = useRef<(HTMLButtonElement | null)[]>([]);
-
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (isOpen && user.id) {
       const fetchTransmissions = async () => {
@@ -48,8 +48,7 @@ export const UserTransmissionsPanel: React.FC<UserTransmissionsPanelProps> = ({
             .from('transmissions')
             .select('id, title, author, cover_url')
             .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(10);
+            .order('created_at', { ascending: false });
 
           if (error) throw error;
           setTransmissions(data || []);
@@ -138,7 +137,7 @@ export const UserTransmissionsPanel: React.FC<UserTransmissionsPanelProps> = ({
       </div>
 
       {loading ? (
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide smooth-scroll overscroll-x-contain">
+        <div className="flex gap-3 overflow-hidden">
           {[1, 2, 3, 4].map(i => (
             <div key={i} className="w-12 h-[72px] bg-slate-700/50 rounded animate-pulse flex-shrink-0" />
           ))}
@@ -149,41 +148,67 @@ export const UserTransmissionsPanel: React.FC<UserTransmissionsPanelProps> = ({
           <p className="text-sm text-slate-500">No books in library yet</p>
         </div>
       ) : (
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide smooth-scroll overscroll-x-contain">
-          {transmissions.map((book, index) => (
-            <button
-              key={book.id}
-              ref={el => { booksRef.current[index] = el; }}
-              className="flex-shrink-0 group cursor-pointer text-left"
-              title={`${book.title} by ${book.author}`}
-              onClick={() => setSelectedBook({
-                id: `transmission-${book.id}`,
-                series_id: 'user-library',
-                title: book.title || 'Unknown',
-                author: book.author || 'Unknown',
-                cover_url: book.cover_url,
-                created_at: new Date().toISOString()
-              })}
-            >
-              {book.cover_url ? (
-                <img
-                  src={book.cover_url}
-                  alt={book.title || 'Book cover'}
-                  className="block w-12 h-[72px] bg-transparent object-cover rounded shadow-md group-hover:scale-105 transition-transform"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-12 h-[72px] bg-slate-700 rounded flex items-center justify-center shadow-md">
-                  <BookOpen className="w-5 h-5 text-slate-500" />
-                </div>
-              )}
-            </button>
-          ))}
-          {transmissions.length === 10 && (
-            <div className="w-12 h-[72px] bg-slate-700/30 rounded flex items-center justify-center flex-shrink-0">
-              <ChevronRight className="w-4 h-4 text-slate-500" />
-            </div>
+        <div className="relative">
+          {/* Scroll buttons */}
+          {transmissions.length > 6 && (
+            <>
+              <button
+                onClick={() => {
+                  if (scrollContainerRef.current) {
+                    scrollContainerRef.current.scrollBy({ left: -150, behavior: 'smooth' });
+                  }
+                }}
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-6 h-6 bg-slate-800/90 rounded-full flex items-center justify-center text-slate-300 hover:bg-slate-700 transition-colors shadow-lg"
+              >
+                <ChevronLeft className="w-3 h-3" />
+              </button>
+              <button
+                onClick={() => {
+                  if (scrollContainerRef.current) {
+                    scrollContainerRef.current.scrollBy({ left: 150, behavior: 'smooth' });
+                  }
+                }}
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-6 h-6 bg-slate-800/90 rounded-full flex items-center justify-center text-slate-300 hover:bg-slate-700 transition-colors shadow-lg"
+              >
+                <ChevronRight className="w-3 h-3" />
+              </button>
+            </>
           )}
+          
+          <div 
+            ref={scrollContainerRef}
+            className="flex gap-3 overflow-x-auto scrollbar-hide smooth-scroll overscroll-x-contain px-1"
+          >
+            {transmissions.map((book, index) => (
+              <button
+                key={book.id}
+                ref={el => { booksRef.current[index] = el; }}
+                className="flex-shrink-0 group cursor-pointer text-left"
+                title={`${book.title} by ${book.author}`}
+                onClick={() => setSelectedBook({
+                  id: `transmission-${book.id}`,
+                  series_id: 'user-library',
+                  title: book.title || 'Unknown',
+                  author: book.author || 'Unknown',
+                  cover_url: book.cover_url,
+                  created_at: new Date().toISOString()
+                })}
+              >
+                {book.cover_url ? (
+                  <img
+                    src={book.cover_url}
+                    alt={book.title || 'Book cover'}
+                    className="block w-12 h-[72px] bg-transparent object-cover rounded shadow-md group-hover:scale-105 transition-transform"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-12 h-[72px] bg-slate-700 rounded flex items-center justify-center shadow-md">
+                    <BookOpen className="w-5 h-5 text-slate-500" />
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

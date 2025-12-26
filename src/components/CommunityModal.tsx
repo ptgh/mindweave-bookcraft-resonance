@@ -1,16 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Search, UserPlus, UserMinus, Users, Compass, ArrowLeft, BookOpen, ArrowLeftRight } from 'lucide-react';
+import { X, Search, UserPlus, UserMinus, Users, Compass, ArrowLeft, BookOpen, ArrowLeftRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useFollowing, UserProfile, FollowedTransmission } from '@/hooks/useFollowing';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import EnhancedBookCover from '@/components/EnhancedBookCover';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import gsap from 'gsap';
-import { useRef } from 'react';
+import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
+import type { EnrichedPublisherBook } from '@/services/publisherService';
 
 interface CommunityModalProps {
   isOpen: boolean;
@@ -50,6 +50,12 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [selectedUserTransmissions, setSelectedUserTransmissions] = useState<FollowedTransmission[]>([]);
   const [loadingUserProfile, setLoadingUserProfile] = useState(false);
+  
+  // Book preview state
+  const [previewBook, setPreviewBook] = useState<EnrichedPublisherBook | null>(null);
+  
+  // Scroll container ref for horizontal scrolling
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen && modalRef.current) {
@@ -366,32 +372,77 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
             </div>
           </div>
 
-          {/* Transmissions Grid */}
-          <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)]">
+          {/* Transmissions - Horizontal Scroll (covers only) */}
+          <div className="p-4">
             {loadingUserProfile ? (
-              <p className="text-center text-slate-400 py-8">Loading library...</p>
+              <div className="flex gap-3 overflow-hidden">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                  <div key={i} className="w-16 h-24 bg-slate-700/50 rounded animate-pulse flex-shrink-0" />
+                ))}
+              </div>
             ) : selectedUserTransmissions.length > 0 ? (
-              <>
-                <p className="text-sm text-slate-400 mb-4">
-                  {selectedUserTransmissions.length} books in their library
-                </p>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+              <div className="relative">
+                {/* Scroll buttons */}
+                <button
+                  onClick={() => {
+                    if (scrollContainerRef.current) {
+                      scrollContainerRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+                    }
+                  }}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-slate-800/90 rounded-full flex items-center justify-center text-slate-300 hover:bg-slate-700 transition-colors shadow-lg"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    if (scrollContainerRef.current) {
+                      scrollContainerRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+                    }
+                  }}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-slate-800/90 rounded-full flex items-center justify-center text-slate-300 hover:bg-slate-700 transition-colors shadow-lg"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                
+                {/* Scrollable book covers */}
+                <div 
+                  ref={scrollContainerRef}
+                  className="flex gap-3 overflow-x-auto scrollbar-hide px-6 py-2 smooth-scroll overscroll-x-contain"
+                >
                   {selectedUserTransmissions.map(t => (
-                    <div key={t.id} className="group">
-                      <EnhancedBookCover
-                        title={t.title || ''}
-                        author={t.author || ''}
-                        coverUrl={t.cover_url || undefined}
-                        className="w-full aspect-[2/3] rounded-lg"
-                      />
-                      <p className="text-xs text-slate-300 mt-1.5 line-clamp-2 font-medium">
-                        {t.title}
-                      </p>
-                      <p className="text-xs text-slate-500 line-clamp-1">{t.author}</p>
-                    </div>
+                    <button
+                      key={t.id}
+                      onClick={() => setPreviewBook({
+                        id: `transmission-${t.id}`,
+                        series_id: 'user-library',
+                        title: t.title || 'Unknown',
+                        author: t.author || 'Unknown',
+                        cover_url: t.cover_url,
+                        created_at: new Date().toISOString()
+                      })}
+                      className="flex-shrink-0 group cursor-pointer"
+                      title={`${t.title} by ${t.author}`}
+                    >
+                      {t.cover_url ? (
+                        <img
+                          src={t.cover_url}
+                          alt={t.title || 'Book cover'}
+                          className="w-16 h-24 object-cover rounded shadow-md group-hover:scale-105 transition-transform"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-16 h-24 bg-slate-700 rounded flex items-center justify-center shadow-md">
+                          <BookOpen className="w-6 h-6 text-slate-500" />
+                        </div>
+                      )}
+                    </button>
                   ))}
                 </div>
-              </>
+                
+                <p className="text-xs text-slate-500 mt-2 text-center">
+                  {selectedUserTransmissions.length} books
+                </p>
+              </div>
             ) : (
               <div className="text-center py-8">
                 <BookOpen className="w-12 h-12 mx-auto text-slate-600 mb-3" />
@@ -399,6 +450,15 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
               </div>
             )}
           </div>
+          
+          {/* Book Preview Modal */}
+          {previewBook && (
+            <EnhancedBookPreviewModal
+              book={previewBook}
+              onClose={() => setPreviewBook(null)}
+              onAddBook={() => {}}
+            />
+          )}
         </div>
       </div>,
       document.body
@@ -587,14 +647,31 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
                     </button>
                     <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
                       {userTransmissions.slice(0, 5).map(t => (
-                        <div key={t.id} className="group">
-                          <EnhancedBookCover
-                            title={t.title || ''}
-                            author={t.author || ''}
-                            coverUrl={t.cover_url || undefined}
-                            className="w-full aspect-[2/3] rounded-lg"
-                          />
-                        </div>
+                        <button
+                          key={t.id}
+                          onClick={() => setPreviewBook({
+                            id: `transmission-${t.id}`,
+                            series_id: 'user-library',
+                            title: t.title || 'Unknown',
+                            author: t.author || 'Unknown',
+                            cover_url: t.cover_url,
+                            created_at: new Date().toISOString()
+                          })}
+                          className="group cursor-pointer"
+                        >
+                          {t.cover_url ? (
+                            <img
+                              src={t.cover_url}
+                              alt={t.title || 'Book cover'}
+                              className="w-full aspect-[2/3] object-cover rounded-lg group-hover:scale-105 transition-transform"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-full aspect-[2/3] bg-slate-700 rounded-lg flex items-center justify-center">
+                              <BookOpen className="w-5 h-5 text-slate-500" />
+                            </div>
+                          )}
+                        </button>
                       ))}
                     </div>
                   </div>
