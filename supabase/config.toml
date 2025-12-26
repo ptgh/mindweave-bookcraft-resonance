@@ -108,3 +108,9 @@ verify_jwt = true
 
 [functions.populate-film-adaptations]
 verify_jwt = false
+
+[functions.populate-criterion-films]
+verify_jwt = false
+
+[functions.populate-sf-directors]
+verify_jwt = false

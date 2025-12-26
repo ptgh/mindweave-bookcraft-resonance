@@ -1,4 +1,4 @@
-import { BookOpen, LogOut, Instagram, Menu, Shield, ChevronDown, Database, Sparkles, User } from "lucide-react";
+import { BookOpen, LogOut, Instagram, Menu, Shield, ChevronDown, Database, Sparkles, User, Film } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { StandardButton } from "./ui/standard-button";
@@ -178,6 +178,17 @@ const Header = () => {
                 }`}
               >
                 Community
+              </Link>
+              <Link
+                to="/book-to-screen"
+                className={`transition-colors text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap flex items-center gap-1 ${
+                  location.pathname === '/book-to-screen' 
+                    ? 'text-amber-400' 
+                    : 'text-slate-300 hover:text-amber-400'
+                }`}
+              >
+                <Film className="w-3.5 h-3.5" />
+                Book to Screen
               </Link>
               
               {/* Desktop Admin Dropdown */}
@@ -380,6 +391,21 @@ const Header = () => {
                       <div className="absolute inset-0.5 rounded-full bg-blue-400/40" />
                     </div>
                     Neural Map
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/book-to-screen"
+                    onClick={handleMenuItemTap}
+                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                      location.pathname === '/book-to-screen'
+                        ? 'text-amber-400'
+                        : 'text-slate-200'
+                    }`}
+                  >
+                    <Film className="w-4 h-4 text-amber-400/70" />
+                    Book to Screen
                   </Link>
                 </DropdownMenuItem>
 

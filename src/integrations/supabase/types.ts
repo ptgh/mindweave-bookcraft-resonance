@@ -673,6 +673,45 @@ export type Database = {
         }
         Relationships: []
       }
+      criterion_films: {
+        Row: {
+          cover_url: string | null
+          created_at: string
+          criterion_url: string | null
+          description: string | null
+          director: string
+          id: string
+          spine_number: number | null
+          title: string
+          trailer_url: string | null
+          year: number | null
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string
+          criterion_url?: string | null
+          description?: string | null
+          director: string
+          id?: string
+          spine_number?: number | null
+          title: string
+          trailer_url?: string | null
+          year?: number | null
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string
+          criterion_url?: string | null
+          description?: string | null
+          director?: string
+          id?: string
+          spine_number?: number | null
+          title?: string
+          trailer_url?: string | null
+          year?: number | null
+        }
+        Relationships: []
+      }
       ebook_search_cache: {
         Row: {
           annas_archive_results: Json | null
@@ -1228,15 +1267,59 @@ export type Database = {
         }
         Relationships: []
       }
+      sf_directors: {
+        Row: {
+          bio: string | null
+          birth_year: number | null
+          created_at: string
+          death_year: number | null
+          id: string
+          name: string
+          nationality: string | null
+          notable_sf_films: string[] | null
+          photo_url: string | null
+          updated_at: string
+          wikipedia_url: string | null
+        }
+        Insert: {
+          bio?: string | null
+          birth_year?: number | null
+          created_at?: string
+          death_year?: number | null
+          id?: string
+          name: string
+          nationality?: string | null
+          notable_sf_films?: string[] | null
+          photo_url?: string | null
+          updated_at?: string
+          wikipedia_url?: string | null
+        }
+        Update: {
+          bio?: string | null
+          birth_year?: number | null
+          created_at?: string
+          death_year?: number | null
+          id?: string
+          name?: string
+          nationality?: string | null
+          notable_sf_films?: string[] | null
+          photo_url?: string | null
+          updated_at?: string
+          wikipedia_url?: string | null
+        }
+        Relationships: []
+      }
       sf_film_adaptations: {
         Row: {
           adaptation_type: string | null
           awards: Json | null
           book_author: string
+          book_cover_url: string | null
           book_isbn: string | null
           book_publication_year: number | null
           book_title: string
           created_at: string | null
+          criterion_spine: number | null
           director: string | null
           film_title: string
           film_year: number | null
@@ -1254,10 +1337,12 @@ export type Database = {
           adaptation_type?: string | null
           awards?: Json | null
           book_author: string
+          book_cover_url?: string | null
           book_isbn?: string | null
           book_publication_year?: number | null
           book_title: string
           created_at?: string | null
+          criterion_spine?: number | null
           director?: string | null
           film_title: string
           film_year?: number | null
@@ -1275,10 +1360,12 @@ export type Database = {
           adaptation_type?: string | null
           awards?: Json | null
           book_author?: string
+          book_cover_url?: string | null
           book_isbn?: string | null
           book_publication_year?: number | null
           book_title?: string
           created_at?: string | null
+          criterion_spine?: number | null
           director?: string | null
           film_title?: string
           film_year?: number | null

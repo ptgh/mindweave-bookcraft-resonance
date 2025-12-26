@@ -1,19 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { Film, Book, X, Star, Calendar, Trophy, ExternalLink, Play } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Film, Book, X, Star, Calendar, Trophy, ExternalLink, Play, User } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { createPortal } from 'react-dom';
+import { gsap } from 'gsap';
 import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
 import { EnrichedPublisherBook } from '@/services/publisherService';
+import { AuthorPopup } from '@/components/AuthorPopup';
+import { DirectorPopup } from '@/components/DirectorPopup';
+import { ScifiAuthor } from '@/services/scifiAuthorsService';
 
 interface FilmAdaptation {
   id: string;
   book_title: string;
   book_author: string;
   book_publication_year: number | null;
+  book_cover_url?: string | null;
   film_title: string;
   film_year: number | null;
   director: string | null;
@@ -25,6 +30,7 @@ interface FilmAdaptation {
   adaptation_type: string | null;
   notable_differences: string | null;
   awards: Array<{ name: string; year: number }> | null;
+  criterion_spine?: number | null;
 }
 
 interface BookToScreenSectionProps {
@@ -32,7 +38,6 @@ interface BookToScreenSectionProps {
   showTitle?: boolean;
 }
 
-// Streaming service colors and icons
 const streamingServices: Record<string, { color: string; bgColor: string; label: string }> = {
   netflix: { color: 'text-red-500', bgColor: 'bg-red-500/10 hover:bg-red-500/20 border-red-500/30', label: 'Netflix' },
   prime: { color: 'text-blue-400', bgColor: 'bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30', label: 'Prime' },
@@ -49,6 +54,12 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
   const [selectedFilm, setSelectedFilm] = useState<FilmAdaptation | null>(null);
   const [showFilmModal, setShowFilmModal] = useState(false);
   const [selectedBook, setSelectedBook] = useState<EnrichedPublisherBook | null>(null);
+  const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
+  const [showAuthorPopup, setShowAuthorPopup] = useState(false);
+  const [selectedDirector, setSelectedDirector] = useState<{ name: string } | null>(null);
+  const [showDirectorPopup, setShowDirectorPopup] = useState(false);
+  const authorRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const directorRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   useEffect(() => {
     const fetchAdaptations = async () => {
@@ -78,6 +89,37 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
     fetchAdaptations();
   }, []);
 
+  // GSAP underline animations
+  useEffect(() => {
+    const setupUnderlineAnimation = (ref: HTMLButtonElement) => {
+      const underline = ref.querySelector('.gsap-underline');
+      if (!underline) return;
+      
+      const handleEnter = () => gsap.to(underline, { width: '100%', duration: 0.3, ease: 'power2.out' });
+      const handleLeave = () => gsap.to(underline, { width: '0%', duration: 0.3, ease: 'power2.out' });
+      
+      ref.addEventListener('mouseenter', handleEnter);
+      ref.addEventListener('mouseleave', handleLeave);
+      
+      return () => {
+        ref.removeEventListener('mouseenter', handleEnter);
+        ref.removeEventListener('mouseleave', handleLeave);
+      };
+    };
+
+    const cleanups: (() => void)[] = [];
+    authorRefs.current.forEach(ref => {
+      const cleanup = setupUnderlineAnimation(ref);
+      if (cleanup) cleanups.push(cleanup);
+    });
+    directorRefs.current.forEach(ref => {
+      const cleanup = setupUnderlineAnimation(ref);
+      if (cleanup) cleanups.push(cleanup);
+    });
+
+    return () => cleanups.forEach(fn => fn());
+  }, [adaptations]);
+
   const openBookPreview = (film: FilmAdaptation) => {
     const book: EnrichedPublisherBook = {
       id: film.id,
@@ -85,6 +127,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
       author: film.book_author,
       series_id: '',
       created_at: new Date().toISOString(),
+      cover_url: film.book_cover_url || undefined,
     };
     setSelectedBook(book);
   };
@@ -97,6 +140,27 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
   const closeFilmModal = () => {
     setShowFilmModal(false);
     setSelectedFilm(null);
+  };
+
+  const handleAuthorClick = async (authorName: string) => {
+    const { data } = await supabase
+      .from('scifi_authors')
+      .select('*')
+      .ilike('name', `%${authorName}%`)
+      .limit(1)
+      .single();
+
+    if (data) {
+      setSelectedAuthor(data as ScifiAuthor);
+    } else {
+      setSelectedAuthor({ id: 'temp', name: authorName, created_at: '', updated_at: '' } as ScifiAuthor);
+    }
+    setShowAuthorPopup(true);
+  };
+
+  const handleDirectorClick = (directorName: string) => {
+    setSelectedDirector({ name: directorName });
+    setShowDirectorPopup(true);
   };
 
   const extractYouTubeId = (url: string | null): string | null => {
@@ -121,9 +185,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
     );
   }
 
-  if (adaptations.length === 0) {
-    return null;
-  }
+  if (adaptations.length === 0) return null;
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -136,18 +198,22 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
               {adaptations.length} Adaptations
             </Badge>
           </div>
+          <a
+            href="https://www.criterion.com/shop/browse?genre=science-fiction"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 transition-all"
+          >
+            <img src="/images/criterion-logo.jpg" alt="Criterion" className="h-5 w-auto rounded" />
+            <span className="text-xs text-amber-400 font-medium">Browse Criterion</span>
+          </a>
         </div>
       )}
 
-      {/* Paired Book/Film Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {adaptations.map((film) => (
-          <Card
-            key={film.id}
-            className="bg-card/40 border-border/30 hover:border-amber-400/30 transition-all duration-300 overflow-hidden"
-          >
+          <Card key={film.id} className="bg-card/40 border-border/30 hover:border-amber-400/30 transition-all duration-300 overflow-hidden">
             <div className="p-3">
-              {/* Side by side Book + Film */}
               <div className="flex gap-3">
                 {/* Book Card */}
                 <button
@@ -161,7 +227,14 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
                   <h4 className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors">
                     {film.book_title}
                   </h4>
-                  <p className="text-xs text-muted-foreground mt-1">{film.book_author}</p>
+                  <button
+                    ref={el => { if (el) authorRefs.current.set(film.id + '-author', el); }}
+                    onClick={(e) => { e.stopPropagation(); handleAuthorClick(film.book_author); }}
+                    className="text-xs text-emerald-400 mt-1 relative inline-block"
+                  >
+                    {film.book_author}
+                    <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-400" />
+                  </button>
                   {film.book_publication_year && (
                     <p className="text-[10px] text-muted-foreground/70 mt-1">{film.book_publication_year}</p>
                   )}
@@ -187,7 +260,16 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
                   <h4 className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-amber-400 transition-colors">
                     {film.film_title}
                   </h4>
-                  <p className="text-xs text-muted-foreground mt-1">{film.director}</p>
+                  {film.director && (
+                    <button
+                      ref={el => { if (el) directorRefs.current.set(film.id + '-director', el); }}
+                      onClick={(e) => { e.stopPropagation(); handleDirectorClick(film.director!); }}
+                      className="text-xs text-amber-300 mt-1 relative inline-block"
+                    >
+                      {film.director}
+                      <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-amber-400" />
+                    </button>
+                  )}
                   {film.film_year && (
                     <p className="text-[10px] text-muted-foreground/70 mt-1">{film.film_year}</p>
                   )}
@@ -206,11 +288,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
                         href={url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={cn(
-                          "px-2 py-1 text-[10px] font-medium rounded border transition-all",
-                          service.bgColor,
-                          service.color
-                        )}
+                        className={cn("px-2 py-1 text-[10px] font-medium rounded border transition-all", service.bgColor, service.color)}
                         onClick={(e) => e.stopPropagation()}
                       >
                         {service.label}
@@ -226,25 +304,13 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
 
       {/* Film Preview Modal */}
       {showFilmModal && selectedFilm && createPortal(
-        <div 
-          className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={closeFilmModal}
-        >
-          <div 
-            className="relative w-full max-w-2xl bg-card rounded-xl overflow-hidden shadow-2xl border border-border/30"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-4 right-4 z-10 text-foreground hover:bg-muted"
-              onClick={closeFilmModal}
-            >
+        <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4" onClick={closeFilmModal}>
+          <div className="relative w-full max-w-2xl bg-slate-900/95 rounded-xl overflow-hidden shadow-2xl border border-amber-500/30" onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon" className="absolute top-4 right-4 z-10 text-foreground hover:bg-muted" onClick={closeFilmModal}>
               <X className="w-5 h-5" />
             </Button>
 
-            {/* Trailer Section */}
+            {/* Trailer */}
             {selectedFilm.trailer_url && extractYouTubeId(selectedFilm.trailer_url) ? (
               <div className="aspect-video bg-black">
                 <iframe
@@ -259,12 +325,11 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
               <div className="aspect-video bg-muted/50 flex items-center justify-center">
                 <div className="text-center text-muted-foreground">
                   <Play className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">No trailer available</p>
+                  <p className="text-sm">Trailer loading...</p>
                 </div>
               </div>
             )}
 
-            {/* Film Info */}
             <div className="p-6 space-y-4">
               <div>
                 <h3 className="text-xl font-semibold text-foreground">{selectedFilm.film_title}</h3>
@@ -273,7 +338,6 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
                 </p>
               </div>
 
-              {/* Meta Info */}
               <div className="flex flex-wrap gap-4 text-sm">
                 {selectedFilm.film_year && (
                   <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -282,32 +346,23 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
                   </div>
                 )}
                 {selectedFilm.director && (
-                  <div className="text-muted-foreground">
-                    <span className="text-muted-foreground/60">Director:</span> {selectedFilm.director}
-                  </div>
+                  <button onClick={() => handleDirectorClick(selectedFilm.director!)} className="text-amber-300 hover:text-amber-400 transition-colors relative group">
+                    <span>Dir: {selectedFilm.director}</span>
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-amber-400 group-hover:w-full transition-all duration-300" />
+                  </button>
                 )}
                 {selectedFilm.imdb_rating && (
                   <div className="flex items-center gap-1 text-amber-400">
                     <Star className="w-4 h-4 fill-amber-400" />
                     <span className="font-medium">{selectedFilm.imdb_rating}/10</span>
-                    <span className="text-muted-foreground/60 text-xs">IMDb</span>
-                  </div>
-                )}
-                {selectedFilm.rotten_tomatoes_score && (
-                  <div className="text-muted-foreground">
-                    🍅 {selectedFilm.rotten_tomatoes_score}%
                   </div>
                 )}
               </div>
 
-              {/* Notable Differences */}
               {selectedFilm.notable_differences && (
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {selectedFilm.notable_differences}
-                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{selectedFilm.notable_differences}</p>
               )}
 
-              {/* Awards */}
               {selectedFilm.awards && selectedFilm.awards.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
@@ -320,53 +375,38 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
                         {award.name}
                       </Badge>
                     ))}
-                    {selectedFilm.awards.length > 4 && (
-                      <Badge variant="secondary" className="text-xs bg-muted text-muted-foreground">
-                        +{selectedFilm.awards.length - 4} more
-                      </Badge>
-                    )}
                   </div>
                 </div>
               )}
 
-              {/* Streaming Links */}
-              {selectedFilm.streaming_availability && Object.keys(selectedFilm.streaming_availability).length > 0 && (
-                <div className="space-y-2 pt-2 border-t border-border/20">
-                  <p className="text-sm font-medium text-foreground">Where to Watch</p>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(selectedFilm.streaming_availability).map(([platform, url]) => {
-                      const service = streamingServices[platform];
-                      if (!service || !url) return null;
-                      return (
-                        <a
-                          key={platform}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={cn(
-                            "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all",
-                            service.bgColor,
-                            service.color
-                          )}
-                        >
-                          {service.label}
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      );
-                    })}
-                  </div>
+              {/* Where to Watch */}
+              <div className="space-y-2 pt-2 border-t border-border/20">
+                <p className="text-sm font-medium text-foreground">Where to Watch</p>
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    href="https://www.criterion.com/shop/browse?genre=science-fiction"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-400"
+                  >
+                    <img src="/images/criterion-logo.jpg" alt="Criterion" className="h-4 w-auto rounded" />
+                    Buy Physical
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  {selectedFilm.streaming_availability && Object.entries(selectedFilm.streaming_availability).map(([platform, url]) => {
+                    const service = streamingServices[platform];
+                    if (!service || !url) return null;
+                    return (
+                      <a key={platform} href={url} target="_blank" rel="noopener noreferrer" className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all", service.bgColor, service.color)}>
+                        {service.label}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
 
-              {/* View Book Button */}
-              <Button
-                variant="outline"
-                className="w-full mt-2 border-primary/30 text-primary hover:bg-primary/10"
-                onClick={() => {
-                  closeFilmModal();
-                  openBookPreview(selectedFilm);
-                }}
-              >
+              <Button variant="outline" className="w-full mt-2 border-primary/30 text-primary hover:bg-primary/10" onClick={() => { closeFilmModal(); openBookPreview(selectedFilm); }}>
                 <Book className="w-4 h-4 mr-2" />
                 View Book Details
               </Button>
@@ -376,14 +416,9 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
         document.body
       )}
 
-      {/* Book Preview Modal */}
-      {selectedBook && (
-        <EnhancedBookPreviewModal
-          book={selectedBook}
-          onClose={() => setSelectedBook(null)}
-          onAddBook={() => {}}
-        />
-      )}
+      {selectedBook && <EnhancedBookPreviewModal book={selectedBook} onClose={() => setSelectedBook(null)} onAddBook={() => {}} />}
+      <AuthorPopup author={selectedAuthor} isVisible={showAuthorPopup} onClose={() => setShowAuthorPopup(false)} />
+      <DirectorPopup director={selectedDirector} isVisible={showDirectorPopup} onClose={() => setShowDirectorPopup(false)} />
     </div>
   );
 };
