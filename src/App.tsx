@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SkipToContent } from "@/components/SkipToContent";
 import { WebsiteStructuredData } from "@/components/StructuredData";
-
+import { FloatingNeuralAssistant } from "@/components/FloatingNeuralAssistant";
 // Lazy load route components for code splitting
 const Index = lazy(() => import("./pages/Index"));
 const Discovery = lazy(() => import("./pages/Discovery"));
@@ -102,6 +102,7 @@ const AppRoutes = () => {
         <Route path="/auth" element={<Navigate to="/" replace />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <FloatingNeuralAssistant />
     </Suspense>
   );
 };
