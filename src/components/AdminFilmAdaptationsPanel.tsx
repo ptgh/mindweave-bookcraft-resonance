@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { 
   Film, Plus, Pencil, Trash2, RefreshCw, Image, Video, 
-  ExternalLink, Star, BookOpen, Loader2, Search, Check, X
+  ExternalLink, Star, BookOpen, Loader2, Search, Check, X, Sparkles
 } from "lucide-react";
 
 interface FilmAdaptation {
@@ -48,6 +48,8 @@ export const AdminFilmAdaptationsPanel = () => {
   const [films, setFilms] = useState<FilmAdaptation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPopulating, setIsPopulating] = useState(false);
+  const [isEnrichingCriterion, setIsEnrichingCriterion] = useState(false);
+  const [isEnrichingAppleTV, setIsEnrichingAppleTV] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingFilm, setEditingFilm] = useState<Partial<FilmAdaptation> | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -104,6 +106,58 @@ export const AdminFilmAdaptationsPanel = () => {
       });
     } finally {
       setIsPopulating(false);
+    }
+  };
+
+  const handleEnrichCriterion = async () => {
+    setIsEnrichingCriterion(true);
+    try {
+      toast({ title: "Starting", description: "Enriching Criterion links via Firecrawl..." });
+      
+      const { data, error } = await supabase.functions.invoke('enrich-criterion-links');
+      if (error) throw error;
+      
+      toast({
+        title: "Criterion Enrichment Complete",
+        description: data.message || `Updated streaming links`,
+        variant: "success"
+      });
+      fetchFilms();
+    } catch (error) {
+      console.error('Error enriching Criterion:', error);
+      toast({
+        title: "Error",
+        description: "Failed to enrich Criterion links",
+        variant: "destructive"
+      });
+    } finally {
+      setIsEnrichingCriterion(false);
+    }
+  };
+
+  const handleEnrichAppleTV = async () => {
+    setIsEnrichingAppleTV(true);
+    try {
+      toast({ title: "Starting", description: "Enriching Apple TV links via Firecrawl (this may take a while)..." });
+      
+      const { data, error } = await supabase.functions.invoke('enrich-apple-tv-links');
+      if (error) throw error;
+      
+      toast({
+        title: "Apple TV Enrichment Complete",
+        description: data.message || `Updated streaming links`,
+        variant: "success"
+      });
+      fetchFilms();
+    } catch (error) {
+      console.error('Error enriching Apple TV:', error);
+      toast({
+        title: "Error",
+        description: "Failed to enrich Apple TV links",
+        variant: "destructive"
+      });
+    } finally {
+      setIsEnrichingAppleTV(false);
     }
   };
 
@@ -194,6 +248,8 @@ export const AdminFilmAdaptationsPanel = () => {
     withBookCovers: films.filter(f => f.book_cover_url).length,
     withTrailers: films.filter(f => f.trailer_url).length,
     criterion: films.filter(f => f.criterion_spine).length,
+    withCriterionLinks: films.filter(f => f.streaming_availability?.criterion).length,
+    withAppleTVLinks: films.filter(f => f.streaming_availability?.apple).length,
   };
 
   return (
@@ -223,6 +279,26 @@ export const AdminFilmAdaptationsPanel = () => {
             >
               {isPopulating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
               <span className="ml-1">Populate</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleEnrichCriterion}
+              disabled={isEnrichingCriterion}
+              className="border-amber-500/30 text-amber-300"
+            >
+              {isEnrichingCriterion ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              <span className="ml-1">Criterion</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleEnrichAppleTV}
+              disabled={isEnrichingAppleTV}
+              className="border-slate-500/30 text-slate-300"
+            >
+              {isEnrichingAppleTV ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              <span className="ml-1">Apple TV</span>
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
@@ -404,7 +480,7 @@ export const AdminFilmAdaptationsPanel = () => {
 
       <CardContent className="space-y-4">
         {/* Stats */}
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-7 gap-2">
           <div className="bg-slate-900/50 p-3 rounded-lg text-center">
             <div className="text-2xl font-bold text-amber-400">{stats.total}</div>
             <div className="text-xs text-slate-400">Total Films</div>
@@ -414,7 +490,7 @@ export const AdminFilmAdaptationsPanel = () => {
               {stats.withPosters}
               {stats.withPosters === stats.total && <Check className="w-4 h-4" />}
             </div>
-            <div className="text-xs text-slate-400">With Posters</div>
+            <div className="text-xs text-slate-400">Posters</div>
           </div>
           <div className="bg-slate-900/50 p-3 rounded-lg text-center">
             <div className="flex items-center justify-center gap-1 text-2xl font-bold text-blue-400">
@@ -424,11 +500,19 @@ export const AdminFilmAdaptationsPanel = () => {
           </div>
           <div className="bg-slate-900/50 p-3 rounded-lg text-center">
             <div className="text-2xl font-bold text-purple-400">{stats.withTrailers}</div>
-            <div className="text-xs text-slate-400">With Trailers</div>
+            <div className="text-xs text-slate-400">Trailers</div>
           </div>
           <div className="bg-slate-900/50 p-3 rounded-lg text-center">
             <div className="text-2xl font-bold text-yellow-400">{stats.criterion}</div>
-            <div className="text-xs text-slate-400">Criterion</div>
+            <div className="text-xs text-slate-400">Criterion Spine</div>
+          </div>
+          <div className="bg-slate-900/50 p-3 rounded-lg text-center">
+            <div className="text-2xl font-bold text-amber-300">{stats.withCriterionLinks}</div>
+            <div className="text-xs text-slate-400">Criterion Links</div>
+          </div>
+          <div className="bg-slate-900/50 p-3 rounded-lg text-center">
+            <div className="text-2xl font-bold text-slate-300">{stats.withAppleTVLinks}</div>
+            <div className="text-xs text-slate-400">Apple TV Links</div>
           </div>
         </div>
 

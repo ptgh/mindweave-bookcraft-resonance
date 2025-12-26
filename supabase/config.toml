@@ -114,3 +114,12 @@ verify_jwt = false
 
 [functions.populate-sf-directors]
 verify_jwt = false
+
+[functions.enrich-criterion-links]
+verify_jwt = false
+
+[functions.enrich-apple-tv-links]
+verify_jwt = false
+
+[functions.enrich-director-data]
+verify_jwt = false
