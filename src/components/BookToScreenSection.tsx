@@ -338,7 +338,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
                     )}
                     {film.streaming_availability?.apple && (
                       <a
-                        href={film.streaming_availability.apple}
+                        href={`https://tv.apple.com/search?term=${encodeURIComponent(film.film_title)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 md:gap-1.5 px-1.5 md:px-2 py-1 text-[9px] md:text-[10px] font-medium rounded border transition-all bg-slate-700/50 hover:bg-slate-600/50 border-slate-500/40 text-slate-200"
@@ -456,7 +456,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
                     {/* Apple TV - only if available */}
                     {selectedFilm.streaming_availability?.apple && (
                       <a
-                        href={selectedFilm.streaming_availability.apple}
+                        href={`https://tv.apple.com/search?term=${encodeURIComponent(selectedFilm.film_title)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border bg-slate-700/50 hover:bg-slate-600/50 border-slate-500/40 text-slate-200"
