@@ -99,7 +99,7 @@ export const NetworkSection: React.FC<NetworkSectionProps> = ({ className }) => 
         <span className="text-xs text-slate-500">Click to view library</span>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-700">
+      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide smooth-scroll overscroll-x-contain">
         {following.slice(0, 10).map((user, index) => (
           <div
             key={user.id}

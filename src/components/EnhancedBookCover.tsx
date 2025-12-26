@@ -206,9 +206,9 @@ const EnhancedBookCover = ({
 
   if (isLoading) {
     return (
-      <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-gradient-to-br from-blue-900/40 to-blue-700/60`}>
+      <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-muted/30`}>
         <div className="w-full h-full animate-pulse flex items-center justify-center">
-          <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-muted-foreground/40 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
     );
@@ -219,7 +219,7 @@ const EnhancedBookCover = ({
   }
 
   return (
-    <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-gradient-to-br from-blue-900/40 to-blue-700/60`}>
+    <div className={`${className} flex-shrink-0 rounded overflow-hidden bg-muted/20`}>
       <OptimizedImage
         src={currentSrc}
         alt={title}
@@ -233,12 +233,12 @@ const EnhancedBookCover = ({
           console.log('Image failed, attempting recovery:', currentSrc);
           setIsLoading(true);
           setHasError(false);
-          
+
           const tryRecover = async () => {
             // Build fallbacks from the original URLs
             const originalUrls = [coverUrl, thumbnailUrl, smallThumbnailUrl].filter(Boolean) as string[];
             const allUrls = createImageFallbacks(originalUrls);
-            
+
             // Try each variant
             for (const url of allUrls) {
               if (url === currentSrc) continue; // Skip the one that just failed
@@ -253,7 +253,7 @@ const EnhancedBookCover = ({
                 continue;
               }
             }
-            
+
             // Try Supabase cache
             const cachedUrl = await getCachedImageUrl(title);
             if (cachedUrl && cachedUrl !== currentSrc) {
@@ -266,7 +266,7 @@ const EnhancedBookCover = ({
                 console.log('Cached URL failed');
               }
             }
-            
+
             // Try Archive.org as last resort
             const archiveCoverUrl = await getArchiveCover(title, author);
             if (archiveCoverUrl) {
@@ -280,12 +280,12 @@ const EnhancedBookCover = ({
                 console.log('Archive.org recovery failed');
               }
             }
-            
+
             // All recovery attempts failed
             setIsLoading(false);
             setHasError(true);
           };
-          
+
           tryRecover();
         }}
         onLoad={() => {
@@ -315,17 +315,17 @@ const getPlaceholderImage = (title: string) => {
 
 const PlaceholderCover = ({ title, className = "w-12 h-16" }: { title: string; className?: string }) => {
   return (
-    <div className={`${className} flex-shrink-0 rounded overflow-hidden relative bg-gradient-to-br from-blue-900/60 to-blue-700/80`}>
+    <div className={`${className} flex-shrink-0 rounded overflow-hidden relative bg-muted/30`}>
       <OptimizedImage
         src={getPlaceholderImage(title)}
         alt={`Placeholder cover for ${title}`}
         className="w-full h-full object-cover opacity-40"
         priority
       />
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 to-blue-700/60 flex items-center justify-center">
+      <div className="absolute inset-0 bg-background/20 flex items-center justify-center">
         <div className="text-center p-2">
-          <BookOpen className="w-4 h-4 text-blue-200 mx-auto mb-1" />
-          <div className="text-[8px] text-blue-100 font-medium leading-tight">
+          <BookOpen className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
+          <div className="text-[8px] text-foreground/80 font-medium leading-tight">
             <span className="break-words line-clamp-2" style={{ wordBreak: 'break-word' }}>
               {title}
             </span>
