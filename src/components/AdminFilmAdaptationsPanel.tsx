@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -11,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { 
   Film, Plus, Pencil, Trash2, RefreshCw, Image, Video, 
-  ExternalLink, Star, BookOpen, Loader2, Search, Check, X, Sparkles
+  Star, BookOpen, Loader2, Search, Check, Sparkles, Play, Award
 } from "lucide-react";
 
 interface StreamingAvailability {
@@ -36,6 +35,7 @@ interface FilmAdaptation {
   poster_url: string | null;
   trailer_url: string | null;
   criterion_spine: number | null;
+  is_criterion_collection: boolean | null;
   streaming_availability: StreamingAvailability | null;
 }
 
@@ -58,8 +58,12 @@ export const AdminFilmAdaptationsPanel = () => {
   const [films, setFilms] = useState<FilmAdaptation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPopulating, setIsPopulating] = useState(false);
+  const [isPopulatingCriterion, setIsPopulatingCriterion] = useState(false);
+  const [isEnrichingArtwork, setIsEnrichingArtwork] = useState(false);
+  const [isEnrichingTrailers, setIsEnrichingTrailers] = useState(false);
   const [isEnrichingCriterion, setIsEnrichingCriterion] = useState(false);
   const [isEnrichingAppleTV, setIsEnrichingAppleTV] = useState(false);
+  const [isRunningAll, setIsRunningAll] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingFilm, setEditingFilm] = useState<Partial<FilmAdaptation> | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -119,10 +123,88 @@ export const AdminFilmAdaptationsPanel = () => {
     }
   };
 
+  const handlePopulateCriterion = async () => {
+    setIsPopulatingCriterion(true);
+    try {
+      toast({ title: "Starting", description: "Populating Criterion SF films..." });
+      
+      const { data, error } = await supabase.functions.invoke('populate-criterion-sf-films');
+      if (error) throw error;
+      
+      toast({
+        title: "Criterion Population Complete",
+        description: data.message || `Processed Criterion films`,
+        variant: "success"
+      });
+      fetchFilms();
+    } catch (error) {
+      console.error('Error populating Criterion:', error);
+      toast({
+        title: "Error",
+        description: "Failed to populate Criterion films",
+        variant: "destructive"
+      });
+    } finally {
+      setIsPopulatingCriterion(false);
+    }
+  };
+
+  const handleEnrichArtwork = async () => {
+    setIsEnrichingArtwork(true);
+    try {
+      toast({ title: "Starting", description: "Enriching film artwork from TMDB and Google Books..." });
+      
+      const { data, error } = await supabase.functions.invoke('enrich-film-artwork');
+      if (error) throw error;
+      
+      toast({
+        title: "Artwork Enrichment Complete",
+        description: data.message || `Updated artwork`,
+        variant: "success"
+      });
+      fetchFilms();
+    } catch (error) {
+      console.error('Error enriching artwork:', error);
+      toast({
+        title: "Error",
+        description: "Failed to enrich artwork",
+        variant: "destructive"
+      });
+    } finally {
+      setIsEnrichingArtwork(false);
+    }
+  };
+
+  const handleEnrichTrailers = async () => {
+    setIsEnrichingTrailers(true);
+    try {
+      toast({ title: "Starting", description: "Searching YouTube for official trailers..." });
+      
+      const { data, error } = await supabase.functions.invoke('enrich-trailer-urls');
+      if (error) throw error;
+      
+      toast({
+        title: "Trailer Enrichment Complete",
+        description: data.message || `Updated trailers`,
+        variant: "success"
+      });
+      fetchFilms();
+    } catch (error) {
+      console.error('Error enriching trailers:', error);
+      toast({
+        title: "Error",
+        description: "Failed to enrich trailers",
+        variant: "destructive"
+      });
+    } finally {
+      setIsEnrichingTrailers(false);
+    }
+  };
+
   const handleEnrichCriterion = async () => {
     setIsEnrichingCriterion(true);
     try {
-      toast({ title: "Starting", description: "Enriching Criterion links via Firecrawl..." });
+      toast({ title: "Starting", description: "Enriching Criterion links..." });
       
       const { data, error } = await supabase.functions.invoke('enrich-criterion-links');
       if (error) throw error;
@@ -148,7 +230,7 @@ export const AdminFilmAdaptationsPanel = () => {
   const handleEnrichAppleTV = async () => {
     setIsEnrichingAppleTV(true);
     try {
-      toast({ title: "Starting", description: "Enriching Apple TV links via Firecrawl (this may take a while)..." });
+      toast({ title: "Starting", description: "Enriching Apple TV links..." });
       
       const { data, error } = await supabase.functions.invoke('enrich-apple-tv-links');
       if (error) throw error;
@@ -171,12 +253,49 @@ export const AdminFilmAdaptationsPanel = () => {
     }
   };
 
+  const handleRunAllEnrichment = async () => {
+    setIsRunningAll(true);
+    toast({ title: "Running All Enrichment", description: "This may take a few minutes..." });
+    
+    try {
+      // Run in sequence to avoid overwhelming APIs
+      await handlePopulateCriterion();
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      await handleEnrichArtwork();
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      await handleEnrichTrailers();
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      await handleEnrichCriterion();
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      await handleEnrichAppleTV();
+      
+      toast({
+        title: "All Enrichment Complete",
+        description: "All enrichment functions have run successfully",
+        variant: "success"
+      });
+    } catch (error) {
+      console.error('Error running all enrichment:', error);
+      toast({
+        title: "Error",
+        description: "Some enrichment functions failed",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRunningAll(false);
+      fetchFilms();
+    }
+  };
+
   const handleSave = async () => {
     if (!editingFilm) return;
     setIsSaving(true);
 
     try {
-      // Clean up streaming_availability - remove empty strings
       const cleanedStreaming = editingFilm.streaming_availability 
         ? Object.fromEntries(
             Object.entries(editingFilm.streaming_availability).filter(([_, v]) => v && v.trim() !== '')
@@ -199,7 +318,6 @@ export const AdminFilmAdaptationsPanel = () => {
       };
 
       if (editingFilm.id) {
-        // Update existing
         const { error } = await supabase
           .from('sf_film_adaptations')
           .update(filmData)
@@ -208,7 +326,6 @@ export const AdminFilmAdaptationsPanel = () => {
         if (error) throw error;
         toast({ title: "Updated", description: "Film adaptation updated successfully", variant: "success" });
       } else {
-        // Insert new
         const { error } = await supabase
           .from('sf_film_adaptations')
           .insert([filmData]);
@@ -265,10 +382,14 @@ export const AdminFilmAdaptationsPanel = () => {
     withPosters: films.filter(f => f.poster_url).length,
     withBookCovers: films.filter(f => f.book_cover_url).length,
     withTrailers: films.filter(f => f.trailer_url).length,
-    criterion: films.filter(f => f.criterion_spine).length,
+    criterion: films.filter(f => f.is_criterion_collection).length,
     withCriterionLinks: films.filter(f => f.streaming_availability?.criterion).length,
     withAppleTVLinks: films.filter(f => f.streaming_availability?.apple).length,
   };
+
+  const missingPosters = stats.total - stats.withPosters;
+  const missingCovers = stats.total - stats.withBookCovers;
+  const missingTrailers = stats.total - stats.withTrailers;
 
   return (
     <Card className="border-amber-700/50 bg-gradient-to-br from-amber-900/20 to-slate-800/50">
@@ -278,7 +399,7 @@ export const AdminFilmAdaptationsPanel = () => {
             <Film className="w-5 h-5 text-amber-400" />
             Film Adaptations Management
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button
               variant="outline"
               size="sm"
@@ -291,32 +412,12 @@ export const AdminFilmAdaptationsPanel = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={handlePopulate}
-              disabled={isPopulating}
-              className="border-amber-500/30 text-amber-300"
+              onClick={handleRunAllEnrichment}
+              disabled={isRunningAll}
+              className="border-emerald-500/30 text-emerald-300 bg-emerald-900/20"
             >
-              {isPopulating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-              <span className="ml-1">Populate</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleEnrichCriterion}
-              disabled={isEnrichingCriterion}
-              className="border-amber-500/30 text-amber-300"
-            >
-              {isEnrichingCriterion ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              <span className="ml-1">Criterion</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleEnrichAppleTV}
-              disabled={isEnrichingAppleTV}
-              className="border-slate-500/30 text-slate-300"
-            >
-              {isEnrichingAppleTV ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              <span className="ml-1">Apple TV</span>
+              {isRunningAll ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              <span className="ml-1">Run All</span>
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
@@ -446,7 +547,6 @@ export const AdminFilmAdaptationsPanel = () => {
                       />
                     </div>
 
-                    {/* Streaming Availability Section */}
                     <div className="space-y-3 pt-4 border-t border-slate-700">
                       <Label className="text-amber-300 font-medium">Streaming Availability</Label>
                       
@@ -482,57 +582,8 @@ export const AdminFilmAdaptationsPanel = () => {
                           />
                         </div>
                       </div>
-
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label className="text-slate-300 text-sm">Netflix URL</Label>
-                          <Input
-                            value={editingFilm.streaming_availability?.netflix || ''}
-                            onChange={e => setEditingFilm({ 
-                              ...editingFilm, 
-                              streaming_availability: { 
-                                ...editingFilm.streaming_availability, 
-                                netflix: e.target.value || undefined 
-                              } 
-                            })}
-                            placeholder="https://netflix.com/..."
-                            className="bg-slate-800 border-slate-700"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-slate-300 text-sm">Prime Video URL</Label>
-                          <Input
-                            value={editingFilm.streaming_availability?.prime || ''}
-                            onChange={e => setEditingFilm({ 
-                              ...editingFilm, 
-                              streaming_availability: { 
-                                ...editingFilm.streaming_availability, 
-                                prime: e.target.value || undefined 
-                              } 
-                            })}
-                            placeholder="https://amazon.com/..."
-                            className="bg-slate-800 border-slate-700"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-slate-300 text-sm">HBO Max URL</Label>
-                          <Input
-                            value={editingFilm.streaming_availability?.hbo || ''}
-                            onChange={e => setEditingFilm({ 
-                              ...editingFilm, 
-                              streaming_availability: { 
-                                ...editingFilm.streaming_availability, 
-                                hbo: e.target.value || undefined 
-                              } 
-                            })}
-                            placeholder="https://max.com/..."
-                            className="bg-slate-800 border-slate-700"
-                          />
-                        </div>
-                      </div>
                     </div>
 
-                    {/* Preview */}
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-700">
                       {editingFilm.book_cover_url && (
                         <div className="space-y-2">
@@ -583,6 +634,70 @@ export const AdminFilmAdaptationsPanel = () => {
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {/* Enrichment Buttons Row */}
+        <div className="flex flex-wrap gap-2 p-3 bg-slate-900/50 rounded-lg border border-slate-700">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePopulate}
+            disabled={isPopulating}
+            className="border-blue-500/30 text-blue-300"
+          >
+            {isPopulating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            <span className="ml-1">Populate Films</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePopulateCriterion}
+            disabled={isPopulatingCriterion}
+            className="border-yellow-500/30 text-yellow-300"
+          >
+            {isPopulatingCriterion ? <Loader2 className="w-4 h-4 animate-spin" /> : <Award className="w-4 h-4" />}
+            <span className="ml-1">Criterion SF ({stats.criterion})</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleEnrichArtwork}
+            disabled={isEnrichingArtwork}
+            className="border-purple-500/30 text-purple-300"
+          >
+            {isEnrichingArtwork ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4" />}
+            <span className="ml-1">Artwork ({missingPosters + missingCovers} missing)</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleEnrichTrailers}
+            disabled={isEnrichingTrailers}
+            className="border-red-500/30 text-red-300"
+          >
+            {isEnrichingTrailers ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+            <span className="ml-1">Trailers ({missingTrailers} missing)</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleEnrichCriterion}
+            disabled={isEnrichingCriterion}
+            className="border-amber-500/30 text-amber-300"
+          >
+            {isEnrichingCriterion ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            <span className="ml-1">Criterion Links</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleEnrichAppleTV}
+            disabled={isEnrichingAppleTV}
+            className="border-slate-500/30 text-slate-300"
+          >
+            {isEnrichingAppleTV ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            <span className="ml-1">Apple TV</span>
+          </Button>
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-7 gap-2">
           <div className="bg-slate-900/50 p-3 rounded-lg text-center">
@@ -608,7 +723,7 @@ export const AdminFilmAdaptationsPanel = () => {
           </div>
           <div className="bg-slate-900/50 p-3 rounded-lg text-center">
             <div className="text-2xl font-bold text-yellow-400">{stats.criterion}</div>
-            <div className="text-xs text-slate-400">Criterion Spine</div>
+            <div className="text-xs text-slate-400">Criterion</div>
           </div>
           <div className="bg-slate-900/50 p-3 rounded-lg text-center">
             <div className="text-2xl font-bold text-amber-300">{stats.withCriterionLinks}</div>
@@ -690,7 +805,7 @@ export const AdminFilmAdaptationsPanel = () => {
                         {film.poster_url && <span title="Has poster"><Image className="w-4 h-4 text-emerald-400" /></span>}
                         {film.book_cover_url && <span title="Has book cover"><BookOpen className="w-4 h-4 text-blue-400" /></span>}
                         {film.trailer_url && <span title="Has trailer"><Video className="w-4 h-4 text-red-400" /></span>}
-                        {film.criterion_spine && (
+                        {film.is_criterion_collection && (
                           <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-400/30 text-[10px] px-1">
                             C
                           </Badge>
