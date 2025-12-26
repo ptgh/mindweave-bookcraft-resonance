@@ -1320,6 +1320,7 @@ export type Database = {
           book_title: string
           created_at: string | null
           criterion_spine: number | null
+          criterion_spine_number: number | null
           criterion_url: string | null
           director: string | null
           film_title: string
@@ -1327,9 +1328,11 @@ export type Database = {
           id: string
           imdb_id: string | null
           imdb_rating: number | null
+          is_criterion_collection: boolean | null
           notable_differences: string | null
           poster_url: string | null
           rotten_tomatoes_score: number | null
+          source: string | null
           streaming_availability: Json | null
           trailer_url: string | null
           updated_at: string | null
@@ -1344,6 +1347,7 @@ export type Database = {
           book_title: string
           created_at?: string | null
           criterion_spine?: number | null
+          criterion_spine_number?: number | null
           criterion_url?: string | null
           director?: string | null
           film_title: string
@@ -1351,9 +1355,11 @@ export type Database = {
           id?: string
           imdb_id?: string | null
           imdb_rating?: number | null
+          is_criterion_collection?: boolean | null
           notable_differences?: string | null
           poster_url?: string | null
           rotten_tomatoes_score?: number | null
+          source?: string | null
           streaming_availability?: Json | null
           trailer_url?: string | null
           updated_at?: string | null
@@ -1368,6 +1374,7 @@ export type Database = {
           book_title?: string
           created_at?: string | null
           criterion_spine?: number | null
+          criterion_spine_number?: number | null
           criterion_url?: string | null
           director?: string | null
           film_title?: string
@@ -1375,9 +1382,11 @@ export type Database = {
           id?: string
           imdb_id?: string | null
           imdb_rating?: number | null
+          is_criterion_collection?: boolean | null
           notable_differences?: string | null
           poster_url?: string | null
           rotten_tomatoes_score?: number | null
+          source?: string | null
           streaming_availability?: Json | null
           trailer_url?: string | null
           updated_at?: string | null

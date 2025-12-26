@@ -1,10 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Header from '@/components/Header';
 import { SEOHead } from '@/components/SEOHead';
 import { BookToScreenSection } from '@/components/BookToScreenSection';
 import { BookToScreenSelector, FilterMode } from '@/components/BookToScreenSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { useEnhancedToast } from '@/hooks/use-enhanced-toast';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
+import { gsap } from 'gsap';
 
 interface AIRecommendation {
   film_title: string;
@@ -19,7 +22,22 @@ const BookToScreen: React.FC = () => {
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [isAILoading, setIsAILoading] = useState(false);
   const [aiRecommendations, setAIRecommendations] = useState<AIRecommendation[]>([]);
+  const [addedFilms, setAddedFilms] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
   const { toast } = useEnhancedToast();
+  const aiPanelRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Animate AI panel when recommendations appear
+  useEffect(() => {
+    if (aiRecommendations.length > 0 && aiPanelRef.current) {
+      gsap.fromTo(aiPanelRef.current, 
+        { opacity: 0, y: -20 },
+        { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }
+      );
+    }
+  }, [aiRecommendations]);
 
   const handleAIScan = useCallback(async () => {
     setIsAILoading(true);
@@ -32,15 +50,26 @@ const BookToScreen: React.FC = () => {
 
       if (data?.recommendations?.length > 0) {
         setAIRecommendations(data.recommendations);
-        toast({
-          title: 'Signal Collection Scanned ✨',
-          description: `Found ${data.recommendations.length} new adaptation suggestions`,
-          variant: 'success',
-        });
+        setAddedFilms(data.added || []);
+        
+        if (data.addedCount > 0) {
+          toast({
+            title: 'Collection Expanded ✨',
+            description: data.message,
+            variant: 'success',
+          });
+          // Refresh the film list to show newly added films
+          setRefreshKey(prev => prev + 1);
+        } else {
+          toast({
+            title: 'Scan Complete',
+            description: data.message,
+          });
+        }
       } else {
         toast({
           title: 'Scan Complete',
-          description: 'No new recommendations found',
+          description: 'No new recommendations at this time',
         });
       }
     } catch (error: any) {
@@ -82,6 +111,21 @@ const BookToScreen: React.FC = () => {
             </p>
           </div>
 
+          {/* Search Bar */}
+          <div className="max-w-md mx-auto mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search films, books, authors, directors..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-muted/20 border-border/30 focus:border-amber-400/50"
+              />
+            </div>
+          </div>
+
           {/* Selector Buttons */}
           <div className="flex justify-center mb-8">
             <BookToScreenSelector
@@ -94,27 +138,57 @@ const BookToScreen: React.FC = () => {
 
           {/* AI Recommendations Display */}
           {aiRecommendations.length > 0 && (
-            <div className="mb-8 p-4 bg-violet-500/10 border border-violet-500/30 rounded-lg">
+            <div 
+              ref={aiPanelRef}
+              className="mb-8 p-4 bg-violet-500/10 border border-violet-500/30 rounded-lg"
+            >
               <h3 className="text-sm font-medium text-violet-300 mb-3 flex items-center gap-2">
                 <span>✨</span>
                 AI Suggestions - Add these to your collection
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {aiRecommendations.map((rec, idx) => (
-                  <div key={idx} className="p-3 bg-muted/20 rounded-lg border border-violet-500/20">
-                    <p className="text-sm font-medium text-foreground">{rec.film_title} ({rec.year})</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Based on "{rec.book_title}" by {rec.author}
-                    </p>
-                    <p className="text-xs text-violet-300 mt-1">Dir: {rec.director}</p>
-                    <p className="text-xs text-muted-foreground/80 mt-2 italic">{rec.reason}</p>
-                  </div>
-                ))}
+                {aiRecommendations.map((rec, idx) => {
+                  const wasAdded = addedFilms.includes(rec.film_title);
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`p-3 rounded-lg border transition-all ${
+                        wasAdded 
+                          ? 'bg-emerald-500/10 border-emerald-500/30' 
+                          : 'bg-muted/20 border-violet-500/20'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-medium text-foreground">{rec.film_title} ({rec.year})</p>
+                        {wasAdded && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded font-medium">
+                            Added ✓
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Based on "{rec.book_title}" by {rec.author}
+                      </p>
+                      <p className="text-xs text-violet-300 mt-1">Dir: {rec.director}</p>
+                      <p className="text-xs text-muted-foreground/80 mt-2 italic">{rec.reason}</p>
+                    </div>
+                  );
+                })}
               </div>
+              <p className="text-xs text-muted-foreground/60 mt-3">
+                {addedFilms.length > 0 
+                  ? `${addedFilms.length} film${addedFilms.length > 1 ? 's' : ''} added to your collection. Scroll down to see all films.`
+                  : 'These films are already in your collection.'}
+              </p>
             </div>
           )}
 
-          <BookToScreenSection showTitle={false} filterMode={filterMode} />
+          <BookToScreenSection 
+            key={refreshKey}
+            showTitle={false} 
+            filterMode={filterMode} 
+            searchQuery={searchQuery}
+          />
         </main>
       </div>
     </>

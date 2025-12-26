@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Film, Book, Star, Calendar, Trophy, ExternalLink, Play, Search } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,7 @@ import { EnrichedPublisherBook } from '@/services/publisherService';
 import { AuthorPopup } from '@/components/AuthorPopup';
 import { DirectorPopup } from '@/components/DirectorPopup';
 import { ScifiAuthor } from '@/services/scifiAuthorsService';
-import { getGoogleWatchLink, getYouTubeSearchUrl, extractYouTubeId, isCriterionFilm } from '@/utils/streamingLinks';
+import { getGoogleWatchLink, getYouTubeSearchUrl, extractYouTubeId, getCriterionBrowseUrl } from '@/utils/streamingLinks';
 import { FilterMode } from './BookToScreenSelector';
 
 interface FilmAdaptation {
@@ -32,18 +32,25 @@ interface FilmAdaptation {
   notable_differences: string | null;
   awards: Array<{ name: string; year: number }> | null;
   criterion_spine?: number | null;
+  criterion_url?: string | null;
+  is_criterion_collection?: boolean;
+  source?: string;
 }
 
 interface BookToScreenSectionProps {
   className?: string;
   showTitle?: boolean;
   filterMode?: FilterMode;
+  searchQuery?: string;
 }
+
+const BATCH_SIZE = 12;
 
 export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ 
   className, 
   showTitle = true,
-  filterMode = 'all'
+  filterMode = 'all',
+  searchQuery = ''
 }) => {
   const [adaptations, setAdaptations] = useState<FilmAdaptation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,8 +61,12 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const [showAuthorPopup, setShowAuthorPopup] = useState(false);
   const [selectedDirector, setSelectedDirector] = useState<{ name: string } | null>(null);
   const [showDirectorPopup, setShowDirectorPopup] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
   const authorRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const directorRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchAdaptations = async () => {
@@ -63,7 +74,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
         const { data, error } = await supabase
           .from('sf_film_adaptations')
           .select('*')
-          .order('imdb_rating', { ascending: false });
+          .order('imdb_rating', { ascending: false, nullsFirst: false });
 
         if (error) throw error;
         
@@ -85,10 +96,68 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     fetchAdaptations();
   }, []);
 
-  // Filter adaptations based on mode
-  const filteredAdaptations = filterMode === 'criterion'
-    ? adaptations.filter(film => isCriterionFilm(film.film_title))
-    : adaptations;
+  // Filter adaptations based on mode and search query
+  const filteredAdaptations = React.useMemo(() => {
+    let result = adaptations;
+    
+    // Filter by mode
+    if (filterMode === 'criterion') {
+      result = result.filter(film => film.is_criterion_collection === true);
+    }
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(film => 
+        film.film_title.toLowerCase().includes(query) ||
+        film.book_title.toLowerCase().includes(query) ||
+        film.book_author.toLowerCase().includes(query) ||
+        (film.director && film.director.toLowerCase().includes(query))
+      );
+    }
+    
+    return result;
+  }, [adaptations, filterMode, searchQuery]);
+
+  // Visible films for infinite scroll
+  const visibleFilms = filteredAdaptations.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredAdaptations.length;
+
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(BATCH_SIZE);
+  }, [filterMode, searchQuery]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          setVisibleCount(prev => Math.min(prev + BATCH_SIZE, filteredAdaptations.length));
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observerRef.current.observe(loadMoreRef.current);
+
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, [hasMore, filteredAdaptations.length]);
+
+  // GSAP fade-in animation for new cards
+  useEffect(() => {
+    const newCards = Array.from(cardRefs.current.values()).slice(-BATCH_SIZE);
+    if (newCards.length > 0 && visibleCount > BATCH_SIZE) {
+      gsap.fromTo(newCards,
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.4, stagger: 0.05, ease: 'power2.out' }
+      );
+    }
+  }, [visibleCount]);
 
   // GSAP underline animations
   useEffect(() => {
@@ -119,7 +188,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     });
 
     return () => cleanups.forEach(fn => fn());
-  }, [adaptations]);
+  }, [visibleFilms]);
 
   const openBookPreview = (film: FilmAdaptation) => {
     const book: EnrichedPublisherBook = {
@@ -186,9 +255,11 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
       <div className={cn("text-center py-12", className)}>
         <Film className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
         <p className="text-muted-foreground">
-          {filterMode === 'criterion' 
-            ? 'No Criterion Collection films found matching your filters'
-            : 'No film adaptations found'}
+          {searchQuery 
+            ? `No films found matching "${searchQuery}"`
+            : filterMode === 'criterion' 
+              ? 'No Criterion Collection films found. Click "Scan Signal Collection ✨ AI" to populate with Criterion titles.'
+              : 'No film adaptations found'}
         </p>
       </div>
     );
@@ -208,12 +279,35 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
         </div>
       )}
 
+      {/* Film count indicator */}
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <span>
+          Showing {visibleFilms.length} of {filteredAdaptations.length} films
+          {filterMode === 'criterion' && ' (Criterion Collection)'}
+        </span>
+        {filterMode === 'criterion' && (
+          <a
+            href={getCriterionBrowseUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-amber-400 hover:text-amber-300 transition-colors inline-flex items-center gap-1 text-xs"
+          >
+            Browse on Criterion
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filteredAdaptations.map((film) => {
-          const isInCriterion = isCriterionFilm(film.film_title);
+        {visibleFilms.map((film) => {
+          const isInCriterion = film.is_criterion_collection === true;
           
           return (
-            <Card key={film.id} className="bg-card/40 border-border/30 hover:border-amber-400/30 transition-all duration-300 overflow-hidden">
+            <Card 
+              key={film.id} 
+              ref={el => { if (el) cardRefs.current.set(film.id, el); }}
+              className="bg-card/40 border-border/30 hover:border-amber-400/30 transition-all duration-300 overflow-hidden"
+            >
               <div className="p-3">
                 <div className="flex gap-2">
                   {/* Book Card with Cover */}
@@ -228,6 +322,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                             src={film.book_cover_url} 
                             alt={film.book_title}
                             className="w-full h-full object-cover"
+                            loading="lazy"
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                           />
                         ) : (
@@ -271,6 +366,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                             src={film.poster_url} 
                             alt={film.film_title}
                             className="w-full h-full object-cover"
+                            loading="lazy"
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                           />
                         ) : (
@@ -313,11 +409,35 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                   </button>
                 </div>
 
-                {/* Criterion Badge - only show if in Criterion Collection */}
+                {/* Criterion Badge with purchase link */}
                 {isInCriterion && (
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/20">
+                    <div className="flex items-center gap-1.5">
+                      <img src="/images/criterion-logo.jpg" alt="" className="h-3 w-auto rounded-sm" />
+                      <span className="text-[10px] text-amber-400 font-medium">Criterion Collection</span>
+                      {film.criterion_spine && (
+                        <span className="text-[9px] text-muted-foreground">#{film.criterion_spine}</span>
+                      )}
+                    </div>
+                    {film.criterion_url && (
+                      <a
+                        href={film.criterion_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-amber-400 hover:text-amber-300 inline-flex items-center gap-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Buy
+                        <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {/* AI-suggested badge */}
+                {film.source === 'ai_suggested' && (
                   <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border/20">
-                    <img src="/images/criterion-logo.jpg" alt="" className="h-3 w-auto rounded-sm" />
-                    <span className="text-[10px] text-amber-400 font-medium">Criterion Collection</span>
+                    <span className="text-[10px] text-violet-400 font-medium">✨ AI Suggested</span>
                   </div>
                 )}
               </div>
@@ -325,6 +445,16 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
           );
         })}
       </div>
+
+      {/* Load more trigger for infinite scroll */}
+      {hasMore && (
+        <div ref={loadMoreRef} className="flex justify-center py-8">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <div className="w-4 h-4 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />
+            <span className="text-sm">Loading more films...</span>
+          </div>
+        </div>
+      )}
 
       {/* Film Preview Modal */}
       {showFilmModal && selectedFilm && createPortal(
@@ -418,16 +548,30 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
               {/* Where to Watch - Google Search Method */}
               <div className="space-y-2 pt-2 border-t border-border/20">
                 <p className="text-sm font-medium text-foreground">Where to Watch</p>
-                <a
-                  href={getGoogleWatchLink(selectedFilm.film_title, selectedFilm.film_year)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 border-blue-500/30 text-blue-300"
-                >
-                  <Search className="w-4 h-4" />
-                  Find Streaming Options
-                  <ExternalLink className="w-3 h-3" />
-                </a>
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    href={getGoogleWatchLink(selectedFilm.film_title, selectedFilm.film_year)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 border-blue-500/30 text-blue-300"
+                  >
+                    <Search className="w-4 h-4" />
+                    Find Streaming Options
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  {selectedFilm.is_criterion_collection && selectedFilm.criterion_url && (
+                    <a
+                      href={selectedFilm.criterion_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border-amber-500/30 text-amber-300"
+                    >
+                      <img src="/images/criterion-logo.jpg" alt="" className="h-4 w-auto rounded-sm" />
+                      Buy on Criterion
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground/70">
                   Shows all available streaming services including Netflix, Apple TV+, Prime Video, and more
                 </p>
