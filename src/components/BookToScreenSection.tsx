@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Film, Play, X, ExternalLink, Star, Calendar, Clapperboard } from 'lucide-react';
+import { Film, Book, X, Star, Calendar, Trophy, ExternalLink, Play } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { createPortal } from 'react-dom';
+import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
+import { EnrichedPublisherBook } from '@/services/publisherService';
 
 interface FilmAdaptation {
   id: string;
@@ -19,9 +21,10 @@ interface FilmAdaptation {
   rotten_tomatoes_score: number | null;
   poster_url: string | null;
   trailer_url: string | null;
-  streaming_availability: Record<string, any> | null;
+  streaming_availability: Record<string, string> | null;
   adaptation_type: string | null;
   notable_differences: string | null;
+  awards: Array<{ name: string; year: number }> | null;
 }
 
 interface BookToScreenSectionProps {
@@ -29,11 +32,23 @@ interface BookToScreenSectionProps {
   showTitle?: boolean;
 }
 
+// Streaming service colors and icons
+const streamingServices: Record<string, { color: string; bgColor: string; label: string }> = {
+  netflix: { color: 'text-red-500', bgColor: 'bg-red-500/10 hover:bg-red-500/20 border-red-500/30', label: 'Netflix' },
+  prime: { color: 'text-blue-400', bgColor: 'bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30', label: 'Prime' },
+  hbo: { color: 'text-purple-400', bgColor: 'bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30', label: 'Max' },
+  apple: { color: 'text-slate-300', bgColor: 'bg-slate-500/10 hover:bg-slate-500/20 border-slate-500/30', label: 'Apple TV+' },
+  disney: { color: 'text-blue-300', bgColor: 'bg-blue-400/10 hover:bg-blue-400/20 border-blue-400/30', label: 'Disney+' },
+  peacock: { color: 'text-yellow-400', bgColor: 'bg-yellow-500/10 hover:bg-yellow-500/20 border-yellow-500/30', label: 'Peacock' },
+  criterion: { color: 'text-amber-400', bgColor: 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30', label: 'Criterion' },
+};
+
 export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ className, showTitle = true }) => {
   const [adaptations, setAdaptations] = useState<FilmAdaptation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFilm, setSelectedFilm] = useState<FilmAdaptation | null>(null);
-  const [showTrailer, setShowTrailer] = useState(false);
+  const [showFilmModal, setShowFilmModal] = useState(false);
+  const [selectedBook, setSelectedBook] = useState<EnrichedPublisherBook | null>(null);
 
   useEffect(() => {
     const fetchAdaptations = async () => {
@@ -41,16 +56,16 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
         const { data, error } = await supabase
           .from('sf_film_adaptations')
           .select('*')
-          .order('imdb_rating', { ascending: false })
-          .limit(12);
+          .order('imdb_rating', { ascending: false });
 
         if (error) throw error;
-        // Map database response to our interface
+        
         const mapped: FilmAdaptation[] = (data || []).map(item => ({
           ...item,
           streaming_availability: typeof item.streaming_availability === 'object' && item.streaming_availability !== null
-            ? item.streaming_availability as Record<string, any>
+            ? item.streaming_availability as Record<string, string>
             : null,
+          awards: Array.isArray(item.awards) ? item.awards as Array<{ name: string; year: number }> : null,
         }));
         setAdaptations(mapped);
       } catch (error) {
@@ -63,20 +78,31 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
     fetchAdaptations();
   }, []);
 
+  const openBookPreview = (film: FilmAdaptation) => {
+    const book: EnrichedPublisherBook = {
+      id: film.id,
+      title: film.book_title,
+      author: film.book_author,
+      series_id: '',
+      created_at: new Date().toISOString(),
+    };
+    setSelectedBook(book);
+  };
+
+  const openFilmModal = (film: FilmAdaptation) => {
+    setSelectedFilm(film);
+    setShowFilmModal(true);
+  };
+
+  const closeFilmModal = () => {
+    setShowFilmModal(false);
+    setSelectedFilm(null);
+  };
+
   const extractYouTubeId = (url: string | null): string | null => {
     if (!url) return null;
     const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
     return match ? match[1] : null;
-  };
-
-  const openTrailerModal = (film: FilmAdaptation) => {
-    setSelectedFilm(film);
-    setShowTrailer(true);
-  };
-
-  const closeTrailerModal = () => {
-    setShowTrailer(false);
-    setSelectedFilm(null);
   };
 
   if (isLoading) {
@@ -84,11 +110,11 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
       <div className={cn("space-y-4", className)}>
         <div className="flex items-center gap-2 mb-4">
           <Film className="w-5 h-5 text-amber-400" />
-          <h2 className="text-lg font-medium text-slate-200">Book to Screen</h2>
+          <h2 className="text-lg font-medium text-foreground">Book to Screen</h2>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="aspect-[2/3] bg-slate-800/50 rounded-lg animate-pulse" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-32 bg-muted/50 rounded-lg animate-pulse" />
           ))}
         </div>
       </div>
@@ -100,120 +126,129 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
   }
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-6", className)}>
       {showTitle && (
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Film className="w-5 h-5 text-amber-400" />
-            <h2 className="text-lg font-medium text-slate-200">Book to Screen</h2>
+            <h2 className="text-lg font-medium text-foreground">Book to Screen</h2>
             <Badge variant="outline" className="text-xs border-amber-400/30 text-amber-400">
-              SF Classics
+              {adaptations.length} Adaptations
             </Badge>
           </div>
         </div>
       )}
 
-      <ScrollArea className="w-full">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 pb-4">
-          {adaptations.map((film) => (
-            <Card
-              key={film.id}
-              className="group relative overflow-hidden bg-slate-800/40 border-slate-700/30 hover:border-amber-400/40 transition-all duration-300 cursor-pointer"
-              onClick={() => openTrailerModal(film)}
-            >
-              {/* Poster */}
-              <div className="aspect-[2/3] relative overflow-hidden">
-                {film.poster_url ? (
-                  <img
-                    src={film.poster_url}
-                    alt={film.film_title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
-                    <Clapperboard className="w-12 h-12 text-slate-600" />
+      {/* Paired Book/Film Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {adaptations.map((film) => (
+          <Card
+            key={film.id}
+            className="bg-card/40 border-border/30 hover:border-amber-400/30 transition-all duration-300 overflow-hidden"
+          >
+            <div className="p-3">
+              {/* Side by side Book + Film */}
+              <div className="flex gap-3">
+                {/* Book Card */}
+                <button
+                  onClick={() => openBookPreview(film)}
+                  className="flex-1 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border/20 hover:border-primary/40 transition-all text-left group"
+                >
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Book className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Book</span>
                   </div>
-                )}
-                
-                {/* Play Button Overlay */}
-                {film.trailer_url && (
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <div className="w-14 h-14 rounded-full bg-amber-500/90 flex items-center justify-center transform group-hover:scale-110 transition-transform">
-                      <Play className="w-7 h-7 text-white ml-1" />
+                  <h4 className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                    {film.book_title}
+                  </h4>
+                  <p className="text-xs text-muted-foreground mt-1">{film.book_author}</p>
+                  {film.book_publication_year && (
+                    <p className="text-[10px] text-muted-foreground/70 mt-1">{film.book_publication_year}</p>
+                  )}
+                </button>
+
+                {/* Film Card */}
+                <button
+                  onClick={() => openFilmModal(film)}
+                  className="flex-1 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border/20 hover:border-amber-400/40 transition-all text-left group"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-1.5">
+                      <Film className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Film</span>
                     </div>
+                    {film.imdb_rating && (
+                      <div className="flex items-center gap-0.5">
+                        <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                        <span className="text-xs font-medium text-amber-400">{film.imdb_rating}</span>
+                      </div>
+                    )}
                   </div>
-                )}
-
-                {/* Rating Badge */}
-                {film.imdb_rating && (
-                  <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/70 px-2 py-1 rounded text-xs">
-                    <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                    <span className="text-white font-medium">{film.imdb_rating}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Info */}
-              <div className="p-3 space-y-1">
-                <h3 className="font-medium text-sm text-slate-200 truncate">{film.film_title}</h3>
-                <p className="text-xs text-slate-400 truncate">
-                  Based on: {film.book_title}
-                </p>
-                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <h4 className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-amber-400 transition-colors">
+                    {film.film_title}
+                  </h4>
+                  <p className="text-xs text-muted-foreground mt-1">{film.director}</p>
                   {film.film_year && (
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {film.film_year}
-                    </span>
+                    <p className="text-[10px] text-muted-foreground/70 mt-1">{film.film_year}</p>
                   )}
-                  {film.director && (
-                    <span className="truncate">• {film.director}</span>
-                  )}
-                </div>
+                </button>
               </div>
-            </Card>
-          ))}
-        </div>
-      </ScrollArea>
 
-      {/* Trailer Modal */}
-      {showTrailer && selectedFilm && (
+              {/* Streaming Links */}
+              {film.streaming_availability && Object.keys(film.streaming_availability).length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-border/20">
+                  {Object.entries(film.streaming_availability).map(([platform, url]) => {
+                    const service = streamingServices[platform];
+                    if (!service || !url) return null;
+                    return (
+                      <a
+                        key={platform}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={cn(
+                          "px-2 py-1 text-[10px] font-medium rounded border transition-all",
+                          service.bgColor,
+                          service.color
+                        )}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {service.label}
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Film Preview Modal */}
+      {showFilmModal && selectedFilm && createPortal(
         <div 
-          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
-          onClick={closeTrailerModal}
+          className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={closeFilmModal}
         >
           <div 
-            className="relative w-full max-w-5xl bg-slate-900 rounded-xl overflow-hidden shadow-2xl"
+            className="relative w-full max-w-2xl bg-card rounded-xl overflow-hidden shadow-2xl border border-border/30"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-4 right-4 z-10 text-white hover:bg-white/20"
-              onClick={closeTrailerModal}
+              className="absolute top-4 right-4 z-10 text-foreground hover:bg-muted"
+              onClick={closeFilmModal}
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </Button>
 
-            {/* Pop-out Button */}
-            {selectedFilm.trailer_url && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-4 right-14 z-10 text-white hover:bg-white/20"
-                onClick={() => window.open(selectedFilm.trailer_url!, '_blank')}
-                title="Open in new tab"
-              >
-                <ExternalLink className="w-5 h-5" />
-              </Button>
-            )}
-
-            {/* YouTube Embed */}
+            {/* Trailer Section */}
             {selectedFilm.trailer_url && extractYouTubeId(selectedFilm.trailer_url) ? (
-              <div className="aspect-video">
+              <div className="aspect-video bg-black">
                 <iframe
-                  src={`https://www.youtube.com/embed/${extractYouTubeId(selectedFilm.trailer_url)}?autoplay=1&rel=0`}
+                  src={`https://www.youtube.com/embed/${extractYouTubeId(selectedFilm.trailer_url)}?rel=0`}
                   title={`${selectedFilm.film_title} Trailer`}
                   className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -221,83 +256,133 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
                 />
               </div>
             ) : (
-              <div className="aspect-video flex items-center justify-center bg-slate-800">
-                <p className="text-slate-400">No trailer available</p>
+              <div className="aspect-video bg-muted/50 flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  <Play className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No trailer available</p>
+                </div>
               </div>
             )}
 
-            {/* Film Info Panel */}
-            <div className="p-6 bg-slate-800/50 border-t border-slate-700/30">
-              <div className="flex gap-6">
-                {/* Poster Thumbnail */}
-                {selectedFilm.poster_url && (
-                  <img 
-                    src={selectedFilm.poster_url} 
-                    alt={selectedFilm.film_title}
-                    className="w-24 h-36 object-cover rounded-lg hidden md:block"
-                  />
+            {/* Film Info */}
+            <div className="p-6 space-y-4">
+              <div>
+                <h3 className="text-xl font-semibold text-foreground">{selectedFilm.film_title}</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Based on "{selectedFilm.book_title}" by {selectedFilm.book_author}
+                </p>
+              </div>
+
+              {/* Meta Info */}
+              <div className="flex flex-wrap gap-4 text-sm">
+                {selectedFilm.film_year && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Calendar className="w-4 h-4 text-amber-400" />
+                    <span>{selectedFilm.film_year}</span>
+                  </div>
                 )}
-                
-                <div className="flex-1 space-y-3">
-                  <div>
-                    <h3 className="text-xl font-medium text-slate-100">{selectedFilm.film_title}</h3>
-                    <p className="text-sm text-slate-400">
-                      Based on "{selectedFilm.book_title}" by {selectedFilm.book_author}
-                    </p>
+                {selectedFilm.director && (
+                  <div className="text-muted-foreground">
+                    <span className="text-muted-foreground/60">Director:</span> {selectedFilm.director}
                   </div>
+                )}
+                {selectedFilm.imdb_rating && (
+                  <div className="flex items-center gap-1 text-amber-400">
+                    <Star className="w-4 h-4 fill-amber-400" />
+                    <span className="font-medium">{selectedFilm.imdb_rating}/10</span>
+                    <span className="text-muted-foreground/60 text-xs">IMDb</span>
+                  </div>
+                )}
+                {selectedFilm.rotten_tomatoes_score && (
+                  <div className="text-muted-foreground">
+                    🍅 {selectedFilm.rotten_tomatoes_score}%
+                  </div>
+                )}
+              </div>
 
-                  <div className="flex flex-wrap gap-4 text-sm">
-                    {selectedFilm.film_year && (
-                      <div className="flex items-center gap-1 text-slate-300">
-                        <Calendar className="w-4 h-4 text-amber-400" />
-                        <span>{selectedFilm.film_year}</span>
-                      </div>
-                    )}
-                    {selectedFilm.director && (
-                      <div className="text-slate-300">
-                        <span className="text-slate-500">Director:</span> {selectedFilm.director}
-                      </div>
-                    )}
-                    {selectedFilm.imdb_rating && (
-                      <div className="flex items-center gap-1 text-slate-300">
-                        <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                        <span>{selectedFilm.imdb_rating}/10 IMDb</span>
-                      </div>
-                    )}
-                    {selectedFilm.rotten_tomatoes_score && (
-                      <div className="text-slate-300">
-                        🍅 {selectedFilm.rotten_tomatoes_score}%
-                      </div>
+              {/* Notable Differences */}
+              {selectedFilm.notable_differences && (
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {selectedFilm.notable_differences}
+                </p>
+              )}
+
+              {/* Awards */}
+              {selectedFilm.awards && selectedFilm.awards.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                    <Trophy className="w-4 h-4 text-amber-400" />
+                    <span>Awards</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedFilm.awards.slice(0, 4).map((award, idx) => (
+                      <Badge key={idx} variant="secondary" className="text-xs bg-amber-500/10 text-amber-400 border-amber-500/20">
+                        {award.name}
+                      </Badge>
+                    ))}
+                    {selectedFilm.awards.length > 4 && (
+                      <Badge variant="secondary" className="text-xs bg-muted text-muted-foreground">
+                        +{selectedFilm.awards.length - 4} more
+                      </Badge>
                     )}
                   </div>
+                </div>
+              )}
 
-                  {selectedFilm.notable_differences && (
-                    <p className="text-xs text-slate-400 line-clamp-2">
-                      {selectedFilm.notable_differences}
-                    </p>
-                  )}
-
-                  {/* Streaming Links */}
-                  {selectedFilm.streaming_availability && Object.keys(selectedFilm.streaming_availability).length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(selectedFilm.streaming_availability).map(([platform, url]) => (
+              {/* Streaming Links */}
+              {selectedFilm.streaming_availability && Object.keys(selectedFilm.streaming_availability).length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-border/20">
+                  <p className="text-sm font-medium text-foreground">Where to Watch</p>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(selectedFilm.streaming_availability).map(([platform, url]) => {
+                      const service = streamingServices[platform];
+                      if (!service || !url) return null;
+                      return (
                         <a
                           key={platform}
-                          href={url as string}
+                          href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-3 py-1 text-xs bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded-full transition-colors"
+                          className={cn(
+                            "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all",
+                            service.bgColor,
+                            service.color
+                          )}
                         >
-                          {platform}
+                          {service.label}
+                          <ExternalLink className="w-3 h-3" />
                         </a>
-                      ))}
-                    </div>
-                  )}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* View Book Button */}
+              <Button
+                variant="outline"
+                className="w-full mt-2 border-primary/30 text-primary hover:bg-primary/10"
+                onClick={() => {
+                  closeFilmModal();
+                  openBookPreview(selectedFilm);
+                }}
+              >
+                <Book className="w-4 h-4 mr-2" />
+                View Book Details
+              </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Book Preview Modal */}
+      {selectedBook && (
+        <EnhancedBookPreviewModal
+          book={selectedBook}
+          onClose={() => setSelectedBook(null)}
+          onAddBook={() => {}}
+        />
       )}
     </div>
   );
