@@ -14,6 +14,15 @@ import {
   ExternalLink, Star, BookOpen, Loader2, Search, Check, X, Sparkles
 } from "lucide-react";
 
+interface StreamingAvailability {
+  criterion?: string;
+  apple?: string;
+  netflix?: string;
+  prime?: string;
+  hbo?: string;
+  [key: string]: string | undefined;
+}
+
 interface FilmAdaptation {
   id: string;
   book_title: string;
@@ -27,7 +36,7 @@ interface FilmAdaptation {
   poster_url: string | null;
   trailer_url: string | null;
   criterion_spine: number | null;
-  streaming_availability: Record<string, string> | null;
+  streaming_availability: StreamingAvailability | null;
 }
 
 const emptyFilm: Partial<FilmAdaptation> = {
@@ -42,6 +51,7 @@ const emptyFilm: Partial<FilmAdaptation> = {
   poster_url: '',
   trailer_url: '',
   criterion_spine: null,
+  streaming_availability: {},
 };
 
 export const AdminFilmAdaptationsPanel = () => {
@@ -166,6 +176,13 @@ export const AdminFilmAdaptationsPanel = () => {
     setIsSaving(true);
 
     try {
+      // Clean up streaming_availability - remove empty strings
+      const cleanedStreaming = editingFilm.streaming_availability 
+        ? Object.fromEntries(
+            Object.entries(editingFilm.streaming_availability).filter(([_, v]) => v && v.trim() !== '')
+          )
+        : null;
+
       const filmData = {
         book_title: editingFilm.book_title,
         book_author: editingFilm.book_author,
@@ -178,6 +195,7 @@ export const AdminFilmAdaptationsPanel = () => {
         poster_url: editingFilm.poster_url || null,
         trailer_url: editingFilm.trailer_url || null,
         criterion_spine: editingFilm.criterion_spine,
+        streaming_availability: cleanedStreaming && Object.keys(cleanedStreaming).length > 0 ? cleanedStreaming : null,
       };
 
       if (editingFilm.id) {
@@ -426,6 +444,92 @@ export const AdminFilmAdaptationsPanel = () => {
                         placeholder="https://www.youtube.com/watch?v=..."
                         className="bg-slate-800 border-slate-700"
                       />
+                    </div>
+
+                    {/* Streaming Availability Section */}
+                    <div className="space-y-3 pt-4 border-t border-slate-700">
+                      <Label className="text-amber-300 font-medium">Streaming Availability</Label>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-300 text-sm">Criterion URL</Label>
+                          <Input
+                            value={editingFilm.streaming_availability?.criterion || ''}
+                            onChange={e => setEditingFilm({ 
+                              ...editingFilm, 
+                              streaming_availability: { 
+                                ...editingFilm.streaming_availability, 
+                                criterion: e.target.value || undefined 
+                              } 
+                            })}
+                            placeholder="https://www.criterion.com/films/..."
+                            className="bg-slate-800 border-slate-700"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-300 text-sm">Apple TV URL</Label>
+                          <Input
+                            value={editingFilm.streaming_availability?.apple || ''}
+                            onChange={e => setEditingFilm({ 
+                              ...editingFilm, 
+                              streaming_availability: { 
+                                ...editingFilm.streaming_availability, 
+                                apple: e.target.value || undefined 
+                              } 
+                            })}
+                            placeholder="https://tv.apple.com/movie/..."
+                            className="bg-slate-800 border-slate-700"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-300 text-sm">Netflix URL</Label>
+                          <Input
+                            value={editingFilm.streaming_availability?.netflix || ''}
+                            onChange={e => setEditingFilm({ 
+                              ...editingFilm, 
+                              streaming_availability: { 
+                                ...editingFilm.streaming_availability, 
+                                netflix: e.target.value || undefined 
+                              } 
+                            })}
+                            placeholder="https://netflix.com/..."
+                            className="bg-slate-800 border-slate-700"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-300 text-sm">Prime Video URL</Label>
+                          <Input
+                            value={editingFilm.streaming_availability?.prime || ''}
+                            onChange={e => setEditingFilm({ 
+                              ...editingFilm, 
+                              streaming_availability: { 
+                                ...editingFilm.streaming_availability, 
+                                prime: e.target.value || undefined 
+                              } 
+                            })}
+                            placeholder="https://amazon.com/..."
+                            className="bg-slate-800 border-slate-700"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-300 text-sm">HBO Max URL</Label>
+                          <Input
+                            value={editingFilm.streaming_availability?.hbo || ''}
+                            onChange={e => setEditingFilm({ 
+                              ...editingFilm, 
+                              streaming_availability: { 
+                                ...editingFilm.streaming_availability, 
+                                hbo: e.target.value || undefined 
+                              } 
+                            })}
+                            placeholder="https://max.com/..."
+                            className="bg-slate-800 border-slate-700"
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     {/* Preview */}
