@@ -12,6 +12,8 @@ import { NaturalLanguageSearchBar, SearchResultsView, SearchFilters, QuerySugges
 import { semanticSearch, SemanticSearchResult, SearchFilters as SearchFiltersType } from "@/services/semanticSearchService";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { CommunityModal } from "@/components/CommunityModal";
+import { BookToScreenSection } from "@/components/BookToScreenSection";
+import { SFTimelineVisualization } from "@/components/SFTimelineVisualization";
 
 // Type for passing book data to Signal Archive
 export interface SpotlightBook {
@@ -185,6 +187,16 @@ const Discovery: React.FC = () => {
                 </div>
               )}
             </div>
+          </section>
+
+          {/* Book to Screen Section */}
+          <section className="max-w-6xl mx-auto mb-12">
+            <BookToScreenSection />
+          </section>
+
+          {/* SF Timeline */}
+          <section className="max-w-4xl mx-auto mb-12">
+            <SFTimelineVisualization />
           </section>
 
           {/* Navigation Links */}
