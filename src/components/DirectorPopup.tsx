@@ -169,15 +169,43 @@ export const DirectorPopup: React.FC<DirectorPopupProps> = ({
 
     setIsEnriching(true);
     try {
-      // Simple enrichment - update that data is being requested
       toast({
-        title: 'Enrichment requested',
-        description: `Looking up data for ${fullDirector.name}...`,
+        title: 'Enrichment started',
+        description: `Fetching Wikipedia data for ${fullDirector.name}...`,
       });
-      
-      // For now, open Wikipedia in new tab as a manual enrichment helper
-      const searchQuery = `${fullDirector.name} film director`;
-      window.open(`https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(searchQuery)}`, '_blank');
+
+      const { data, error } = await supabase.functions.invoke('enrich-director-data', {
+        body: { directorId: fullDirector.id, directorName: fullDirector.name }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast({
+          title: 'Enrichment complete',
+          description: `Updated data for ${fullDirector.name}`,
+        });
+        
+        // Refresh director data
+        const { data: refreshed } = await supabase
+          .from('sf_directors')
+          .select('*')
+          .eq('id', fullDirector.id)
+          .single();
+        
+        if (refreshed) {
+          setFullDirector(refreshed as Director);
+        }
+      } else {
+        throw new Error(data.error || 'Enrichment failed');
+      }
+    } catch (err) {
+      console.error('Enrichment error:', err);
+      toast({
+        title: 'Enrichment failed',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'destructive'
+      });
     } finally {
       setIsEnriching(false);
     }
