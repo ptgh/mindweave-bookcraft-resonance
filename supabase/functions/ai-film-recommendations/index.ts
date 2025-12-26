@@ -39,7 +39,7 @@ serve(async (req) => {
     const existingTitles = existingFilms?.map(f => f.film_title.toLowerCase()) || [];
     const existingTitlesStr = existingFilms?.map(f => f.film_title).join(', ') || '';
 
-    const systemPrompt = `You are a science fiction film expert. Your task is to suggest classic SF book-to-film adaptations that would be interesting for a curated collection.
+const systemPrompt = `You are a science fiction film expert. Your task is to suggest classic SF book-to-film adaptations that would be interesting for a curated collection.
 
 Focus on:
 - Classic and influential SF adaptations (1920s-2020s)
@@ -47,6 +47,8 @@ Focus on:
 - Critically acclaimed adaptations
 - Mix of well-known classics and hidden gems
 - Diverse range of directors and authors
+
+IMPORTANT: Use only English characters in your responses. Author names must be in English/Latin script only (e.g., "Isaac Asimov" not transliterated names). If there are multiple authors, separate with commas only.
 
 Existing films in collection (AVOID suggesting these): ${existingTitlesStr}`;
 

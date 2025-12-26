@@ -18,6 +18,23 @@ interface AIRecommendation {
   reason: string;
 }
 
+// Clean author names from AI responses
+const cleanAuthorName = (author: string): string => {
+  return author
+    .replace(/[\u0980-\u09FF]+/g, '') // Remove Bengali characters
+    .replace(/\s+(or|and)\s+/gi, ', ') // Normalize separators
+    .replace(/\s*\([^)]*\)\s*/g, ' ') // Remove parenthetical notes
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+const truncateText = (text: string, maxLength: number = 35): string => {
+  const cleaned = cleanAuthorName(text);
+  if (cleaned.length <= maxLength) return cleaned;
+  const breakPoint = cleaned.lastIndexOf(',', maxLength);
+  return cleaned.substring(0, breakPoint > 10 ? breakPoint : maxLength) + '...';
+};
+
 const BookToScreen: React.FC = () => {
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [isAILoading, setIsAILoading] = useState(false);
@@ -166,8 +183,8 @@ const BookToScreen: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Based on "{rec.book_title}" by {rec.author}
+                      <p className="text-xs text-muted-foreground mt-1" title={rec.author}>
+                        Based on "{rec.book_title}" by {truncateText(rec.author)}
                       </p>
                       <p className="text-xs text-violet-300 mt-1">Dir: {rec.director}</p>
                       <p className="text-xs text-muted-foreground/80 mt-2 italic">{rec.reason}</p>
