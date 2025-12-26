@@ -83,27 +83,29 @@ const AppRoutes = () => {
 
   // If user is authenticated, show all routes including test-brain
   return (
-    <Suspense fallback={SuspenseFallback}>
-      <Routes>
-        <Route path="/" element={<Discovery />} />
-        <Route path="/library" element={<Index />} />
-        <Route path="/thread-map" element={<Navigate to="/book-browser" replace />} />
-        <Route path="/insights" element={<ReadingInsights />} />
-        <Route path="/author-matrix" element={<AuthorMatrix />} />
-        <Route path="/search" element={<Search />} />
-        <Route path="/book-browser" element={<BookBrowser />} />
-        <Route path="/publisher-resonance" element={<PublisherResonance />} />
-        
-        <Route path="/test-brain" element={<TestBrain />} />
-        <Route path="/community" element={<Community />} />
-        <Route path="/admin/enrichment" element={<AdminEnrichment />} />
-        <Route path="/admin/populate" element={<AdminPopulate />} />
-        <Route path="/unsubscribe/:token" element={<Unsubscribe />} />
-        <Route path="/auth" element={<Navigate to="/" replace />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+    <>
+      <Suspense fallback={SuspenseFallback}>
+        <Routes>
+          <Route path="/" element={<Discovery />} />
+          <Route path="/library" element={<Index />} />
+          <Route path="/thread-map" element={<Navigate to="/book-browser" replace />} />
+          <Route path="/insights" element={<ReadingInsights />} />
+          <Route path="/author-matrix" element={<AuthorMatrix />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/book-browser" element={<BookBrowser />} />
+          <Route path="/publisher-resonance" element={<PublisherResonance />} />
+          
+          <Route path="/test-brain" element={<TestBrain />} />
+          <Route path="/community" element={<Community />} />
+          <Route path="/admin/enrichment" element={<AdminEnrichment />} />
+          <Route path="/admin/populate" element={<AdminPopulate />} />
+          <Route path="/unsubscribe/:token" element={<Unsubscribe />} />
+          <Route path="/auth" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
       <FloatingNeuralAssistant />
-    </Suspense>
+    </>
   );
 };
 
