@@ -6,6 +6,24 @@ declare const __APP_BUILD_ID__: string | undefined;
 
 const BUILD_ID = typeof __APP_BUILD_ID__ === "string" ? __APP_BUILD_ID__ : "dev";
 const RELOAD_KEY = `leafnode:app_update_reloaded:${BUILD_ID}`;
+const BUILD_PARAM_KEY = `leafnode:app_update_param_set:${BUILD_ID}`;
+
+function ensureBuildIdInUrlOnce() {
+  if (typeof window === "undefined") return;
+
+  try {
+    if (sessionStorage.getItem(BUILD_PARAM_KEY) === "1") return;
+    sessionStorage.setItem(BUILD_PARAM_KEY, "1");
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("v") !== BUILD_ID) {
+      url.searchParams.set("v", BUILD_ID);
+      window.location.replace(url.toString());
+    }
+  } catch {
+    // ignore
+  }
+}
 
 function isChunkLoadError(err: unknown): boolean {
   const message =
@@ -18,12 +36,18 @@ function isChunkLoadError(err: unknown): boolean {
   );
 }
 
-function reloadOnceWithCacheBust() {
+function reloadOnceWithCacheBust(reason?: unknown) {
   if (typeof window === "undefined") return;
 
   try {
     if (sessionStorage.getItem(RELOAD_KEY) === "1") return;
     sessionStorage.setItem(RELOAD_KEY, "1");
+
+    console.warn("[Leafnode] Detected chunk-load failure; reloading with cache-bust", {
+      buildId: BUILD_ID,
+      href: window.location.href,
+      reason: typeof reason === "string" ? reason : (reason as any)?.message ?? reason,
+    });
 
     const url = new URL(window.location.href);
     url.searchParams.set("v", BUILD_ID);
@@ -36,12 +60,17 @@ function reloadOnceWithCacheBust() {
 export function setupAppUpdateRecovery() {
   if (typeof window === "undefined") return;
 
+  // Ensures users land on a URL that busts stale HTML caches after deploys,
+  // but only once per build per session.
+  ensureBuildIdInUrlOnce();
+
   // Vite emits this event when preloading dynamic imports fails.
   window.addEventListener("vite:preloadError", (event: Event) => {
     // Some browsers attach error details differently.
     const anyEvent = event as any;
-    if (isChunkLoadError(anyEvent?.reason ?? anyEvent?.message ?? "vite:preloadError")) {
-      reloadOnceWithCacheBust();
+    const reason = anyEvent?.reason ?? anyEvent?.message ?? "vite:preloadError";
+    if (isChunkLoadError(reason)) {
+      reloadOnceWithCacheBust(reason);
     }
   });
 
@@ -49,7 +78,7 @@ export function setupAppUpdateRecovery() {
   window.addEventListener("unhandledrejection", (event: PromiseRejectionEvent) => {
     if (isChunkLoadError(event.reason)) {
       event.preventDefault?.();
-      reloadOnceWithCacheBust();
+      reloadOnceWithCacheBust(event.reason);
     }
   });
 
@@ -57,7 +86,7 @@ export function setupAppUpdateRecovery() {
     const e = event as ErrorEvent;
     if (isChunkLoadError(e.error ?? e.message)) {
       e.preventDefault?.();
-      reloadOnceWithCacheBust();
+      reloadOnceWithCacheBust(e.error ?? e.message);
     }
   });
 }

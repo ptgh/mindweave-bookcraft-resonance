@@ -8,9 +8,13 @@ import { reportWebVitals } from './utils/webVitals'
 import { applyReducedMotionCSS, configureGSAPForReducedMotion } from './utils/reducedMotion'
 import { analytics } from './utils/analytics'
 import { setupAppUpdateRecovery } from './utils/appUpdateRecovery'
+import { setupRuntimeDiagnostics } from './utils/runtimeDiagnostics'
 
 // Recover from stale-cache / chunk-load failures after deploys (common on Safari)
 setupAppUpdateRecovery();
+
+// Capture runtime error details (for diagnosing ErrorBoundary crashes)
+setupRuntimeDiagnostics();
 
 // Apply iOS accessibility fixes on load
 enableIOSScrollFix();
