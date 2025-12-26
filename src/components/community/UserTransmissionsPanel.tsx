@@ -4,6 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import gsap from 'gsap';
+import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
+import type { EnrichedPublisherBook } from '@/services/publisherService';
 
 interface UserProfile {
   id: string;
@@ -33,8 +35,9 @@ export const UserTransmissionsPanel: React.FC<UserTransmissionsPanelProps> = ({
 }) => {
   const [transmissions, setTransmissions] = useState<Transmission[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedBook, setSelectedBook] = useState<EnrichedPublisherBook | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const booksRef = useRef<(HTMLDivElement | null)[]>([]);
+  const booksRef = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
     if (isOpen && user.id) {
@@ -135,9 +138,9 @@ export const UserTransmissionsPanel: React.FC<UserTransmissionsPanelProps> = ({
       </div>
 
       {loading ? (
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="w-16 h-24 bg-slate-700/50 rounded animate-pulse flex-shrink-0" />
+            <div key={i} className="w-12 h-[72px] bg-slate-700/50 rounded animate-pulse flex-shrink-0" />
           ))}
         </div>
       ) : transmissions.length === 0 ? (
@@ -146,33 +149,49 @@ export const UserTransmissionsPanel: React.FC<UserTransmissionsPanelProps> = ({
           <p className="text-sm text-slate-500">No books in library yet</p>
         </div>
       ) : (
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-700">
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
           {transmissions.map((book, index) => (
-            <div
+            <button
               key={book.id}
               ref={el => { booksRef.current[index] = el; }}
-              className="flex-shrink-0 group cursor-pointer"
+              className="flex-shrink-0 group cursor-pointer text-left"
               title={`${book.title} by ${book.author}`}
+              onClick={() => setSelectedBook({
+                id: `transmission-${book.id}`,
+                series_id: 'user-library',
+                title: book.title || 'Unknown',
+                author: book.author || 'Unknown',
+                cover_url: book.cover_url,
+                created_at: new Date().toISOString()
+              })}
             >
               {book.cover_url ? (
                 <img
                   src={book.cover_url}
                   alt={book.title || 'Book cover'}
-                  className="w-16 h-24 object-cover rounded shadow-md group-hover:scale-105 transition-transform"
+                  className="w-12 h-[72px] object-cover rounded shadow-md group-hover:scale-105 transition-transform"
                 />
               ) : (
-                <div className="w-16 h-24 bg-slate-700 rounded flex items-center justify-center shadow-md">
-                  <BookOpen className="w-6 h-6 text-slate-500" />
+                <div className="w-12 h-[72px] bg-slate-700 rounded flex items-center justify-center shadow-md">
+                  <BookOpen className="w-5 h-5 text-slate-500" />
                 </div>
               )}
-            </div>
+            </button>
           ))}
           {transmissions.length === 10 && (
-            <div className="w-16 h-24 bg-slate-700/30 rounded flex items-center justify-center flex-shrink-0">
-              <ChevronRight className="w-5 h-5 text-slate-500" />
+            <div className="w-12 h-[72px] bg-slate-700/30 rounded flex items-center justify-center flex-shrink-0">
+              <ChevronRight className="w-4 h-4 text-slate-500" />
             </div>
           )}
         </div>
+      )}
+
+      {selectedBook && (
+        <EnhancedBookPreviewModal
+          book={selectedBook}
+          onClose={() => setSelectedBook(null)}
+          onAddBook={() => {}}
+        />
       )}
     </div>
   );

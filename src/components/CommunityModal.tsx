@@ -259,7 +259,7 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <p className="text-slate-200 font-medium">{user.display_name || 'Anonymous'}</p>
+              <p className="text-slate-200 font-medium">{user.display_name || user.id.slice(0, 8)}</p>
               {mutual && (
                 <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full font-medium">
                   Mutual
@@ -339,7 +339,7 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h2 className="text-lg font-semibold text-slate-100">{selectedUser.display_name || 'Anonymous'}</h2>
+                <h2 className="text-lg font-semibold text-slate-100">{selectedUser.display_name || selectedUser.id.slice(0, 8)}</h2>
                 {selectedUser.bio && (
                   <p className="text-xs text-slate-400 line-clamp-1">{selectedUser.bio}</p>
                 )}
