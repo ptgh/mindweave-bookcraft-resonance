@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Film, Book, Star, Calendar, Trophy, ExternalLink, Play, Search, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Film, Book, Star, Calendar, Trophy, ExternalLink, Play, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,23 +11,9 @@ import { EnrichedPublisherBook } from '@/services/publisherService';
 import { AuthorPopup } from '@/components/AuthorPopup';
 import { DirectorPopup } from '@/components/DirectorPopup';
 import { ScifiAuthor } from '@/services/scifiAuthorsService';
-import { getGoogleWatchLink, getProviderDirectLink, getYouTubeSearchUrl, extractYouTubeId, getCriterionBrowseUrl } from '@/utils/streamingLinks';
+import { getYouTubeSearchUrl, extractYouTubeId, getCriterionBrowseUrl } from '@/utils/streamingLinks';
 import { FilterMode } from './BookToScreenSelector';
 
-interface WatchProvider {
-  id: number;
-  name: string;
-  logo: string | null;
-  priority: number;
-  deepLink?: string | null;
-}
-
-interface WatchProvidersData {
-  streaming: WatchProvider[];
-  rent: WatchProvider[];
-  buy: WatchProvider[];
-  link: string | null;
-}
 
 interface FilmAdaptation {
   id: string;
@@ -82,9 +68,8 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const [watchProviders, setWatchProviders] = useState<WatchProvidersData | null>(null);
   const [tmdbTrailer, setTmdbTrailer] = useState<{ url: string; key: string } | null>(null);
-  const [isLoadingProviders, setIsLoadingProviders] = useState(false);
+  const [isLoadingTrailer, setIsLoadingTrailer] = useState(false);
 
   // Clean author names - remove encoding issues and truncate for display
   const cleanAuthorName = (author: string): string => {
@@ -259,54 +244,33 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     setSelectedBook(book);
   };
 
-  // Auto-detect user region from timezone
-  const getUserRegion = useCallback((): string => {
-    try {
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const regionMap: Record<string, string> = {
-        'Australia': 'AU', 'Europe/London': 'GB', 'Europe/Paris': 'FR', 'Europe/Berlin': 'DE',
-        'America/New_York': 'US', 'America/Los_Angeles': 'US', 'America/Chicago': 'US',
-        'Asia/Tokyo': 'JP', 'Asia/Hong_Kong': 'HK', 'Pacific/Auckland': 'NZ'
-      };
-      for (const [key, code] of Object.entries(regionMap)) {
-        if (tz.includes(key)) return code;
-      }
-      return 'US'; // Default
-    } catch { return 'US'; }
-  }, []);
-
   const openFilmModal = async (film: FilmAdaptation) => {
     setSelectedFilm(film);
     setShowFilmModal(true);
-    setWatchProviders(null);
     setTmdbTrailer(null);
     
-    // Fetch watch providers and trailer from TMDB with auto-detected region
-    setIsLoadingProviders(true);
-    try {
-      const region = getUserRegion();
-      const { data, error } = await supabase.functions.invoke('get-watch-providers', {
-        body: { filmTitle: film.film_title, filmYear: film.film_year, region }
-      });
-      
-      if (!error && data?.success && data?.found) {
-        setWatchProviders(data.providers);
-        // Use TMDB trailer if available
-        if (data.trailer?.key) {
+    // Fetch trailer from TMDB if not already stored
+    if (!film.trailer_url) {
+      setIsLoadingTrailer(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('get-watch-providers', {
+          body: { filmTitle: film.film_title, filmYear: film.film_year, region: 'US' }
+        });
+        
+        if (!error && data?.success && data?.trailer?.key) {
           setTmdbTrailer({ url: data.trailer.url, key: data.trailer.key });
         }
+      } catch (e) {
+        console.error('Failed to fetch trailer:', e);
+      } finally {
+        setIsLoadingTrailer(false);
       }
-    } catch (e) {
-      console.error('Failed to fetch watch providers:', e);
-    } finally {
-      setIsLoadingProviders(false);
     }
   };
 
   const closeFilmModal = () => {
     setShowFilmModal(false);
     setSelectedFilm(null);
-    setWatchProviders(null);
     setTmdbTrailer(null);
   };
 
@@ -513,27 +477,13 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                   </button>
                 </div>
 
-                {/* Criterion Badge with purchase link */}
+                {/* Criterion Badge - compact */}
                 {isInCriterion && (
-                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/20">
-                    <div className="flex items-center gap-1.5">
-                      <img src="/images/criterion-logo.jpg" alt="" className="h-3 w-auto rounded-sm" />
-                      <span className="text-[10px] text-amber-400 font-medium">Criterion Collection</span>
-                      {film.criterion_spine && (
-                        <span className="text-[9px] text-muted-foreground">#{film.criterion_spine}</span>
-                      )}
-                    </div>
-                    {film.criterion_url && (
-                      <a
-                        href={film.criterion_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[10px] text-amber-400 hover:text-amber-300 inline-flex items-center gap-1"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Buy
-                        <ExternalLink className="w-2.5 h-2.5" />
-                      </a>
+                  <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border/20">
+                    <img src="/images/criterion-logo.jpg" alt="" className="h-2.5 w-auto rounded-sm opacity-70" />
+                    <span className="text-[9px] text-amber-400/80">Criterion</span>
+                    {film.criterion_spine && (
+                      <span className="text-[8px] text-muted-foreground">#{film.criterion_spine}</span>
                     )}
                   </div>
                 )}
@@ -597,7 +547,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                     );
                   }
                   
-                  if (isLoadingProviders) {
+                  if (isLoadingTrailer) {
                     return (
                       <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950">
                         <Loader2 className="w-10 h-10 text-amber-400/50 animate-spin mb-3" />
@@ -682,84 +632,61 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                   </div>
                 )}
 
-                {/* Where to Watch - with Google direct links for each provider */}
+                {/* Where to Watch - Google search integration */}
                 <div className="space-y-4 pt-4 border-t border-border/30">
                   <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
                     <ExternalLink className="w-4 h-4 text-amber-400" />
                     Where to Watch
                   </h4>
                   
-                  {(() => {
-                    // Filter for Google Play only (provider_id: 3 = Google Play Movies, 192 = YouTube)
-                    const GOOGLE_PLAY_ID = 3;
-                    const googlePlayRent = watchProviders?.rent.find(p => p.id === GOOGLE_PLAY_ID);
-                    const googlePlayBuy = watchProviders?.buy.find(p => p.id === GOOGLE_PLAY_ID);
-                    const hasGooglePlay = googlePlayRent || googlePlayBuy;
-                    
-                    if (isLoadingProviders) {
-                      return (
-                        <div className="flex items-center gap-2 text-muted-foreground py-2">
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span className="text-sm">Finding streaming options...</span>
-                        </div>
-                      );
-                    }
-                    
-                    return (
-                      <div className="space-y-3">
-                        {/* Google Play - Rent/Buy */}
-                        {hasGooglePlay ? (
-                          <a
-                            href={`https://play.google.com/store/search?q=${encodeURIComponent(selectedFilm.film_title + ' ' + (selectedFilm.film_year || ''))}&c=movies`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border/30 hover:border-primary/30 transition-all group"
-                          >
-                            {(googlePlayRent?.logo || googlePlayBuy?.logo) && (
-                              <img 
-                                src={googlePlayRent?.logo || googlePlayBuy?.logo || ''} 
-                                alt="Google Play" 
-                                className="w-10 h-10 rounded-lg"
-                              />
-                            )}
-                            <div className="text-left">
-                              <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors block">
-                                Google Play Movies
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {googlePlayRent && googlePlayBuy ? 'Rent or Buy' : googlePlayRent ? 'Rent' : 'Buy'}
-                              </span>
-                            </div>
-                            <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary ml-auto" />
-                          </a>
-                        ) : (
-                          <a
-                            href={`https://play.google.com/store/search?q=${encodeURIComponent(selectedFilm.film_title + ' ' + (selectedFilm.film_year || ''))}&c=movies`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/30 text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            <Search className="w-4 h-4" />
-                            Search on Google Play
-                          </a>
-                        )}
-
-                        {/* Criterion link */}
-                        {selectedFilm.is_criterion_collection && selectedFilm.criterion_url && (
-                          <a
-                            href={selectedFilm.criterion_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 transition-colors"
-                          >
-                            <img src="/images/criterion-logo.jpg" alt="" className="h-4 w-auto rounded-sm" />
-                            Buy from Criterion Collection
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        )}
+                  <div className="space-y-3">
+                    {/* Primary: Google Watch search - opens in new tab showing all providers */}
+                    <a
+                      href={`https://www.google.com/search?q=watch+${encodeURIComponent(selectedFilm.film_title)}+${selectedFilm.film_year || ''}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border/30 hover:border-primary/30 transition-all group"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center">
+                        <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                        </svg>
                       </div>
-                    );
-                  })()}
+                      <div className="text-left flex-1">
+                        <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors block">
+                          Find Streaming Options
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          See all available platforms
+                        </span>
+                      </div>
+                      <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
+                    </a>
+
+                    {/* Criterion Collection - fixed URL format */}
+                    {selectedFilm.is_criterion_collection && (
+                      <a
+                        href={`https://www.criterion.com/search#stq=${encodeURIComponent(selectedFilm.film_title)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-all group"
+                      >
+                        <img src="/images/criterion-logo.jpg" alt="" className="h-5 w-auto rounded-sm" />
+                        <div className="text-left flex-1">
+                          <span className="text-sm font-medium text-amber-300 group-hover:text-amber-200 transition-colors">
+                            Criterion Collection
+                          </span>
+                          <span className="text-[10px] text-amber-400/60 block">
+                            Buy Blu-ray / 4K
+                          </span>
+                        </div>
+                        <ExternalLink className="w-3.5 h-3.5 text-amber-400/60" />
+                      </a>
+                    )}
+                  </div>
                 </div>
 
                 {/* View Book button */}
