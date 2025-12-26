@@ -30,6 +30,8 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(true);
+  const [userTransmissions, setUserTransmissions] = useState<any[]>([]);
+  const [userName, setUserName] = useState<string | null>(null);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -41,6 +43,42 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
   const { toast } = useToast();
   const pageContext = usePageContext();
   const location = useLocation();
+
+  // Fetch user's transmissions and profile for AI context
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user?.id) return;
+      
+      try {
+        // Fetch profile for user name
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name, first_name')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile) {
+          setUserName(profile.display_name || profile.first_name || null);
+        }
+        
+        // Fetch user's transmissions
+        const { data: transmissions } = await supabase
+          .from('transmissions')
+          .select('id, title, author, tags, notes, publication_year, narrative_time_period, historical_context_tags')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(50);
+        
+        if (transmissions) {
+          setUserTransmissions(transmissions);
+        }
+      } catch (error) {
+        console.error('Error fetching user data for assistant:', error);
+      }
+    };
+    
+    fetchUserData();
+  }, [user?.id]);
   
   // Hide on Neural Map page (it has its own BrainChatInterface)
   const isNeuralMapPage = location.pathname === '/test-brain';
@@ -114,8 +152,9 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
           message: text.trim(),
           messages: messageHistory,
           userId: user?.id,
+          userName: userName,
           brainData: { nodes: [], links: [], activeFilters: [] },
-          userTransmissions: [],
+          userTransmissions: userTransmissions,
           pageContext: {
             pageName: pageContext.pageName,
             systemContextAddition: pageContext.systemContextAddition,
@@ -156,7 +195,7 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, messages, user?.id, pageContext, typewriterEffect, voiceEnabled, toast]);
+  }, [isLoading, messages, user?.id, userName, userTransmissions, pageContext, typewriterEffect, voiceEnabled, toast]);
 
   // Voice input
   const startRecording = useCallback(async () => {
