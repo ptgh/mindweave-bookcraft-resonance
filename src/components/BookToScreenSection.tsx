@@ -19,6 +19,7 @@ interface WatchProvider {
   name: string;
   logo: string | null;
   priority: number;
+  deepLink?: string | null;
 }
 
 interface WatchProvidersData {
@@ -257,16 +258,33 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     setSelectedBook(book);
   };
 
+  // Auto-detect user region from timezone
+  const getUserRegion = useCallback((): string => {
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const regionMap: Record<string, string> = {
+        'Australia': 'AU', 'Europe/London': 'GB', 'Europe/Paris': 'FR', 'Europe/Berlin': 'DE',
+        'America/New_York': 'US', 'America/Los_Angeles': 'US', 'America/Chicago': 'US',
+        'Asia/Tokyo': 'JP', 'Asia/Hong_Kong': 'HK', 'Pacific/Auckland': 'NZ'
+      };
+      for (const [key, code] of Object.entries(regionMap)) {
+        if (tz.includes(key)) return code;
+      }
+      return 'US'; // Default
+    } catch { return 'US'; }
+  }, []);
+
   const openFilmModal = async (film: FilmAdaptation) => {
     setSelectedFilm(film);
     setShowFilmModal(true);
     setWatchProviders(null);
     
-    // Fetch watch providers from TMDB
+    // Fetch watch providers from TMDB with auto-detected region
     setIsLoadingProviders(true);
     try {
+      const region = getUserRegion();
       const { data, error } = await supabase.functions.invoke('get-watch-providers', {
-        body: { filmTitle: film.film_title, filmYear: film.film_year, region: 'US' }
+        body: { filmTitle: film.film_title, filmYear: film.film_year, region }
       });
       
       if (!error && data?.success && data?.found) {
@@ -538,228 +556,219 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
       {/* Film Preview Modal */}
       {showFilmModal && selectedFilm && createPortal(
         <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4" onClick={closeFilmModal}>
-          <div className="relative w-full max-w-2xl bg-slate-900/95 rounded-xl overflow-hidden shadow-2xl border border-amber-500/30" onClick={(e) => e.stopPropagation()}>
-            {/* Trailer */}
-            <div className="aspect-video bg-black relative">
-              {selectedFilm.trailer_url && extractYouTubeId(selectedFilm.trailer_url) ? (
-                <iframe
-                  src={`https://www.youtube.com/embed/${extractYouTubeId(selectedFilm.trailer_url)}?rel=0&autoplay=0`}
-                  title={`${selectedFilm.film_title} Trailer`}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950">
-                  <Film className="w-12 h-12 text-amber-400/30 mb-3" />
-                  <p className="text-sm text-muted-foreground mb-3">Find official trailer</p>
-                  <a
-                    href={getYouTubeSearchUrl(selectedFilm.film_title)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
-                  >
-                    <Play className="w-4 h-4 fill-white" />
-                    Watch on YouTube
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
+          <div 
+            className="relative w-full max-w-2xl max-h-[85vh] bg-slate-900/95 rounded-xl shadow-2xl border border-amber-500/30 flex flex-col overflow-hidden" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button 
+              onClick={closeFilmModal}
+              className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-white/80 hover:text-white transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto">
+              {/* Trailer - smaller */}
+              <div className="aspect-video bg-black relative max-h-[280px]">
+                {selectedFilm.trailer_url && extractYouTubeId(selectedFilm.trailer_url) ? (
+                  <iframe
+                    src={`https://www.youtube.com/embed/${extractYouTubeId(selectedFilm.trailer_url)}?rel=0&autoplay=0`}
+                    title={`${selectedFilm.film_title} Trailer`}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950">
+                    <Film className="w-10 h-10 text-amber-400/30 mb-2" />
+                    <a
+                      href={getYouTubeSearchUrl(selectedFilm.film_title)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg transition-colors"
+                    >
+                      <Play className="w-3 h-3 fill-white" />
+                      Watch on YouTube
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 space-y-3">
+                {/* Title & meta - compact */}
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground leading-tight">{selectedFilm.film_title}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Based on "{selectedFilm.book_title}" by {selectedFilm.book_author}
+                  </p>
                 </div>
-              )}
-            </div>
 
-            <div className="p-6 space-y-4">
-              <div>
-                <h3 className="text-xl font-semibold text-foreground">{selectedFilm.film_title}</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Based on "{selectedFilm.book_title}" by {selectedFilm.book_author}
-                </p>
-              </div>
+                <div className="flex flex-wrap gap-3 text-sm">
+                  {selectedFilm.film_year && (
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Calendar className="w-3 h-3 text-amber-400" />
+                      <span className="text-xs">{selectedFilm.film_year}</span>
+                    </div>
+                  )}
+                  {selectedFilm.director && (
+                    <button onClick={() => handleDirectorClick(selectedFilm.director!)} className="text-xs text-amber-300 hover:text-amber-400 transition-colors">
+                      Dir: {selectedFilm.director}
+                    </button>
+                  )}
+                  {selectedFilm.imdb_rating && (
+                    <div className="flex items-center gap-1 text-amber-400">
+                      <Star className="w-3 h-3 fill-amber-400" />
+                      <span className="text-xs font-medium">{selectedFilm.imdb_rating}/10</span>
+                    </div>
+                  )}
+                </div>
 
-              <div className="flex flex-wrap gap-4 text-sm">
-                {selectedFilm.film_year && (
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Calendar className="w-4 h-4 text-amber-400" />
-                    <span>{selectedFilm.film_year}</span>
-                  </div>
+                {selectedFilm.notable_differences && (
+                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{selectedFilm.notable_differences}</p>
                 )}
-                {selectedFilm.director && (
-                  <button onClick={() => handleDirectorClick(selectedFilm.director!)} className="text-amber-300 hover:text-amber-400 transition-colors relative group">
-                    <span>Dir: {selectedFilm.director}</span>
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-amber-400 group-hover:w-full transition-all duration-300" />
-                  </button>
-                )}
-                {selectedFilm.imdb_rating && (
-                  <div className="flex items-center gap-1 text-amber-400">
-                    <Star className="w-4 h-4 fill-amber-400" />
-                    <span className="font-medium">{selectedFilm.imdb_rating}/10</span>
-                  </div>
-                )}
-              </div>
 
-              {selectedFilm.notable_differences && (
-                <p className="text-sm text-muted-foreground leading-relaxed">{selectedFilm.notable_differences}</p>
-              )}
-
-              {selectedFilm.awards && selectedFilm.awards.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-                    <Trophy className="w-4 h-4 text-amber-400" />
-                    <span>Awards</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedFilm.awards.slice(0, 4).map((award, idx) => (
-                      <a
-                        key={idx}
-                        href={`https://www.google.com/search?q=${encodeURIComponent(award.name + ' ' + award.year)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-colors cursor-pointer"
-                      >
+                {selectedFilm.awards && selectedFilm.awards.length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Trophy className="w-3 h-3 text-amber-400" />
+                    {selectedFilm.awards.slice(0, 3).map((award, idx) => (
+                      <span key={idx} className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
                         {award.name}
-                        <ExternalLink className="w-2.5 h-2.5" />
-                      </a>
+                      </span>
                     ))}
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Where to Watch - TMDB Providers + Fallback */}
-              <div className="space-y-3 pt-2 border-t border-border/20">
-                <p className="text-sm font-medium text-foreground">Where to Watch</p>
-                
-                {isLoadingProviders ? (
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm py-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Finding streaming options...</span>
-                  </div>
-                ) : watchProviders && (watchProviders.streaming.length > 0 || watchProviders.rent.length > 0 || watchProviders.buy.length > 0) ? (
-                  <div className="space-y-3">
-                    {/* Streaming providers */}
-                    {watchProviders.streaming.length > 0 && (
-                      <div className="space-y-1.5">
-                        <p className="text-xs text-muted-foreground">Stream</p>
-                        <div className="flex flex-wrap gap-2">
-                          {watchProviders.streaming.slice(0, 6).map((provider) => (
+                {/* Where to Watch - condensed */}
+                <div className="space-y-2 pt-2 border-t border-border/20">
+                  <p className="text-xs font-medium text-foreground">Where to Watch</p>
+                  
+                  {isLoadingProviders ? (
+                    <div className="flex items-center gap-2 text-muted-foreground text-xs py-1">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span>Finding options...</span>
+                    </div>
+                  ) : watchProviders && (watchProviders.streaming.length > 0 || watchProviders.rent.length > 0 || watchProviders.buy.length > 0) ? (
+                    <div className="space-y-2">
+                      {/* Streaming - show logos only, use deepLinks */}
+                      {watchProviders.streaming.length > 0 && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[10px] text-muted-foreground w-10">Stream</span>
+                          {watchProviders.streaming.slice(0, 5).map((provider) => (
                             <a
                               key={provider.id}
-                              href={watchProviders.link || getGoogleWatchLink(selectedFilm.film_title, selectedFilm.film_year)}
+                              href={provider.deepLink || watchProviders.link || getGoogleWatchLink(selectedFilm.film_title, selectedFilm.film_year)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-muted/30 hover:bg-muted/50 border border-border/30 transition-colors"
-                              title={`Watch on ${provider.name}`}
+                              className="group relative"
+                              title={provider.name}
                             >
-                              {provider.logo && (
-                                <img src={provider.logo} alt="" className="w-5 h-5 rounded" />
+                              {provider.logo ? (
+                                <img src={provider.logo} alt={provider.name} className="w-7 h-7 rounded-md hover:ring-2 ring-primary/50 transition-all" />
+                              ) : (
+                                <span className="text-[10px] px-2 py-1 bg-muted/30 rounded text-muted-foreground hover:bg-muted/50">{provider.name}</span>
                               )}
-                              <span className="text-foreground">{provider.name}</span>
                             </a>
                           ))}
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Rent providers */}
-                    {watchProviders.rent.length > 0 && (
-                      <div className="space-y-1.5">
-                        <p className="text-xs text-muted-foreground">Rent</p>
-                        <div className="flex flex-wrap gap-2">
+                      {/* Rent - compact */}
+                      {watchProviders.rent.length > 0 && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[10px] text-muted-foreground w-10">Rent</span>
                           {watchProviders.rent.slice(0, 4).map((provider) => (
                             <a
                               key={provider.id}
-                              href={watchProviders.link || getGoogleWatchLink(selectedFilm.film_title, selectedFilm.film_year)}
+                              href={provider.deepLink || watchProviders.link || getGoogleWatchLink(selectedFilm.film_title, selectedFilm.film_year)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 transition-colors"
-                              title={`Rent on ${provider.name}`}
+                              title={provider.name}
                             >
-                              {provider.logo && (
-                                <img src={provider.logo} alt="" className="w-4 h-4 rounded" />
+                              {provider.logo ? (
+                                <img src={provider.logo} alt={provider.name} className="w-6 h-6 rounded opacity-80 hover:opacity-100 transition-opacity" />
+                              ) : (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-muted/20 rounded text-muted-foreground">{provider.name}</span>
                               )}
-                              <span className="text-muted-foreground">{provider.name}</span>
                             </a>
                           ))}
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Buy providers */}
-                    {watchProviders.buy.length > 0 && (
-                      <div className="space-y-1.5">
-                        <p className="text-xs text-muted-foreground">Buy</p>
-                        <div className="flex flex-wrap gap-2">
+                      {/* Buy - compact */}
+                      {watchProviders.buy.length > 0 && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[10px] text-muted-foreground w-10">Buy</span>
                           {watchProviders.buy.slice(0, 4).map((provider) => (
                             <a
                               key={provider.id}
-                              href={watchProviders.link || getGoogleWatchLink(selectedFilm.film_title, selectedFilm.film_year)}
+                              href={provider.deepLink || watchProviders.link || getGoogleWatchLink(selectedFilm.film_title, selectedFilm.film_year)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 transition-colors"
-                              title={`Buy on ${provider.name}`}
+                              title={provider.name}
                             >
-                              {provider.logo && (
-                                <img src={provider.logo} alt="" className="w-4 h-4 rounded" />
+                              {provider.logo ? (
+                                <img src={provider.logo} alt={provider.name} className="w-6 h-6 rounded opacity-80 hover:opacity-100 transition-opacity" />
+                              ) : (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-muted/20 rounded text-muted-foreground">{provider.name}</span>
                               )}
-                              <span className="text-muted-foreground">{provider.name}</span>
                             </a>
                           ))}
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Criterion Collection */}
-                    {selectedFilm.is_criterion_collection && selectedFilm.criterion_url && (
+                      {/* Criterion */}
+                      {selectedFilm.is_criterion_collection && selectedFilm.criterion_url && (
+                        <a
+                          href={selectedFilm.criterion_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-2 py-1 text-[10px] font-medium rounded bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300"
+                        >
+                          <img src="/images/criterion-logo.jpg" alt="" className="h-3 w-auto rounded-sm" />
+                          Criterion
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
                       <a
-                        href={selectedFilm.criterion_url}
+                        href={getGoogleWatchLink(selectedFilm.film_title, selectedFilm.film_year)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-300"
                       >
-                        <img src="/images/criterion-logo.jpg" alt="" className="h-4 w-auto rounded-sm" />
-                        Buy on Criterion
-                        <ExternalLink className="w-3 h-3" />
+                        <Search className="w-3 h-3" />
+                        Find Streaming
                       </a>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    <a
-                      href={getGoogleWatchLink(selectedFilm.film_title, selectedFilm.film_year)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 border-blue-500/30 text-blue-300"
-                    >
-                      <Search className="w-4 h-4" />
-                      Find Streaming Options
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                    {selectedFilm.is_criterion_collection && selectedFilm.criterion_url && (
-                      <a
-                        href={selectedFilm.criterion_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border-amber-500/30 text-amber-300"
-                      >
-                        <img src="/images/criterion-logo.jpg" alt="" className="h-4 w-auto rounded-sm" />
-                        Buy on Criterion
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                  </div>
-                )}
-                
-                <p className="text-xs text-muted-foreground/70">
-                  Streaming availability provided by TMDB
-                </p>
+                      {selectedFilm.is_criterion_collection && selectedFilm.criterion_url && (
+                        <a
+                          href={selectedFilm.criterion_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-300"
+                        >
+                          <img src="/images/criterion-logo.jpg" alt="" className="h-3 w-auto rounded-sm" />
+                          Criterion
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <button 
+                  onClick={() => { closeFilmModal(); openBookPreview(selectedFilm); }}
+                  className="w-full py-1.5 text-xs font-medium rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Book className="w-3 h-3" />
+                  View Book
+                </button>
               </div>
-
-              <button 
-                onClick={() => { closeFilmModal(); openBookPreview(selectedFilm); }}
-                className="w-full mt-2 py-1.5 text-xs font-medium rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-1.5"
-              >
-                <Book className="w-3 h-3" />
-                View Book
-              </button>
             </div>
           </div>
         </div>,
