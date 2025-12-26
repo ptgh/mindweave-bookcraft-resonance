@@ -1,6 +1,8 @@
 import { AdminEnrichmentPanel } from "@/components/AdminEnrichmentPanel";
 import { AdminPopulateBooks } from "@/components/AdminPopulateBooks";
 import { AdminFilmAdaptationsPanel } from "@/components/AdminFilmAdaptationsPanel";
+import { AdminDirectorsPanel } from "@/components/AdminDirectorsPanel";
+import { AdminImageUrlValidator } from "@/components/AdminImageUrlValidator";
 import Header from "@/components/Header";
 import { ProtectedAdminRoute } from "@/components/ProtectedAdminRoute";
 import { Button } from "@/components/ui/button";
@@ -216,6 +218,8 @@ const AdminEnrichment = () => {
 
             <AdminPopulateBooks />
             <AdminFilmAdaptationsPanel />
+            <AdminDirectorsPanel />
+            <AdminImageUrlValidator />
             <AdminEnrichmentPanel />
           </div>
         </main>
