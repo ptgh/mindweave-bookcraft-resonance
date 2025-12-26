@@ -93,7 +93,7 @@ const Header = () => {
               <Instagram className="w-4 h-4" />
             </a>
             
-            <nav className="hidden lg:flex items-center space-x-3 xl:space-x-4" role="navigation" aria-label="Main navigation">
+            <nav className="hidden lg:flex items-center space-x-3 xl:space-x-4 overflow-x-auto scrollbar-hide max-w-[calc(100vw-400px)]" role="navigation" aria-label="Main navigation">
               <Link
                 to="/"
                 className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
