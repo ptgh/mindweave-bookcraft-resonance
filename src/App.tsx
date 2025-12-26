@@ -1,9 +1,9 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { EnhancedToaster } from "@/components/ui/enhanced-toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SkipToContent } from "@/components/SkipToContent";
@@ -27,6 +27,17 @@ const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
+
+// Scroll restoration component
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  
+  return null;
+};
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
@@ -108,6 +119,7 @@ const App = () => (
         <EnhancedToaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <AppRoutes />
         </BrowserRouter>
       </TooltipProvider>

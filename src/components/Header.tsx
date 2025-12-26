@@ -96,7 +96,7 @@ const Header = () => {
             <nav className="hidden lg:flex items-center space-x-3 xl:space-x-4 overflow-x-auto scrollbar-hide max-w-[calc(100vw-400px)]" role="navigation" aria-label="Main navigation">
               <Link
                 to="/"
-                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
+                className={`transition-colors text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
                   location.pathname === '/' 
                     ? 'text-blue-400' 
                     : 'text-slate-300 hover:text-blue-400'
@@ -106,7 +106,7 @@ const Header = () => {
               </Link>
               <Link
                 to="/library"
-                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
+                className={`transition-colors text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
                   location.pathname === '/library' 
                     ? 'text-blue-400' 
                     : 'text-slate-300 hover:text-blue-400'
@@ -116,7 +116,7 @@ const Header = () => {
               </Link>
               <Link
                 to="/book-browser"
-                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
+                className={`transition-colors text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
                   location.pathname === '/book-browser' 
                     ? 'text-blue-400' 
                     : 'text-slate-300 hover:text-blue-400'
@@ -126,7 +126,7 @@ const Header = () => {
               </Link>
               <Link
                 to="/author-matrix"
-                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
+                className={`transition-colors text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
                   location.pathname === '/author-matrix' 
                     ? 'text-blue-400' 
                     : 'text-slate-300 hover:text-blue-400'
@@ -136,7 +136,7 @@ const Header = () => {
               </Link>
               <Link
                 to="/insights"
-                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
+                className={`transition-colors text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
                   location.pathname === '/insights' 
                     ? 'text-blue-400' 
                     : 'text-slate-300 hover:text-blue-400'
@@ -146,7 +146,7 @@ const Header = () => {
               </Link>
               <Link
                 to="/publisher-resonance"
-                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
+                className={`transition-colors text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
                   location.pathname === '/publisher-resonance' 
                     ? 'text-blue-400' 
                     : 'text-slate-300 hover:text-blue-400'
@@ -156,7 +156,7 @@ const Header = () => {
               </Link>
               <Link
                 to="/test-brain"
-                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
+                className={`transition-colors text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
                   location.pathname === '/test-brain' 
                     ? 'text-blue-400' 
                     : 'text-slate-300 hover:text-blue-400'
@@ -166,7 +166,7 @@ const Header = () => {
               </Link>
               <Link
                 to="/community"
-                className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
+                className={`transition-colors text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
                   location.pathname === '/community' 
                     ? 'text-emerald-400' 
                     : 'text-slate-300 hover:text-emerald-400'
@@ -180,7 +180,7 @@ const Header = () => {
                 <DropdownMenu open={adminMenuOpen} onOpenChange={setAdminMenuOpen}>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className={`transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap flex items-center gap-1 ${
+                      className={`transition-colors text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap flex items-center gap-1 ${
                         isAdminRoute 
                           ? 'text-amber-400' 
                           : 'text-amber-300/70 hover:text-amber-400'
