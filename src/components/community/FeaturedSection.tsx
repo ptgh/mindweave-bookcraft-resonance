@@ -1,9 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, BookOpen, MessageSquare, TrendingUp, Globe, Sparkles } from 'lucide-react';
+import { User, BookOpen, MessageSquare, TrendingUp, Globe, Sparkles, Film, Play, Star, Calendar } from 'lucide-react';
 import { useFeaturedContent } from '@/hooks/useFeaturedContent';
 import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 import gsap from 'gsap';
+
+interface FilmAdaptation {
+  id: string;
+  film_title: string;
+  book_title: string;
+  book_author: string;
+  film_year: number | null;
+  director: string | null;
+  imdb_rating: number | null;
+  poster_url: string | null;
+  trailer_url: string | null;
+}
 
 interface FeaturedSectionProps {
   className?: string;
@@ -15,12 +28,31 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const workRefs = useRef<(HTMLButtonElement | null)[]>([]);
   
+  // Featured film state
+  const [featuredFilm, setFeaturedFilm] = useState<FilmAdaptation | null>(null);
+  const [showTrailer, setShowTrailer] = useState(false);
+  
   // Modal state for notable works and featured book
   const [selectedBook, setSelectedBook] = useState<{
     title: string;
     author: string;
     cover_url?: string;
   } | null>(null);
+
+  // Fetch a featured film
+  useEffect(() => {
+    const fetchFeaturedFilm = async () => {
+      const { data } = await supabase
+        .from('sf_film_adaptations')
+        .select('id, film_title, book_title, book_author, film_year, director, imdb_rating, poster_url, trailer_url')
+        .order('imdb_rating', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (data) setFeaturedFilm(data);
+    };
+    fetchFeaturedFilm();
+  }, []);
 
   useEffect(() => {
     if (!sectionRef.current || loading) return;
@@ -85,10 +117,16 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
     });
   };
 
+  const extractYouTubeId = (url: string | null): string | null => {
+    if (!url) return null;
+    const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+    return match ? match[1] : null;
+  };
+
   if (loading) {
     return (
-      <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4", className)}>
-        {[1, 2, 3].map(i => (
+      <div className={cn("grid grid-cols-1 md:grid-cols-4 gap-4", className)}>
+        {[1, 2, 3, 4].map(i => (
           <div key={i} className="h-48 bg-slate-800/30 rounded-xl animate-pulse" />
         ))}
       </div>
@@ -126,7 +164,7 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
 
   return (
     <>
-      <div ref={sectionRef} className={cn("grid grid-cols-1 md:grid-cols-3 gap-4", className)}>
+      <div ref={sectionRef} className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4", className)}>
         {/* Featured Author Card */}
         <div
           ref={el => { cardsRef.current[0] = el; }}
@@ -282,7 +320,118 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
             <p className="text-sm text-slate-500">Be the first to post!</p>
           )}
         </div>
+
+        {/* Featured Film Card */}
+        <div
+          ref={el => { cardsRef.current[3] = el; }}
+          onClick={featuredFilm?.trailer_url ? () => setShowTrailer(true) : undefined}
+          className={cn(
+            "rounded-xl border p-5 transition-all duration-300 hover:shadow-lg",
+            "bg-amber-500/10",
+            "border-amber-500/20 hover:border-amber-500/40",
+            "hover:shadow-amber-500/10",
+            featuredFilm?.trailer_url && "cursor-pointer"
+          )}
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400">
+              <Film className="w-4 h-4" />
+            </div>
+            <h3 className="text-sm font-medium text-slate-400">Featured Film</h3>
+          </div>
+          
+          {featuredFilm ? (
+            <div className="flex gap-3">
+              {featuredFilm.poster_url ? (
+                <div className="relative w-16 h-24 flex-shrink-0">
+                  <img 
+                    src={featuredFilm.poster_url}
+                    alt={featuredFilm.film_title}
+                    className="w-full h-full object-cover rounded-md shadow-md"
+                  />
+                  {featuredFilm.trailer_url && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-md opacity-0 hover:opacity-100 transition-opacity">
+                      <Play className="w-6 h-6 text-white" />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="w-16 h-24 bg-slate-700 rounded-md flex items-center justify-center flex-shrink-0">
+                  <Film className="w-6 h-6 text-slate-500" />
+                </div>
+              )}
+              
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <p className="text-base font-medium text-slate-200 line-clamp-1 hover:text-amber-300 transition-colors">
+                  {featuredFilm.film_title}
+                </p>
+                <p className="text-xs text-slate-400 truncate">
+                  Based on "{featuredFilm.book_title}"
+                </p>
+                <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                  {featuredFilm.film_year && (
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {featuredFilm.film_year}
+                    </span>
+                  )}
+                  {featuredFilm.imdb_rating && (
+                    <span className="flex items-center gap-1 text-amber-400">
+                      <Star className="w-3 h-3 fill-amber-400" />
+                      {featuredFilm.imdb_rating}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">No featured film</p>
+          )}
+        </div>
       </div>
+
+      {/* Trailer Modal */}
+      {showTrailer && featuredFilm && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setShowTrailer(false)}
+        >
+          <div 
+            className="relative w-full max-w-4xl bg-slate-900 rounded-xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+              onClick={() => setShowTrailer(false)}
+            >
+              ✕
+            </button>
+            
+            {extractYouTubeId(featuredFilm.trailer_url) ? (
+              <div className="aspect-video">
+                <iframe
+                  src={`https://www.youtube.com/embed/${extractYouTubeId(featuredFilm.trailer_url)}?autoplay=1&rel=0`}
+                  title={`${featuredFilm.film_title} Trailer`}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            ) : (
+              <div className="aspect-video flex items-center justify-center bg-slate-800">
+                <p className="text-slate-400">No trailer available</p>
+              </div>
+            )}
+            
+            <div className="p-4 bg-slate-800/50 border-t border-slate-700/30">
+              <h3 className="text-lg font-medium text-slate-100">{featuredFilm.film_title}</h3>
+              <p className="text-sm text-slate-400">
+                Based on "{featuredFilm.book_title}" by {featuredFilm.book_author}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Book Preview Modal */}
       {selectedBook && (

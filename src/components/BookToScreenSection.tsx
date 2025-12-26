@@ -26,9 +26,10 @@ interface FilmAdaptation {
 
 interface BookToScreenSectionProps {
   className?: string;
+  showTitle?: boolean;
 }
 
-export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ className }) => {
+export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ className, showTitle = true }) => {
   const [adaptations, setAdaptations] = useState<FilmAdaptation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFilm, setSelectedFilm] = useState<FilmAdaptation | null>(null);
@@ -100,15 +101,17 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
 
   return (
     <div className={cn("space-y-4", className)}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Film className="w-5 h-5 text-amber-400" />
-          <h2 className="text-lg font-medium text-slate-200">Book to Screen</h2>
-          <Badge variant="outline" className="text-xs border-amber-400/30 text-amber-400">
-            SF Classics
-          </Badge>
+      {showTitle && (
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Film className="w-5 h-5 text-amber-400" />
+            <h2 className="text-lg font-medium text-slate-200">Book to Screen</h2>
+            <Badge variant="outline" className="text-xs border-amber-400/30 text-amber-400">
+              SF Classics
+            </Badge>
+          </div>
         </div>
-      </div>
+      )}
 
       <ScrollArea className="w-full">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 pb-4">

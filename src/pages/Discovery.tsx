@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Brain, BookOpen, Search, Eye, Building, Mail, Users } from "lucide-react";
+import { Brain, BookOpen, Search, Eye, Building, Mail, Users, Film } from "lucide-react";
 import Header from "@/components/Header";
 import { StandardButton } from "@/components/ui/standard-button";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
@@ -12,8 +12,6 @@ import { NaturalLanguageSearchBar, SearchResultsView, SearchFilters, QuerySugges
 import { semanticSearch, SemanticSearchResult, SearchFilters as SearchFiltersType } from "@/services/semanticSearchService";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { CommunityModal } from "@/components/CommunityModal";
-import { BookToScreenSection } from "@/components/BookToScreenSection";
-import { SFTimelineVisualization } from "@/components/SFTimelineVisualization";
 
 // Type for passing book data to Signal Archive
 export interface SpotlightBook {
@@ -189,16 +187,6 @@ const Discovery: React.FC = () => {
             </div>
           </section>
 
-          {/* Book to Screen Section */}
-          <section className="max-w-6xl mx-auto mb-12">
-            <BookToScreenSection />
-          </section>
-
-          {/* SF Timeline */}
-          <section className="max-w-4xl mx-auto mb-12">
-            <SFTimelineVisualization />
-          </section>
-
           {/* Navigation Links */}
           <div className="flex flex-col space-y-8 max-w-4xl mx-auto">
             <div ref={addFeatureBlockRef} className="feature-block">
@@ -315,6 +303,23 @@ const Discovery: React.FC = () => {
                   <h2 className="text-xl font-medium text-slate-200 mb-2">Community</h2>
                   <p className="text-slate-400 leading-relaxed text-sm">
                     Connect with other readers
+                  </p>
+                </div>
+              </Link>
+            </div>
+
+            <div ref={addFeatureBlockRef} className="feature-block">
+              <Link 
+                to="/book-to-screen"
+                className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-amber-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-amber-500/10 flex items-center space-x-6 w-full text-left"
+              >
+                <div className="w-12 h-12 bg-amber-500/20 rounded-lg flex items-center justify-center group-hover:bg-amber-500/30 transition-colors">
+                  <Film className="w-6 h-6 text-amber-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-medium text-slate-200 mb-2">Book to Screen</h2>
+                  <p className="text-slate-400 leading-relaxed text-sm">
+                    SF film adaptations with trailers
                   </p>
                 </div>
               </Link>
