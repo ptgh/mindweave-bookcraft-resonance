@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { captureReactErrorBoundary, copyLastRuntimeErrorToClipboard } from '@/utils/runtimeDiagnostics';
 
 interface Props {
   children: ReactNode;
@@ -11,6 +12,7 @@ interface State {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
+  errorId: string | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -20,6 +22,7 @@ export class ErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
+      errorId: null,
     };
   }
 
@@ -28,15 +31,19 @@ export class ErrorBoundary extends Component<Props, State> {
       hasError: true,
       error,
       errorInfo: null,
+      errorId: null,
     };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+
+    const errorId = captureReactErrorBoundary(error, errorInfo);
+
     this.setState({
       error,
       errorInfo,
+      errorId,
     });
 
     // Log to analytics/monitoring service
@@ -53,6 +60,7 @@ export class ErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
+      errorId: null,
     });
   };
 
@@ -73,9 +81,13 @@ export class ErrorBoundary extends Component<Props, State> {
                 <h2 className="text-lg font-semibold text-foreground mb-2">
                   Something went wrong
                 </h2>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground mb-2">
                   An unexpected error occurred. Please try refreshing the page or contact support if the problem persists.
                 </p>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Error ID: <span className="font-mono">{this.state.errorId ?? 'unknown'}</span>
+                </p>
+
                 {process.env.NODE_ENV === 'development' && this.state.error && (
                   <details className="mb-4 text-xs">
                     <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
@@ -87,16 +99,28 @@ export class ErrorBoundary extends Component<Props, State> {
                     </pre>
                   </details>
                 )}
-                <div className="flex gap-2">
+
+                <div className="flex flex-wrap gap-2">
                   <Button onClick={this.handleReset} variant="default" size="sm">
                     Try again
                   </Button>
                   <Button
-                    onClick={() => window.location.href = '/'}
+                    onClick={() => (window.location.href = '/')}
                     variant="outline"
                     size="sm"
                   >
                     Go home
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      copyLastRuntimeErrorToClipboard().then((ok) => {
+                        if (ok) console.info('[Leafnode] Copied runtime error report to clipboard');
+                      });
+                    }}
+                    variant="secondary"
+                    size="sm"
+                  >
+                    Copy error report
                   </Button>
                 </div>
               </div>
