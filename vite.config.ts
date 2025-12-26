@@ -18,9 +18,13 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Force a single React + ReactDOM resolution (fixes dispatcher.useState / invalid hook call)
-      react: path.resolve(__dirname, "node_modules/react/index.js"),
-      "react-dom": path.resolve(__dirname, "node_modules/react-dom/index.js"),
+
+      // Force a single React instance across the bundle (fixes dispatcher.useState / invalid hook call)
+      react: path.resolve(__dirname, "node_modules/react"),
+      "react/jsx-runtime": path.resolve(__dirname, "node_modules/react/jsx-runtime.js"),
+      "react/jsx-dev-runtime": path.resolve(__dirname, "node_modules/react/jsx-dev-runtime.js"),
+
+      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
       "react-dom/client": path.resolve(__dirname, "node_modules/react-dom/client.js"),
     },
     dedupe: ["react", "react-dom"],
@@ -35,4 +39,3 @@ export default defineConfig(({ mode }) => ({
     ],
   },
 }));
-
