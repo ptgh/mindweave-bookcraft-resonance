@@ -68,18 +68,45 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
+  // Clean author names - remove encoding issues and truncate for display
+  const cleanAuthorName = (author: string): string => {
+    // Remove Bengali/other script characters and clean up common AI formatting issues
+    return author
+      .replace(/[\u0980-\u09FF]+/g, '') // Remove Bengali characters
+      .replace(/\s+(or|and|,)\s+/gi, ', ') // Normalize separators
+      .replace(/\s*\([^)]*\)\s*/g, ' ') // Remove parenthetical notes
+      .replace(/\s+/g, ' ') // Clean up extra spaces
+      .trim();
+  };
+
+  const truncateAuthors = (author: string, maxLength: number = 30): { display: string; full: string } => {
+    const cleaned = cleanAuthorName(author);
+    if (cleaned.length <= maxLength) {
+      return { display: cleaned, full: cleaned };
+    }
+    // Find a good break point (comma or space)
+    const breakPoint = cleaned.lastIndexOf(',', maxLength) > 10 
+      ? cleaned.lastIndexOf(',', maxLength) 
+      : cleaned.lastIndexOf(' ', maxLength);
+    return {
+      display: cleaned.substring(0, breakPoint > 10 ? breakPoint : maxLength) + '...',
+      full: cleaned
+    };
+  };
+
   useEffect(() => {
     const fetchAdaptations = async () => {
       try {
         const { data, error } = await supabase
           .from('sf_film_adaptations')
           .select('*')
-          .order('imdb_rating', { ascending: false, nullsFirst: false });
+          .order('created_at', { ascending: false }); // New films at top
 
         if (error) throw error;
         
         const mapped: FilmAdaptation[] = (data || []).map(item => ({
           ...item,
+          book_author: cleanAuthorName(item.book_author), // Clean on fetch
           streaming_availability: typeof item.streaming_availability === 'object' && item.streaming_availability !== null
             ? item.streaming_availability as Record<string, string>
             : null,
@@ -148,16 +175,28 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     };
   }, [hasMore, filteredAdaptations.length]);
 
-  // GSAP fade-in animation for new cards
+  // GSAP fade-in animation for cards (initial load + new cards)
+  const prevCountRef = useRef(0);
   useEffect(() => {
-    const newCards = Array.from(cardRefs.current.values()).slice(-BATCH_SIZE);
-    if (newCards.length > 0 && visibleCount > BATCH_SIZE) {
-      gsap.fromTo(newCards,
+    const cards = Array.from(cardRefs.current.values());
+    if (cards.length > 0) {
+      // Determine if this is initial load or adding more cards
+      const isInitialLoad = prevCountRef.current === 0;
+      const cardsToAnimate = isInitialLoad ? cards : cards.slice(-BATCH_SIZE);
+      
+      gsap.fromTo(cardsToAnimate,
         { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 0.4, stagger: 0.05, ease: 'power2.out' }
+        { 
+          opacity: 1, 
+          y: 0, 
+          duration: 0.4, 
+          stagger: isInitialLoad ? 0.03 : 0.05, 
+          ease: 'power2.out' 
+        }
       );
+      prevCountRef.current = cards.length;
     }
-  }, [visibleCount]);
+  }, [visibleCount, filteredAdaptations.length]);
 
   // GSAP underline animations
   useEffect(() => {
@@ -339,14 +378,20 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                         <h4 className="text-xs font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors leading-tight">
                           {film.book_title}
                         </h4>
-                        <button
-                          ref={el => { if (el) authorRefs.current.set(film.id + '-author', el); }}
-                          onClick={(e) => { e.stopPropagation(); handleAuthorClick(film.book_author); }}
-                          className="text-[10px] text-emerald-400 mt-1 relative inline-block"
-                        >
-                          {film.book_author}
-                          <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-400" />
-                        </button>
+                        {(() => {
+                          const { display, full } = truncateAuthors(film.book_author);
+                          return (
+                            <button
+                              ref={el => { if (el) authorRefs.current.set(film.id + '-author', el); }}
+                              onClick={(e) => { e.stopPropagation(); handleAuthorClick(full); }}
+                              className="text-[10px] text-emerald-400 mt-1 relative inline-block"
+                              title={full !== display ? full : undefined}
+                            >
+                              {display}
+                              <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-400" />
+                            </button>
+                          );
+                        })()}
                         {film.book_publication_year && (
                           <p className="text-[9px] text-muted-foreground/70 mt-0.5">{film.book_publication_year}</p>
                         )}
