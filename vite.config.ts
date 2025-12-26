@@ -18,8 +18,21 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Force a single React + ReactDOM resolution (fixes dispatcher.useState / invalid hook call)
+      react: path.resolve(__dirname, "node_modules/react/index.js"),
+      "react-dom": path.resolve(__dirname, "node_modules/react-dom/index.js"),
+      "react-dom/client": path.resolve(__dirname, "node_modules/react-dom/client.js"),
     },
-    // Prevent duplicate React instances pulled in by deps
     dedupe: ["react", "react-dom"],
   },
+  optimizeDeps: {
+    include: [
+      "react",
+      "react-dom",
+      "react-dom/client",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
+    ],
+  },
 }));
+
