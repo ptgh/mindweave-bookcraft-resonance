@@ -1,5 +1,6 @@
 import { AdminEnrichmentPanel } from "@/components/AdminEnrichmentPanel";
 import { AdminPopulateBooks } from "@/components/AdminPopulateBooks";
+import { AdminFilmAdaptationsPanel } from "@/components/AdminFilmAdaptationsPanel";
 import Header from "@/components/Header";
 import { ProtectedAdminRoute } from "@/components/ProtectedAdminRoute";
 import { Button } from "@/components/ui/button";
@@ -214,6 +215,7 @@ const AdminEnrichment = () => {
             </Card>
 
             <AdminPopulateBooks />
+            <AdminFilmAdaptationsPanel />
             <AdminEnrichmentPanel />
           </div>
         </main>
