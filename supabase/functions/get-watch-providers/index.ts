@@ -22,6 +22,16 @@ interface WatchProviderResult {
   buy?: WatchProvider[];
 }
 
+interface TMDBVideo {
+  id: string;
+  key: string;
+  name: string;
+  site: string;
+  type: string;
+  official: boolean;
+  published_at: string;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -63,6 +73,7 @@ serve(async (req) => {
           success: true,
           found: false,
           providers: null,
+          trailer: null,
           message: 'No movie found' 
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -73,15 +84,57 @@ serve(async (req) => {
     const movie = searchData.results[0];
     console.log(`Found movie: ${movie.title} (${movie.release_date}) - ID: ${movie.id}`);
 
-    // Step 2: Get watch providers for this movie
-    const providersUrl = `${TMDB_BASE_URL}/movie/${movie.id}/watch/providers?api_key=${TMDB_API_KEY}`;
-    
-    const providersResponse = await fetch(providersUrl);
+    // Step 2: Fetch watch providers and videos in parallel
+    const [providersResponse, videosResponse] = await Promise.all([
+      fetch(`${TMDB_BASE_URL}/movie/${movie.id}/watch/providers?api_key=${TMDB_API_KEY}`),
+      fetch(`${TMDB_BASE_URL}/movie/${movie.id}/videos?api_key=${TMDB_API_KEY}`)
+    ]);
+
     if (!providersResponse.ok) {
       throw new Error(`TMDB providers failed: ${providersResponse.status}`);
     }
 
     const providersData = await providersResponse.json();
+    const videosData = videosResponse.ok ? await videosResponse.json() : { results: [] };
+    
+    // Find the best trailer from videos
+    const videos: TMDBVideo[] = videosData.results || [];
+    
+    // Priority: Official YouTube Trailers > Official YouTube Teasers > Any YouTube Trailer
+    const findBestTrailer = (): { url: string; name: string; key: string } | null => {
+      // First: Official trailers
+      const officialTrailer = videos.find(v => 
+        v.site === 'YouTube' && v.type === 'Trailer' && v.official === true
+      );
+      if (officialTrailer) {
+        return { url: `https://www.youtube.com/watch?v=${officialTrailer.key}`, name: officialTrailer.name, key: officialTrailer.key };
+      }
+      
+      // Second: Any trailer
+      const anyTrailer = videos.find(v => v.site === 'YouTube' && v.type === 'Trailer');
+      if (anyTrailer) {
+        return { url: `https://www.youtube.com/watch?v=${anyTrailer.key}`, name: anyTrailer.name, key: anyTrailer.key };
+      }
+      
+      // Third: Official teaser
+      const teaser = videos.find(v => 
+        v.site === 'YouTube' && v.type === 'Teaser' && v.official === true
+      );
+      if (teaser) {
+        return { url: `https://www.youtube.com/watch?v=${teaser.key}`, name: teaser.name, key: teaser.key };
+      }
+      
+      // Fourth: Any YouTube video
+      const anyVideo = videos.find(v => v.site === 'YouTube');
+      if (anyVideo) {
+        return { url: `https://www.youtube.com/watch?v=${anyVideo.key}`, name: anyVideo.name, key: anyVideo.key };
+      }
+      
+      return null;
+    };
+    
+    const bestTrailer = findBestTrailer();
+    console.log(`Found trailer: ${bestTrailer ? bestTrailer.name : 'none'}`);
     
     // Get providers for the requested region, fallback to US if not available
     let regionProviders: WatchProviderResult = providersData.results?.[region];
@@ -138,6 +191,7 @@ serve(async (req) => {
         rent: formatProviders(regionProviders.rent),
         buy: formatProviders(regionProviders.buy),
       },
+      trailer: bestTrailer,
       region: usedRegion,
     };
 
