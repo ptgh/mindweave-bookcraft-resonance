@@ -26,6 +26,11 @@ interface DataStats {
   publisherBooks: number;
   authorBooks: number;
   pendingEnrichments: number;
+  // Film adaptation stats
+  filmAdaptations: number;
+  filmsMissingPosters: number;
+  filmsMissingBookCovers: number;
+  sfDirectors: number;
 }
 
 interface ValidationIssue {
@@ -68,14 +73,22 @@ export const AdminPopulateBooks = () => {
         authorsRes,
         enrichmentQueueRes,
         publisherBooksWithCoversRes,
-        authorBooksWithCoversRes
+        authorBooksWithCoversRes,
+        filmAdaptationsRes,
+        filmsMissingPostersRes,
+        filmsMissingBookCoversRes,
+        sfDirectorsRes
       ] = await Promise.all([
         supabase.from('author_books').select('id, cover_url, google_books_id', { count: 'exact' }),
         supabase.from('publisher_books').select('id, cover_url, isbn', { count: 'exact' }),
         supabase.from('scifi_authors').select('id', { count: 'exact' }),
         supabase.from('author_enrichment_queue').select('id, status', { count: 'exact' }).eq('status', 'pending'),
         supabase.from('publisher_books').select('id').not('cover_url', 'is', null),
-        supabase.from('author_books').select('id').not('cover_url', 'is', null)
+        supabase.from('author_books').select('id').not('cover_url', 'is', null),
+        supabase.from('sf_film_adaptations').select('id', { count: 'exact' }),
+        supabase.from('sf_film_adaptations').select('id', { count: 'exact' }).is('poster_url', null),
+        supabase.from('sf_film_adaptations').select('id', { count: 'exact' }).is('book_cover_url', null),
+        supabase.from('sf_directors').select('id', { count: 'exact' })
       ]);
 
       const authorBooks = authorBooksRes.data || [];
@@ -96,7 +109,11 @@ export const AdminPopulateBooks = () => {
         booksWithoutISBN: totalBooks - booksWithISBN,
         publisherBooks: publisherBooksRes.count || 0,
         authorBooks: authorBooksRes.count || 0,
-        pendingEnrichments: enrichmentQueueRes.count || 0
+        pendingEnrichments: enrichmentQueueRes.count || 0,
+        filmAdaptations: filmAdaptationsRes.count || 0,
+        filmsMissingPosters: filmsMissingPostersRes.count || 0,
+        filmsMissingBookCovers: filmsMissingBookCoversRes.count || 0,
+        sfDirectors: sfDirectorsRes.count || 0
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -230,13 +247,14 @@ export const AdminPopulateBooks = () => {
         description: "Enriching author data from Wikipedia and other sources...",
       });
 
-      const { data, error } = await supabase.functions.invoke('queue-author-enrichment');
+      // Use the correct function to trigger actual enrichment processing
+      const { data, error } = await supabase.functions.invoke('enrich-author-data');
 
       if (error) throw error;
 
       setEnrichmentQueueStatus(data);
       await fetchStats(); // Refresh stats
-      
+
       toast({
         title: "Enrichment Queue Processed!",
         description: `Processed ${data.processed || 0} authors.`,
@@ -473,6 +491,23 @@ export const AdminPopulateBooks = () => {
               <div className="bg-slate-900/50 p-4 rounded-lg text-center">
                 <div className="text-3xl font-bold text-slate-400">{stats.booksWithISBN}</div>
                 <div className="text-xs text-slate-400 mt-1">With ISBN/ID</div>
+              </div>
+              {/* Film Adaptation Stats */}
+              <div className="bg-slate-900/50 p-4 rounded-lg text-center border border-amber-500/20">
+                <div className="text-3xl font-bold text-amber-400">{stats.filmAdaptations}</div>
+                <div className="text-xs text-slate-400 mt-1">Film Adaptations</div>
+              </div>
+              <div className="bg-slate-900/50 p-4 rounded-lg text-center border border-amber-500/20">
+                <div className="text-3xl font-bold text-amber-300">{stats.sfDirectors}</div>
+                <div className="text-xs text-slate-400 mt-1">SF Directors</div>
+              </div>
+              <div className="bg-slate-900/50 p-4 rounded-lg text-center">
+                <div className="text-3xl font-bold text-red-400">{stats.filmsMissingPosters}</div>
+                <div className="text-xs text-slate-400 mt-1">Films Missing Posters</div>
+              </div>
+              <div className="bg-slate-900/50 p-4 rounded-lg text-center">
+                <div className="text-3xl font-bold text-red-300">{stats.filmsMissingBookCovers}</div>
+                <div className="text-xs text-slate-400 mt-1">Films Missing Book Covers</div>
               </div>
             </div>
           ) : (

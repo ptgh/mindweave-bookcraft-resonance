@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -200,6 +200,16 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
 
   const handleEnrichment = async () => {
     if (isEnriching) return;
+    
+    // Check for temporary author ID - cannot enrich
+    if (!currentAuthor.id || currentAuthor.id === 'temp') {
+      toast({
+        title: "Cannot Enrich",
+        description: "This author needs to be added to the database first.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     console.log('Starting enrichment for author:', currentAuthor.name);
     setIsEnriching(true);
