@@ -201,28 +201,63 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
   const handleEnrichment = async () => {
     if (isEnriching) return;
     
-    // Check for temporary author ID - cannot enrich
-    if (!currentAuthor.id || currentAuthor.id === 'temp') {
-      toast({
-        title: "Cannot Enrich",
-        description: "This author needs to be added to the database first.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     console.log('Starting enrichment for author:', currentAuthor.name);
     setIsEnriching(true);
     setEnrichmentStatus('queuing');
     
-    toast({
-      title: "Starting Enrichment",
-      description: "Gathering author data from multiple sources...",
-    });
+    let authorId = currentAuthor.id;
+    
+    // If author doesn't exist in DB (temp ID), create them first
+    if (!authorId || authorId === 'temp') {
+      toast({
+        title: "Creating Author",
+        description: `Adding ${currentAuthor.name} to database...`,
+      });
+
+      try {
+        const { data: newAuthor, error: insertError } = await supabase
+          .from('scifi_authors')
+          .insert({ 
+            name: currentAuthor.name,
+            data_source: 'popup_auto',
+            verification_status: 'pending',
+            needs_enrichment: true
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          throw new Error(`Failed to create author: ${insertError.message}`);
+        }
+
+        authorId = newAuthor.id;
+        setCurrentAuthor(newAuthor as ScifiAuthor);
+        
+        toast({
+          title: "Author Created",
+          description: `Now enriching data for ${currentAuthor.name}...`,
+        });
+      } catch (error) {
+        console.error('Failed to create author:', error);
+        setIsEnriching(false);
+        setEnrichmentStatus('error');
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to create author",
+          variant: "destructive",
+        });
+        return;
+      }
+    } else {
+      toast({
+        title: "Starting Enrichment",
+        description: "Gathering author data from multiple sources...",
+      });
+    }
     
     try {
       // First queue the author for enrichment
-      await queueAuthorForEnrichment(currentAuthor.id);
+      await queueAuthorForEnrichment(authorId);
       setEnrichmentStatus('queued');
       
       // Trigger enrichment immediately and keep re-triggering
@@ -234,7 +269,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
         triggerCount++;
         console.log(`Triggering enrichment job (attempt ${triggerCount})...`);
         try {
-          await triggerEnrichmentJob(currentAuthor.id);
+          await triggerEnrichmentJob(authorId);
           setEnrichmentStatus('processing');
         } catch (e) {
           console.error('Trigger error:', e);
@@ -248,7 +283,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
       let elapsed = 0;
       const checkInterval = setInterval(async () => {
         try {
-          const status = await checkEnrichmentStatus(currentAuthor.id);
+          const status = await checkEnrichmentStatus(authorId);
           console.log('Enrichment status check:', status?.status);
           
           if (status?.status === 'completed') {
@@ -260,7 +295,7 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
             const { data: refreshedAuthor } = await supabase
               .from('scifi_authors')
               .select('*')
-              .eq('id', currentAuthor.id)
+              .eq('id', authorId)
               .single();
             
             if (refreshedAuthor) {

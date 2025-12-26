@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Film, Book, Star, Calendar, Trophy, ExternalLink, Play, Search } from 'lucide-react';
+import { Film, Book, Star, Calendar, Trophy, ExternalLink, Play, Search, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +13,20 @@ import { DirectorPopup } from '@/components/DirectorPopup';
 import { ScifiAuthor } from '@/services/scifiAuthorsService';
 import { getGoogleWatchLink, getYouTubeSearchUrl, extractYouTubeId, getCriterionBrowseUrl } from '@/utils/streamingLinks';
 import { FilterMode } from './BookToScreenSelector';
+
+interface WatchProvider {
+  id: number;
+  name: string;
+  logo: string | null;
+  priority: number;
+}
+
+interface WatchProvidersData {
+  streaming: WatchProvider[];
+  rent: WatchProvider[];
+  buy: WatchProvider[];
+  link: string | null;
+}
 
 interface FilmAdaptation {
   id: string;
@@ -67,6 +81,8 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [watchProviders, setWatchProviders] = useState<WatchProvidersData | null>(null);
+  const [isLoadingProviders, setIsLoadingProviders] = useState(false);
 
   // Clean author names - remove encoding issues and truncate for display
   const cleanAuthorName = (author: string): string => {
@@ -241,14 +257,32 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     setSelectedBook(book);
   };
 
-  const openFilmModal = (film: FilmAdaptation) => {
+  const openFilmModal = async (film: FilmAdaptation) => {
     setSelectedFilm(film);
     setShowFilmModal(true);
+    setWatchProviders(null);
+    
+    // Fetch watch providers from TMDB
+    setIsLoadingProviders(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-watch-providers', {
+        body: { filmTitle: film.film_title, filmYear: film.film_year, region: 'US' }
+      });
+      
+      if (!error && data?.success && data?.found) {
+        setWatchProviders(data.providers);
+      }
+    } catch (e) {
+      console.error('Failed to fetch watch providers:', e);
+    } finally {
+      setIsLoadingProviders(false);
+    }
   };
 
   const closeFilmModal = () => {
     setShowFilmModal(false);
     setSelectedFilm(null);
+    setWatchProviders(null);
   };
 
   const handleAuthorClick = async (authorName: string) => {
@@ -590,35 +624,132 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                 </div>
               )}
 
-              {/* Where to Watch - Google Search Method */}
-              <div className="space-y-2 pt-2 border-t border-border/20">
+              {/* Where to Watch - TMDB Providers + Fallback */}
+              <div className="space-y-3 pt-2 border-t border-border/20">
                 <p className="text-sm font-medium text-foreground">Where to Watch</p>
-                <div className="flex flex-wrap gap-2">
-                  <a
-                    href={getGoogleWatchLink(selectedFilm.film_title, selectedFilm.film_year)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 border-blue-500/30 text-blue-300"
-                  >
-                    <Search className="w-4 h-4" />
-                    Find Streaming Options
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                  {selectedFilm.is_criterion_collection && selectedFilm.criterion_url && (
+                
+                {isLoadingProviders ? (
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm py-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Finding streaming options...</span>
+                  </div>
+                ) : watchProviders && (watchProviders.streaming.length > 0 || watchProviders.rent.length > 0 || watchProviders.buy.length > 0) ? (
+                  <div className="space-y-3">
+                    {/* Streaming providers */}
+                    {watchProviders.streaming.length > 0 && (
+                      <div className="space-y-1.5">
+                        <p className="text-xs text-muted-foreground">Stream</p>
+                        <div className="flex flex-wrap gap-2">
+                          {watchProviders.streaming.slice(0, 6).map((provider) => (
+                            <a
+                              key={provider.id}
+                              href={watchProviders.link || getGoogleWatchLink(selectedFilm.film_title, selectedFilm.film_year)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-muted/30 hover:bg-muted/50 border border-border/30 transition-colors"
+                              title={`Watch on ${provider.name}`}
+                            >
+                              {provider.logo && (
+                                <img src={provider.logo} alt="" className="w-5 h-5 rounded" />
+                              )}
+                              <span className="text-foreground">{provider.name}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Rent providers */}
+                    {watchProviders.rent.length > 0 && (
+                      <div className="space-y-1.5">
+                        <p className="text-xs text-muted-foreground">Rent</p>
+                        <div className="flex flex-wrap gap-2">
+                          {watchProviders.rent.slice(0, 4).map((provider) => (
+                            <a
+                              key={provider.id}
+                              href={watchProviders.link || getGoogleWatchLink(selectedFilm.film_title, selectedFilm.film_year)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 transition-colors"
+                              title={`Rent on ${provider.name}`}
+                            >
+                              {provider.logo && (
+                                <img src={provider.logo} alt="" className="w-4 h-4 rounded" />
+                              )}
+                              <span className="text-muted-foreground">{provider.name}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Buy providers */}
+                    {watchProviders.buy.length > 0 && (
+                      <div className="space-y-1.5">
+                        <p className="text-xs text-muted-foreground">Buy</p>
+                        <div className="flex flex-wrap gap-2">
+                          {watchProviders.buy.slice(0, 4).map((provider) => (
+                            <a
+                              key={provider.id}
+                              href={watchProviders.link || getGoogleWatchLink(selectedFilm.film_title, selectedFilm.film_year)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 transition-colors"
+                              title={`Buy on ${provider.name}`}
+                            >
+                              {provider.logo && (
+                                <img src={provider.logo} alt="" className="w-4 h-4 rounded" />
+                              )}
+                              <span className="text-muted-foreground">{provider.name}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Criterion Collection */}
+                    {selectedFilm.is_criterion_collection && selectedFilm.criterion_url && (
+                      <a
+                        href={selectedFilm.criterion_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 transition-colors"
+                      >
+                        <img src="/images/criterion-logo.jpg" alt="" className="h-4 w-auto rounded-sm" />
+                        Buy on Criterion
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
                     <a
-                      href={selectedFilm.criterion_url}
+                      href={getGoogleWatchLink(selectedFilm.film_title, selectedFilm.film_year)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border-amber-500/30 text-amber-300"
+                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 border-blue-500/30 text-blue-300"
                     >
-                      <img src="/images/criterion-logo.jpg" alt="" className="h-4 w-auto rounded-sm" />
-                      Buy on Criterion
+                      <Search className="w-4 h-4" />
+                      Find Streaming Options
                       <ExternalLink className="w-3 h-3" />
                     </a>
-                  )}
-                </div>
+                    {selectedFilm.is_criterion_collection && selectedFilm.criterion_url && (
+                      <a
+                        href={selectedFilm.criterion_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border-amber-500/30 text-amber-300"
+                      >
+                        <img src="/images/criterion-logo.jpg" alt="" className="h-4 w-auto rounded-sm" />
+                        Buy on Criterion
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+                )}
+                
                 <p className="text-xs text-muted-foreground/70">
-                  Shows all available streaming services including Netflix, Apple TV+, Prime Video, and more
+                  Streaming availability provided by TMDB
                 </p>
               </div>
 

@@ -135,3 +135,6 @@ verify_jwt = false
 
 [functions.enrich-trailer-urls]
 verify_jwt = false
+
+[functions.get-watch-providers]
+verify_jwt = false

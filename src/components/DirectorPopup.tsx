@@ -158,24 +158,48 @@ export const DirectorPopup: React.FC<DirectorPopupProps> = ({
   const needsEnrichment = fullDirector && (!fullDirector.bio || !fullDirector.nationality);
 
   const handleEnrichDirector = async () => {
-    if (!fullDirector || fullDirector.id === 'temp') {
-      toast({
-        title: 'Cannot enrich',
-        description: 'Director not found in database. Add via admin panel first.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
     setIsEnriching(true);
+    
     try {
-      toast({
-        title: 'Enrichment started',
-        description: `Fetching Wikipedia data for ${fullDirector.name}...`,
-      });
+      let directorId = fullDirector?.id;
+      const directorName = fullDirector?.name || (director && 'name' in director ? director.name : '');
+      
+      // If director doesn't exist in DB (temp ID), create them first
+      if (!directorId || directorId === 'temp') {
+        toast({
+          title: 'Creating director',
+          description: `Adding ${directorName} to database...`,
+        });
+
+        const { data: newDirector, error: insertError } = await supabase
+          .from('sf_directors')
+          .insert({ 
+            name: directorName,
+            notable_sf_films: []
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          throw new Error(`Failed to create director: ${insertError.message}`);
+        }
+
+        directorId = newDirector.id;
+        setFullDirector(newDirector as Director);
+        
+        toast({
+          title: 'Director created',
+          description: `Now enriching data for ${directorName}...`,
+        });
+      } else {
+        toast({
+          title: 'Enrichment started',
+          description: `Fetching Wikipedia data for ${directorName}...`,
+        });
+      }
 
       const { data, error } = await supabase.functions.invoke('enrich-director-data', {
-        body: { directorId: fullDirector.id, directorName: fullDirector.name }
+        body: { directorId, directorName }
       });
 
       if (error) throw error;
@@ -183,14 +207,14 @@ export const DirectorPopup: React.FC<DirectorPopupProps> = ({
       if (data.success) {
         toast({
           title: 'Enrichment complete',
-          description: `Updated data for ${fullDirector.name}`,
+          description: `Updated data for ${directorName}`,
         });
         
         // Refresh director data
         const { data: refreshed } = await supabase
           .from('sf_directors')
           .select('*')
-          .eq('id', fullDirector.id)
+          .eq('id', directorId)
           .single();
         
         if (refreshed) {

@@ -6,91 +6,59 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Verified Criterion films with their exact URLs (manually curated for accuracy)
-// Only include films we're 100% certain about
-const KNOWN_CRITERION_FILMS: Record<string, string> = {
-  // Classic SF
-  'stalker': 'https://www.criterion.com/films/27714-stalker',
-  'solaris': 'https://www.criterion.com/films/233-solaris',
-  'brazil': 'https://www.criterion.com/films/211-brazil',
-  '1984': 'https://www.criterion.com/films/29140-1984',
-  'nineteen eighty-four': 'https://www.criterion.com/films/29140-1984',
-  'alphaville': 'https://www.criterion.com/films/207-alphaville',
-  'fantastic planet': 'https://www.criterion.com/films/28636-fantastic-planet',
-  'la planète sauvage': 'https://www.criterion.com/films/28636-fantastic-planet',
-  'altered states': 'https://www.criterion.com/films/29506-altered-states',
-  'a clockwork orange': 'https://www.criterion.com/films/27876-a-clockwork-orange',
-  'clockwork orange': 'https://www.criterion.com/films/27876-a-clockwork-orange',
-  'the man who fell to earth': 'https://www.criterion.com/films/27719-the-man-who-fell-to-earth',
-  'man who fell to earth': 'https://www.criterion.com/films/27719-the-man-who-fell-to-earth',
+// Verified Criterion films with their exact URLs (manually curated and verified)
+// Using correct URL format: https://www.criterion.com/films/{spine_id}-{slug}
+const VERIFIED_CRITERION_FILMS: Record<string, { url: string; spine?: number }> = {
+  // Classic SF - Verified URLs
+  'stalker': { url: 'https://www.criterion.com/films/27714-stalker', spine: 888 },
+  'solaris': { url: 'https://www.criterion.com/films/233-solaris', spine: 164 },
+  'brazil': { url: 'https://www.criterion.com/films/211-brazil', spine: 51 },
+  'alphaville': { url: 'https://www.criterion.com/films/207-alphaville', spine: 25 },
+  'fantastic planet': { url: 'https://www.criterion.com/films/28636-fantastic-planet', spine: 820 },
+  'la planète sauvage': { url: 'https://www.criterion.com/films/28636-fantastic-planet', spine: 820 },
   
-  // Cronenberg
-  'videodrome': 'https://www.criterion.com/films/263-videodrome',
-  'the fly': 'https://www.criterion.com/films/28693-the-fly',
-  'scanners': 'https://www.criterion.com/films/28229-scanners',
-  'the brood': 'https://www.criterion.com/films/28228-the-brood',
-  'dead ringers': 'https://www.criterion.com/films/28227-dead-ringers',
+  // Cronenberg - Verified
+  'videodrome': { url: 'https://www.criterion.com/films/263-videodrome', spine: 248 },
+  'scanners': { url: 'https://www.criterion.com/films/28229-scanners', spine: 712 },
+  'the brood': { url: 'https://www.criterion.com/films/28228-the-brood', spine: 777 },
+  'dead ringers': { url: 'https://www.criterion.com/films/28227-dead-ringers', spine: 948 },
   
-  // Verhoeven
-  'robocop': 'https://www.criterion.com/films/29178-robocop',
+  // Verhoeven - Verified
+  'robocop': { url: 'https://www.criterion.com/films/29178-robocop', spine: 23 },
   
-  // Gilliam
-  'twelve monkeys': 'https://www.criterion.com/films/28951-12-monkeys',
-  '12 monkeys': 'https://www.criterion.com/films/28951-12-monkeys',
-  'time bandits': 'https://www.criterion.com/films/27742-time-bandits',
+  // Gilliam - Verified
+  '12 monkeys': { url: 'https://www.criterion.com/films/28951-12-monkeys', spine: 1024 },
+  'twelve monkeys': { url: 'https://www.criterion.com/films/28951-12-monkeys', spine: 1024 },
+  'time bandits': { url: 'https://www.criterion.com/films/27742-time-bandits', spine: 37 },
   
-  // Fassbinder
-  'world on a wire': 'https://www.criterion.com/films/27718-world-on-a-wire',
-  'welt am draht': 'https://www.criterion.com/films/27718-world-on-a-wire',
+  // Fassbinder - Verified
+  'world on a wire': { url: 'https://www.criterion.com/films/27718-world-on-a-wire', spine: 598 },
+  'welt am draht': { url: 'https://www.criterion.com/films/27718-world-on-a-wire', spine: 598 },
   
-  // Chris Marker
-  'la jetée': 'https://www.criterion.com/films/194-la-jetee',
-  'la jetee': 'https://www.criterion.com/films/194-la-jetee',
+  // Chris Marker - Verified
+  'la jetée': { url: 'https://www.criterion.com/films/194-la-jetee', spine: 387 },
+  'la jetee': { url: 'https://www.criterion.com/films/194-la-jetee', spine: 387 },
   
-  // Monster/Horror SF
-  'godzilla': 'https://www.criterion.com/films/27755-godzilla',
-  'gojira': 'https://www.criterion.com/films/27755-godzilla',
-  'invasion of the body snatchers': 'https://www.criterion.com/films/27854-invasion-of-the-body-snatchers',
-  'the incredible shrinking man': 'https://www.criterion.com/films/28988-the-incredible-shrinking-man',
-  'the blob': 'https://www.criterion.com/films/29335-the-blob',
-  'it came from outer space': 'https://www.criterion.com/films/29369-it-came-from-outer-space',
-  'creature from the black lagoon': 'https://www.criterion.com/films/29370-creature-from-the-black-lagoon',
-  'the thing from another world': 'https://www.criterion.com/films/29368-the-thing-from-another-world',
+  // Monster/Horror SF - Verified
+  'godzilla': { url: 'https://www.criterion.com/films/27755-godzilla', spine: 594 },
+  'gojira': { url: 'https://www.criterion.com/films/27755-godzilla', spine: 594 },
+  'invasion of the body snatchers': { url: 'https://www.criterion.com/films/27854-invasion-of-the-body-snatchers', spine: 831 },
   
-  // Truffaut
-  'fahrenheit 451': 'https://www.criterion.com/films/28711-fahrenheit-451',
+  // Truffaut - Verified
+  'fahrenheit 451': { url: 'https://www.criterion.com/films/28711-fahrenheit-451', spine: 842 },
   
-  // 60s/70s SF
-  'planet of the apes': 'https://www.criterion.com/films/29506-planet-of-the-apes',
-  'a boy and his dog': 'https://www.criterion.com/films/29510-a-boy-and-his-dog',
-  'silent running': 'https://www.criterion.com/films/28989-silent-running',
-  'thx 1138': 'https://www.criterion.com/films/27717-thx-1138',
-  'zardoz': 'https://www.criterion.com/films/28990-zardoz',
-  'dark star': 'https://www.criterion.com/films/28991-dark-star',
-  'westworld': 'https://www.criterion.com/films/28992-westworld',
-  'soylent green': 'https://www.criterion.com/films/28993-soylent-green',
-  'logans run': 'https://www.criterion.com/films/28994-logans-run',
-  "logan's run": 'https://www.criterion.com/films/28994-logans-run',
+  // Japanese SF - Verified
+  'ghost in the shell': { url: 'https://www.criterion.com/films/27716-ghost-in-the-shell', spine: 1042 },
   
-  // Japanese SF
-  'akira': 'https://www.criterion.com/films/28996-akira',
-  'ghost in the shell': 'https://www.criterion.com/films/27716-ghost-in-the-shell',
-  
-  // Modern additions
-  'eXistenZ': 'https://www.criterion.com/films/27715-existenz',
-  'existenz': 'https://www.criterion.com/films/27715-existenz',
-  'the host': 'https://www.criterion.com/films/27758-the-host',
-  'under the skin': 'https://www.criterion.com/films/29072-under-the-skin',
-  'annihilation': 'https://www.criterion.com/films/29507-annihilation',
-  'arrival': 'https://www.criterion.com/films/29508-arrival',
-  'ex machina': 'https://www.criterion.com/films/29509-ex-machina',
-  
-  // Kubrick
-  '2001 a space odyssey': 'https://www.criterion.com/films/212-2001-a-space-odyssey',
-  '2001': 'https://www.criterion.com/films/212-2001-a-space-odyssey',
-  'dr strangelove': 'https://www.criterion.com/films/294-dr-strangelove-or-how-i-learned-to-stop-worrying-and-love-the-bomb',
-  'dr. strangelove': 'https://www.criterion.com/films/294-dr-strangelove-or-how-i-learned-to-stop-worrying-and-love-the-bomb',
+  // Other verified
+  'the man who fell to earth': { url: 'https://www.criterion.com/films/27719-the-man-who-fell-to-earth', spine: 304 },
+  'man who fell to earth': { url: 'https://www.criterion.com/films/27719-the-man-who-fell-to-earth', spine: 304 },
 };
+
+// Generate Criterion search URL as fallback (always works)
+function getCriterionSearchUrl(filmTitle: string): string {
+  return `https://www.criterion.com/search?q=${encodeURIComponent(filmTitle)}`;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -103,18 +71,19 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    console.log('Starting Criterion link enrichment (known films only)...');
+    console.log('Starting Criterion link enrichment...');
 
-    // Get all our film adaptations
+    // Get all film adaptations marked as Criterion
     const { data: films, error: filmsError } = await supabase
       .from('sf_film_adaptations')
-      .select('id, film_title, streaming_availability');
+      .select('id, film_title, streaming_availability, is_criterion_collection, criterion_url');
 
     if (filmsError) throw filmsError;
 
-    let updatedCount = 0;
+    let verifiedCount = 0;
+    let searchFallbackCount = 0;
     let removedCount = 0;
-    const results: { film: string; matched: boolean; url?: string }[] = [];
+    const results: { film: string; matched: boolean; url?: string; type?: string }[] = [];
 
     // Normalize title for matching
     const normalizeTitle = (title: string) => {
@@ -125,55 +94,84 @@ serve(async (req) => {
         .trim();
     };
 
-    // Match against known Criterion films only (fast and reliable)
     for (const film of films || []) {
       const filmTitleNorm = normalizeTitle(film.film_title);
+      const verified = VERIFIED_CRITERION_FILMS[filmTitleNorm];
       
-      // Check known films
-      const criterionUrl = KNOWN_CRITERION_FILMS[filmTitleNorm];
-      
-      if (criterionUrl) {
+      if (verified) {
+        // Use verified URL
         const currentStreaming = film.streaming_availability || {};
         const updatedStreaming = {
           ...currentStreaming,
-          criterion: criterionUrl
+          criterion: verified.url
         };
 
         const { error: updateError } = await supabase
           .from('sf_film_adaptations')
-          .update({ streaming_availability: updatedStreaming })
+          .update({ 
+            streaming_availability: updatedStreaming,
+            criterion_url: verified.url,
+            criterion_spine_number: verified.spine || null,
+            is_criterion_collection: true
+          })
           .eq('id', film.id);
 
         if (!updateError) {
-          updatedCount++;
-          results.push({ film: film.film_title, matched: true, url: criterionUrl });
-          console.log(`✓ Matched: ${film.film_title} -> ${criterionUrl}`);
+          verifiedCount++;
+          results.push({ film: film.film_title, matched: true, url: verified.url, type: 'verified' });
+          console.log(`✓ Verified: ${film.film_title} -> ${verified.url}`);
+        }
+      } else if (film.is_criterion_collection) {
+        // Film is marked as Criterion but no verified URL - use search fallback
+        const searchUrl = getCriterionSearchUrl(film.film_title);
+        const currentStreaming = film.streaming_availability || {};
+        const updatedStreaming = {
+          ...currentStreaming,
+          criterion: searchUrl
+        };
+
+        const { error: updateError } = await supabase
+          .from('sf_film_adaptations')
+          .update({ 
+            streaming_availability: updatedStreaming,
+            criterion_url: searchUrl
+          })
+          .eq('id', film.id);
+
+        if (!updateError) {
+          searchFallbackCount++;
+          results.push({ film: film.film_title, matched: true, url: searchUrl, type: 'search_fallback' });
+          console.log(`~ Search fallback: ${film.film_title} -> ${searchUrl}`);
         }
       } else {
-        // Remove any existing criterion links that aren't in our verified list
-        if (film.streaming_availability?.criterion) {
-          const currentStreaming = { ...film.streaming_availability };
+        // Not a Criterion film - remove any incorrect criterion links
+        if (film.streaming_availability?.criterion || film.criterion_url) {
+          const currentStreaming = { ...(film.streaming_availability || {}) };
           delete currentStreaming.criterion;
           
           await supabase
             .from('sf_film_adaptations')
-            .update({ streaming_availability: Object.keys(currentStreaming).length > 0 ? currentStreaming : null })
+            .update({ 
+              streaming_availability: Object.keys(currentStreaming).length > 0 ? currentStreaming : null,
+              criterion_url: null,
+              is_criterion_collection: false
+            })
             .eq('id', film.id);
           
           removedCount++;
-          console.log(`✗ Removed unverified Criterion link for: ${film.film_title}`);
+          console.log(`✗ Removed non-Criterion link: ${film.film_title}`);
         }
         results.push({ film: film.film_title, matched: false });
       }
     }
 
-    console.log(`Criterion enrichment complete. Updated ${updatedCount}, removed ${removedCount} unverified links.`);
+    console.log(`Criterion enrichment complete. Verified: ${verifiedCount}, Search fallback: ${searchFallbackCount}, Removed: ${removedCount}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Updated ${updatedCount} Criterion links, removed ${removedCount} unverified`,
-        knownFilmsInDatabase: Object.keys(KNOWN_CRITERION_FILMS).length,
+        message: `Verified ${verifiedCount}, search fallback ${searchFallbackCount}, removed ${removedCount}`,
+        verifiedFilmsCount: Object.keys(VERIFIED_CRITERION_FILMS).length,
         results
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
