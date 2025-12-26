@@ -83,16 +83,44 @@ serve(async (req) => {
 
     const providersData = await providersResponse.json();
     
-    // Get providers for the requested region
-    const regionProviders: WatchProviderResult = providersData.results?.[region] || {};
+    // Get providers for the requested region, fallback to US if not available
+    let regionProviders: WatchProviderResult = providersData.results?.[region];
+    let usedRegion = region;
     
-    // Format the response
+    if (!regionProviders || (!regionProviders.flatrate?.length && !regionProviders.rent?.length && !regionProviders.buy?.length)) {
+      regionProviders = providersData.results?.['US'] || {};
+      usedRegion = 'US';
+    }
+    
+    // Provider deep link URLs (direct to service where possible)
+    const providerDeepLinks: Record<number, string> = {
+      8: 'https://www.netflix.com', // Netflix
+      9: 'https://tv.apple.com', // Apple TV+
+      337: 'https://www.disneyplus.com', // Disney+
+      1899: 'https://www.max.com', // Max
+      15: 'https://www.hulu.com', // Hulu
+      119: 'https://www.amazon.com/gp/video', // Prime Video
+      384: 'https://www.hbomax.com', // HBO Max
+      386: 'https://www.peacocktv.com', // Peacock
+      531: 'https://www.paramountplus.com', // Paramount+
+      257: 'https://www.fubo.tv', // fuboTV
+      283: 'https://www.crunchyroll.com', // Crunchyroll
+      526: 'https://www.amc.com', // AMC+
+      350: 'https://tv.apple.com', // Apple TV
+      2: 'https://tv.apple.com', // Apple iTunes
+      3: 'https://play.google.com/store/movies', // Google Play Movies
+      192: 'https://www.youtube.com', // YouTube
+      10: 'https://www.amazon.com/gp/video', // Amazon Video
+    };
+    
+    // Format the response with deep links
     const formatProviders = (providers: WatchProvider[] = []) => 
       providers.map(p => ({
         id: p.provider_id,
         name: p.provider_name,
         logo: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
         priority: p.display_priority,
+        deepLink: providerDeepLinks[p.provider_id] || null,
       }));
 
     const result = {
@@ -110,7 +138,7 @@ serve(async (req) => {
         rent: formatProviders(regionProviders.rent),
         buy: formatProviders(regionProviders.buy),
       },
-      region,
+      region: usedRegion,
     };
 
     console.log(`Found ${result.providers.streaming.length} streaming, ${result.providers.rent.length} rent, ${result.providers.buy.length} buy options`);
