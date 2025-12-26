@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
 import { Film, Sparkles } from 'lucide-react';
 
-export type FilterMode = 'all' | 'criterion';
+export type FilterMode = 'all' | 'criterion' | 'arrow';
 
 interface BookToScreenSelectorProps {
   selected: FilterMode;
@@ -24,7 +24,8 @@ export const BookToScreenSelector: React.FC<BookToScreenSelectorProps> = ({
 
   const buttons: { id: FilterMode; label: string; icon?: React.ReactNode }[] = [
     { id: 'all', label: 'All Films', icon: <Film className="w-3.5 h-3.5" /> },
-    { id: 'criterion', label: 'Criterion Collection', icon: <img src="/images/criterion-logo.jpg" alt="" className="h-3.5 w-auto rounded-sm" /> },
+    { id: 'criterion', label: 'Criterion', icon: <img src="/images/criterion-logo.jpg" alt="" className="h-3.5 w-auto rounded-sm" /> },
+    { id: 'arrow', label: 'Arrow', icon: <span className="text-[10px] font-bold text-red-500">▶</span> },
   ];
 
   useEffect(() => {
@@ -42,7 +43,7 @@ export const BookToScreenSelector: React.FC<BookToScreenSelectorProps> = ({
   }, [selected]);
 
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
+    <div className={`flex items-center gap-3 flex-wrap justify-center ${className}`}>
       {/* Filter Buttons */}
       <div className="relative inline-flex items-center bg-muted/30 rounded-lg p-1 border border-border/30">
         {/* Sliding indicator */}
