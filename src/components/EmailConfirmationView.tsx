@@ -7,9 +7,11 @@ interface EmailConfirmationViewProps {
   email: string;
   onResend: () => void;
   onBack: () => void;
+  title?: string;
+  description?: string;
 }
 
-const EmailConfirmationView = ({ email, onResend, onBack }: EmailConfirmationViewProps) => {
+const EmailConfirmationView = ({ email, onResend, onBack, title, description }: EmailConfirmationViewProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -18,10 +20,10 @@ const EmailConfirmationView = ({ email, onResend, onBack }: EmailConfirmationVie
             <CheckCircle className="w-8 h-8 text-cyan-400" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-light text-slate-200 mb-2 tracking-wider">
-            Check Your Email
+            {title || 'Check Your Email'}
           </h1>
           <p className="text-slate-400 text-sm">
-            Confirmation signal transmitted
+            {description ? '' : 'Confirmation signal transmitted'}
           </p>
         </div>
 
@@ -30,9 +32,9 @@ const EmailConfirmationView = ({ email, onResend, onBack }: EmailConfirmationVie
             <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-cyan-400/10 flex items-center justify-center">
               <Mail className="w-6 h-6 text-cyan-400" />
             </div>
-            <CardTitle className="text-slate-200">Email Confirmation Required</CardTitle>
+            <CardTitle className="text-slate-200">{title || 'Email Confirmation Required'}</CardTitle>
             <CardDescription className="text-slate-400">
-              We've sent a confirmation link to <strong className="text-slate-300">{email}</strong>
+              {description || <>We've sent a confirmation link to <strong className="text-slate-300">{email}</strong></>}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

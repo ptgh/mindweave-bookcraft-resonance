@@ -16,6 +16,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [subscribeNewsletter, setSubscribeNewsletter] = useState(true);
+  const [isResetPassword, setIsResetPassword] = useState(false);
   const { toast } = useEnhancedToast();
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -157,19 +158,58 @@ const Auth = () => {
     setIsSignUp(!isSignUp);
     setPassword("");
     setEmailSent(false);
+    setIsResetPassword(false);
   };
 
   const handleBack = () => {
     setEmailSent(false);
     setIsSignUp(false);
+    setIsResetPassword(false);
   };
 
-  if (emailSent) {
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?type=recovery`
+      });
+
+      if (error) throw error;
+
+      setIsResetPassword(true);
+      toast({
+        title: "Reset email sent",
+        description: "Check your email for the password reset link.",
+        variant: "success"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (emailSent || isResetPassword) {
     return (
       <EmailConfirmationView
         email={email}
-        onResend={handleResendConfirmation}
+        onResend={isResetPassword ? handleForgotPassword : handleResendConfirmation}
         onBack={handleBack}
+        title={isResetPassword ? "Check Your Email" : undefined}
+        description={isResetPassword ? "We've sent you a password reset link. Click the link in your email to reset your password." : undefined}
       />
     );
   }
@@ -215,6 +255,7 @@ const Auth = () => {
               onNewsletterChange={setSubscribeNewsletter}
               onSubmit={handleAuth}
               onToggleMode={handleToggleMode}
+              onForgotPassword={handleForgotPassword}
             />
           </CardContent>
         </Card>
