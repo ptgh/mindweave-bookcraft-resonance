@@ -466,9 +466,9 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
 
               <button 
                 onClick={() => { closeFilmModal(); openBookPreview(selectedFilm); }}
-                className="w-full mt-2 py-2 text-sm font-medium rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-2"
+                className="w-full mt-2 py-1.5 text-xs font-medium rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-1.5"
               >
-                <Book className="w-3.5 h-3.5" />
+                <Book className="w-3 h-3" />
                 View Book
               </button>
             </div>
@@ -479,7 +479,22 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ classN
 
       {selectedBook && <EnhancedBookPreviewModal book={selectedBook} onClose={() => setSelectedBook(null)} onAddBook={() => {}} />}
       <AuthorPopup author={selectedAuthor} isVisible={showAuthorPopup} onClose={() => setShowAuthorPopup(false)} />
-      <DirectorPopup director={selectedDirector} isVisible={showDirectorPopup} onClose={() => setShowDirectorPopup(false)} />
+      <DirectorPopup 
+        director={selectedDirector} 
+        isVisible={showDirectorPopup} 
+        onClose={() => setShowDirectorPopup(false)} 
+        onFilmClick={(filmTitle) => {
+          setShowDirectorPopup(false);
+          // Find the film in adaptations and open its modal
+          const film = adaptations.find(f => 
+            f.film_title.toLowerCase().includes(filmTitle.toLowerCase()) ||
+            filmTitle.toLowerCase().includes(f.film_title.toLowerCase())
+          );
+          if (film) {
+            openFilmModal(film);
+          }
+        }}
+      />
     </div>
   );
 };
