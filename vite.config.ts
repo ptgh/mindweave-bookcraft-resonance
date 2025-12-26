@@ -18,18 +18,13 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-
-      // Force a single React instance across the bundle (fixes dispatcher.useState / invalid hook call)
-      react: path.resolve(__dirname, "node_modules/react"),
-      "react/jsx-runtime": path.resolve(__dirname, "node_modules/react/jsx-runtime.js"),
-      "react/jsx-dev-runtime": path.resolve(__dirname, "node_modules/react/jsx-dev-runtime.js"),
-
-      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
-      "react-dom/client": path.resolve(__dirname, "node_modules/react-dom/client.js"),
     },
-    dedupe: ["react", "react-dom"],
+    // Prevent duplicate React instances pulled in by deps (fixes dispatcher.useState / invalid hook call)
+    dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
   },
+  // Force Vite to re-optimize deps so we don't reuse a stale prebundle with a different React instance
   optimizeDeps: {
+    force: true,
     include: [
       "react",
       "react-dom",
