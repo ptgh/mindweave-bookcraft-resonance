@@ -7,10 +7,6 @@ const buildId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // Use a per-build cache dir to avoid stale/corrupt optimized deps causing
-  // "Importing a module script failed" and duplicate-React hook dispatcher crashes.
-  cacheDir: `node_modules/.vite-leafnode-${buildId}`,
-
   define: {
     __APP_BUILD_ID__: JSON.stringify(buildId),
   },
@@ -23,6 +19,18 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    // Ensure React + ReactDOM resolve to the same instance
     dedupe: ["react", "react-dom"],
+  },
+  // Force Vite to re-optimize deps so we don't end up mixing caches
+  optimizeDeps: {
+    force: true,
+    include: [
+      "react",
+      "react-dom",
+      "react-dom/client",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
+    ],
   },
 }));
