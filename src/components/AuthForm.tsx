@@ -18,6 +18,7 @@ interface AuthFormProps {
   onNewsletterChange?: (checked: boolean) => void;
   onSubmit: (e: React.FormEvent) => void;
   onToggleMode: () => void;
+  onForgotPassword?: () => void;
 }
 
 const AuthForm = ({
@@ -32,7 +33,8 @@ const AuthForm = ({
   onTogglePassword,
   onNewsletterChange,
   onSubmit,
-  onToggleMode
+  onToggleMode,
+  onForgotPassword
 }: AuthFormProps) => {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -83,6 +85,17 @@ const AuthForm = ({
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
+        {!isSignUp && onForgotPassword && (
+          <div className="text-right">
+            <button
+              type="button"
+              onClick={onForgotPassword}
+              className="text-xs text-slate-400 hover:text-cyan-400 transition-colors"
+            >
+              Forgot password?
+            </button>
+          </div>
+        )}
       </div>
 
       {isSignUp && onNewsletterChange && (

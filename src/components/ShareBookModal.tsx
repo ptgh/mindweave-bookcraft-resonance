@@ -21,23 +21,12 @@ const TEMPLATE_STYLES: { id: TemplateStyle; name: string; description: string }[
   { id: 'dark', name: 'Dark', description: 'Sophisticated' },
 ];
 
-// Helper to convert image URL to base64 to bypass CORS
+// Helper to convert image URL to base64 to bypass CORS - improved with multiple fallbacks
 const fetchImageAsBase64 = async (url: string): Promise<string | null> => {
+  // Try direct fetch first
   try {
     const response = await fetch(url);
-    if (!response.ok) throw new Error('Failed to fetch');
-    const blob = await response.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    try {
-      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-      const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error('Proxy fetch failed');
+    if (response.ok) {
       const blob = await response.blob();
       return new Promise((resolve) => {
         const reader = new FileReader();
@@ -45,10 +34,36 @@ const fetchImageAsBase64 = async (url: string): Promise<string | null> => {
         reader.onerror = () => resolve(null);
         reader.readAsDataURL(blob);
       });
+    }
+  } catch {
+    // Continue to proxies
+  }
+
+  // List of CORS proxies to try
+  const proxies = [
+    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    `https://cors-anywhere.herokuapp.com/${url}`,
+  ];
+
+  for (const proxyUrl of proxies) {
+    try {
+      const response = await fetch(proxyUrl);
+      if (response.ok) {
+        const blob = await response.blob();
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(blob);
+        });
+      }
     } catch {
-      return null;
+      continue;
     }
   }
+
+  return null;
 };
 
 
@@ -212,10 +227,10 @@ const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
     ctx.font = '36px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.fillText(`by ${book.author}`, width / 2, y + 70);
 
-    // Branding at bottom - just website URL, clean and minimal
-    const brandingY = height - 100;
+    // Branding at bottom - closer to cover/title for better framing
+    const brandingY = y + 140;
     ctx.fillStyle = subtextColor;
-    ctx.font = '28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.font = '32px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('www.leafnode.co.uk', width / 2, brandingY);
 
@@ -349,15 +364,15 @@ const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
             </p>
           )}
 
-          {/* Share Button - Primary Action */}
+          {/* Share Button - Compact */}
           <Button
             onClick={handleNativeShare}
-            className="w-full h-12 text-base active:scale-[0.98] transition-transform"
-            size="lg"
+            variant="outline"
+            className="w-full h-10 text-sm active:scale-[0.98] transition-transform"
             disabled={!canShare || generatingImage}
           >
-            <Share2 className="w-5 h-5 mr-2" />
-            Share to Apps
+            <Share2 className="w-4 h-4 mr-2" />
+            Share
           </Button>
 
           {!canShare && (

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Upload, User } from 'lucide-react';
+import { X, Upload, User, Book, Feather, Mail } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,12 +18,16 @@ interface ProfileEditModalProps {
 
 export const ProfileEditModal = ({ isOpen, onClose }: ProfileEditModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
   const { profile, updateProfile } = useProfile();
   const { toast } = useToast();
   
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [favoriteBook, setFavoriteBook] = useState('');
+  const [favoriteAuthor, setFavoriteAuthor] = useState('');
+  const [userEmail, setUserEmail] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -32,15 +36,39 @@ export const ProfileEditModal = ({ isOpen, onClose }: ProfileEditModalProps) => 
       setDisplayName(profile.display_name || '');
       setBio(profile.bio || '');
       setAvatarUrl(profile.avatar_url || '');
+      // Parse reading_preferences for favorites
+      const prefs = profile.reading_preferences as { favoriteBook?: string; favoriteAuthor?: string } | null;
+      setFavoriteBook(prefs?.favoriteBook || '');
+      setFavoriteAuthor(prefs?.favoriteAuthor || '');
     }
   }, [profile]);
+
+  // Fetch user email
+  useEffect(() => {
+    const getEmail = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
+    };
+    if (isOpen) getEmail();
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && modalRef.current) {
       gsap.fromTo(modalRef.current, 
-        { opacity: 0, scale: 0.95 },
-        { opacity: 1, scale: 1, duration: 0.3, ease: "power2.out" }
+        { opacity: 0, scale: 0.95, y: 20 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: "power3.out" }
       );
+      
+      // Animate form fields with stagger
+      if (formRef.current) {
+        const fields = formRef.current.querySelectorAll('.form-field');
+        gsap.fromTo(fields,
+          { opacity: 0, x: -15 },
+          { opacity: 1, x: 0, duration: 0.3, stagger: 0.06, ease: "power2.out", delay: 0.15 }
+        );
+      }
     }
   }, [isOpen]);
 
@@ -104,7 +132,11 @@ export const ProfileEditModal = ({ isOpen, onClose }: ProfileEditModalProps) => 
       const success = await updateProfile({
         display_name: displayName.trim() || null,
         bio: bio.trim() || null,
-        avatar_url: avatarUrl || null
+        avatar_url: avatarUrl || null,
+        reading_preferences: {
+          favoriteBook: favoriteBook.trim() || null,
+          favoriteAuthor: favoriteAuthor.trim() || null
+        }
       } as any);
 
       if (success) {
@@ -143,12 +175,12 @@ export const ProfileEditModal = ({ isOpen, onClose }: ProfileEditModalProps) => 
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-6">
+        <div ref={formRef} className="p-4 space-y-5 max-h-[60vh] overflow-y-auto scrollbar-hide">
           {/* Avatar */}
-          <div className="flex flex-col items-center gap-3">
-            <Avatar className="w-24 h-24">
+          <div className="flex flex-col items-center gap-3 form-field">
+            <Avatar className="w-20 h-20">
               <AvatarImage src={avatarUrl || undefined} />
-              <AvatarFallback className="bg-slate-700 text-slate-300 text-2xl">
+              <AvatarFallback className="bg-slate-700 text-slate-300 text-xl">
                 {displayName?.charAt(0).toUpperCase() || '?'}
               </AvatarFallback>
             </Avatar>
@@ -160,49 +192,95 @@ export const ProfileEditModal = ({ isOpen, onClose }: ProfileEditModalProps) => 
                 className="hidden"
                 disabled={isUploading}
               />
-              <span className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors">
-                <Upload className="w-4 h-4" />
+              <span className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors">
+                <Upload className="w-3 h-3" />
                 {isUploading ? 'Uploading...' : 'Change Avatar'}
               </span>
             </label>
           </div>
 
+          {/* Email (read-only) */}
+          <div className="space-y-1.5 form-field">
+            <Label htmlFor="email" className="flex items-center gap-2 text-xs">
+              <Mail className="w-3 h-3 text-slate-500" />
+              Email
+            </Label>
+            <Input
+              id="email"
+              value={userEmail}
+              disabled
+              className="bg-slate-800/30 border-slate-700 text-slate-400 text-sm"
+            />
+          </div>
+
           {/* Display Name */}
-          <div className="space-y-2">
-            <Label htmlFor="displayName">Display Name</Label>
+          <div className="space-y-1.5 form-field">
+            <Label htmlFor="displayName" className="text-xs">Display Name</Label>
             <Input
               id="displayName"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="How others see you"
-              className="bg-slate-800/50 border-slate-600"
+              className="bg-slate-800/50 border-slate-600 text-sm"
               maxLength={50}
             />
-            <p className="text-xs text-slate-500">This is how other readers will find you</p>
+            <p className="text-[10px] text-slate-500">This is how other readers will find you</p>
           </div>
 
           {/* Bio */}
-          <div className="space-y-2">
-            <Label htmlFor="bio">Bio</Label>
+          <div className="space-y-1.5 form-field">
+            <Label htmlFor="bio" className="text-xs">Bio</Label>
             <Textarea
               id="bio"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Tell others about your reading interests..."
-              className="bg-slate-800/50 border-slate-600 resize-none"
-              rows={3}
+              className="bg-slate-800/50 border-slate-600 resize-none text-sm"
+              rows={2}
               maxLength={200}
             />
-            <p className="text-xs text-slate-500">{bio.length}/200 characters</p>
+            <p className="text-[10px] text-slate-500">{bio.length}/200 characters</p>
+          </div>
+
+          {/* Favorite Book */}
+          <div className="space-y-1.5 form-field">
+            <Label htmlFor="favoriteBook" className="flex items-center gap-2 text-xs">
+              <Book className="w-3 h-3 text-blue-400" />
+              Favorite Book
+            </Label>
+            <Input
+              id="favoriteBook"
+              value={favoriteBook}
+              onChange={(e) => setFavoriteBook(e.target.value)}
+              placeholder="Your all-time favorite book"
+              className="bg-slate-800/50 border-slate-600 text-sm"
+              maxLength={100}
+            />
+          </div>
+
+          {/* Favorite Author */}
+          <div className="space-y-1.5 form-field">
+            <Label htmlFor="favoriteAuthor" className="flex items-center gap-2 text-xs">
+              <Feather className="w-3 h-3 text-emerald-400" />
+              Favorite Author
+            </Label>
+            <Input
+              id="favoriteAuthor"
+              value={favoriteAuthor}
+              onChange={(e) => setFavoriteAuthor(e.target.value)}
+              placeholder="Your favorite author"
+              className="bg-slate-800/50 border-slate-600 text-sm"
+              maxLength={100}
+            />
           </div>
         </div>
 
         {/* Footer */}
         <div className="flex justify-end gap-3 p-4 border-t border-slate-700">
-          <Button variant="outline" onClick={handleClose}>
+          <Button variant="outline" size="sm" onClick={handleClose}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
+          <Button size="sm" onClick={handleSave} disabled={isSaving}>
             {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
