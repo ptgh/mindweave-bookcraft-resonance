@@ -526,9 +526,9 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                             <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">Film</span>
                           </div>
                           {film.imdb_rating && (
-                            <div className="flex items-center gap-0.5">
-                              <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
-                              <span className="text-[10px] font-medium text-amber-400">{film.imdb_rating}</span>
+                            <div className="flex items-center gap-0.5 bg-amber-500/20 px-1.5 py-0.5 rounded">
+                              <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                              <span className="text-[11px] font-bold text-amber-400">{film.imdb_rating}</span>
                             </div>
                           )}
                         </div>
