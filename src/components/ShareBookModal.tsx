@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Share2 } from 'lucide-react';
+import { X, Share2, Link, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEnhancedToast } from '@/hooks/use-enhanced-toast';
+import { getSocialShareImageUrl } from '@/utils/performance';
 
 interface ShareBookModalProps {
   book: {
+    id?: number; // Transmission ID for shareable URL
     title: string;
     author: string;
     cover_url?: string | null;
@@ -20,6 +22,8 @@ const TEMPLATE_STYLES: { id: TemplateStyle; name: string; description: string }[
   { id: 'gradient', name: 'Cosmic', description: 'Space gradient' },
   { id: 'dark', name: 'Dark', description: 'Sophisticated' },
 ];
+
+const SITE_URL = 'https://www.leafnode.co.uk';
 
 // Helper to convert image URL to base64 to bypass CORS - improved with multiple fallbacks
 const fetchImageAsBase64 = async (url: string): Promise<string | null> => {
@@ -73,13 +77,40 @@ const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [imageLoadError, setImageLoadError] = useState(false);
   const [canShare, setCanShare] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useEnhancedToast();
+
+  // Generate shareable URL with OG meta tags
+  const shareableUrl = book.id 
+    ? `${SITE_URL}/share/book/${book.id}`
+    : SITE_URL;
 
   // Check if native sharing is available
   useEffect(() => {
     setCanShare(typeof navigator !== 'undefined' && 'share' in navigator);
   }, []);
+
+  // Copy shareable link to clipboard
+  const copyShareableLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareableUrl);
+      setLinkCopied(true);
+      toast({
+        title: 'Link copied!',
+        description: 'Share this link for rich social previews',
+        variant: 'success',
+      });
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      toast({
+        title: 'Copy failed',
+        description: 'Please copy the link manually',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const generateShareImage = useCallback(async () => {
     const canvas = canvasRef.current;
@@ -281,11 +312,11 @@ const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
         }
       }
       
-      // Fallback to text-only share with actionable link
+      // Fallback to text-only share with shareable URL (has OG tags)
       await navigator.share({
         title: book.title,
-        text: `Reading "${book.title}" by ${book.author}`,
-        url: 'https://www.leafnode.co.uk',
+        text: `Check out "${book.title}" by ${book.author}`,
+        url: shareableUrl,
       });
       
       toast({
@@ -364,6 +395,27 @@ const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
             </p>
           )}
 
+          {/* Copy Link Button - For social previews */}
+          {book.id && (
+            <Button
+              onClick={copyShareableLink}
+              variant="ghost"
+              className="w-full h-10 text-sm text-slate-300 hover:text-slate-100 active:scale-[0.98] transition-transform"
+            >
+              {linkCopied ? (
+                <>
+                  <Check className="w-4 h-4 mr-2 text-green-400" />
+                  Link Copied!
+                </>
+              ) : (
+                <>
+                  <Link className="w-4 h-4 mr-2" />
+                  Copy Link (for rich previews)
+                </>
+              )}
+            </Button>
+          )}
+
           {/* Share Button - Compact */}
           <Button
             onClick={handleNativeShare}
@@ -372,12 +424,12 @@ const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
             disabled={!canShare || generatingImage}
           >
             <Share2 className="w-4 h-4 mr-2" />
-            Share
+            Share Image
           </Button>
 
           {!canShare && (
             <p className="text-xs text-slate-500 text-center">
-              Sharing is not available on this device
+              Native sharing not available - use Copy Link above
             </p>
           )}
         </div>

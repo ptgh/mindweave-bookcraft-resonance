@@ -435,6 +435,7 @@ const BookCard = ({
         <ShareBookModal
           onClose={() => setShowShareModal(false)}
           book={{
+            id,
             title,
             author,
             cover_url: coverUrl || ''

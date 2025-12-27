@@ -26,6 +26,7 @@ const AdminPopulate = lazy(() => import("./pages/AdminPopulate"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 
 const NotFound = lazy(() => import("./pages/NotFound"));
+const ShareBook = lazy(() => import("./pages/ShareBook"));
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const AppRoutes = () => {
           <Route path="/auth" element={<Auth />} />
           <Route path="/test-brain" element={<TestBrain />} />
           <Route path="/unsubscribe/:token" element={<Unsubscribe />} />
+          <Route path="/share/book/:id" element={<ShareBook />} />
           <Route path="*" element={<Navigate to="/auth" replace />} />
         </Routes>
       </Suspense>
@@ -102,6 +104,7 @@ const AppRoutes = () => {
           <Route path="/admin/enrichment" element={<AdminEnrichment />} />
           <Route path="/admin/populate" element={<AdminPopulate />} />
           <Route path="/unsubscribe/:token" element={<Unsubscribe />} />
+          <Route path="/share/book/:id" element={<ShareBook />} />
           <Route path="/auth" element={<Navigate to="/" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
