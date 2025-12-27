@@ -491,7 +491,7 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
         {/* Chat Panel */}
         {isOpen && (
           <div 
-            className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/30 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden transition-all duration-300 w-96 h-[520px] flex flex-col"
+            className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/40 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden transition-all duration-300 w-96 h-[520px] flex flex-col"
           >
             {/* Header - styled like BrainChatInterface */}
             <div 
