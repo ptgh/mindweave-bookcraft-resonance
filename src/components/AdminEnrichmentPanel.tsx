@@ -16,7 +16,8 @@ import {
   enrichFilmAdaptationBooks
 } from "@/services/filmAdaptationEnrichmentService";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { PlayCircle, RefreshCw, CheckCircle, XCircle, Clock, Image, Film, Calendar } from "lucide-react";
+import { PlayCircle, RefreshCw, CheckCircle, XCircle, Clock, Image, Film, Calendar, Database } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const AdminEnrichmentPanel = () => {
   const { toast } = useEnhancedToast();
@@ -113,6 +114,29 @@ export const AdminEnrichmentPanel = () => {
         variant: "destructive",
       });
       setProgress({ current: 0, total: 0 });
+    },
+  });
+
+  const populateVerifiedFilmsMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('populate-verified-sf-films');
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (result) => {
+      toast({
+        title: "Verified Films Populated",
+        description: `Added ${result.added} new films. ${result.enriched} enriched with book data. ${result.alreadyExist} already existed.`,
+        variant: "success"
+      });
+      queryClient.invalidateQueries({ queryKey: ['film-book-stats'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Population Failed",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -316,6 +340,42 @@ export const AdminEnrichmentPanel = () => {
               <>
                 <Film className="h-5 w-5 mr-2" />
                 Enrich Film Book Data
+              </>
+            )}
+          </Button>
+        </div>
+      </Card>
+
+      {/* Populate Verified SF Films */}
+      <Card className="p-6 bg-background/40 backdrop-blur-md border-amber-400/30">
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Populate Verified SF Films</h3>
+            <p className="text-sm text-muted-foreground">
+              Add missing films from verified Criterion Collection and Arrow Films lists. 
+              Automatically enriches with TMDB posters and Google Books covers.
+            </p>
+            <div className="mt-2 flex items-center gap-2 text-sm text-amber-400">
+              <Database className="h-4 w-4" />
+              <span>51 Criterion + 8 Arrow verified SF films</span>
+            </div>
+          </div>
+
+          <Button
+            onClick={() => populateVerifiedFilmsMutation.mutate()}
+            disabled={populateVerifiedFilmsMutation.isPending}
+            className="w-full bg-amber-600 hover:bg-amber-700"
+            size="lg"
+          >
+            {populateVerifiedFilmsMutation.isPending ? (
+              <>
+                <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                Populating...
+              </>
+            ) : (
+              <>
+                <Database className="h-5 w-5 mr-2" />
+                Populate Verified Films
               </>
             )}
           </Button>

@@ -144,3 +144,6 @@ verify_jwt = false
 
 [functions.share-book-meta]
 verify_jwt = false
+
+[functions.populate-verified-sf-films]
+verify_jwt = false
