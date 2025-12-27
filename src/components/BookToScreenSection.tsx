@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Film, Book, Star, Calendar, Trophy, ExternalLink, Play, Loader2, X } from 'lucide-react';
+import { Film, Book, Star, Calendar, Trophy, ExternalLink, Play, Loader2, X, Sparkles } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -427,49 +427,74 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
             >
               <div className="p-3">
                 <div className="flex gap-3">
-                  {/* Book Card with Cover */}
+                  {/* Book/Source Card with Cover */}
                   <button
                     onClick={() => openBookPreview(film)}
-                    className="flex-1 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-primary/40 transition-all text-left group overflow-hidden"
+                    className={`flex-1 rounded-lg border transition-all text-left group overflow-hidden ${
+                      film.adaptation_type === 'original'
+                        ? 'bg-violet-500/10 hover:bg-violet-500/20 border-violet-500/30 hover:border-violet-400/50'
+                        : 'bg-muted/20 hover:bg-muted/40 border-border/20 hover:border-primary/40'
+                    }`}
                   >
                     <div className="flex gap-2 h-full">
                       {/* Cover wrapper - do not change dimensions */}
                       <div className="w-16 h-24 flex-shrink-0 overflow-hidden rounded-sm">
-                        <MediaImage
-                          src={film.book_cover_url}
-                          alt={film.book_title}
-                          type="book"
-                          quality="optimized"
-                          fallbackIcon={<Book className="w-6 h-6 text-primary/40" />}
-                          aspectRatio="auto"
-                          className="w-full h-full object-cover"
-                        />
+                        {film.adaptation_type === 'original' ? (
+                          <div className="w-full h-full bg-gradient-to-br from-violet-600/30 to-purple-800/40 flex items-center justify-center">
+                            <Sparkles className="w-6 h-6 text-violet-400" />
+                          </div>
+                        ) : (
+                          <MediaImage
+                            src={film.book_cover_url}
+                            alt={film.book_title}
+                            type="book"
+                            quality="optimized"
+                            fallbackIcon={<Book className="w-6 h-6 text-primary/40" />}
+                            aspectRatio="auto"
+                            className="w-full h-full object-cover"
+                          />
+                        )}
                       </div>
                       <div className="flex-1 py-2 pr-2 min-w-0 flex flex-col">
                         <div className="flex items-center gap-1 mb-1">
-                          <Book className="w-3 h-3 text-primary flex-shrink-0" />
-                          <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">Book</span>
+                          {film.adaptation_type === 'original' ? (
+                            <>
+                              <Sparkles className="w-3 h-3 text-violet-400 flex-shrink-0" />
+                              <span className="text-[9px] uppercase tracking-wider text-violet-400 font-medium">Original</span>
+                            </>
+                          ) : (
+                            <>
+                              <Book className="w-3 h-3 text-primary flex-shrink-0" />
+                              <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">Book</span>
+                            </>
+                          )}
                         </div>
-                        <h4 className="text-[11px] sm:text-xs font-medium text-foreground line-clamp-3 group-hover:text-primary transition-colors leading-snug mb-auto">
-                          {film.book_title}
+                        <h4 className={`text-[11px] sm:text-xs font-medium line-clamp-3 transition-colors leading-snug mb-auto ${
+                          film.adaptation_type === 'original'
+                            ? 'text-foreground group-hover:text-violet-400'
+                            : 'text-foreground group-hover:text-primary'
+                        }`}>
+                          {film.adaptation_type === 'original' ? film.film_title : film.book_title}
                         </h4>
-                        {/* Author + Year - fixed height row */}
+                        {/* Author/Writer + Year - fixed height row */}
                         <div className="mt-2 space-y-0.5">
                           <button
                             ref={el => { if (el) authorRefs.current.set(film.id + '-author', el); }}
                             onClick={(e) => { e.stopPropagation(); handleAuthorClick(authorFull); }}
-                            className="text-[10px] text-emerald-400 relative inline-block truncate max-w-full"
+                            className={`text-[10px] relative inline-block truncate max-w-full ${
+                              film.adaptation_type === 'original' ? 'text-violet-300' : 'text-emerald-400'
+                            }`}
                             title={authorFull !== authorDisplay ? authorFull : undefined}
                           >
-                            {authorDisplay}
-                            <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-400" />
+                            {film.adaptation_type === 'original' ? (film.director || 'Writer/Director') : authorDisplay}
+                            <span className={`gsap-underline absolute bottom-0 left-0 w-0 h-0.5 ${
+                              film.adaptation_type === 'original' ? 'bg-violet-400' : 'bg-emerald-400'
+                            }`} />
                           </button>
                           <p className="text-[10px] text-muted-foreground/70">
-                            {film.book_publication_year 
-                              ? film.book_publication_year 
-                              : film.adaptation_type === 'original' 
-                                ? 'Original Screenplay' 
-                                : '—'}
+                            {film.adaptation_type === 'original' 
+                              ? 'Original Screenplay' 
+                              : film.book_publication_year || '—'}
                           </p>
                         </div>
                       </div>
