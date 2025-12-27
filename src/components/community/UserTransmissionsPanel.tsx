@@ -177,13 +177,15 @@ export const UserTransmissionsPanel: React.FC<UserTransmissionsPanelProps> = ({
           
           <div 
             ref={scrollContainerRef}
-            className="flex gap-3 overflow-x-auto scrollbar-hide smooth-scroll overscroll-x-contain px-1"
+            className="flex gap-3 overflow-x-auto scrollbar-hide overscroll-x-contain px-1"
+            style={{ scrollBehavior: 'smooth' }}
           >
             {transmissions.map((book, index) => (
               <button
                 key={book.id}
                 ref={el => { booksRef.current[index] = el; }}
-                className="flex-shrink-0 group cursor-pointer text-left"
+                className="w-12 h-[72px] flex-shrink-0 flex-grow-0 group cursor-pointer text-left"
+                style={{ minWidth: '48px', maxWidth: '48px' }}
                 title={`${book.title} by ${book.author}`}
                 onClick={() => setSelectedBook({
                   id: `transmission-${book.id}`,
@@ -196,13 +198,20 @@ export const UserTransmissionsPanel: React.FC<UserTransmissionsPanelProps> = ({
               >
                 {book.cover_url ? (
                   <img
-                    src={book.cover_url}
+                    src={getHighQualityCoverUrl(book.cover_url)}
                     alt={book.title || 'Book cover'}
-                    className="block w-12 h-[72px] bg-transparent object-cover rounded shadow-md group-hover:scale-105 transition-transform"
+                    className="block w-full h-full bg-slate-800 object-cover rounded shadow-md group-hover:scale-105 transition-transform"
                     loading="lazy"
+                    onError={(e) => {
+                      // Fallback to original URL if high-quality fails
+                      const target = e.target as HTMLImageElement;
+                      if (target.src !== book.cover_url) {
+                        target.src = book.cover_url || '';
+                      }
+                    }}
                   />
                 ) : (
-                  <div className="w-12 h-[72px] bg-slate-700 rounded flex items-center justify-center shadow-md">
+                  <div className="w-full h-full bg-slate-700 rounded flex items-center justify-center shadow-md">
                     <BookOpen className="w-5 h-5 text-slate-500" />
                   </div>
                 )}
