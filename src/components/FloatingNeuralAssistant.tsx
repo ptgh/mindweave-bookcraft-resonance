@@ -434,15 +434,39 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
   // Don't render on Neural Map page (has its own BrainChatInterface)
   if (!user || isNeuralMapPage) return null;
 
-  // Clear conversation handler
+  // Clear conversation handler - clears UI but AI retains memory
   const handleClearConversation = async () => {
-    setMessages([]);
-    setShowQuickActions(true);
-    setConversationId(null);
-    toast({
-      title: "Conversation cleared",
-      description: "Ready for a fresh start",
-    });
+    try {
+      // Delete messages from DB if conversation exists
+      if (conversationId) {
+        await supabase
+          .from('chat_messages')
+          .delete()
+          .eq('conversation_id', conversationId);
+        
+        // Delete the conversation record itself
+        await supabase
+          .from('chat_conversations')
+          .delete()
+          .eq('id', conversationId);
+      }
+      
+      // Clear local state
+      setMessages([]);
+      setShowQuickActions(true);
+      setConversationId(null);
+      
+      toast({
+        title: "Conversation cleared",
+        description: "Ready for a fresh start (memory retained)",
+      });
+    } catch (error) {
+      console.error('Error clearing conversation:', error);
+      // Still clear local state even if DB fails
+      setMessages([]);
+      setShowQuickActions(true);
+      setConversationId(null);
+    }
   };
 
   return (

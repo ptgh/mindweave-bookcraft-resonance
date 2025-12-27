@@ -114,11 +114,22 @@ export const preloadCriticalResources = () => {
   }
 };
 
-// Image optimization utility
+// Image optimization utility - balances quality and speed
 export const getOptimizedImageUrl = (url: string, width?: number) => {
   if (!url) return '';
   
   const settings = getOptimizedSettings();
+  
+  // For Google Books URLs
+  if (url.includes('books.google') || url.includes('googleusercontent.com')) {
+    // Desktop: use zoom=2 for good quality, mobile: zoom=1 for speed
+    const zoomLevel = settings.reduceAnimations ? 1 : 2;
+    let optimized = url.replace(/zoom=\d+/, `zoom=${zoomLevel}`);
+    if (!optimized.includes('zoom=')) {
+      optimized = `${optimized}${optimized.includes('?') ? '&' : '?'}zoom=${zoomLevel}`;
+    }
+    return optimized;
+  }
   
   // Use smaller images on mobile devices
   if (settings.reduceAnimations && width) {
@@ -127,6 +138,22 @@ export const getOptimizedImageUrl = (url: string, width?: number) => {
     if (url.includes('googleusercontent.com')) {
       return url.replace(/=s\d+/, `=s${mobileWidth}`);
     }
+  }
+  
+  return url;
+};
+
+// Get high quality image URL for social sharing (minimum 1200px width)
+export const getSocialShareImageUrl = (url: string): string => {
+  if (!url) return '';
+  
+  // For Google Books URLs, get highest quality
+  if (url.includes('books.google') || url.includes('googleusercontent.com')) {
+    let optimized = url.replace(/zoom=\d+/, 'zoom=3');
+    if (!optimized.includes('zoom=')) {
+      optimized = `${optimized}${optimized.includes('?') ? '&' : '?'}zoom=3`;
+    }
+    return optimized;
   }
   
   return url;
