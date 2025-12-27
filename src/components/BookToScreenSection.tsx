@@ -433,7 +433,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                     className="flex-1 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-primary/40 transition-all text-left group overflow-hidden"
                   >
                     <div className="flex gap-2 h-full">
-                      <div className="w-20 sm:w-24 flex-shrink-0 overflow-hidden">
+                      <div className="w-16 flex-shrink-0 overflow-hidden">
                         <MediaImage
                           src={film.book_cover_url}
                           alt={film.book_title}
@@ -477,7 +477,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                     className="flex-1 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-amber-400/40 transition-all text-left group overflow-hidden"
                   >
                     <div className="flex gap-2 h-full">
-                      <div className="w-20 sm:w-24 flex-shrink-0 overflow-hidden">
+                      <div className="w-16 flex-shrink-0 overflow-hidden">
                         <MediaImage
                           src={film.poster_url}
                           alt={film.film_title}
