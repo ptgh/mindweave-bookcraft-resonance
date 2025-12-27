@@ -131,6 +131,17 @@ export const getOptimizedImageUrl = (url: string, width?: number) => {
     return optimized;
   }
   
+  // For TMDB poster URLs - use higher quality on desktop
+  if (url.includes('image.tmdb.org')) {
+    if (settings.reduceAnimations) {
+      // Mobile: w342 for faster loading
+      return url.replace(/\/w\d+\//, '/w342/');
+    } else {
+      // Desktop: w780 for better quality
+      return url.replace(/\/w\d+\//, '/w780/');
+    }
+  }
+  
   // Use smaller images on mobile devices
   if (settings.reduceAnimations && width) {
     const mobileWidth = Math.min(width, 400);
@@ -156,5 +167,64 @@ export const getSocialShareImageUrl = (url: string): string => {
     return optimized;
   }
   
+  // For TMDB URLs, use original quality
+  if (url.includes('image.tmdb.org')) {
+    return url.replace(/\/w\d+\//, '/original/');
+  }
+  
+  // For Open Library, use L size
+  if (url.includes('covers.openlibrary.org')) {
+    return url.replace(/-[SML]\.jpg/, '-L.jpg');
+  }
+  
   return url;
+};
+
+// Get high quality display URL (for modals, previews)
+export const getHighQualityDisplayUrl = (url: string): string => {
+  if (!url) return '';
+  
+  // For Google Books URLs
+  if (url.includes('books.google') || url.includes('googleusercontent.com')) {
+    let optimized = url.replace(/zoom=\d+/, 'zoom=2');
+    if (!optimized.includes('zoom=')) {
+      optimized = `${optimized}${optimized.includes('?') ? '&' : '?'}zoom=2`;
+    }
+    return optimized;
+  }
+  
+  // For TMDB URLs, use w780 (good balance of quality and size)
+  if (url.includes('image.tmdb.org')) {
+    return url.replace(/\/w\d+\//, '/w780/');
+  }
+  
+  // For Open Library, use L size
+  if (url.includes('covers.openlibrary.org')) {
+    return url.replace(/-[SM]\.jpg/, '-L.jpg');
+  }
+  
+  return url;
+};
+
+// Preload an image and return a promise
+export const preloadImage = (src: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    if (!src) {
+      reject(new Error('No source provided'));
+      return;
+    }
+    
+    const img = new Image();
+    img.onload = () => resolve(src);
+    img.onerror = () => reject(new Error(`Failed to load: ${src}`));
+    img.src = src;
+  });
+};
+
+// Preload multiple images
+export const preloadImages = (urls: string[]): void => {
+  urls.filter(Boolean).forEach(url => {
+    const img = new Image();
+    img.src = url;
+  });
 };
