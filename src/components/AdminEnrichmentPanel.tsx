@@ -11,8 +11,12 @@ import {
   getMissingCoverStats, 
   enrichBookCovers 
 } from "@/services/bookCoverEnrichmentService";
+import { 
+  getMissingBookDataStats,
+  enrichFilmAdaptationBooks
+} from "@/services/filmAdaptationEnrichmentService";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { PlayCircle, RefreshCw, CheckCircle, XCircle, Clock, Image } from "lucide-react";
+import { PlayCircle, RefreshCw, CheckCircle, XCircle, Clock, Image, Film, Calendar } from "lucide-react";
 
 export const AdminEnrichmentPanel = () => {
   const { toast } = useEnhancedToast();
@@ -28,6 +32,12 @@ export const AdminEnrichmentPanel = () => {
   const { data: coverStats } = useQuery({
     queryKey: ['cover-stats'],
     queryFn: getMissingCoverStats,
+    refetchInterval: 10000,
+  });
+
+  const { data: filmBookStats } = useQuery({
+    queryKey: ['film-book-stats'],
+    queryFn: getMissingBookDataStats,
     refetchInterval: 10000,
   });
 
@@ -74,6 +84,31 @@ export const AdminEnrichmentPanel = () => {
     onError: (error: Error) => {
       toast({
         title: "Cover Enrichment Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      setProgress({ current: 0, total: 0 });
+    },
+  });
+
+  const filmBookEnrichmentMutation = useMutation({
+    mutationFn: async () => {
+      return await enrichFilmAdaptationBooks((current, total) => {
+        setProgress({ current, total });
+      });
+    },
+    onSuccess: (result) => {
+      toast({
+        title: "Film Book Enrichment Complete",
+        description: `Processed ${result.processed} films. ${result.successful} updated, ${result.failed} unchanged.`,
+        variant: "success"
+      });
+      queryClient.invalidateQueries({ queryKey: ['film-book-stats'] });
+      setProgress({ current: 0, total: 0 });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Film Book Enrichment Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -225,6 +260,62 @@ export const AdminEnrichmentPanel = () => {
               <>
                 <Image className="h-5 w-5 mr-2" />
                 Fetch Missing Covers ({coverStats?.missingCovers || 0} books)
+              </>
+            )}
+          </Button>
+        </div>
+      </Card>
+
+      {/* Film Adaptation Book Enrichment */}
+      <Card className="p-6 bg-background/40 backdrop-blur-md border-border/50">
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Film Adaptation Book Data</h3>
+            <p className="text-sm text-muted-foreground">
+              Enrich book metadata for film adaptations (covers and publication years).
+            </p>
+            <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Image className="h-4 w-4 text-amber-400" />
+                <span>{filmBookStats?.missingCovers || 0} missing covers</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-cyan-400" />
+                <span>{filmBookStats?.missingYears || 0} missing years</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Film className="h-4 w-4 text-muted-foreground" />
+                <span>{filmBookStats?.totalFilms || 0} total films</span>
+              </div>
+            </div>
+          </div>
+
+          {filmBookEnrichmentMutation.isPending && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Enriching book data...</span>
+                <span>{progress.current} / {progress.total}</span>
+              </div>
+              <Progress value={progressPercentage} className="h-2" />
+            </div>
+          )}
+
+          <Button
+            onClick={() => filmBookEnrichmentMutation.mutate()}
+            disabled={filmBookEnrichmentMutation.isPending || ((filmBookStats?.missingCovers || 0) === 0 && (filmBookStats?.missingYears || 0) === 0)}
+            className="w-full"
+            size="lg"
+            variant="outline"
+          >
+            {filmBookEnrichmentMutation.isPending ? (
+              <>
+                <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                Enriching...
+              </>
+            ) : (
+              <>
+                <Film className="h-5 w-5 mr-2" />
+                Enrich Film Book Data
               </>
             )}
           </Button>
