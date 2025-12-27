@@ -465,7 +465,11 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                             <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-400" />
                           </button>
                           <p className="text-[10px] text-muted-foreground/70">
-                            {film.book_publication_year || '—'}
+                            {film.book_publication_year 
+                              ? film.book_publication_year 
+                              : film.adaptation_type === 'original' 
+                                ? 'Original Screenplay' 
+                                : '—'}
                           </p>
                         </div>
                       </div>
