@@ -16,11 +16,15 @@ interface FilmAdaptation {
   imdb_rating: number | null;
   poster_url: string | null;
   trailer_url: string | null;
+  adaptation_type?: string | null;
 }
 
 interface FeaturedSectionProps {
   className?: string;
 }
+
+// Rotation interval in milliseconds (10 seconds)
+const ROTATION_INTERVAL = 10000;
 
 export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) => {
   const { featuredContent, loading } = useFeaturedContent();
@@ -28,9 +32,15 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const workRefs = useRef<(HTMLButtonElement | null)[]>([]);
   
-  // Featured film state
-  const [featuredFilm, setFeaturedFilm] = useState<FilmAdaptation | null>(null);
+  // Featured film state (book adaptations only)
+  const [featuredFilms, setFeaturedFilms] = useState<FilmAdaptation[]>([]);
+  const [currentFilmIndex, setCurrentFilmIndex] = useState(0);
   const [showTrailer, setShowTrailer] = useState(false);
+  
+  // Original screenplay state
+  const [originalScreenplays, setOriginalScreenplays] = useState<FilmAdaptation[]>([]);
+  const [currentOriginalIndex, setCurrentOriginalIndex] = useState(0);
+  const [showOriginalTrailer, setShowOriginalTrailer] = useState(false);
   
   // Modal state for notable works and featured book
   const [selectedBook, setSelectedBook] = useState<{
@@ -39,20 +49,58 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
     cover_url?: string;
   } | null>(null);
 
-  // Fetch a featured film
+  // Fetch featured films (book adaptations) and original screenplays
   useEffect(() => {
-    const fetchFeaturedFilm = async () => {
-      const { data } = await supabase
+    const fetchFilms = async () => {
+      // Fetch book adaptations (non-original)
+      const { data: adaptations } = await supabase
         .from('sf_film_adaptations')
-        .select('id, film_title, book_title, book_author, film_year, director, imdb_rating, poster_url, trailer_url')
+        .select('id, film_title, book_title, book_author, film_year, director, imdb_rating, poster_url, trailer_url, adaptation_type')
+        .neq('adaptation_type', 'original')
+        .not('poster_url', 'is', null)
         .order('imdb_rating', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(10);
       
-      if (data) setFeaturedFilm(data);
+      if (adaptations) setFeaturedFilms(adaptations);
+
+      // Fetch original screenplays
+      const { data: originals } = await supabase
+        .from('sf_film_adaptations')
+        .select('id, film_title, book_title, book_author, film_year, director, imdb_rating, poster_url, trailer_url, adaptation_type')
+        .eq('adaptation_type', 'original')
+        .not('poster_url', 'is', null)
+        .order('imdb_rating', { ascending: false })
+        .limit(10);
+      
+      if (originals) setOriginalScreenplays(originals);
     };
-    fetchFeaturedFilm();
+    fetchFilms();
   }, []);
+
+  // Rotation effect for featured films
+  useEffect(() => {
+    if (featuredFilms.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentFilmIndex(prev => (prev + 1) % featuredFilms.length);
+    }, ROTATION_INTERVAL);
+    
+    return () => clearInterval(interval);
+  }, [featuredFilms.length]);
+
+  // Rotation effect for original screenplays
+  useEffect(() => {
+    if (originalScreenplays.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentOriginalIndex(prev => (prev + 1) % originalScreenplays.length);
+    }, ROTATION_INTERVAL + 2000); // Offset slightly from film rotation
+    
+    return () => clearInterval(interval);
+  }, [originalScreenplays.length]);
+
+  const featuredFilm = featuredFilms[currentFilmIndex] || null;
+  const featuredOriginal = originalScreenplays[currentOriginalIndex] || null;
 
   useEffect(() => {
     if (!sectionRef.current || loading) return;
@@ -125,8 +173,8 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
 
   if (loading) {
     return (
-      <div className={cn("grid grid-cols-1 md:grid-cols-4 gap-4", className)}>
-        {[1, 2, 3, 4].map(i => (
+      <div className={cn("grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4", className)}>
+        {[1, 2, 3, 4, 5].map(i => (
           <div key={i} className="h-48 bg-slate-800/30 rounded-xl animate-pulse" />
         ))}
       </div>
@@ -164,7 +212,7 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
 
   return (
     <>
-      <div ref={sectionRef} className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4", className)}>
+      <div ref={sectionRef} className={cn("grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4", className)}>
         {/* Featured Author Card */}
         <div
           ref={el => { cardsRef.current[0] = el; }}
@@ -333,11 +381,26 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
             featuredFilm?.trailer_url && "cursor-pointer"
           )}
         >
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400">
-              <Film className="w-4 h-4" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400">
+                <Film className="w-4 h-4" />
+              </div>
+              <h3 className="text-sm font-medium text-slate-400">Featured Film</h3>
             </div>
-            <h3 className="text-sm font-medium text-slate-400">Featured Film</h3>
+            {featuredFilms.length > 1 && (
+              <div className="flex gap-1">
+                {featuredFilms.slice(0, 5).map((_, idx) => (
+                  <div 
+                    key={idx}
+                    className={cn(
+                      "w-1.5 h-1.5 rounded-full transition-colors",
+                      idx === currentFilmIndex ? "bg-amber-400" : "bg-amber-400/30"
+                    )}
+                  />
+                ))}
+              </div>
+            )}
           </div>
           
           {featuredFilm ? (
@@ -388,6 +451,89 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
             <p className="text-sm text-slate-500">No featured film</p>
           )}
         </div>
+
+        {/* Original Screenplay Card */}
+        <div
+          ref={el => { cardsRef.current[4] = el; }}
+          onClick={featuredOriginal?.trailer_url ? () => setShowOriginalTrailer(true) : undefined}
+          className={cn(
+            "rounded-xl border p-5 transition-all duration-300 hover:shadow-lg",
+            "bg-violet-500/10",
+            "border-violet-500/20 hover:border-violet-500/40",
+            "hover:shadow-violet-500/10",
+            featuredOriginal?.trailer_url && "cursor-pointer"
+          )}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-violet-500/20 text-violet-400">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <h3 className="text-sm font-medium text-slate-400">Original Screenplay</h3>
+            </div>
+            {originalScreenplays.length > 1 && (
+              <div className="flex gap-1">
+                {originalScreenplays.slice(0, 5).map((_, idx) => (
+                  <div 
+                    key={idx}
+                    className={cn(
+                      "w-1.5 h-1.5 rounded-full transition-colors",
+                      idx === currentOriginalIndex ? "bg-violet-400" : "bg-violet-400/30"
+                    )}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {featuredOriginal ? (
+            <div className="flex gap-3">
+              {featuredOriginal.poster_url ? (
+                <div className="relative w-16 h-24 flex-shrink-0">
+                  <img 
+                    src={featuredOriginal.poster_url}
+                    alt={featuredOriginal.film_title}
+                    className="w-full h-full object-cover rounded-md shadow-md"
+                  />
+                  {featuredOriginal.trailer_url && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-md opacity-0 hover:opacity-100 transition-opacity">
+                      <Play className="w-6 h-6 text-white" />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="w-16 h-24 bg-gradient-to-br from-violet-600/30 to-purple-800/40 rounded-md flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-6 h-6 text-violet-400" />
+                </div>
+              )}
+              
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <p className="text-base font-medium text-slate-200 line-clamp-1 hover:text-violet-300 transition-colors">
+                  {featuredOriginal.film_title}
+                </p>
+                <p className="text-xs text-violet-300 truncate">
+                  {featuredOriginal.director || 'Unknown Director'}
+                </p>
+                <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                  {featuredOriginal.film_year && (
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {featuredOriginal.film_year}
+                    </span>
+                  )}
+                  {featuredOriginal.imdb_rating && (
+                    <span className="flex items-center gap-1 text-violet-400">
+                      <Star className="w-3 h-3 fill-violet-400" />
+                      {featuredOriginal.imdb_rating}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">No original screenplays</p>
+          )}
+        </div>
       </div>
 
       {/* Trailer Modal */}
@@ -427,6 +573,53 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
               <h3 className="text-lg font-medium text-slate-100">{featuredFilm.film_title}</h3>
               <p className="text-sm text-slate-400">
                 Based on "{featuredFilm.book_title}" by {featuredFilm.book_author}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Original Screenplay Trailer Modal */}
+      {showOriginalTrailer && featuredOriginal && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setShowOriginalTrailer(false)}
+        >
+          <div 
+            className="relative w-full max-w-4xl bg-slate-900 rounded-xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+              onClick={() => setShowOriginalTrailer(false)}
+            >
+              ✕
+            </button>
+            
+            {extractYouTubeId(featuredOriginal.trailer_url) ? (
+              <div className="aspect-video">
+                <iframe
+                  src={`https://www.youtube.com/embed/${extractYouTubeId(featuredOriginal.trailer_url)}?autoplay=1&rel=0`}
+                  title={`${featuredOriginal.film_title} Trailer`}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            ) : (
+              <div className="aspect-video flex items-center justify-center bg-slate-800">
+                <p className="text-slate-400">No trailer available</p>
+              </div>
+            )}
+            
+            <div className="p-4 bg-violet-900/30 border-t border-violet-700/30">
+              <div className="flex items-center gap-2 mb-1">
+                <Sparkles className="w-4 h-4 text-violet-400" />
+                <span className="text-xs text-violet-400 font-medium">Original Screenplay</span>
+              </div>
+              <h3 className="text-lg font-medium text-slate-100">{featuredOriginal.film_title}</h3>
+              <p className="text-sm text-slate-400">
+                Directed by {featuredOriginal.director || 'Unknown'}
               </p>
             </div>
           </div>
