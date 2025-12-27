@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Film, Book, Star, Calendar, Trophy, ExternalLink, Play, Loader2 } from 'lucide-react';
+import { Film, Book, Star, Calendar, Trophy, ExternalLink, Play, Loader2, X } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -543,25 +543,33 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
         </div>
       )}
 
-      {/* Film Preview Modal - Original styling with scroll */}
+      {/* Film Preview Modal - Styled to match Signal Preview */}
       {showFilmModal && selectedFilm && createPortal(
-        <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4" onClick={closeFilmModal}>
+        <div className="fixed inset-0 z-[2000] flex h-[100dvh] w-screen items-center justify-center bg-background/50 backdrop-blur-sm p-4" onClick={closeFilmModal}>
           <div 
-            className="relative w-full max-w-2xl max-h-[90vh] bg-slate-900/95 rounded-xl shadow-2xl border border-amber-500/30 overflow-hidden flex flex-col" 
+            className="modal-content bg-slate-800/50 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[90vh] flex flex-col" 
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
-            <button 
-              onClick={closeFilmModal}
-              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white/80 hover:text-white transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            {/* Header - matching Signal Preview style */}
+            <div className="p-3 border-b border-slate-700 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+                  <span className="text-slate-200 text-base font-medium">
+                    Film Preview
+                  </span>
+                </div>
+                <button
+                  onClick={closeFilmModal}
+                  className="text-slate-400 hover:text-slate-200 transition-colors p-1 rounded hover:bg-slate-700/50"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
 
-            {/* Scrollable content area */}
-            <div className="flex-1 overflow-y-auto">
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto scrollbar-hide">
               {/* Trailer */}
               <div className="aspect-video bg-black relative">
                 {(() => {
@@ -606,48 +614,67 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                 })()}
               </div>
 
-              {/* Content */}
-              <div className="p-6 space-y-5">
-                {/* Title & meta */}
-                <div>
-                  <h3 className="text-xl font-semibold text-foreground">{selectedFilm.film_title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Based on "{selectedFilm.book_title}" by {selectedFilm.book_author}
-                  </p>
-                </div>
-
-                {/* Film details */}
-                <div className="flex flex-wrap gap-4 text-sm">
-                  {selectedFilm.film_year && (
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <Calendar className="w-4 h-4 text-amber-400" />
-                      <span>{selectedFilm.film_year}</span>
+              {/* Content section */}
+              <div className="p-4 space-y-4">
+                {/* Title & meta - matching book modal layout */}
+                <div className="flex space-x-4">
+                  {/* Film poster thumbnail */}
+                  {selectedFilm.poster_url && (
+                    <div className="flex-shrink-0 w-16 h-24 bg-slate-700/50 border border-slate-600 rounded-lg overflow-hidden shadow-lg">
+                      <img 
+                        src={getHighQualityDisplayUrl(selectedFilm.poster_url)} 
+                        alt={selectedFilm.film_title}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   )}
-                  {selectedFilm.director && (
-                    <button 
-                      onClick={() => handleDirectorClick(selectedFilm.director!)} 
-                      className="text-amber-300 hover:text-amber-400 transition-colors"
-                    >
-                      Dir: {selectedFilm.director}
-                    </button>
-                  )}
-                  {selectedFilm.imdb_rating && (
-                    <div className="flex items-center gap-1.5 text-amber-400">
-                      <Star className="w-4 h-4 fill-amber-400" />
-                      <span className="font-medium">{selectedFilm.imdb_rating}/10</span>
+                  <div className="flex-1 space-y-1">
+                    <h2 className="text-slate-200 font-bold text-xl leading-tight">
+                      {selectedFilm.film_title}
+                    </h2>
+                    <p className="text-slate-400 text-sm">
+                      Based on "{selectedFilm.book_title}" by {selectedFilm.book_author}
+                    </p>
+                    
+                    {/* Film details row */}
+                    <div className="flex flex-wrap gap-3 text-sm pt-1">
+                      {selectedFilm.film_year && (
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                          <span>{selectedFilm.film_year}</span>
+                        </div>
+                      )}
+                      {selectedFilm.director && (
+                        <button 
+                          onClick={() => handleDirectorClick(selectedFilm.director!)} 
+                          className="text-amber-300 hover:text-amber-400 transition-colors text-sm"
+                        >
+                          Dir: {selectedFilm.director}
+                        </button>
+                      )}
+                      {selectedFilm.imdb_rating && (
+                        <div className="flex items-center gap-1 text-amber-400">
+                          <Star className="w-3.5 h-3.5 fill-amber-400" />
+                          <span className="font-medium text-sm">{selectedFilm.imdb_rating}/10</span>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* Description */}
                 {selectedFilm.notable_differences && (
-                  <p className="text-sm text-muted-foreground leading-relaxed">{selectedFilm.notable_differences}</p>
+                  <div className="space-y-2">
+                    <h3 className="text-slate-200 font-semibold text-sm">About the Adaptation</h3>
+                    <p className="text-slate-400 text-sm leading-relaxed max-h-24 overflow-y-auto scrollbar-hide">
+                      {selectedFilm.notable_differences}
+                    </p>
+                  </div>
                 )}
 
                 {/* Awards */}
                 {selectedFilm.awards && selectedFilm.awards.length > 0 && (
-                  <div className="flex items-start gap-3 flex-wrap">
+                  <div className="flex items-start gap-2 flex-wrap">
                     <Trophy className="w-4 h-4 text-amber-400 mt-0.5" />
                     <div className="flex flex-wrap gap-2">
                       {selectedFilm.awards.map((award, idx) => (
@@ -665,82 +692,86 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                   </div>
                 )}
 
-                {/* Where to Watch - Google search integration + Physical Media */}
-                <div className="space-y-4 pt-4 border-t border-border/30">
-                  <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
-                    <ExternalLink className="w-4 h-4 text-amber-400" />
-                    Where to Watch
-                  </h4>
-                  
-                  <div className="space-y-3">
-                    {/* Primary: Google Watch search - opens in new tab showing all providers */}
-                    <a
-                      href={`https://www.google.com/search?q=watch+${encodeURIComponent(selectedFilm.film_title)}+${selectedFilm.film_year || ''}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border/30 hover:border-primary/30 transition-all group"
-                    >
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center">
-                        <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                {/* Streaming Section - styled like book's digital copy section */}
+                <div className="border border-slate-700 rounded-lg p-3 bg-slate-700/20">
+                  <a
+                    href={`https://www.google.com/search?q=watch+${encodeURIComponent(selectedFilm.film_title)}+${selectedFilm.film_year || ''}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between group"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                           <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                           <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                           <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                         </svg>
                       </div>
-                      <div className="text-left flex-1">
-                        <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors block">
+                      <div className="text-left">
+                        <span className="text-slate-200 text-sm font-medium block group-hover:text-blue-400 transition-colors">
                           Find Streaming Options
                         </span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-slate-500 text-xs">
                           See all available platforms
                         </span>
                       </div>
-                      <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
-                    </a>
-
-                    {/* Physical Media Section */}
-                    {(getCriterionFilm(selectedFilm.film_title) || getArrowFilm(selectedFilm.film_title)) && (
-                      <div className="pt-2">
-                        <p className="text-xs text-muted-foreground mb-2">Buy Physical</p>
-                        <div className="flex gap-2 flex-wrap">
-                          {/* Criterion Collection */}
-                          {getCriterionFilm(selectedFilm.film_title) && (
-                            <a
-                              href={getCriterionPurchaseUrl(selectedFilm.film_title)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600/50 hover:border-slate-500 transition-all group"
-                            >
-                              <img src="/images/criterion-logo.jpg" alt="" className="h-4 w-auto rounded-sm" />
-                              <span className="text-xs font-medium text-slate-200">Criterion</span>
-                              <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-slate-200" />
-                            </a>
-                          )}
-
-                          {/* Arrow Films */}
-                          {getArrowFilm(selectedFilm.film_title) && (
-                            <a
-                              href={getArrowPurchaseUrl(selectedFilm.film_title)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-900/30 hover:bg-red-900/50 border border-red-600/30 hover:border-red-500/50 transition-all group"
-                            >
-                              <span className="text-red-500 font-bold text-sm">▶</span>
-                              <span className="text-xs font-medium text-red-200">Arrow</span>
-                              <ExternalLink className="w-3 h-3 text-red-400 group-hover:text-red-200" />
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-blue-400 transition-colors" />
+                  </a>
                 </div>
 
-                {/* View Book button - styled consistently */}
+                {/* Buy Physical Section - styled like book's publisher section */}
+                {(getCriterionFilm(selectedFilm.film_title) || getArrowFilm(selectedFilm.film_title)) && (
+                  <div className="space-y-2">
+                    <p className="text-slate-500 text-xs font-medium uppercase tracking-wider">Buy Physical</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {/* Criterion Collection */}
+                      {getCriterionFilm(selectedFilm.film_title) && (
+                        <a
+                          href={getCriterionPurchaseUrl(selectedFilm.film_title)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-600/50 bg-slate-700/30 hover:bg-slate-700/50 hover:border-slate-500 transition-all group"
+                        >
+                          <img src="/images/criterion-logo.jpg" alt="" className="h-5 w-auto rounded-sm" />
+                          <span className="text-sm text-slate-200">Criterion</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-200" />
+                        </a>
+                      )}
+
+                      {/* Arrow Films */}
+                      {getArrowFilm(selectedFilm.film_title) && (
+                        <a
+                          href={getArrowPurchaseUrl(selectedFilm.film_title)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-red-600/30 bg-red-900/20 hover:bg-red-900/40 hover:border-red-500/50 transition-all group"
+                        >
+                          <span className="text-red-500 font-bold text-sm">▶</span>
+                          <span className="text-sm text-red-200">Arrow</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-red-400 group-hover:text-red-200" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer Actions - matching Signal Preview style */}
+            <div className="border-t border-slate-700 p-3 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={closeFilmModal}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700/50 transition-colors"
+                >
+                  Close
+                </button>
                 <button 
                   onClick={() => { closeFilmModal(); openBookPreview(selectedFilm); }}
-                  className="w-full py-3 text-sm font-medium rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 transition-colors flex items-center justify-center gap-2"
                 >
                   <Book className="w-4 h-4" />
                   View Book
