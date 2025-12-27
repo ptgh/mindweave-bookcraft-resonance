@@ -21,13 +21,19 @@ interface Film {
   poster_url: string | null;
   book_cover_url: string | null;
   book_isbn: string | null;
+  imdb_rating: number | null;
 }
 
-// Fetch poster from TMDB
-async function fetchTMDBPoster(filmTitle: string, year: number | null): Promise<string | null> {
+interface TMDBResult {
+  poster_path: string | null;
+  vote_average: number;
+}
+
+// Fetch poster and rating from TMDB
+async function fetchTMDBData(filmTitle: string, year: number | null): Promise<{ posterUrl: string | null; rating: number | null }> {
   if (!TMDB_API_KEY) {
     console.log('TMDB_API_KEY not configured');
-    return null;
+    return { posterUrl: null, rating: null };
   }
 
   try {
@@ -40,25 +46,25 @@ async function fetchTMDBPoster(filmTitle: string, year: number | null): Promise<
     const response = await fetch(searchUrl);
     if (!response.ok) {
       console.error(`TMDB search failed: ${response.status}`);
-      return null;
+      return { posterUrl: null, rating: null };
     }
     
     const data = await response.json();
     
     if (data.results && data.results.length > 0) {
-      const movie = data.results[0];
-      if (movie.poster_path) {
-        const posterUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
-        console.log(`Found TMDB poster: ${posterUrl}`);
-        return posterUrl;
-      }
+      const movie: TMDBResult = data.results[0];
+      const posterUrl = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null;
+      const rating = movie.vote_average > 0 ? Math.round(movie.vote_average * 10) / 10 : null;
+      
+      console.log(`Found TMDB data: poster=${posterUrl ? 'yes' : 'no'}, rating=${rating}`);
+      return { posterUrl, rating };
     }
     
-    console.log(`No poster found for: ${filmTitle}`);
-    return null;
+    console.log(`No TMDB data found for: ${filmTitle}`);
+    return { posterUrl: null, rating: null };
   } catch (error) {
     console.error(`TMDB fetch error for ${filmTitle}:`, error);
-    return null;
+    return { posterUrl: null, rating: null };
   }
 }
 
@@ -164,11 +170,11 @@ serve(async (req) => {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Fetch films missing posters or book covers (limit 15 per run)
+    // Fetch films missing posters, book covers, or ratings (limit 15 per run)
     const { data: films, error: fetchError } = await supabase
       .from('sf_film_adaptations')
-      .select('id, film_title, film_year, book_title, book_author, poster_url, book_cover_url, book_isbn')
-      .or('poster_url.is.null,book_cover_url.is.null')
+      .select('id, film_title, film_year, book_title, book_author, poster_url, book_cover_url, book_isbn, imdb_rating')
+      .or('poster_url.is.null,book_cover_url.is.null,imdb_rating.is.null')
       .limit(15);
 
     if (fetchError) throw fetchError;
@@ -185,17 +191,22 @@ serve(async (req) => {
 
     let postersAdded = 0;
     let bookCoversAdded = 0;
+    let ratingsAdded = 0;
     const errors: string[] = [];
 
     for (const film of films) {
       const updates: Partial<Film> = {};
       
-      // Fetch poster if missing
-      if (!film.poster_url) {
-        const posterUrl = await fetchTMDBPoster(film.film_title, film.film_year);
-        if (posterUrl) {
-          updates.poster_url = posterUrl;
+      // Fetch poster and/or rating if missing
+      if (!film.poster_url || !film.imdb_rating) {
+        const tmdbData = await fetchTMDBData(film.film_title, film.film_year);
+        if (!film.poster_url && tmdbData.posterUrl) {
+          updates.poster_url = tmdbData.posterUrl;
           postersAdded++;
+        }
+        if (!film.imdb_rating && tmdbData.rating) {
+          updates.imdb_rating = tmdbData.rating;
+          ratingsAdded++;
         }
       }
       
@@ -232,7 +243,7 @@ serve(async (req) => {
       await new Promise(resolve => setTimeout(resolve, 300));
     }
 
-    const message = `Added ${postersAdded} posters and ${bookCoversAdded} book covers`;
+    const message = `Added ${postersAdded} posters, ${bookCoversAdded} book covers, and ${ratingsAdded} ratings`;
     console.log(message);
 
     return new Response(
@@ -241,6 +252,7 @@ serve(async (req) => {
         message,
         postersAdded,
         bookCoversAdded,
+        ratingsAdded,
         processed: films.length,
         errors: errors.length > 0 ? errors : undefined
       }),
