@@ -143,11 +143,9 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const filteredAdaptations = React.useMemo(() => {
     let result = adaptations;
     
-    // Filter by mode - using verified lists
+    // Filter by mode - ONLY use verified lists, not database flags
     if (filterMode === 'criterion') {
-      result = result.filter(film => 
-        getCriterionFilm(film.film_title) !== null || film.is_criterion_collection === true
-      );
+      result = result.filter(film => getCriterionFilm(film.film_title) !== null);
     } else if (filterMode === 'arrow') {
       result = result.filter(film => getArrowFilm(film.film_title) !== null);
     }
@@ -416,6 +414,11 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {visibleFilms.map((film) => {
+          const { display: authorDisplay, full: authorFull } = truncateAuthors(film.book_author, 20);
+          const directorDisplay = film.director && film.director.length > 20 
+            ? film.director.substring(0, 18) + '...' 
+            : film.director;
+          
           return (
             <Card 
               key={film.id} 
@@ -423,14 +426,14 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
               className="bg-card/40 border-border/30 hover:border-amber-400/30 transition-all duration-300 overflow-hidden"
             >
               <div className="p-3">
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   {/* Book Card with Cover */}
                   <button
                     onClick={() => openBookPreview(film)}
-                    className="flex-1 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-primary/40 transition-all text-left group overflow-hidden h-28"
+                    className="flex-1 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-primary/40 transition-all text-left group overflow-hidden"
                   >
                     <div className="flex gap-2 h-full">
-                      <div className="w-16 h-full flex-shrink-0 overflow-hidden">
+                      <div className="w-20 sm:w-24 flex-shrink-0 overflow-hidden">
                         <MediaImage
                           src={film.book_cover_url}
                           alt={film.book_title}
@@ -438,34 +441,29 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                           quality="optimized"
                           fallbackIcon={<Book className="w-6 h-6 text-primary/40" />}
                           aspectRatio="auto"
-                          className="w-full h-full"
+                          className="w-full h-full object-cover"
                         />
                       </div>
-                      <div className="flex-1 p-2 min-w-0 flex flex-col h-full">
+                      <div className="flex-1 py-2 pr-2 min-w-0 flex flex-col">
                         <div className="flex items-center gap-1 mb-1">
-                          <Book className="w-3 h-3 text-primary" />
+                          <Book className="w-3 h-3 text-primary flex-shrink-0" />
                           <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">Book</span>
                         </div>
-                        <h4 className="text-xs font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors leading-tight">
+                        <h4 className="text-[11px] sm:text-xs font-medium text-foreground line-clamp-3 group-hover:text-primary transition-colors leading-snug mb-auto">
                           {film.book_title}
                         </h4>
-                        {/* Author + Year aligned to bottom */}
-                        <div className="mt-auto">
-                          {(() => {
-                            const { display, full } = truncateAuthors(film.book_author);
-                            return (
-                              <button
-                                ref={el => { if (el) authorRefs.current.set(film.id + '-author', el); }}
-                                onClick={(e) => { e.stopPropagation(); handleAuthorClick(full); }}
-                                className="text-[10px] text-emerald-400 relative inline-block"
-                                title={full !== display ? full : undefined}
-                              >
-                                {display}
-                                <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-400" />
-                              </button>
-                            );
-                          })()}
-                          <p className="text-[9px] text-muted-foreground/70 mt-0.5 h-3">
+                        {/* Author + Year - fixed height row */}
+                        <div className="mt-2 space-y-0.5">
+                          <button
+                            ref={el => { if (el) authorRefs.current.set(film.id + '-author', el); }}
+                            onClick={(e) => { e.stopPropagation(); handleAuthorClick(authorFull); }}
+                            className="text-[10px] text-emerald-400 relative inline-block truncate max-w-full"
+                            title={authorFull !== authorDisplay ? authorFull : undefined}
+                          >
+                            {authorDisplay}
+                            <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-400" />
+                          </button>
+                          <p className="text-[10px] text-muted-foreground/70">
                             {film.book_publication_year || '—'}
                           </p>
                         </div>
@@ -476,10 +474,10 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                   {/* Film Card with Poster */}
                   <button
                     onClick={() => openFilmModal(film)}
-                    className="flex-1 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-amber-400/40 transition-all text-left group overflow-hidden h-28"
+                    className="flex-1 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-amber-400/40 transition-all text-left group overflow-hidden"
                   >
                     <div className="flex gap-2 h-full">
-                      <div className="w-16 h-full flex-shrink-0 overflow-hidden">
+                      <div className="w-20 sm:w-24 flex-shrink-0 overflow-hidden">
                         <MediaImage
                           src={film.poster_url}
                           alt={film.film_title}
@@ -487,13 +485,13 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                           quality="optimized"
                           fallbackIcon={<Film className="w-6 h-6 text-amber-400/40" />}
                           aspectRatio="auto"
-                          className="w-full h-full"
+                          className="w-full h-full object-cover"
                         />
                       </div>
-                      <div className="flex-1 p-2 min-w-0 flex flex-col h-full">
+                      <div className="flex-1 py-2 pr-2 min-w-0 flex flex-col">
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-1">
-                            <Film className="w-3 h-3 text-amber-400" />
+                            <Film className="w-3 h-3 text-amber-400 flex-shrink-0" />
                             <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">Film</span>
                           </div>
                           {film.imdb_rating && (
@@ -503,24 +501,25 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                             </div>
                           )}
                         </div>
-                        <h4 className="text-xs font-medium text-foreground line-clamp-2 group-hover:text-amber-400 transition-colors leading-tight">
+                        <h4 className="text-[11px] sm:text-xs font-medium text-foreground line-clamp-3 group-hover:text-amber-400 transition-colors leading-snug mb-auto">
                           {film.film_title}
                         </h4>
-                        {/* Director + Year aligned to bottom */}
-                        <div className="mt-auto">
+                        {/* Director + Year - same height row as book side */}
+                        <div className="mt-2 space-y-0.5">
                           {film.director ? (
                             <button
                               ref={el => { if (el) directorRefs.current.set(film.id + '-director', el); }}
                               onClick={(e) => { e.stopPropagation(); handleDirectorClick(film.director!); }}
-                              className="text-[10px] text-amber-300 relative inline-block"
+                              className="text-[10px] text-amber-300 relative inline-block truncate max-w-full"
+                              title={film.director !== directorDisplay ? film.director : undefined}
                             >
-                              {film.director}
+                              {directorDisplay}
                               <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-amber-400" />
                             </button>
                           ) : (
                             <span className="text-[10px] text-muted-foreground/50">—</span>
                           )}
-                          <p className="text-[9px] text-muted-foreground/70 mt-0.5 h-3">
+                          <p className="text-[10px] text-muted-foreground/70">
                             {film.film_year || '—'}
                           </p>
                         </div>
