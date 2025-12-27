@@ -441,7 +441,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                           className="w-full h-full"
                         />
                       </div>
-                      <div className="flex-1 p-2 min-w-0">
+                      <div className="flex-1 p-2 min-w-0 flex flex-col">
                         <div className="flex items-center gap-1 mb-1">
                           <Book className="w-3 h-3 text-primary" />
                           <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">Book</span>
@@ -449,23 +449,25 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                         <h4 className="text-xs font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors leading-tight">
                           {film.book_title}
                         </h4>
-                        {(() => {
-                          const { display, full } = truncateAuthors(film.book_author);
-                          return (
-                            <button
-                              ref={el => { if (el) authorRefs.current.set(film.id + '-author', el); }}
-                              onClick={(e) => { e.stopPropagation(); handleAuthorClick(full); }}
-                              className="text-[10px] text-emerald-400 mt-1 relative inline-block"
-                              title={full !== display ? full : undefined}
-                            >
-                              {display}
-                              <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-400" />
-                            </button>
-                          );
-                        })()}
-                        {film.book_publication_year && (
-                          <p className="text-[9px] text-muted-foreground/70 mt-0.5">{film.book_publication_year}</p>
-                        )}
+                        <div className="mt-auto pt-1">
+                          {(() => {
+                            const { display, full } = truncateAuthors(film.book_author);
+                            return (
+                              <button
+                                ref={el => { if (el) authorRefs.current.set(film.id + '-author', el); }}
+                                onClick={(e) => { e.stopPropagation(); handleAuthorClick(full); }}
+                                className="text-[10px] text-emerald-400 relative inline-block"
+                                title={full !== display ? full : undefined}
+                              >
+                                {display}
+                                <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-400" />
+                              </button>
+                            );
+                          })()}
+                          {film.book_publication_year && (
+                            <p className="text-[9px] text-muted-foreground/70 mt-0.5">{film.book_publication_year}</p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </button>
@@ -487,7 +489,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                           className="w-full h-full"
                         />
                       </div>
-                      <div className="flex-1 p-2 min-w-0">
+                      <div className="flex-1 p-2 min-w-0 flex flex-col">
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-1">
                             <Film className="w-3 h-3 text-amber-400" />
@@ -503,19 +505,21 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                         <h4 className="text-xs font-medium text-foreground line-clamp-2 group-hover:text-amber-400 transition-colors leading-tight">
                           {film.film_title}
                         </h4>
-                        {film.director && (
-                          <button
-                            ref={el => { if (el) directorRefs.current.set(film.id + '-director', el); }}
-                            onClick={(e) => { e.stopPropagation(); handleDirectorClick(film.director!); }}
-                            className="text-[10px] text-amber-300 mt-1 relative inline-block"
-                          >
-                            {film.director}
-                            <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-amber-400" />
-                          </button>
-                        )}
-                        {film.film_year && (
-                          <p className="text-[9px] text-muted-foreground/70 mt-0.5">{film.film_year}</p>
-                        )}
+                        <div className="mt-auto pt-1">
+                          {film.director && (
+                            <button
+                              ref={el => { if (el) directorRefs.current.set(film.id + '-director', el); }}
+                              onClick={(e) => { e.stopPropagation(); handleDirectorClick(film.director!); }}
+                              className="text-[10px] text-amber-300 relative inline-block"
+                            >
+                              {film.director}
+                              <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-amber-400" />
+                            </button>
+                          )}
+                          {film.film_year && (
+                            <p className="text-[9px] text-muted-foreground/70 mt-0.5">{film.film_year}</p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </button>
