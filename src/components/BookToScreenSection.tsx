@@ -433,14 +433,14 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                     className="flex-1 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-primary/40 transition-all text-left group overflow-hidden"
                   >
                     <div className="flex gap-2 h-full">
-                      <div className="w-16 flex-shrink-0 overflow-hidden">
+                      <div className="w-16 flex-shrink-0 overflow-hidden aspect-[2/3]">
                         <MediaImage
                           src={film.book_cover_url}
                           alt={film.book_title}
                           type="book"
                           quality="optimized"
                           fallbackIcon={<Book className="w-6 h-6 text-primary/40" />}
-                          aspectRatio="auto"
+                          aspectRatio="poster"
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -477,14 +477,14 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                     className="flex-1 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-amber-400/40 transition-all text-left group overflow-hidden"
                   >
                     <div className="flex gap-2 h-full">
-                      <div className="w-16 flex-shrink-0 overflow-hidden">
+                      <div className="w-16 flex-shrink-0 overflow-hidden aspect-[2/3]">
                         <MediaImage
                           src={film.poster_url}
                           alt={film.film_title}
                           type="film"
                           quality="optimized"
                           fallbackIcon={<Film className="w-6 h-6 text-amber-400/40" />}
-                          aspectRatio="auto"
+                          aspectRatio="poster"
                           className="w-full h-full object-cover"
                         />
                       </div>
