@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { useLocation } from 'react-router-dom';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { gsap } from 'gsap';
 
 interface Message {
   id: string;
@@ -170,6 +171,41 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
       inputRef.current.focus();
     }
   }, [isOpen, isLoadingConversation]);
+
+  // GSAP pulse animation for chat panel border
+  const panelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (isOpen && panelRef.current) {
+      // Subtle pulse on panel border
+      gsap.to(panelRef.current, {
+        boxShadow: '0 0 20px rgba(34, 211, 238, 0.15), 0 0 40px rgba(34, 211, 238, 0.05)',
+        duration: 2,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut'
+      });
+      
+      // Input glow animation
+      const inputEl = panelRef.current.querySelector('.input-glow');
+      if (inputEl) {
+        gsap.to(inputEl, {
+          boxShadow: '0 0 8px rgba(34, 211, 238, 0.3), inset 0 0 4px rgba(34, 211, 238, 0.1)',
+          duration: 2.5,
+          repeat: -1,
+          yoyo: true,
+          ease: 'sine.inOut'
+        });
+      }
+    }
+    
+    return () => {
+      if (panelRef.current) {
+        gsap.killTweensOf(panelRef.current);
+        const inputEl = panelRef.current.querySelector('.input-glow');
+        if (inputEl) gsap.killTweensOf(inputEl);
+      }
+    };
+  }, [isOpen]);
 
   // Typewriter effect for AI responses
   const typewriterEffect = useCallback((fullText: string, messageId: string) => {
@@ -491,7 +527,8 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
         {/* Chat Panel */}
         {isOpen && (
           <div 
-            className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/40 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden transition-all duration-300 w-96 h-[520px] flex flex-col"
+            ref={panelRef}
+            className="chat-panel-glow bg-slate-900/85 backdrop-blur-xl border border-cyan-400/30 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden transition-all duration-300 w-96 h-[520px] flex flex-col"
           >
             {/* Header - styled like BrainChatInterface */}
             <div 
@@ -673,7 +710,7 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyPress}
                   placeholder="Ask about SF books, themes..."
-                  className="flex-1 bg-slate-900/50 border-slate-700/50 text-slate-100 placeholder:text-slate-500 text-sm"
+                  className="input-glow flex-1 bg-slate-900/60 border-cyan-500/40 focus:border-cyan-400/70 text-slate-100 placeholder:text-slate-500 text-sm h-11"
                   disabled={isLoading || isRecording || isLoadingConversation}
                 />
                 <Button

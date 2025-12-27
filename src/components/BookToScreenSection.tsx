@@ -427,10 +427,10 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                   {/* Book Card with Cover */}
                   <button
                     onClick={() => openBookPreview(film)}
-                    className="flex-1 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-primary/40 transition-all text-left group overflow-hidden"
+                    className="flex-1 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-primary/40 transition-all text-left group overflow-hidden h-28"
                   >
-                    <div className="flex gap-2">
-                      <div className="w-16 h-24 flex-shrink-0 overflow-hidden">
+                    <div className="flex gap-2 h-full">
+                      <div className="w-16 h-full flex-shrink-0 overflow-hidden">
                         <MediaImage
                           src={film.book_cover_url}
                           alt={film.book_title}
@@ -441,7 +441,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                           className="w-full h-full"
                         />
                       </div>
-                      <div className="flex-1 p-2 min-w-0 flex flex-col">
+                      <div className="flex-1 p-2 min-w-0 flex flex-col h-full">
                         <div className="flex items-center gap-1 mb-1">
                           <Book className="w-3 h-3 text-primary" />
                           <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">Book</span>
@@ -449,7 +449,8 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                         <h4 className="text-xs font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors leading-tight">
                           {film.book_title}
                         </h4>
-                        <div className="mt-auto pt-1">
+                        {/* Author + Year aligned to bottom */}
+                        <div className="mt-auto">
                           {(() => {
                             const { display, full } = truncateAuthors(film.book_author);
                             return (
@@ -464,9 +465,9 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                               </button>
                             );
                           })()}
-                          {film.book_publication_year && (
-                            <p className="text-[9px] text-muted-foreground/70 mt-0.5">{film.book_publication_year}</p>
-                          )}
+                          <p className="text-[9px] text-muted-foreground/70 mt-0.5 h-3">
+                            {film.book_publication_year || '—'}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -475,10 +476,10 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                   {/* Film Card with Poster */}
                   <button
                     onClick={() => openFilmModal(film)}
-                    className="flex-1 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-amber-400/40 transition-all text-left group overflow-hidden"
+                    className="flex-1 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-amber-400/40 transition-all text-left group overflow-hidden h-28"
                   >
-                    <div className="flex gap-2">
-                      <div className="w-16 h-24 flex-shrink-0 overflow-hidden">
+                    <div className="flex gap-2 h-full">
+                      <div className="w-16 h-full flex-shrink-0 overflow-hidden">
                         <MediaImage
                           src={film.poster_url}
                           alt={film.film_title}
@@ -489,7 +490,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                           className="w-full h-full"
                         />
                       </div>
-                      <div className="flex-1 p-2 min-w-0 flex flex-col">
+                      <div className="flex-1 p-2 min-w-0 flex flex-col h-full">
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-1">
                             <Film className="w-3 h-3 text-amber-400" />
@@ -505,8 +506,9 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                         <h4 className="text-xs font-medium text-foreground line-clamp-2 group-hover:text-amber-400 transition-colors leading-tight">
                           {film.film_title}
                         </h4>
-                        <div className="mt-auto pt-1">
-                          {film.director && (
+                        {/* Director + Year aligned to bottom */}
+                        <div className="mt-auto">
+                          {film.director ? (
                             <button
                               ref={el => { if (el) directorRefs.current.set(film.id + '-director', el); }}
                               onClick={(e) => { e.stopPropagation(); handleDirectorClick(film.director!); }}
@@ -515,10 +517,12 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                               {film.director}
                               <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-amber-400" />
                             </button>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground/50">—</span>
                           )}
-                          {film.film_year && (
-                            <p className="text-[9px] text-muted-foreground/70 mt-0.5">{film.film_year}</p>
-                          )}
+                          <p className="text-[9px] text-muted-foreground/70 mt-0.5 h-3">
+                            {film.film_year || '—'}
+                          </p>
                         </div>
                       </div>
                     </div>
