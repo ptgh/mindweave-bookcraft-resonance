@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, ImgHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 import { getOptimizedImageUrl, getHighQualityDisplayUrl, preloadImage } from '@/utils/performance';
+import { getCachedImageUrl, requestImageCache } from '@/services/imageCacheService';
 
 interface MediaImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'> {
   src: string | null | undefined;
@@ -10,11 +11,12 @@ interface MediaImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src
   fallbackIcon?: React.ReactNode;
   aspectRatio?: 'poster' | 'square' | 'auto';
   showSkeleton?: boolean;
+  enableCaching?: boolean;
 }
 
 /**
  * Unified media image component for books and films
- * Handles loading states, quality optimization, and fallbacks consistently
+ * Handles loading states, quality optimization, caching, and fallbacks consistently
  */
 export function MediaImage({
   src,
@@ -24,12 +26,14 @@ export function MediaImage({
   fallbackIcon,
   aspectRatio = 'poster',
   showSkeleton = true,
+  enableCaching = true,
   className,
   ...props
 }: MediaImageProps) {
   const [imageState, setImageState] = useState<'loading' | 'loaded' | 'error'>('loading');
-  const [optimizedSrc, setOptimizedSrc] = useState<string | null>(null);
+  const [displaySrc, setDisplaySrc] = useState<string | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+  const cacheRequested = useRef(false);
 
   useEffect(() => {
     if (!src) {
@@ -37,23 +41,48 @@ export function MediaImage({
       return;
     }
 
-    // Get optimized URL based on quality setting
-    let finalSrc = src;
-    if (quality === 'high') {
-      finalSrc = getHighQualityDisplayUrl(src);
-    } else if (quality === 'optimized') {
-      finalSrc = getOptimizedImageUrl(src);
-    }
-    // 'social' uses getSocialShareImageUrl but that's for meta tags
-
-    setOptimizedSrc(finalSrc);
     setImageState('loading');
+    cacheRequested.current = false;
 
-    // Preload image to prevent layout shift
-    preloadImage(finalSrc)
-      .then(() => setImageState('loaded'))
-      .catch(() => setImageState('error'));
-  }, [src, quality]);
+    const loadImage = async () => {
+      // Try to get cached URL first
+      let finalSrc = src;
+      
+      if (enableCaching && (type === 'book' || type === 'film')) {
+        try {
+          const cachedUrl = await getCachedImageUrl(src, type);
+          if (cachedUrl && cachedUrl !== src) {
+            finalSrc = cachedUrl;
+          }
+        } catch (e) {
+          // Fallback to original
+        }
+      }
+
+      // Apply quality optimization
+      if (quality === 'high') {
+        finalSrc = getHighQualityDisplayUrl(finalSrc);
+      } else if (quality === 'optimized') {
+        finalSrc = getOptimizedImageUrl(finalSrc);
+      }
+
+      setDisplaySrc(finalSrc);
+
+      // Preload image to prevent layout shift
+      preloadImage(finalSrc)
+        .then(() => {
+          setImageState('loaded');
+          // Request background caching after successful load
+          if (enableCaching && !cacheRequested.current && (type === 'book' || type === 'film')) {
+            cacheRequested.current = true;
+            requestImageCache(src, type);
+          }
+        })
+        .catch(() => setImageState('error'));
+    };
+
+    loadImage();
+  }, [src, quality, type, enableCaching]);
 
   const aspectClasses = {
     poster: 'aspect-[2/3]',
@@ -81,7 +110,7 @@ export function MediaImage({
   }
 
   // Show fallback icon on error
-  if (imageState === 'error' || !optimizedSrc) {
+  if (imageState === 'error' || !displaySrc) {
     return (
       <div 
         className={cn(
@@ -98,7 +127,7 @@ export function MediaImage({
   return (
     <img
       ref={imgRef}
-      src={optimizedSrc}
+      src={displaySrc}
       alt={alt}
       loading="lazy"
       decoding="async"
