@@ -7,6 +7,23 @@ import gsap from 'gsap';
 import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
 import type { EnrichedPublisherBook } from '@/services/publisherService';
 
+// Optimize cover URL for higher quality while maintaining load speed
+const getHighQualityCoverUrl = (url: string | null): string => {
+  if (!url) return '';
+  
+  // For Google Books URLs, request larger image
+  if (url.includes('books.google') || url.includes('googleusercontent.com')) {
+    // Replace zoom=1 with zoom=2 for better quality, or add it
+    let optimized = url.replace(/zoom=\d+/, 'zoom=2');
+    if (!optimized.includes('zoom=')) {
+      optimized = `${optimized}${optimized.includes('?') ? '&' : '?'}zoom=2`;
+    }
+    return optimized;
+  }
+  
+  return url;
+};
+
 interface UserProfile {
   id: string;
   display_name: string | null;
