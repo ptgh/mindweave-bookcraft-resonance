@@ -138,3 +138,9 @@ verify_jwt = false
 
 [functions.get-watch-providers]
 verify_jwt = false
+
+[functions.cache-image]
+verify_jwt = false
+
+[functions.share-book-meta]
+verify_jwt = false

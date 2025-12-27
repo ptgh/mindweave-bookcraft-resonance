@@ -546,6 +546,48 @@ export type Database = {
         }
         Relationships: []
       }
+      cached_images: {
+        Row: {
+          access_count: number
+          cached_path: string
+          cached_url: string
+          created_at: string
+          file_size: number | null
+          height: number | null
+          id: string
+          image_type: string
+          last_accessed: string
+          original_url: string
+          width: number | null
+        }
+        Insert: {
+          access_count?: number
+          cached_path: string
+          cached_url: string
+          created_at?: string
+          file_size?: number | null
+          height?: number | null
+          id?: string
+          image_type?: string
+          last_accessed?: string
+          original_url: string
+          width?: number | null
+        }
+        Update: {
+          access_count?: number
+          cached_path?: string
+          cached_url?: string
+          created_at?: string
+          file_size?: number | null
+          height?: number | null
+          id?: string
+          image_type?: string
+          last_accessed?: string
+          original_url?: string
+          width?: number | null
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           created_at: string | null
