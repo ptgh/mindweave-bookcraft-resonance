@@ -6,23 +6,7 @@ import { cn } from '@/lib/utils';
 import gsap from 'gsap';
 import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
 import type { EnrichedPublisherBook } from '@/services/publisherService';
-
-// Optimize cover URL for higher quality while maintaining load speed
-const getHighQualityCoverUrl = (url: string | null): string => {
-  if (!url) return '';
-  
-  // For Google Books URLs, request larger image
-  if (url.includes('books.google') || url.includes('googleusercontent.com')) {
-    // Replace zoom=1 with zoom=2 for better quality, or add it
-    let optimized = url.replace(/zoom=\d+/, 'zoom=2');
-    if (!optimized.includes('zoom=')) {
-      optimized = `${optimized}${optimized.includes('?') ? '&' : '?'}zoom=2`;
-    }
-    return optimized;
-  }
-  
-  return url;
-};
+import { getHighQualityDisplayUrl } from '@/utils/performance';
 
 interface UserProfile {
   id: string;
@@ -215,7 +199,7 @@ export const UserTransmissionsPanel: React.FC<UserTransmissionsPanelProps> = ({
               >
                 {book.cover_url ? (
                   <img
-                    src={getHighQualityCoverUrl(book.cover_url)}
+                    src={getHighQualityDisplayUrl(book.cover_url)}
                     alt={book.title || 'Book cover'}
                     className="block w-full h-full bg-slate-800 object-cover rounded shadow-md group-hover:scale-105 transition-transform"
                     loading="lazy"

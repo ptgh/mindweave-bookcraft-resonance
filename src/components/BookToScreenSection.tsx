@@ -11,6 +11,8 @@ import { EnrichedPublisherBook } from '@/services/publisherService';
 import { AuthorPopup } from '@/components/AuthorPopup';
 import { DirectorPopup } from '@/components/DirectorPopup';
 import { ScifiAuthor } from '@/services/scifiAuthorsService';
+import { MediaImage } from '@/components/ui/media-image';
+import { preloadImages, getHighQualityDisplayUrl } from '@/utils/performance';
 import { 
   getYouTubeSearchUrl, 
   extractYouTubeId, 
@@ -167,6 +169,18 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   // Visible films for infinite scroll
   const visibleFilms = filteredAdaptations.slice(0, visibleCount);
   const hasMore = visibleCount < filteredAdaptations.length;
+
+  // Preload images for visible films to prevent loading lag
+  useEffect(() => {
+    if (visibleFilms.length > 0) {
+      const imagesToPreload = visibleFilms.flatMap(film => [
+        film.book_cover_url,
+        film.poster_url
+      ]).filter((url): url is string => !!url);
+      
+      preloadImages(imagesToPreload);
+    }
+  }, [visibleFilms]);
 
   // Reset visible count when filters change
   useEffect(() => {
@@ -416,20 +430,16 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                     className="flex-1 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-primary/40 transition-all text-left group overflow-hidden"
                   >
                     <div className="flex gap-2">
-                      <div className="w-16 h-24 flex-shrink-0 bg-gradient-to-br from-primary/20 to-primary/5 overflow-hidden">
-                        {film.book_cover_url ? (
-                          <img 
-                            src={film.book_cover_url} 
-                            alt={film.book_title}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Book className="w-6 h-6 text-primary/40" />
-                          </div>
-                        )}
+                      <div className="w-16 h-24 flex-shrink-0 overflow-hidden">
+                        <MediaImage
+                          src={film.book_cover_url}
+                          alt={film.book_title}
+                          type="book"
+                          quality="optimized"
+                          fallbackIcon={<Book className="w-6 h-6 text-primary/40" />}
+                          aspectRatio="auto"
+                          className="w-full h-full"
+                        />
                       </div>
                       <div className="flex-1 p-2 min-w-0">
                         <div className="flex items-center gap-1 mb-1">
@@ -466,20 +476,16 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                     className="flex-1 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/20 hover:border-amber-400/40 transition-all text-left group overflow-hidden"
                   >
                     <div className="flex gap-2">
-                      <div className="w-16 h-24 flex-shrink-0 bg-gradient-to-br from-amber-500/20 to-amber-500/5 overflow-hidden">
-                        {film.poster_url ? (
-                          <img 
-                            src={film.poster_url} 
-                            alt={film.film_title}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Film className="w-6 h-6 text-amber-400/40" />
-                          </div>
-                        )}
+                      <div className="w-16 h-24 flex-shrink-0 overflow-hidden">
+                        <MediaImage
+                          src={film.poster_url}
+                          alt={film.film_title}
+                          type="film"
+                          quality="optimized"
+                          fallbackIcon={<Film className="w-6 h-6 text-amber-400/40" />}
+                          aspectRatio="auto"
+                          className="w-full h-full"
+                        />
                       </div>
                       <div className="flex-1 p-2 min-w-0">
                         <div className="flex items-center justify-between mb-1">
