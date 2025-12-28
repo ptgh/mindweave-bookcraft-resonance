@@ -1,11 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { requireAdminOrInternal, corsHeaders } from "../_shared/adminAuth.ts";
 
 interface WikipediaResponse {
   query?: {
@@ -21,11 +17,14 @@ interface WikipediaResponse {
 serve(async (req) => {
   console.log('=== Enrich author data function called ===');
   console.log('Method:', req.method);
-  console.log('Headers:', Object.fromEntries(req.headers.entries()));
   
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders })
   }
+
+  // Admin authorization check
+  const auth = await requireAdminOrInternal(req);
+  if (auth instanceof Response) return auth;
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');

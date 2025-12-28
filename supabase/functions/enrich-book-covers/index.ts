@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { requireAdminOrInternal, corsHeaders } from "../_shared/adminAuth.ts";
 
 interface GoogleBooksItem {
   volumeInfo: {
@@ -50,9 +46,14 @@ async function searchGoogleBooks(query: string, maxResults = 3): Promise<string 
 }
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Admin authorization check
+  const auth = await requireAdminOrInternal(req);
+  if (auth instanceof Response) return auth;
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
