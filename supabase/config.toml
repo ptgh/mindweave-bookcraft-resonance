@@ -150,3 +150,6 @@ verify_jwt = false
 
 [functions.admin-whoami]
 verify_jwt = false
+
+[functions.cache-watch-providers]
+verify_jwt = false

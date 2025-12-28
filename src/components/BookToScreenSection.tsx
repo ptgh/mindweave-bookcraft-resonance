@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Film, Book, Star, Calendar, Trophy, ExternalLink, Play, Loader2, X, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Film, Book, Star, Calendar, Trophy, ExternalLink, Play, Loader2, X, Sparkles, Tv } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +28,18 @@ import {
 import { FilterMode } from './BookToScreenSelector';
 
 
+interface WatchProvider {
+  provider_name: string;
+  provider_id: number;
+  logo_path?: string;
+}
+
+interface WatchProviders {
+  flatrate?: WatchProvider[];
+  rent?: WatchProvider[];
+  buy?: WatchProvider[];
+}
+
 interface FilmAdaptation {
   id: string;
   book_title: string;
@@ -49,6 +61,10 @@ interface FilmAdaptation {
   criterion_url?: string | null;
   is_criterion_collection?: boolean;
   source?: string;
+  // Provider caching fields
+  watch_providers?: WatchProviders | null;
+  watch_providers_updated_at?: string | null;
+  watch_providers_region?: string | null;
 }
 
 interface BookToScreenSectionProps {
@@ -76,6 +92,9 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const [selectedDirector, setSelectedDirector] = useState<{ name: string } | null>(null);
   const [showDirectorPopup, setShowDirectorPopup] = useState(false);
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const [modalProviders, setModalProviders] = useState<WatchProviders | null>(null);
+  const [isLoadingProviders, setIsLoadingProviders] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const authorRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const directorRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -109,6 +128,18 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     };
   };
 
+  // Check if user is admin on mount
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase.rpc('is_admin', { _user_id: user.id });
+        setIsAdmin(!!data);
+      }
+    };
+    checkAdmin();
+  }, []);
+
   useEffect(() => {
     const fetchAdaptations = async () => {
       try {
@@ -126,6 +157,9 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
             ? item.streaming_availability as Record<string, string>
             : null,
           awards: Array.isArray(item.awards) ? item.awards as Array<{ name: string; year: number }> : null,
+          watch_providers: typeof item.watch_providers === 'object' && item.watch_providers !== null
+            ? item.watch_providers as WatchProviders
+            : null,
         }));
         setAdaptations(mapped);
       } catch (error) {
@@ -293,16 +327,70 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     setSelectedBook(book);
   };
 
+  // Helper: Check if cached providers are fresh (< 7 days old)
+  const isCacheFresh = useCallback((updatedAt: string | null | undefined): boolean => {
+    if (!updatedAt) return false;
+    const cacheDate = new Date(updatedAt);
+    const now = new Date();
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+    return (now.getTime() - cacheDate.getTime()) < sevenDaysMs;
+  }, []);
+
+  // Fetch and cache providers for a film
+  const fetchProviders = useCallback(async (film: FilmAdaptation) => {
+    setIsLoadingProviders(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-watch-providers', {
+        body: { 
+          title: film.film_title, 
+          year: film.film_year,
+          region: 'GB' 
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.providers) {
+        setModalProviders(data.providers as WatchProviders);
+        
+        // Fire-and-forget cache if admin
+        if (isAdmin) {
+          supabase.functions.invoke('cache-watch-providers', {
+            body: {
+              filmId: film.id,
+              providers: data.providers,
+              region: 'GB'
+            }
+          }).catch(err => console.warn('Failed to cache providers:', err));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch providers:', err);
+    } finally {
+      setIsLoadingProviders(false);
+    }
+  }, [isAdmin]);
+
   const openFilmModal = async (film: FilmAdaptation) => {
     setSelectedFilm(film);
     setShowFilmModal(true);
-    // Trailer is now sourced directly from film.trailer_url (enriched by admin tools)
-    // No on-demand fetch - if missing, UI shows "Trailer pending"
+    setModalProviders(null); // Reset providers
+    
+    // Check if we have fresh cached providers
+    if (film.watch_providers && isCacheFresh(film.watch_providers_updated_at)) {
+      // Use cached data immediately
+      setModalProviders(film.watch_providers);
+    } else {
+      // Fetch fresh providers
+      fetchProviders(film);
+    }
   };
 
   const closeFilmModal = () => {
     setShowFilmModal(false);
     setSelectedFilm(null);
+    setModalProviders(null);
+    setIsLoadingProviders(false);
   };
 
   const handleAuthorClick = async (authorName: string) => {
@@ -733,33 +821,100 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                   </div>
                 )}
 
-                {/* Streaming Section - styled like book's digital copy section */}
-                <div className="border border-slate-700 rounded-lg p-3 bg-slate-700/20">
+                {/* Streaming Section - with cached providers */}
+                <div className="border border-slate-700 rounded-lg p-3 bg-slate-700/20 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Tv className="w-4 h-4 text-blue-400" />
+                      <span className="text-slate-200 text-sm font-medium">Watch Options (UK)</span>
+                    </div>
+                    {isLoadingProviders && (
+                      <Loader2 className="w-4 h-4 text-slate-400 animate-spin" />
+                    )}
+                  </div>
+                  
+                  {/* Provider chips */}
+                  {modalProviders && (
+                    <div className="space-y-2">
+                      {/* Streaming (flatrate) */}
+                      {modalProviders.flatrate && modalProviders.flatrate.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {modalProviders.flatrate.map((p) => (
+                            <span
+                              key={p.provider_id}
+                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-green-500/10 text-green-400 text-xs border border-green-500/20"
+                            >
+                              {p.logo_path && (
+                                <img 
+                                  src={`https://image.tmdb.org/t/p/w45${p.logo_path}`} 
+                                  alt="" 
+                                  className="w-4 h-4 rounded-sm"
+                                />
+                              )}
+                              {p.provider_name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Rent */}
+                      {modalProviders.rent && modalProviders.rent.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {modalProviders.rent.slice(0, 4).map((p) => (
+                            <span
+                              key={p.provider_id}
+                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-blue-500/10 text-blue-400 text-xs border border-blue-500/20"
+                            >
+                              {p.logo_path && (
+                                <img 
+                                  src={`https://image.tmdb.org/t/p/w45${p.logo_path}`} 
+                                  alt="" 
+                                  className="w-4 h-4 rounded-sm"
+                                />
+                              )}
+                              Rent: {p.provider_name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Buy */}
+                      {modalProviders.buy && modalProviders.buy.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {modalProviders.buy.slice(0, 3).map((p) => (
+                            <span
+                              key={p.provider_id}
+                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-purple-500/10 text-purple-400 text-xs border border-purple-500/20"
+                            >
+                              {p.logo_path && (
+                                <img 
+                                  src={`https://image.tmdb.org/t/p/w45${p.logo_path}`} 
+                                  alt="" 
+                                  className="w-4 h-4 rounded-sm"
+                                />
+                              )}
+                              Buy: {p.provider_name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* No providers found or loading */}
+                  {!isLoadingProviders && !modalProviders && (
+                    <p className="text-slate-500 text-xs">No streaming info available</p>
+                  )}
+                  
+                  {/* Fallback Google search */}
                   <a
                     href={`https://www.google.com/search?q=watch+${encodeURIComponent(selectedFilm.film_title)}+${selectedFilm.film_year || ''}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-between group"
+                    className="flex items-center gap-2 text-xs text-slate-400 hover:text-blue-400 transition-colors"
                   >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center">
-                        <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                        </svg>
-                      </div>
-                      <div className="text-left">
-                        <span className="text-slate-200 text-sm font-medium block group-hover:text-blue-400 transition-colors">
-                          Find Streaming Options
-                        </span>
-                        <span className="text-slate-500 text-xs">
-                          See all available platforms
-                        </span>
-                      </div>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-blue-400 transition-colors" />
+                    <span>Search all platforms</span>
+                    <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
 
