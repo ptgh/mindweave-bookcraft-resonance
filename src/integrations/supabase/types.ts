@@ -14,6 +14,107 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_data_events: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_name: string
+          event_type: string
+          id: string
+          job_id: string | null
+          records_deleted: number | null
+          records_inserted: number | null
+          records_selected: number | null
+          records_updated: number | null
+          target_table: string | null
+          triggered_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_name: string
+          event_type?: string
+          id?: string
+          job_id?: string | null
+          records_deleted?: number | null
+          records_inserted?: number | null
+          records_selected?: number | null
+          records_updated?: number | null
+          target_table?: string | null
+          triggered_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_name?: string
+          event_type?: string
+          id?: string
+          job_id?: string | null
+          records_deleted?: number | null
+          records_inserted?: number | null
+          records_selected?: number | null
+          records_updated?: number | null
+          target_table?: string | null
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_data_events_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "admin_jobs_log"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_jobs_log: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          items_inserted: number | null
+          items_processed: number | null
+          items_skipped: number | null
+          items_updated: number | null
+          job_name: string
+          metadata: Json | null
+          started_at: string
+          status: string
+          triggered_by: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          items_inserted?: number | null
+          items_processed?: number | null
+          items_skipped?: number | null
+          items_updated?: number | null
+          job_name: string
+          metadata?: Json | null
+          started_at?: string
+          status?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          items_inserted?: number | null
+          items_processed?: number | null
+          items_skipped?: number | null
+          items_updated?: number | null
+          job_name?: string
+          metadata?: Json | null
+          started_at?: string
+          status?: string
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       admins: {
         Row: {
           created_at: string

@@ -3,7 +3,7 @@ import { AdminPopulateBooks } from "@/components/AdminPopulateBooks";
 import { AdminFilmAdaptationsPanel } from "@/components/AdminFilmAdaptationsPanel";
 import { AdminDirectorsPanel } from "@/components/AdminDirectorsPanel";
 import { AdminImageUrlValidator } from "@/components/AdminImageUrlValidator";
-import { AdminBooksPanel, AdminTrailersPanel, AdminExternalLinksPanel, AdminCachePanel } from "@/components/admin";
+import { AdminBooksPanel, AdminTrailersPanel, AdminExternalLinksPanel, AdminCachePanel, AdminDataHealthPanel } from "@/components/admin";
 import Header from "@/components/Header";
 import { ProtectedAdminRoute } from "@/components/ProtectedAdminRoute";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { generateTransmissionEmbeddings } from "@/services/semanticSearchService";
 import { invokeAdminFunction } from "@/utils/adminFunctions";
-import { RefreshCw, Clock, Sparkles, ShieldCheck } from "lucide-react";
+import { RefreshCw, Clock, Sparkles, ShieldCheck, Database } from "lucide-react";
 import { useState } from "react";
 
 const AdminEnrichment = () => {
@@ -282,6 +282,9 @@ const AdminEnrichment = () => {
               </CardContent>
             </Card>
 
+            {/* Data Health Dashboard - Primary Panel */}
+            <AdminDataHealthPanel />
+            
             <AdminCachePanel />
             <AdminBooksPanel />
             <AdminTrailersPanel />
