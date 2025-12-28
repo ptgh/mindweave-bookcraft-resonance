@@ -100,12 +100,16 @@ const ResultCard: React.FC<{
             src={coverUrl}
             alt={result.title}
             className="w-full h-full object-cover"
+            onError={(e) => { 
+              (e.target as HTMLImageElement).style.display = 'none';
+              const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
+              if (fallback) fallback.classList.remove('hidden');
+            }}
           />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <BookOpen className="h-6 w-6 text-slate-500" />
-          </div>
-        )}
+        ) : null}
+        <div className={`w-full h-full flex items-center justify-center ${coverUrl ? 'hidden' : ''}`}>
+          <BookOpen className="h-6 w-6 text-slate-500" />
+        </div>
       </div>
 
       {/* Content */}
