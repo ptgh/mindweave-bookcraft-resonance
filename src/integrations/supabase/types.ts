@@ -1372,6 +1372,7 @@ export type Database = {
           awards: Json | null
           book_author: string
           book_cover_url: string | null
+          book_id: string | null
           book_isbn: string | null
           book_publication_year: number | null
           book_title: string
@@ -1386,6 +1387,7 @@ export type Database = {
           imdb_id: string | null
           imdb_rating: number | null
           is_criterion_collection: boolean | null
+          match_confidence: number | null
           notable_differences: string | null
           poster_url: string | null
           rotten_tomatoes_score: number | null
@@ -1402,6 +1404,7 @@ export type Database = {
           awards?: Json | null
           book_author: string
           book_cover_url?: string | null
+          book_id?: string | null
           book_isbn?: string | null
           book_publication_year?: number | null
           book_title: string
@@ -1416,6 +1419,7 @@ export type Database = {
           imdb_id?: string | null
           imdb_rating?: number | null
           is_criterion_collection?: boolean | null
+          match_confidence?: number | null
           notable_differences?: string | null
           poster_url?: string | null
           rotten_tomatoes_score?: number | null
@@ -1432,6 +1436,7 @@ export type Database = {
           awards?: Json | null
           book_author?: string
           book_cover_url?: string | null
+          book_id?: string | null
           book_isbn?: string | null
           book_publication_year?: number | null
           book_title?: string
@@ -1446,6 +1451,7 @@ export type Database = {
           imdb_id?: string | null
           imdb_rating?: number | null
           is_criterion_collection?: boolean | null
+          match_confidence?: number | null
           notable_differences?: string | null
           poster_url?: string | null
           rotten_tomatoes_score?: number | null
@@ -1457,7 +1463,15 @@ export type Database = {
           watch_providers_region?: string | null
           watch_providers_updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sf_film_adaptations_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "publisher_books"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       temporal_analysis_cache: {
         Row: {

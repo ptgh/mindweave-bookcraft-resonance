@@ -65,6 +65,9 @@ interface FilmAdaptation {
   watch_providers?: WatchProviders | null;
   watch_providers_updated_at?: string | null;
   watch_providers_region?: string | null;
+  // Book linking fields
+  book_id?: string | null;
+  match_confidence?: number | null;
 }
 
 interface BookToScreenSectionProps {
@@ -87,6 +90,8 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const [selectedFilm, setSelectedFilm] = useState<FilmAdaptation | null>(null);
   const [showFilmModal, setShowFilmModal] = useState(false);
   const [selectedBook, setSelectedBook] = useState<EnrichedPublisherBook | null>(null);
+  const [linkedPublisherBook, setLinkedPublisherBook] = useState<EnrichedPublisherBook | null>(null);
+  const [isLoadingLinkedBook, setIsLoadingLinkedBook] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
   const [showAuthorPopup, setShowAuthorPopup] = useState(false);
   const [selectedDirector, setSelectedDirector] = useState<{ name: string } | null>(null);
@@ -310,12 +315,47 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     return () => cleanups.forEach(fn => fn());
   }, [visibleFilms]);
 
+  // Fetch linked publisher book if book_id exists
+  const fetchLinkedBook = useCallback(async (bookId: string) => {
+    setIsLoadingLinkedBook(true);
+    try {
+      const { data, error } = await supabase
+        .from('publisher_books')
+        .select('*')
+        .eq('id', bookId)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const enrichedBook: EnrichedPublisherBook = {
+          ...data,
+          cover_url: data.cover_url || undefined,
+        };
+        setLinkedPublisherBook(enrichedBook);
+      }
+    } catch (err) {
+      console.error('Failed to fetch linked book:', err);
+    } finally {
+      setIsLoadingLinkedBook(false);
+    }
+  }, []);
+
   const openBookPreview = (film: FilmAdaptation) => {
     // For original screenplays, there's no source book to preview
     if (film.adaptation_type === 'original') {
       return;
     }
+
+    // If film has a linked book_id, fetch the real publisher book
+    if (film.book_id) {
+      fetchLinkedBook(film.book_id).then(() => {
+        // Will open the modal with linkedPublisherBook when ready
+      });
+      return;
+    }
     
+    // Fallback: create synthetic book from film data
     const book: EnrichedPublisherBook = {
       id: film.id,
       title: film.book_title,
@@ -391,6 +431,8 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     setSelectedFilm(null);
     setModalProviders(null);
     setIsLoadingProviders(false);
+    setLinkedPublisherBook(null);
+    setIsLoadingLinkedBook(false);
   };
 
   const handleAuthorClick = async (authorName: string) => {
@@ -760,9 +802,22 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                         Original Screenplay by {selectedFilm.book_author || selectedFilm.director || 'Unknown'}
                       </p>
                     ) : (
-                      <p className="text-slate-400 text-sm">
-                        Based on "{selectedFilm.book_title}" by {selectedFilm.book_author}
-                      </p>
+                      <div className="space-y-1">
+                        <p className="text-slate-400 text-sm">
+                          Based on "{selectedFilm.book_title}" by {selectedFilm.book_author}
+                        </p>
+                        {/* Not linked to library banner */}
+                        {!selectedFilm.book_id && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                            ⚠ Not linked to library record
+                          </span>
+                        )}
+                        {selectedFilm.book_id && selectedFilm.match_confidence && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            ✓ Linked ({selectedFilm.match_confidence}% match)
+                          </span>
+                        )}
+                      </div>
                     )}
                     
                     {/* Film details row */}
@@ -971,10 +1026,14 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                 {selectedFilm.adaptation_type !== 'original' && (
                   <button 
                     onClick={() => { closeFilmModal(); openBookPreview(selectedFilm); }}
-                    className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 transition-colors flex items-center justify-center gap-2"
+                    disabled={isLoadingLinkedBook}
+                    className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     <Book className="w-4 h-4" />
-                    View Book
+                    {selectedFilm.book_id ? 'View Library Book' : 'View Book'}
+                    {!selectedFilm.book_id && (
+                      <span className="text-[10px] text-muted-foreground ml-1">(unlinked)</span>
+                    )}
                   </button>
                 )}
               </div>
@@ -984,7 +1043,16 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
         document.body
       )}
 
-      {selectedBook && <EnhancedBookPreviewModal book={selectedBook} onClose={() => setSelectedBook(null)} onAddBook={() => {}} />}
+      {(selectedBook || linkedPublisherBook) && (
+        <EnhancedBookPreviewModal 
+          book={(linkedPublisherBook || selectedBook)!} 
+          onClose={() => { 
+            setSelectedBook(null); 
+            setLinkedPublisherBook(null); 
+          }} 
+          onAddBook={() => {}} 
+        />
+      )}
       <AuthorPopup author={selectedAuthor} isVisible={showAuthorPopup} onClose={() => setShowAuthorPopup(false)} />
       <DirectorPopup 
         director={selectedDirector} 
