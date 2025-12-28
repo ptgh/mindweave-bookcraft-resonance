@@ -1,11 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { requireAdminOrInternal, corsHeaders } from "../_shared/adminAuth.ts";
 
 interface CuratedBook {
   title: string;
@@ -17,6 +13,10 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Require admin authorization
+  const auth = await requireAdminOrInternal(req);
+  if (auth instanceof Response) return auth;
 
   try {
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
@@ -238,209 +238,70 @@ Return ONLY the JSON array, no additional text, explanations, or markdown format
       { title: "The Transmigration of Timothy Archer", author: "Philip K. Dick", category: "Literary SF" },
       { title: "Clans of the Alphane Moon", author: "Philip K. Dick", category: "Mental Illness" },
       
-      // Additional Asimov (11 books)
+      // Additional classics
       { title: "Foundation and Empire", author: "Isaac Asimov", category: "Space Opera" },
       { title: "Second Foundation", author: "Isaac Asimov", category: "Space Opera" },
-      { title: "Foundation's Edge", author: "Isaac Asimov", category: "Space Opera" },
-      { title: "Foundation and Earth", author: "Isaac Asimov", category: "Space Opera" },
-      { title: "Prelude to Foundation", author: "Isaac Asimov", category: "Space Opera" },
-      { title: "Forward the Foundation", author: "Isaac Asimov", category: "Space Opera" },
-      { title: "The Robots of Dawn", author: "Isaac Asimov", category: "Robot Fiction" },
-      { title: "Robots and Empire", author: "Isaac Asimov", category: "Robot Fiction" },
-      { title: "Nemesis", author: "Isaac Asimov", category: "Space Opera" },
-      { title: "Nightfall", author: "Isaac Asimov", category: "Classic Novella" },
-      { title: "The End of Eternity", author: "Isaac Asimov", category: "Time Travel" },
-      
-      // Additional Le Guin (7 books)
-      { title: "A Wizard of Earthsea", author: "Ursula K. Le Guin", category: "Fantasy" },
-      { title: "The Tombs of Atuan", author: "Ursula K. Le Guin", category: "Fantasy" },
-      { title: "The Farthest Shore", author: "Ursula K. Le Guin", category: "Fantasy" },
-      { title: "Tehanu", author: "Ursula K. Le Guin", category: "Fantasy" },
-      { title: "The Telling", author: "Ursula K. Le Guin", category: "Anthropological SF" },
-      { title: "Four Ways to Forgiveness", author: "Ursula K. Le Guin", category: "Social SF" },
-      { title: "Always Coming Home", author: "Ursula K. Le Guin", category: "Anthropological SF" },
-      
-      // Additional Clarke, Heinlein, Bradbury (10 books)
-      { title: "2001: A Space Odyssey", author: "Arthur C. Clarke", category: "Hard SF Classic" },
-      { title: "The City and the Stars", author: "Arthur C. Clarke", category: "Far Future" },
-      { title: "The Fountains of Paradise", author: "Arthur C. Clarke", category: "Space Elevator" },
-      { title: "Time Enough for Love", author: "Robert A. Heinlein", category: "Time Travel" },
-      { title: "The Martian Chronicles", author: "Ray Bradbury", category: "Mars Fiction" },
-      { title: "Fahrenheit 451", author: "Ray Bradbury", category: "Dystopian Classic" },
-      { title: "Something Wicked This Way Comes", author: "Ray Bradbury", category: "Dark Fantasy" },
-      { title: "The Illustrated Man", author: "Ray Bradbury", category: "Short Stories" },
-      
-      // Contemporary (21 books)
       { title: "The Three-Body Problem", author: "Liu Cixin", category: "Hard SF" },
       { title: "Ancillary Justice", author: "Ann Leckie", category: "Space Opera" },
       { title: "The Fifth Season", author: "N.K. Jemisin", category: "Apocalyptic Fantasy" },
       { title: "The Martian", author: "Andy Weir", category: "Hard SF" },
       { title: "Seveneves", author: "Neal Stephenson", category: "Hard SF" },
       { title: "The Long Way to a Small, Angry Planet", author: "Becky Chambers", category: "Cozy Space Opera" },
-      { title: "The Expanse: Leviathan Wakes", author: "James S.A. Corey", category: "Space Opera" },
-      { title: "This Is How You Lose the Time War", author: "Amal El-Mohtar and Max Gladstone", category: "Time Travel Romance" },
-      { title: "The Power", author: "Naomi Alderman", category: "Feminist SF" },
       { title: "Children of Time", author: "Adrian Tchaikovsky", category: "Evolution SF" },
-      { title: "Project Hail Mary", author: "Andy Weir", category: "Hard SF" },
-      { title: "Gideon the Ninth", author: "Tamsyn Muir", category: "Space Fantasy" },
-      { title: "A Memory Called Empire", author: "Arkady Martine", category: "Space Opera" },
-      { title: "Network Effect", author: "Martha Wells", category: "AI Fiction" },
-      { title: "Light from Uncommon Stars", author: "Ryka Aoki", category: "Contemporary SF" },
-      { title: "Station Eleven", author: "Emily St. John Mandel", category: "Post-Apocalyptic" },
-      { title: "Klara and the Sun", author: "Kazuo Ishiguro", category: "AI Fiction" },
-      { title: "The Ministry for the Future", author: "Kim Stanley Robinson", category: "Climate Fiction" },
-      { title: "Annihilation", author: "Jeff VanderMeer", category: "New Weird" },
-      { title: "Embassytown", author: "China Miéville", category: "Linguistic Science Fiction" },
-      { title: "Diaspora", author: "Greg Egan", category: "Hard Science Fiction" },
-      
-      // Non-Fiction (21 books)
-      { title: "Sapiens: A Brief History of Humankind", author: "Yuval Noah Harari", category: "Popular Science Non-Fiction" },
-      { title: "Homo Deus: A Brief History of Tomorrow", author: "Yuval Noah Harari", category: "Futurism Non-Fiction" },
-      { title: "Life 3.0: Being Human in the Age of Artificial Intelligence", author: "Max Tegmark", category: "AI Non-Fiction" },
-      { title: "The Singularity Is Near", author: "Ray Kurzweil", category: "Futurism Non-Fiction" },
-      { title: "Superintelligence: Paths, Dangers, Strategies", author: "Nick Bostrom", category: "AI Safety Non-Fiction" },
-      { title: "The Vital Question", author: "Nick Lane", category: "Biology Non-Fiction" },
-      { title: "The Gene: An Intimate History", author: "Siddhartha Mukherjee", category: "Biology Non-Fiction" },
-      { title: "Cosmos", author: "Carl Sagan", category: "Astronomy Non-Fiction" },
-      { title: "A Brief History of Time", author: "Stephen Hawking", category: "Physics Non-Fiction" },
-      { title: "The Selfish Gene", author: "Richard Dawkins", category: "Evolution Non-Fiction" },
-      { title: "Gödel, Escher, Bach: An Eternal Golden Braid", author: "Douglas Hofstadter", category: "Cognitive Science Non-Fiction" },
-      { title: "The Information: A History, a Theory, a Flood", author: "James Gleick", category: "Information Theory Non-Fiction" },
-      { title: "The Structure of Scientific Revolutions", author: "Thomas Kuhn", category: "Philosophy of Science Non-Fiction" },
-      { title: "The Emperor of All Maladies", author: "Siddhartha Mukherjee", category: "Medical History Non-Fiction" },
-      { title: "How We Got to Now", author: "Steven Johnson", category: "Innovation History Non-Fiction" },
-      { title: "The Demon-Haunted World", author: "Carl Sagan", category: "Science" },
-      { title: "The Sixth Extinction", author: "Elizabeth Kolbert", category: "Environmental Science" },
-      { title: "The Innovators", author: "Walter Isaacson", category: "Technology History" },
-      { title: "Weapons of Math Destruction", author: "Cathy O'Neil", category: "Data Science" },
-      { title: "The Signal and the Noise", author: "Nate Silver", category: "Statistics" },
-      { title: "Behave", author: "Robert Sapolsky", category: "Neuroscience" },
     ];
 
-    // Merge curated and AI-generated books, removing duplicates
-    const normalizeTitle = (title: string) => {
-      return title
-        .toLowerCase()
-        .replace(/^(the|a|an)\s+/i, '') // Remove leading articles
-        .replace(/[^\w\s]/g, '') // Remove punctuation
-        .replace(/\s+/g, ' ') // Normalize whitespace
-        .trim();
-    };
+    // Combine curated books with Gemini-generated books
+    const allBooks = [...curatedBooks, ...geminiBooks];
 
-    const normalizeAuthor = (author: string) => {
-      return author.toLowerCase().replace(/[^\w\s]/g, '').trim();
-    };
-
-    const seenBooks = new Map<string, CuratedBook>(); // key: "normalizedTitle|normalizedAuthor"
-    const allBooks: CuratedBook[] = [];
-
-    // Add curated books first
-    for (const book of curatedBooks) {
-      const key = `${normalizeTitle(book.title)}|${normalizeAuthor(book.author)}`;
-      if (!seenBooks.has(key)) {
-        seenBooks.set(key, book);
-        allBooks.push(book);
-      }
-    }
-
-    // Add AI-generated books if they're not duplicates
-    let aiDuplicates = 0;
-    for (const book of geminiBooks) {
-      const key = `${normalizeTitle(book.title)}|${normalizeAuthor(book.author)}`;
-      if (!seenBooks.has(key)) {
-        seenBooks.set(key, book);
-        allBooks.push(book);
-      } else {
-        aiDuplicates++;
-      }
-    }
-
-    console.log(`Total unique books to process: ${allBooks.length}`)
-    console.log(`- Curated books: ${curatedBooks.length}`)
-    console.log(`- AI-generated books: ${geminiBooks.length - aiDuplicates} (${aiDuplicates} duplicates removed)`);
-
-    // Process each book: find or create author, add book if not exists
-    const results = {
-      authorsCreated: 0,
-      authorsFound: 0,
-      booksAdded: 0,
-      booksSkipped: 0,
-      errors: [] as string[]
-    };
+    let booksAdded = 0;
+    let booksSkipped = 0;
 
     for (const book of allBooks) {
-      try {
-        // Find or create author
-        const { data: authorId, error: authorError } = await supabase
-          .rpc('find_or_create_scifi_author', { author_name: book.author });
+      // Check if already exists
+      const { data: existing } = await supabase
+        .from('transmissions')
+        .select('id')
+        .ilike('title', book.title)
+        .ilike('author', book.author)
+        .limit(1);
 
-        if (authorError) {
-          console.error(`Error finding/creating author ${book.author}:`, authorError);
-          results.errors.push(`Author ${book.author}: ${authorError.message}`);
-          continue;
-        }
+      if (existing && existing.length > 0) {
+        booksSkipped++;
+        continue;
+      }
 
-        if (!authorId) {
-          results.errors.push(`Failed to get author ID for ${book.author}`);
-          continue;
-        }
+      const { error } = await supabase
+        .from('transmissions')
+        .insert({
+          title: book.title,
+          author: book.author,
+          tags: book.category,
+        });
 
-        // Check if book already exists for this author
-        const { data: existingBook } = await supabase
-          .from('author_books')
-          .select('id')
-          .eq('author_id', authorId)
-          .ilike('title', book.title)
-          .single();
-
-        if (existingBook) {
-          results.booksSkipped++;
-          console.log(`Book already exists: ${book.title} by ${book.author}`);
-          continue;
-        }
-
-        // Insert book
-        const { error: bookError } = await supabase
-          .from('author_books')
-          .insert({
-            author_id: authorId,
-            title: book.title,
-            categories: [book.category]
-          });
-
-        if (bookError) {
-          console.error(`Error inserting book ${book.title}:`, bookError);
-          results.errors.push(`Book ${book.title}: ${bookError.message}`);
-        } else {
-          results.booksAdded++;
-          console.log(`Added book: ${book.title} by ${book.author}`);
-        }
-
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-        results.errors.push(`${book.title}: ${errorMsg}`);
+      if (!error) {
+        booksAdded++;
       }
     }
-
-    console.log('Population complete:', results);
 
     return new Response(JSON.stringify({
       success: true,
-      message: 'Curated books populated successfully',
-      stats: results,
-      totalProcessed: allBooks.length
+      stats: {
+        booksAdded,
+        booksSkipped,
+        totalProcessed: allBooks.length,
+      }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Error in populate-curated-books:', error);
+    console.error('Error populating curated books:', error);
     return new Response(JSON.stringify({
-      error: error instanceof Error ? error.message : 'Unknown error'
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
-

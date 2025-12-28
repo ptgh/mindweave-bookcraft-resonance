@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { requireAdminOrInternal, corsHeaders } from "../_shared/adminAuth.ts";
 
 // Publisher series definitions - VERIFIED FROM OFFICIAL WEBSITES
 const SERIES_CONFIG = {
@@ -13,7 +9,6 @@ const SERIES_CONFIG = {
     publisher: 'Penguin',
     description: 'A curated collection of classic science fiction, featuring distinctive cover art celebrating the genre\'s most influential works.',
     badge_emoji: '🐧',
-    // Data from https://www.penguin.co.uk/series/PENGSCIFI/penguin-science-fiction
     books: [
       { isbn: '9780241454589', title: 'The Ark Sakura', author: 'Kobo Abe', publisher_url: 'https://www.penguin.co.uk/books/317662/the-ark-sakura-by-abe-kobo/9780241454589', cover_url: 'https://cdn.penguin.co.uk/dam-assets/books/9780241454589/9780241454589-jacket-large.jpg', publication_year: 1988 },
       { isbn: '9780241505724', title: 'Black No More', author: 'George S. Schuyler', publisher_url: 'https://www.penguin.co.uk/books/443345/black-no-more-by-schuyler-george-s/9780241505724', cover_url: 'https://cdn.penguin.co.uk/dam-assets/books/9780241505724/9780241505724-jacket-large.jpg', publication_year: 1931 },
@@ -38,7 +33,6 @@ const SERIES_CONFIG = {
     publisher: 'Gollancz',
     description: 'The definitive library of science fiction classics, featuring essential works from the genre\'s greatest authors with iconic cover designs.',
     badge_emoji: '⭐',
-    // Data from https://store.gollancz.co.uk/collections/best-of-masterworks
     books: [
       { isbn: '9781399623001', title: 'Dune', author: 'Frank Herbert', publisher_url: 'https://store.gollancz.co.uk/products/dune', cover_url: 'https://store.gollancz.co.uk/cdn/shop/products/9781399623001-original.jpg', publication_year: 1965 },
       { isbn: '9781399625654', title: 'The Dispossessed', author: 'Ursula K. Le Guin', publisher_url: 'https://store.gollancz.co.uk/products/the-dispossessed', cover_url: 'https://store.gollancz.co.uk/cdn/shop/files/9781399625654-original.jpg', publication_year: 1974 },
@@ -159,6 +153,10 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Require admin authorization
+  const auth = await requireAdminOrInternal(req);
+  if (auth instanceof Response) return auth;
 
   try {
     // Parse request body for series selection
