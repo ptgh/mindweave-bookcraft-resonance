@@ -260,6 +260,11 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   }, [visibleFilms]);
 
   const openBookPreview = (film: FilmAdaptation) => {
+    // For original screenplays, there's no source book to preview
+    if (film.adaptation_type === 'original') {
+      return;
+    }
+    
     const book: EnrichedPublisherBook = {
       id: film.id,
       title: film.book_title,
@@ -429,10 +434,10 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                 <div className="flex gap-3">
                   {/* Book/Source Card with Cover */}
                   <button
-                    onClick={() => openBookPreview(film)}
+                    onClick={() => film.adaptation_type === 'original' ? openFilmModal(film) : openBookPreview(film)}
                     className={`flex-1 rounded-lg border transition-all text-left group overflow-hidden ${
                       film.adaptation_type === 'original'
-                        ? 'bg-violet-500/10 hover:bg-violet-500/20 border-violet-500/30 hover:border-violet-400/50'
+                        ? 'bg-violet-500/10 hover:bg-violet-500/20 border-violet-500/30 hover:border-violet-400/50 cursor-pointer'
                         : 'bg-muted/20 hover:bg-muted/40 border-border/20 hover:border-primary/40'
                     }`}
                   >
@@ -670,9 +675,15 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                     <h2 className="text-slate-200 font-bold text-xl leading-tight">
                       {selectedFilm.film_title}
                     </h2>
-                    <p className="text-slate-400 text-sm">
-                      Based on "{selectedFilm.book_title}" by {selectedFilm.book_author}
-                    </p>
+                    {selectedFilm.adaptation_type === 'original' ? (
+                      <p className="text-violet-300 text-sm">
+                        Original Screenplay by {selectedFilm.book_author || selectedFilm.director || 'Unknown'}
+                      </p>
+                    ) : (
+                      <p className="text-slate-400 text-sm">
+                        Based on "{selectedFilm.book_title}" by {selectedFilm.book_author}
+                      </p>
+                    )}
                     
                     {/* Film details row */}
                     <div className="flex flex-wrap gap-3 text-sm pt-1">
@@ -807,13 +818,16 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                 >
                   Close
                 </button>
-                <button 
-                  onClick={() => { closeFilmModal(); openBookPreview(selectedFilm); }}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Book className="w-4 h-4" />
-                  View Book
-                </button>
+                {/* Only show View Book button for adaptations, not original screenplays */}
+                {selectedFilm.adaptation_type !== 'original' && (
+                  <button 
+                    onClick={() => { closeFilmModal(); openBookPreview(selectedFilm); }}
+                    className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Book className="w-4 h-4" />
+                    View Book
+                  </button>
+                )}
               </div>
             </div>
           </div>
