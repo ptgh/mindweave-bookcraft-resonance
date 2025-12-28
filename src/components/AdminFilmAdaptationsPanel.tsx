@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeAdminFunction } from "@/utils/adminFunctions";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { 
   Film, Plus, Pencil, Trash2, RefreshCw, Image, Video, 
@@ -102,20 +103,20 @@ export const AdminFilmAdaptationsPanel = () => {
   const handlePopulate = async () => {
     setIsPopulating(true);
     try {
-      const { data, error } = await supabase.functions.invoke('populate-film-adaptations');
+      const { data, error } = await invokeAdminFunction('populate-film-adaptations');
       if (error) throw error;
       
       toast({
         title: "Success",
-        description: `Populated ${data.count} film adaptations`,
+        description: `Populated ${(data as any).count} film adaptations`,
         variant: "success"
       });
       fetchFilms();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error populating films:', error);
       toast({
         title: "Error",
-        description: "Failed to populate film adaptations",
+        description: error.message || "Failed to populate film adaptations",
         variant: "destructive"
       });
     } finally {
@@ -128,20 +129,20 @@ export const AdminFilmAdaptationsPanel = () => {
     try {
       toast({ title: "Starting", description: "Populating Criterion SF films..." });
       
-      const { data, error } = await supabase.functions.invoke('populate-criterion-sf-films');
+      const { data, error } = await invokeAdminFunction('populate-criterion-sf-films');
       if (error) throw error;
       
       toast({
         title: "Criterion Population Complete",
-        description: data.message || `Processed Criterion films`,
+        description: (data as any).message || `Processed Criterion films`,
         variant: "success"
       });
       fetchFilms();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error populating Criterion:', error);
       toast({
         title: "Error",
-        description: "Failed to populate Criterion films",
+        description: error.message || "Failed to populate Criterion films",
         variant: "destructive"
       });
     } finally {
@@ -154,20 +155,20 @@ export const AdminFilmAdaptationsPanel = () => {
     try {
       toast({ title: "Starting", description: "Enriching film artwork from TMDB and Google Books..." });
       
-      const { data, error } = await supabase.functions.invoke('enrich-film-artwork');
+      const { data, error } = await invokeAdminFunction('enrich-film-artwork');
       if (error) throw error;
       
       toast({
         title: "Artwork Enrichment Complete",
-        description: data.message || `Updated artwork`,
+        description: (data as any).message || `Updated artwork`,
         variant: "success"
       });
       fetchFilms();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error enriching artwork:', error);
       toast({
         title: "Error",
-        description: "Failed to enrich artwork",
+        description: error.message || "Failed to enrich artwork",
         variant: "destructive"
       });
     } finally {
@@ -180,20 +181,20 @@ export const AdminFilmAdaptationsPanel = () => {
     try {
       toast({ title: "Starting", description: "Searching YouTube for official trailers..." });
       
-      const { data, error } = await supabase.functions.invoke('enrich-trailer-urls');
+      const { data, error } = await invokeAdminFunction('enrich-trailer-urls');
       if (error) throw error;
       
       toast({
         title: "Trailer Enrichment Complete",
-        description: data.message || `Updated trailers`,
+        description: (data as any).message || `Updated trailers`,
         variant: "success"
       });
       fetchFilms();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error enriching trailers:', error);
       toast({
         title: "Error",
-        description: "Failed to enrich trailers",
+        description: error.message || "Failed to enrich trailers",
         variant: "destructive"
       });
     } finally {
@@ -206,20 +207,20 @@ export const AdminFilmAdaptationsPanel = () => {
     try {
       toast({ title: "Starting", description: "Enriching Criterion links..." });
       
-      const { data, error } = await supabase.functions.invoke('enrich-criterion-links');
+      const { data, error } = await invokeAdminFunction('enrich-criterion-links');
       if (error) throw error;
       
       toast({
         title: "Criterion Enrichment Complete",
-        description: data.message || `Updated streaming links`,
+        description: (data as any).message || `Updated streaming links`,
         variant: "success"
       });
       fetchFilms();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error enriching Criterion:', error);
       toast({
         title: "Error",
-        description: "Failed to enrich Criterion links",
+        description: error.message || "Failed to enrich Criterion links",
         variant: "destructive"
       });
     } finally {
@@ -232,20 +233,20 @@ export const AdminFilmAdaptationsPanel = () => {
     try {
       toast({ title: "Starting", description: "Enriching Apple TV links..." });
       
-      const { data, error } = await supabase.functions.invoke('enrich-apple-tv-links');
+      const { data, error } = await invokeAdminFunction('enrich-apple-tv-links');
       if (error) throw error;
       
       toast({
         title: "Apple TV Enrichment Complete",
-        description: data.message || `Updated streaming links`,
+        description: (data as any).message || `Updated streaming links`,
         variant: "success"
       });
       fetchFilms();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error enriching Apple TV:', error);
       toast({
         title: "Error",
-        description: "Failed to enrich Apple TV links",
+        description: error.message || "Failed to enrich Apple TV links",
         variant: "destructive"
       });
     } finally {
@@ -387,10 +388,6 @@ export const AdminFilmAdaptationsPanel = () => {
     withAppleTVLinks: films.filter(f => f.streaming_availability?.apple).length,
   };
 
-  const missingPosters = stats.total - stats.withPosters;
-  const missingCovers = stats.total - stats.withBookCovers;
-  const missingTrailers = stats.total - stats.withTrailers;
-
   return (
     <Card className="border-amber-700/50 bg-gradient-to-br from-amber-900/20 to-slate-800/50">
       <CardHeader>
@@ -477,153 +474,17 @@ export const AdminFilmAdaptationsPanel = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-slate-300">Book Year</Label>
-                        <Input
-                          type="number"
-                          value={editingFilm.book_publication_year || ''}
-                          onChange={e => setEditingFilm({ ...editingFilm, book_publication_year: parseInt(e.target.value) || null })}
-                          className="bg-slate-800 border-slate-700"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-slate-300">Film Year</Label>
-                        <Input
-                          type="number"
-                          value={editingFilm.film_year || ''}
-                          onChange={e => setEditingFilm({ ...editingFilm, film_year: parseInt(e.target.value) || null })}
-                          className="bg-slate-800 border-slate-700"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-slate-300">IMDB Rating</Label>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          value={editingFilm.imdb_rating || ''}
-                          onChange={e => setEditingFilm({ ...editingFilm, imdb_rating: parseFloat(e.target.value) || null })}
-                          className="bg-slate-800 border-slate-700"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-slate-300">Criterion Spine</Label>
-                        <Input
-                          type="number"
-                          value={editingFilm.criterion_spine || ''}
-                          onChange={e => setEditingFilm({ ...editingFilm, criterion_spine: parseInt(e.target.value) || null })}
-                          className="bg-slate-800 border-slate-700"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-300">Book Cover URL</Label>
-                      <Input
-                        value={editingFilm.book_cover_url || ''}
-                        onChange={e => setEditingFilm({ ...editingFilm, book_cover_url: e.target.value })}
-                        placeholder="https://..."
-                        className="bg-slate-800 border-slate-700"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-300">Film Poster URL</Label>
-                      <Input
-                        value={editingFilm.poster_url || ''}
-                        onChange={e => setEditingFilm({ ...editingFilm, poster_url: e.target.value })}
-                        placeholder="https://..."
-                        className="bg-slate-800 border-slate-700"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-300">Trailer URL (YouTube)</Label>
-                      <Input
-                        value={editingFilm.trailer_url || ''}
-                        onChange={e => setEditingFilm({ ...editingFilm, trailer_url: e.target.value })}
-                        placeholder="https://www.youtube.com/watch?v=..."
-                        className="bg-slate-800 border-slate-700"
-                      />
-                    </div>
-
-                    <div className="space-y-3 pt-4 border-t border-slate-700">
-                      <Label className="text-amber-300 font-medium">Streaming Availability</Label>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label className="text-slate-300 text-sm">Criterion URL</Label>
-                          <Input
-                            value={editingFilm.streaming_availability?.criterion || ''}
-                            onChange={e => setEditingFilm({ 
-                              ...editingFilm, 
-                              streaming_availability: { 
-                                ...editingFilm.streaming_availability, 
-                                criterion: e.target.value || undefined 
-                              } 
-                            })}
-                            placeholder="https://www.criterion.com/films/..."
-                            className="bg-slate-800 border-slate-700"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-slate-300 text-sm">Apple TV URL</Label>
-                          <Input
-                            value={editingFilm.streaming_availability?.apple || ''}
-                            onChange={e => setEditingFilm({ 
-                              ...editingFilm, 
-                              streaming_availability: { 
-                                ...editingFilm.streaming_availability, 
-                                apple: e.target.value || undefined 
-                              } 
-                            })}
-                            placeholder="https://tv.apple.com/movie/..."
-                            className="bg-slate-800 border-slate-700"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-700">
-                      {editingFilm.book_cover_url && (
-                        <div className="space-y-2">
-                          <Label className="text-slate-400 text-xs">Book Cover Preview</Label>
-                          <img 
-                            src={editingFilm.book_cover_url} 
-                            alt="Book cover" 
-                            className="h-32 rounded object-cover"
-                            onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
-                          />
-                        </div>
-                      )}
-                      {editingFilm.poster_url && (
-                        <div className="space-y-2">
-                          <Label className="text-slate-400 text-xs">Poster Preview</Label>
-                          <img 
-                            src={editingFilm.poster_url} 
-                            alt="Film poster" 
-                            className="h-32 rounded object-cover"
-                            onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
-                          />
-                        </div>
-                      )}
-                    </div>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                      </DialogClose>
+                      <Button onClick={handleSave} disabled={isSaving}>
+                        {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                        Save
+                      </Button>
+                    </DialogFooter>
                   </div>
                 )}
-
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="outline" className="border-slate-600">Cancel</Button>
-                  </DialogClose>
-                  <Button 
-                    onClick={handleSave} 
-                    disabled={isSaving || !editingFilm?.book_title || !editingFilm?.film_title}
-                    className="bg-amber-600 hover:bg-amber-700"
-                  >
-                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
-                    {editingFilm?.id ? 'Update' : 'Create'}
-                  </Button>
-                </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
@@ -632,114 +493,64 @@ export const AdminFilmAdaptationsPanel = () => {
           Manage SF film adaptations with posters, trailers, and streaming links
         </CardDescription>
       </CardHeader>
-
       <CardContent className="space-y-4">
-        {/* Enrichment Buttons Row */}
-        <div className="flex flex-wrap gap-2 p-3 bg-slate-900/50 rounded-lg border border-slate-700">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePopulate}
-            disabled={isPopulating}
-            className="border-blue-500/30 text-blue-300"
-          >
-            {isPopulating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-            <span className="ml-1">Populate Films</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePopulateCriterion}
-            disabled={isPopulatingCriterion}
-            className="border-yellow-500/30 text-yellow-300"
-          >
-            {isPopulatingCriterion ? <Loader2 className="w-4 h-4 animate-spin" /> : <Award className="w-4 h-4" />}
-            <span className="ml-1">Criterion SF ({stats.criterion})</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleEnrichArtwork}
-            disabled={isEnrichingArtwork}
-            className="border-purple-500/30 text-purple-300"
-          >
-            {isEnrichingArtwork ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4" />}
-            <span className="ml-1">Artwork ({missingPosters + missingCovers} missing)</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleEnrichTrailers}
-            disabled={isEnrichingTrailers}
-            className="border-red-500/30 text-red-300"
-          >
-            {isEnrichingTrailers ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-            <span className="ml-1">Trailers ({missingTrailers} missing)</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleEnrichCriterion}
-            disabled={isEnrichingCriterion}
-            className="border-amber-500/30 text-amber-300"
-          >
-            {isEnrichingCriterion ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            <span className="ml-1">Criterion Links</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleEnrichAppleTV}
-            disabled={isEnrichingAppleTV}
-            className="border-slate-500/30 text-slate-300"
-          >
-            {isEnrichingAppleTV ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            <span className="ml-1">Apple TV</span>
-          </Button>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-7 gap-2 text-center text-xs">
+          <div className="bg-slate-800/50 p-2 rounded">
+            <div className="text-lg font-bold text-amber-400">{stats.total}</div>
+            <div className="text-slate-400">Total</div>
+          </div>
+          <div className="bg-slate-800/50 p-2 rounded">
+            <div className="text-lg font-bold text-green-400">{stats.withPosters}</div>
+            <div className="text-slate-400">Posters</div>
+          </div>
+          <div className="bg-slate-800/50 p-2 rounded">
+            <div className="text-lg font-bold text-blue-400">{stats.withBookCovers}</div>
+            <div className="text-slate-400">Covers</div>
+          </div>
+          <div className="bg-slate-800/50 p-2 rounded">
+            <div className="text-lg font-bold text-purple-400">{stats.withTrailers}</div>
+            <div className="text-slate-400">Trailers</div>
+          </div>
+          <div className="bg-slate-800/50 p-2 rounded">
+            <div className="text-lg font-bold text-yellow-400">{stats.criterion}</div>
+            <div className="text-slate-400">Criterion</div>
+          </div>
+          <div className="bg-slate-800/50 p-2 rounded">
+            <div className="text-lg font-bold text-orange-400">{stats.withCriterionLinks}</div>
+            <div className="text-slate-400">CC Links</div>
+          </div>
+          <div className="bg-slate-800/50 p-2 rounded">
+            <div className="text-lg font-bold text-pink-400">{stats.withAppleTVLinks}</div>
+            <div className="text-slate-400">Apple TV</div>
+          </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-7 gap-2">
-          <div className="bg-slate-900/50 p-3 rounded-lg text-center">
-            <div className="text-2xl font-bold text-amber-400">{stats.total}</div>
-            <div className="text-xs text-slate-400">Total Films</div>
-          </div>
-          <div className="bg-slate-900/50 p-3 rounded-lg text-center">
-            <div className="flex items-center justify-center gap-1 text-2xl font-bold text-emerald-400">
-              {stats.withPosters}
-              {stats.withPosters === stats.total && <Check className="w-4 h-4" />}
-            </div>
-            <div className="text-xs text-slate-400">Posters</div>
-          </div>
-          <div className="bg-slate-900/50 p-3 rounded-lg text-center">
-            <div className="flex items-center justify-center gap-1 text-2xl font-bold text-blue-400">
-              {stats.withBookCovers}
-            </div>
-            <div className="text-xs text-slate-400">Book Covers</div>
-          </div>
-          <div className="bg-slate-900/50 p-3 rounded-lg text-center">
-            <div className="text-2xl font-bold text-purple-400">{stats.withTrailers}</div>
-            <div className="text-xs text-slate-400">Trailers</div>
-          </div>
-          <div className="bg-slate-900/50 p-3 rounded-lg text-center">
-            <div className="text-2xl font-bold text-yellow-400">{stats.criterion}</div>
-            <div className="text-xs text-slate-400">Criterion</div>
-          </div>
-          <div className="bg-slate-900/50 p-3 rounded-lg text-center">
-            <div className="text-2xl font-bold text-amber-300">{stats.withCriterionLinks}</div>
-            <div className="text-xs text-slate-400">Criterion Links</div>
-          </div>
-          <div className="bg-slate-900/50 p-3 rounded-lg text-center">
-            <div className="text-2xl font-bold text-slate-300">{stats.withAppleTVLinks}</div>
-            <div className="text-xs text-slate-400">Apple TV Links</div>
-          </div>
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={handlePopulate} disabled={isPopulating}>
+            {isPopulating ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
+            Populate Films
+          </Button>
+          <Button size="sm" variant="outline" onClick={handlePopulateCriterion} disabled={isPopulatingCriterion}>
+            {isPopulatingCriterion ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Award className="w-4 h-4 mr-1" />}
+            Criterion SF
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleEnrichArtwork} disabled={isEnrichingArtwork}>
+            {isEnrichingArtwork ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Image className="w-4 h-4 mr-1" />}
+            Artwork
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleEnrichTrailers} disabled={isEnrichingTrailers}>
+            {isEnrichingTrailers ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Play className="w-4 h-4 mr-1" />}
+            Trailers
+          </Button>
         </div>
 
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
-            placeholder="Search films, books, or directors..."
+            placeholder="Search films..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="pl-10 bg-slate-800 border-slate-700"
@@ -747,100 +558,56 @@ export const AdminFilmAdaptationsPanel = () => {
         </div>
 
         {/* Films Table */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
-          </div>
-        ) : (
-          <div className="rounded-lg border border-slate-700 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-800/50 hover:bg-slate-800/50">
-                  <TableHead className="text-slate-300 w-[80px]">Poster</TableHead>
-                  <TableHead className="text-slate-300">Film</TableHead>
-                  <TableHead className="text-slate-300">Book</TableHead>
-                  <TableHead className="text-slate-300">Director</TableHead>
-                  <TableHead className="text-slate-300 text-center">Year</TableHead>
-                  <TableHead className="text-slate-300 text-center">Rating</TableHead>
-                  <TableHead className="text-slate-300 text-center">Media</TableHead>
-                  <TableHead className="text-slate-300 text-right">Actions</TableHead>
+        <div className="max-h-96 overflow-y-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Film</TableHead>
+                <TableHead>Book</TableHead>
+                <TableHead>Year</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="w-20">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredFilms.slice(0, 50).map(film => (
+                <TableRow key={film.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {film.poster_url && <img src={film.poster_url} alt="" className="w-8 h-12 object-cover rounded" />}
+                      <div>
+                        <div className="font-medium">{film.film_title}</div>
+                        <div className="text-xs text-slate-400">{film.director}</div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">{film.book_title}</div>
+                    <div className="text-xs text-slate-400">{film.book_author}</div>
+                  </TableCell>
+                  <TableCell>{film.film_year}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-1 flex-wrap">
+                      {film.poster_url && <Badge variant="outline" className="text-[10px]">Poster</Badge>}
+                      {film.trailer_url && <Badge variant="outline" className="text-[10px]">Trailer</Badge>}
+                      {film.is_criterion_collection && <Badge className="text-[10px] bg-yellow-600">CC</Badge>}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => { setEditingFilm(film); setIsDialogOpen(true); }}>
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleDelete(film.id)}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredFilms.map((film) => (
-                  <TableRow key={film.id} className="hover:bg-slate-800/30">
-                    <TableCell>
-                      {film.poster_url ? (
-                        <img 
-                          src={film.poster_url} 
-                          alt={film.film_title}
-                          className="w-12 h-16 object-cover rounded"
-                          onError={(e) => (e.target as HTMLImageElement).src = '/placeholder.svg'}
-                        />
-                      ) : (
-                        <div className="w-12 h-16 bg-slate-700 rounded flex items-center justify-center">
-                          <Film className="w-5 h-5 text-slate-500" />
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-medium text-foreground">{film.film_title}</TableCell>
-                    <TableCell className="text-slate-400">
-                      <div className="flex flex-col">
-                        <span className="text-sm">{film.book_title}</span>
-                        <span className="text-xs text-slate-500">by {film.book_author}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-slate-400">{film.director || '—'}</TableCell>
-                    <TableCell className="text-center text-slate-400">{film.film_year}</TableCell>
-                    <TableCell className="text-center">
-                      {film.imdb_rating ? (
-                        <Badge className="bg-amber-500/20 text-amber-300 border-amber-400/30">
-                          <Star className="w-3 h-3 mr-1 fill-amber-400" />
-                          {film.imdb_rating}
-                        </Badge>
-                      ) : '—'}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        {film.poster_url && <span title="Has poster"><Image className="w-4 h-4 text-emerald-400" /></span>}
-                        {film.book_cover_url && <span title="Has book cover"><BookOpen className="w-4 h-4 text-blue-400" /></span>}
-                        {film.trailer_url && <span title="Has trailer"><Video className="w-4 h-4 text-red-400" /></span>}
-                        {film.is_criterion_collection && (
-                          <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-400/30 text-[10px] px-1">
-                            C
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingFilm(film);
-                            setIsDialogOpen(true);
-                          }}
-                          className="h-8 w-8 p-0 text-slate-400 hover:text-amber-400"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(film.id)}
-                          className="h-8 w-8 p-0 text-slate-400 hover:text-red-400"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

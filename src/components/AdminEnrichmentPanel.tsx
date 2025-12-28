@@ -17,7 +17,7 @@ import {
 } from "@/services/filmAdaptationEnrichmentService";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PlayCircle, RefreshCw, CheckCircle, XCircle, Clock, Image, Film, Calendar, Database } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAdminFunction } from "@/utils/adminFunctions";
 
 export const AdminEnrichmentPanel = () => {
   const { toast } = useEnhancedToast();
@@ -27,7 +27,7 @@ export const AdminEnrichmentPanel = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['enrichment-stats'],
     queryFn: getEnrichmentStats,
-    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchInterval: 5000,
   });
 
   const { data: coverStats } = useQuery({
@@ -119,11 +119,11 @@ export const AdminEnrichmentPanel = () => {
 
   const populateVerifiedFilmsMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('populate-verified-sf-films');
+      const { data, error } = await invokeAdminFunction('populate-verified-sf-films');
       if (error) throw error;
       return data;
     },
-    onSuccess: (result) => {
+    onSuccess: (result: any) => {
       toast({
         title: "Verified Films Populated",
         description: `Added ${result.added} new films. ${result.enriched} enriched with book data. ${result.alreadyExist} already existed.`,

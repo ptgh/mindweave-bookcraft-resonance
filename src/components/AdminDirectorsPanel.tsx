@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeAdminFunction } from "@/utils/adminFunctions";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { 
   Plus, 
@@ -240,21 +241,21 @@ export const AdminDirectorsPanel = () => {
         description: "Running populate-sf-directors function...",
       });
 
-      const { data, error } = await supabase.functions.invoke("populate-sf-directors");
+      const { data, error } = await invokeAdminFunction("populate-sf-directors");
 
       if (error) throw error;
 
       toast({
         title: "Directors Populated",
-        description: `Successfully populated ${data.count || 0} directors`,
+        description: `Successfully populated ${(data as any).count || 0} directors`,
         variant: "success",
       });
       fetchDirectors();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error populating directors:", error);
       toast({
         title: "Error",
-        description: "Failed to populate directors",
+        description: error.message || "Failed to populate directors",
         variant: "destructive",
       });
     }
@@ -274,13 +275,14 @@ export const AdminDirectorsPanel = () => {
 
     for (const director of directorsNeedingEnrichment) {
       try {
-        const { data, error } = await supabase.functions.invoke("enrich-director-data", {
-          body: { directorName: director.name, directorId: director.id }
+        const { data, error } = await invokeAdminFunction("enrich-director-data", {
+          directorName: director.name,
+          directorId: director.id
         });
 
         if (error) throw error;
         
-        if (data.success) {
+        if ((data as any).success) {
           enrichedCount++;
           console.log(`✓ Enriched: ${director.name}`);
         }
@@ -501,10 +503,10 @@ export const AdminDirectorsPanel = () => {
           </div>
           <div className="bg-slate-800/50 rounded-lg p-3 text-center">
             <div className="text-2xl font-bold text-purple-400">{stats.withWikipedia}</div>
-            <div className="text-xs text-muted-foreground">With Wikipedia</div>
+            <div className="text-xs text-muted-foreground">Wikipedia</div>
           </div>
           <div className="bg-slate-800/50 rounded-lg p-3 text-center">
-            <div className="text-2xl font-bold text-amber-400">{stats.withFilms}</div>
+            <div className="text-2xl font-bold text-yellow-400">{stats.withFilms}</div>
             <div className="text-xs text-muted-foreground">With Films</div>
           </div>
         </div>
@@ -513,132 +515,70 @@ export const AdminDirectorsPanel = () => {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search directors by name, nationality, or film..."
+            placeholder="Search directors..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
           />
         </div>
 
-        {/* Table */}
-        <div className="border rounded-lg overflow-hidden">
+        {/* Directors Table */}
+        <div className="max-h-96 overflow-y-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-16">Photo</TableHead>
-                <TableHead>Name</TableHead>
+                <TableHead>Director</TableHead>
                 <TableHead>Nationality</TableHead>
                 <TableHead>Years</TableHead>
-                <TableHead>Notable SF Films</TableHead>
-                <TableHead>Links</TableHead>
-                <TableHead className="w-24">Actions</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="w-20">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
-                    <RefreshCw className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
-                  </TableCell>
-                </TableRow>
-              ) : filteredDirectors.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    No directors found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredDirectors.map((director) => (
-                  <TableRow key={director.id}>
-                    <TableCell>
+              {filteredDirectors.slice(0, 50).map((director) => (
+                <TableRow key={director.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
                       {director.photo_url ? (
                         <img
                           src={director.photo_url}
                           alt={director.name}
-                          className="w-10 h-10 object-cover rounded-full"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = "/placeholder.svg";
-                          }}
+                          className="w-8 h-8 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
-                          <User className="w-5 h-5 text-slate-500" />
+                        <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
+                          <User className="w-4 h-4 text-slate-400" />
                         </div>
                       )}
-                    </TableCell>
-                    <TableCell className="font-medium">{director.name}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {director.nationality || "-"}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {director.birth_year && (
-                        <>
-                          {director.birth_year}
-                          {director.death_year
-                            ? ` - ${director.death_year}`
-                            : " - present"}
-                        </>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1 max-w-xs">
-                        {director.notable_sf_films?.slice(0, 3).map((film, i) => (
-                          <Badge key={i} variant="secondary" className="text-xs">
-                            {film}
-                          </Badge>
-                        ))}
-                        {(director.notable_sf_films?.length || 0) > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{(director.notable_sf_films?.length || 0) - 3}
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        {director.wikipedia_url && (
-                          <a
-                            href={director.wikipedia_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-muted-foreground hover:text-foreground"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        )}
-                        {director.photo_url && (
-                          <ImageIcon className="w-4 h-4 text-green-500" />
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenDialog(director)}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(director)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
+                      <span className="font-medium">{director.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>{director.nationality || "-"}</TableCell>
+                  <TableCell>
+                    {director.birth_year}
+                    {director.death_year ? ` - ${director.death_year}` : ""}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      {director.bio && <Badge variant="outline" className="text-[10px]">Bio</Badge>}
+                      {director.photo_url && <Badge variant="outline" className="text-[10px]">Photo</Badge>}
+                      {director.wikipedia_url && <Badge variant="outline" className="text-[10px]">Wiki</Badge>}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => handleOpenDialog(director)}>
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleDelete(director)}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
-        </div>
-
-        <div className="text-xs text-muted-foreground">
-          Showing {filteredDirectors.length} of {directors.length} directors
         </div>
       </CardContent>
     </Card>
