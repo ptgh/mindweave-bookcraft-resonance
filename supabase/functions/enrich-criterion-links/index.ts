@@ -2,6 +2,14 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { requireAdminOrInternal, corsHeaders } from "../_shared/adminAuth.ts";
 
+// Helper for JSON responses with CORS
+function json(status: number, body: Record<string, unknown>): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
 // Verified Criterion films with their exact URLs (manually curated and verified)
 // Using correct URL format: https://www.criterion.com/films/{spine_id}-{slug}
 const VERIFIED_CRITERION_FILMS: Record<string, { url: string; spine?: number }> = {
@@ -66,18 +74,46 @@ serve(async (req) => {
   const auth = await requireAdminOrInternal(req);
   if (auth instanceof Response) return auth;
 
-  try {
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  // === ENV VAR NULL CHECKS ===
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
+  if (!SUPABASE_URL) {
+    console.error('Missing SUPABASE_URL');
+    return json(500, { success: false, error: 'Server misconfiguration: SUPABASE_URL not set' });
+  }
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('Missing SUPABASE_SERVICE_ROLE_KEY');
+    return json(500, { success: false, error: 'Server misconfiguration: SUPABASE_SERVICE_ROLE_KEY not set' });
+  }
+
+  try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     console.log('Starting Criterion link enrichment...');
 
-    // Get all film adaptations marked as Criterion
-    const { data: films, error: filmsError } = await supabase
+    // Parse optional filmIds from request body
+    let filmIds: string[] | undefined;
+    try {
+      const body = await req.json();
+      if (body.filmIds && Array.isArray(body.filmIds)) {
+        filmIds = body.filmIds;
+        console.log(`Processing specific films: ${filmIds.length} IDs provided`);
+      }
+    } catch {
+      // No body or invalid JSON - process all
+    }
+
+    // Build query - if filmIds provided, filter to those; else process all
+    let query = supabase
       .from('sf_film_adaptations')
       .select('id, film_title, streaming_availability, is_criterion_collection, criterion_url');
+
+    if (filmIds && filmIds.length > 0) {
+      query = query.in('id', filmIds);
+    }
+
+    const { data: films, error: filmsError } = await query;
 
     if (filmsError) throw filmsError;
 
@@ -168,24 +204,19 @@ serve(async (req) => {
 
     console.log(`Criterion enrichment complete. Verified: ${verifiedCount}, Search fallback: ${searchFallbackCount}, Removed: ${removedCount}`);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: `Verified ${verifiedCount}, search fallback ${searchFallbackCount}, removed ${removedCount}`,
-        verifiedFilmsCount: Object.keys(VERIFIED_CRITERION_FILMS).length,
-        results
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return json(200, {
+      success: true,
+      message: `Verified ${verifiedCount}, search fallback ${searchFallbackCount}, removed ${removedCount}`,
+      verifiedFilmsCount: Object.keys(VERIFIED_CRITERION_FILMS).length,
+      processed: films?.length || 0,
+      results
+    });
 
   } catch (error) {
     console.error('Error enriching Criterion links:', error);
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return json(500, { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    });
   }
 });

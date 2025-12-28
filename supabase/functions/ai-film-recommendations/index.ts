@@ -11,6 +11,49 @@ interface AIRecommendation {
   reason: string;
 }
 
+// Helper for JSON responses with CORS
+function json(status: number, body: Record<string, unknown>): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+// Trigger enrichment functions internally (fire-and-forget)
+async function triggerEnrichment(filmIds: string[], supabaseUrl: string, internalSecret: string): Promise<void> {
+  const enrichFunctions = [
+    'enrich-film-artwork',
+    'enrich-trailer-urls', 
+    'enrich-criterion-links'
+  ];
+
+  for (const funcName of enrichFunctions) {
+    try {
+      const url = `${supabaseUrl}/functions/v1/${funcName}`;
+      console.log(`[auto-enrich] Triggering ${funcName} for ${filmIds.length} films...`);
+      
+      // Fire-and-forget - don't await
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-secret': internalSecret,
+        },
+        body: JSON.stringify({ filmIds }),
+      }).then(res => {
+        console.log(`[auto-enrich] ${funcName} responded: ${res.status}`);
+      }).catch(err => {
+        console.warn(`[auto-enrich] ${funcName} failed:`, err.message);
+      });
+      
+      // Small delay between triggering functions
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } catch (err) {
+      console.warn(`[auto-enrich] Failed to trigger ${funcName}:`, err);
+    }
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -20,15 +63,31 @@ serve(async (req) => {
   const auth = await requireAdminOrInternal(req);
   if (auth instanceof Response) return auth;
 
-  try {
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
-    }
+  // === ENV VAR NULL CHECKS ===
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+  const INTERNAL_EDGE_SECRET = Deno.env.get('INTERNAL_EDGE_SECRET');
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+  if (!SUPABASE_URL) {
+    console.error('Missing SUPABASE_URL');
+    return json(500, { error: 'Server misconfiguration: SUPABASE_URL not set', recommendations: [] });
+  }
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('Missing SUPABASE_SERVICE_ROLE_KEY');
+    return json(500, { error: 'Server misconfiguration: SUPABASE_SERVICE_ROLE_KEY not set', recommendations: [] });
+  }
+  if (!LOVABLE_API_KEY) {
+    console.error('Missing LOVABLE_API_KEY');
+    return json(500, { error: 'Server misconfiguration: LOVABLE_API_KEY not set', recommendations: [] });
+  }
+  if (!INTERNAL_EDGE_SECRET) {
+    console.error('Missing INTERNAL_EDGE_SECRET');
+    return json(500, { error: 'Server misconfiguration: INTERNAL_EDGE_SECRET not set', recommendations: [] });
+  }
+
+  try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // Get existing films for context and deduplication
     const { data: existingFilms } = await supabase
@@ -94,16 +153,10 @@ Return ONLY a valid JSON array with this exact structure:
       console.error('AI API error:', response.status, errorText);
       
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return json(429, { error: 'Rate limit exceeded. Please try again later.', recommendations: [] });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'AI credits exhausted. Please add credits.' }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return json(402, { error: 'AI credits exhausted. Please add credits.', recommendations: [] });
       }
       throw new Error(`AI API error: ${response.status}`);
     }
@@ -130,12 +183,9 @@ Return ONLY a valid JSON array with this exact structure:
       }
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
-      return new Response(JSON.stringify({ 
+      return json(500, { 
         error: 'Failed to parse AI response as valid JSON',
         recommendations: []
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
@@ -144,6 +194,7 @@ Return ONLY a valid JSON array with this exact structure:
     // Auto-add recommendations to database (avoiding duplicates)
     let addedCount = 0;
     const addedFilms: string[] = [];
+    const addedFilmIds: string[] = [];
     const skippedFilms: string[] = [];
 
     for (const rec of recommendations) {
@@ -170,7 +221,7 @@ Return ONLY a valid JSON array with this exact structure:
       }
 
       // Insert new film
-      const { error: insertError } = await supabase
+      const { data: inserted, error: insertError } = await supabase
         .from('sf_film_adaptations')
         .insert({
           film_title: rec.film_title,
@@ -180,40 +231,48 @@ Return ONLY a valid JSON array with this exact structure:
           director: rec.director,
           source: 'ai_suggested',
           is_criterion_collection: false,
-        });
+        })
+        .select('id')
+        .single();
 
       if (insertError) {
         console.error(`Failed to insert ${rec.film_title}:`, insertError);
       } else {
         addedCount++;
         addedFilms.push(rec.film_title);
+        if (inserted?.id) {
+          addedFilmIds.push(inserted.id);
+        }
         existingTitles.push(normalizedTitle); // Prevent duplicates in this batch
-        console.log(`Added: ${rec.film_title}`);
+        console.log(`Added: ${rec.film_title} (id: ${inserted?.id})`);
       }
     }
 
     console.log(`Added ${addedCount} new films to database`);
 
-    return new Response(JSON.stringify({ 
+    // === AUTO-TRIGGER ENRICHMENT (server-side, no client orchestration) ===
+    if (addedFilmIds.length > 0) {
+      console.log(`[auto-enrich] Triggering enrichment for ${addedFilmIds.length} new films...`);
+      // Fire-and-forget - don't await
+      triggerEnrichment(addedFilmIds, SUPABASE_URL, INTERNAL_EDGE_SECRET);
+    }
+
+    return json(200, { 
       recommendations,
       added: addedFilms,
       skipped: skippedFilms,
       addedCount,
+      addedFilmIds,
       message: addedCount > 0 
-        ? `Added ${addedCount} new film${addedCount > 1 ? 's' : ''} to collection!`
+        ? `Added ${addedCount} new film${addedCount > 1 ? 's' : ''} to collection! Enrichment started.`
         : 'All suggested films are already in your collection.'
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error('Error in ai-film-recommendations:', error);
-    return new Response(JSON.stringify({ 
+    return json(500, { 
       error: error instanceof Error ? error.message : 'Unknown error',
       recommendations: []
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });

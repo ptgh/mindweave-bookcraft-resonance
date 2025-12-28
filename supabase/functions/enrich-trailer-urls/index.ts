@@ -3,9 +3,13 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { requireAdminOrInternal, corsHeaders } from "../_shared/adminAuth.ts";
 
-const YOUTUBE_API_KEY = Deno.env.get('YOUTUBE_API_KEY');
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+// Helper for JSON responses with CORS
+function json(status: number, body: Record<string, unknown>): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
 
 interface Film {
   id: string;
@@ -15,18 +19,13 @@ interface Film {
 }
 
 // Search YouTube for official trailer
-async function searchYouTubeTrailer(filmTitle: string, year: number | null): Promise<string | null> {
-  if (!YOUTUBE_API_KEY) {
-    console.log('YOUTUBE_API_KEY not configured');
-    return null;
-  }
-
+async function searchYouTubeTrailer(filmTitle: string, year: number | null, apiKey: string): Promise<string | null> {
   try {
     // Build search query with year and "official trailer"
     const yearStr = year ? ` ${year}` : '';
     const query = encodeURIComponent(`${filmTitle}${yearStr} official trailer`);
     
-    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${query}&type=video&maxResults=5&key=${YOUTUBE_API_KEY}`;
+    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${query}&type=video&maxResults=5&key=${apiKey}`;
     
     console.log(`Searching YouTube for: ${filmTitle}${yearStr} official trailer`);
     
@@ -113,24 +112,59 @@ serve(async (req) => {
   const auth = await requireAdminOrInternal(req);
   if (auth instanceof Response) return auth;
 
+  // === ENV VAR NULL CHECKS ===
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const YOUTUBE_API_KEY = Deno.env.get('YOUTUBE_API_KEY');
+
+  if (!SUPABASE_URL) {
+    console.error('Missing SUPABASE_URL');
+    return json(500, { success: false, error: 'Server misconfiguration: SUPABASE_URL not set' });
+  }
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('Missing SUPABASE_SERVICE_ROLE_KEY');
+    return json(500, { success: false, error: 'Server misconfiguration: SUPABASE_SERVICE_ROLE_KEY not set' });
+  }
+  if (!YOUTUBE_API_KEY) {
+    console.error('Missing YOUTUBE_API_KEY');
+    return json(500, { success: false, error: 'Server misconfiguration: YOUTUBE_API_KEY not set' });
+  }
+
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Fetch films missing trailers (limit 10 per run to stay within YouTube quota)
-    const { data: films, error: fetchError } = await supabase
+    // Parse optional filmIds from request body
+    let filmIds: string[] | undefined;
+    try {
+      const body = await req.json();
+      if (body.filmIds && Array.isArray(body.filmIds)) {
+        filmIds = body.filmIds;
+        console.log(`Processing specific films: ${filmIds.length} IDs provided`);
+      }
+    } catch {
+      // No body or invalid JSON - process batch
+    }
+
+    // Build query - if filmIds provided, filter to those; else get missing trailers
+    let query = supabase
       .from('sf_film_adaptations')
-      .select('id, film_title, film_year, trailer_url')
-      .is('trailer_url', null)
-      .limit(10);
+      .select('id, film_title, film_year, trailer_url');
+
+    if (filmIds && filmIds.length > 0) {
+      // Process specific films (even if they have trailers, we might want to refresh)
+      query = query.in('id', filmIds).is('trailer_url', null);
+    } else {
+      // Batch mode: get films missing trailers
+      query = query.is('trailer_url', null).limit(10);
+    }
+
+    const { data: films, error: fetchError } = await query;
 
     if (fetchError) throw fetchError;
 
     if (!films || films.length === 0) {
-      console.log('All films have trailers!');
-      return new Response(
-        JSON.stringify({ success: true, message: 'All films already have trailers', updated: 0 }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.log('No films to process');
+      return json(200, { success: true, message: 'No films to process', updated: 0 });
     }
 
     console.log(`Processing ${films.length} films for trailer enrichment`);
@@ -143,7 +177,7 @@ serve(async (req) => {
       if (quotaExceeded) break;
       
       try {
-        const trailerUrl = await searchYouTubeTrailer(film.film_title, film.film_year);
+        const trailerUrl = await searchYouTubeTrailer(film.film_title, film.film_year, YOUTUBE_API_KEY);
         
         if (trailerUrl) {
           const { error: updateError } = await supabase
@@ -163,11 +197,12 @@ serve(async (req) => {
         await new Promise(resolve => setTimeout(resolve, 500));
         
       } catch (error) {
-        if (error.message?.includes('quota')) {
+        const errMsg = error instanceof Error ? error.message : 'Unknown error';
+        if (errMsg.includes('quota')) {
           quotaExceeded = true;
           errors.push('YouTube API quota exceeded - stopping');
         } else {
-          errors.push(`Error for ${film.film_title}: ${error.message}`);
+          errors.push(`Error for ${film.film_title}: ${errMsg}`);
         }
       }
     }
@@ -178,23 +213,17 @@ serve(async (req) => {
     
     console.log(message);
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message,
-        trailersAdded,
-        processed: films.length,
-        quotaExceeded,
-        errors: errors.length > 0 ? errors : undefined
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return json(200, { 
+      success: true, 
+      message,
+      trailersAdded,
+      processed: films.length,
+      quotaExceeded,
+      errors: errors.length > 0 ? errors : undefined
+    });
 
   } catch (error) {
     console.error('Trailer enrichment error:', error);
-    return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return json(500, { success: false, error: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
