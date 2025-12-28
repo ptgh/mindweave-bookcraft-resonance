@@ -148,7 +148,7 @@ serve(async (req) => {
           .update({ 
             streaming_availability: updatedStreaming,
             criterion_url: verified.url,
-            criterion_spine_number: verified.spine || null,
+            criterion_spine: verified.spine || null,
             is_criterion_collection: true
           })
           .eq('id', film.id);
