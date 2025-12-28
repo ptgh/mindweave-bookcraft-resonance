@@ -8,11 +8,17 @@ import Header from "@/components/Header";
 import { ProtectedAdminRoute } from "@/components/ProtectedAdminRoute";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { generateTransmissionEmbeddings } from "@/services/semanticSearchService";
 import { invokeAdminFunction } from "@/utils/adminFunctions";
-import { RefreshCw, Clock, Sparkles, ShieldCheck, Database } from "lucide-react";
+import { RefreshCw, Clock, Sparkles, ShieldCheck, Book, Film, Users, HardDrive, Activity } from "lucide-react";
 import { useState } from "react";
 
 const AdminEnrichment = () => {
@@ -135,166 +141,172 @@ const AdminEnrichment = () => {
               Data Enrichment Administration
             </h1>
             <p className="text-muted-foreground">
-              Manage author and temporal data enrichment
+              Manage and enrich all data - organized by category
             </p>
           </div>
           
-          <div className="space-y-6">
-            {/* Admin Auth Test */}
-            <Card className="border-green-500/30 bg-green-950/20">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-green-400" />
-                  <CardTitle>Admin Auth Test</CardTitle>
-                </div>
-                <CardDescription>
-                  Test bearer token wiring, admin detection, and CORS
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  onClick={handleTestAdminAuth}
-                  disabled={isTestingAuth}
-                  variant="outline"
-                  className="border-green-500/50 text-green-400 hover:bg-green-500/10"
-                >
-                  {isTestingAuth ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      Testing...
-                    </>
-                  ) : (
-                    <>
-                      <ShieldCheck className="w-4 h-4 mr-2" />
-                      Test Admin Auth (whoami)
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Temporal Context Enrichment */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-purple-400" />
-                  <CardTitle>Temporal Context Enrichment</CardTitle>
-                </div>
-                <CardDescription>
-                  Enrich books with structured temporal metadata: Literary Era (20 tags), Historical Forces (35 tags), Technological Context (40 tags)
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <Button
-                    onClick={handleTemporalEnrichment}
-                    disabled={isEnrichingTemporal}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    {isEnrichingTemporal ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Enriching...
-                      </>
-                    ) : (
-                      <>
-                        <Clock className="w-4 h-4 mr-2" />
-                        Enrich Temporal Context
-                      </>
-                    )}
-                  </Button>
-                  
-                  {enrichmentProgress.total > 0 && (
-                    <span className="text-sm text-muted-foreground">
-                      Processed: {enrichmentProgress.processed} / {enrichmentProgress.total} books
-                    </span>
-                  )}
-                </div>
-                
-                {isEnrichingTemporal && (
-                  <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
-                    <p className="text-sm text-slate-300 mb-2">Enrichment in progress...</p>
-                    <div className="w-full bg-slate-700 rounded-full h-2">
-                      <div 
-                        className="bg-purple-500 h-2 rounded-full transition-all duration-500"
-                        style={{ 
-                          width: enrichmentProgress.total > 0 
-                            ? `${(enrichmentProgress.processed / enrichmentProgress.total) * 100}%` 
-                            : '0%' 
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-                
-                <div className="text-xs text-slate-400 space-y-1">
-                  <p>• Uses OpenAI tool calling with controlled vocabulary (95 tags)</p>
-                  <p>• Includes: Golden Age, Cyberpunk Era, Cold War Tensions, Nuclear Age, PC Revolution, AI Emergence, etc.</p>
-                  <p>• Rate limited to 1 request per second to avoid API throttling</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Semantic Embeddings Generation */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-blue-400" />
-                  <CardTitle>Semantic Search Embeddings</CardTitle>
-                </div>
-                <CardDescription>
-                  Generate OpenAI embeddings for transmissions to enable AI-powered semantic search
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <Button
-                    onClick={handleGenerateEmbeddings}
-                    disabled={isGeneratingEmbeddings}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    {isGeneratingEmbeddings ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Generate Embeddings
-                      </>
-                    )}
-                  </Button>
-                  
-                  {embeddingProgress.total > 0 && (
-                    <span className="text-sm text-muted-foreground">
-                      Created: {embeddingProgress.processed} | Skipped: {embeddingProgress.skipped} | Total: {embeddingProgress.total}
-                    </span>
-                  )}
-                </div>
-                
-                <div className="text-xs text-slate-400 space-y-1">
-                  <p>• Uses OpenAI text-embedding-3-small model</p>
-                  <p>• Generates embeddings from title, author, notes, and tags</p>
-                  <p>• Skips transmissions that already have embeddings</p>
-                  <p>• Required for semantic search functionality</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Data Health Dashboard - Primary Panel */}
-            <AdminDataHealthPanel />
+          {/* Quick Actions Bar */}
+          <div className="flex flex-wrap gap-2 mb-6 p-4 bg-muted/20 rounded-lg border border-border/30">
+            <Button
+              onClick={handleTestAdminAuth}
+              disabled={isTestingAuth}
+              variant="outline"
+              size="sm"
+              className="border-green-500/50 text-green-400 hover:bg-green-500/10"
+            >
+              {isTestingAuth ? (
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <ShieldCheck className="w-4 h-4 mr-2" />
+              )}
+              Test Auth
+            </Button>
             
-            <AdminCachePanel />
-            <AdminBooksPanel />
-            <AdminTrailersPanel />
-            <AdminExternalLinksPanel />
-            <AdminPopulateBooks />
-            <AdminFilmAdaptationsPanel />
-            <AdminDirectorsPanel />
-            <AdminImageUrlValidator />
-            <AdminEnrichmentPanel />
+            <Button
+              onClick={handleTemporalEnrichment}
+              disabled={isEnrichingTemporal}
+              variant="outline"
+              size="sm"
+              className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10"
+            >
+              {isEnrichingTemporal ? (
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Clock className="w-4 h-4 mr-2" />
+              )}
+              Temporal Enrichment
+            </Button>
+            
+            <Button
+              onClick={handleGenerateEmbeddings}
+              disabled={isGeneratingEmbeddings}
+              variant="outline"
+              size="sm"
+              className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
+            >
+              {isGeneratingEmbeddings ? (
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4 mr-2" />
+              )}
+              Generate Embeddings
+            </Button>
+            
+            {(enrichmentProgress.total > 0 || embeddingProgress.total > 0) && (
+              <div className="flex items-center gap-4 ml-auto text-sm text-muted-foreground">
+                {enrichmentProgress.total > 0 && (
+                  <span>Temporal: {enrichmentProgress.processed}/{enrichmentProgress.total}</span>
+                )}
+                {embeddingProgress.total > 0 && (
+                  <span>Embeddings: {embeddingProgress.processed} new, {embeddingProgress.skipped} skipped</span>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Data Health Dashboard - Always Visible */}
+          <div className="mb-6">
+            <AdminDataHealthPanel />
+          </div>
+          
+          {/* Collapsible Sections */}
+          <Accordion type="multiple" defaultValue={["books"]} className="space-y-4">
+            
+            {/* BOOKS Section */}
+            <AccordionItem value="books" className="border border-emerald-500/30 rounded-lg bg-emerald-950/10">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <div className="flex items-center gap-3">
+                  <Book className="w-5 h-5 text-emerald-400" />
+                  <span className="text-lg font-semibold text-emerald-100">Books</span>
+                  <span className="text-xs text-emerald-400/70 ml-2">Transmissions, Covers, Publisher Books</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 space-y-4">
+                <AdminBooksPanel />
+                <AdminPopulateBooks />
+                <AdminImageUrlValidator />
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* FILMS Section */}
+            <AccordionItem value="films" className="border border-amber-500/30 rounded-lg bg-amber-950/10">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <div className="flex items-center gap-3">
+                  <Film className="w-5 h-5 text-amber-400" />
+                  <span className="text-lg font-semibold text-amber-100">Films</span>
+                  <span className="text-xs text-amber-400/70 ml-2">Adaptations, Trailers, External Links</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 space-y-4">
+                <AdminFilmAdaptationsPanel />
+                <AdminTrailersPanel />
+                <AdminExternalLinksPanel />
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* AUTHORS Section */}
+            <AccordionItem value="authors" className="border border-cyan-500/30 rounded-lg bg-cyan-950/10">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <div className="flex items-center gap-3">
+                  <Users className="w-5 h-5 text-cyan-400" />
+                  <span className="text-lg font-semibold text-cyan-100">Authors & Directors</span>
+                  <span className="text-xs text-cyan-400/70 ml-2">SF Authors, Directors, Enrichment</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 space-y-4">
+                <AdminEnrichmentPanel />
+                <AdminDirectorsPanel />
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* CACHE & SYSTEM Section */}
+            <AccordionItem value="cache" className="border border-slate-500/30 rounded-lg bg-slate-950/10">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <div className="flex items-center gap-3">
+                  <HardDrive className="w-5 h-5 text-slate-400" />
+                  <span className="text-lg font-semibold text-slate-100">Cache & System</span>
+                  <span className="text-xs text-slate-400/70 ml-2">Image Cache, Storage Management</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 space-y-4">
+                <AdminCachePanel />
+                
+                {/* System Info Card */}
+                <Card className="border-slate-500/30 bg-slate-900/50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-slate-100">
+                      <Activity className="w-5 h-5" />
+                      System Information
+                    </CardTitle>
+                    <CardDescription>AI enrichment and automation details</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm text-muted-foreground">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="font-medium text-foreground mb-1">Temporal Enrichment</p>
+                        <ul className="list-disc list-inside space-y-1 text-xs">
+                          <li>Uses OpenAI tool calling with 95 controlled vocabulary tags</li>
+                          <li>Rate limited: 1 request/second</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground mb-1">Semantic Embeddings</p>
+                        <ul className="list-disc list-inside space-y-1 text-xs">
+                          <li>OpenAI text-embedding-3-small model</li>
+                          <li>Generates from title, author, notes, tags</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div className="pt-2 border-t border-border/30">
+                      <p className="font-medium text-foreground mb-1">Automatic Scheduling</p>
+                      <p className="text-xs">Enrichment jobs run every 6 hours (00:00, 06:00, 12:00, 18:00 UTC)</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
+            
+          </Accordion>
         </main>
       </div>
     </ProtectedAdminRoute>
