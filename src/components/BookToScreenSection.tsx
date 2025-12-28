@@ -797,9 +797,13 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                   {/* Film poster thumbnail */}
                   {selectedFilm.poster_url && (
                     <div className="flex-shrink-0 w-16 h-24 bg-slate-700/50 border border-slate-600 rounded-lg overflow-hidden shadow-lg">
-                      <img 
-                        src={getHighQualityDisplayUrl(selectedFilm.poster_url)} 
+                      <MediaImage
+                        src={getHighQualityDisplayUrl(selectedFilm.poster_url)}
                         alt={selectedFilm.film_title}
+                        type="film"
+                        quality="optimized"
+                        fallbackIcon={<Film className="w-6 h-6 text-amber-400/40" />}
+                        aspectRatio="auto"
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -915,6 +919,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                                   src={`https://image.tmdb.org/t/p/w45${p.logo_path}`} 
                                   alt="" 
                                   className="w-4 h-4 rounded-sm"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                 />
                               )}
                               {p.provider_name}
@@ -936,6 +941,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                                   src={`https://image.tmdb.org/t/p/w45${p.logo_path}`} 
                                   alt="" 
                                   className="w-4 h-4 rounded-sm"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                 />
                               )}
                               Rent: {p.provider_name}
@@ -957,6 +963,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                                   src={`https://image.tmdb.org/t/p/w45${p.logo_path}`} 
                                   alt="" 
                                   className="w-4 h-4 rounded-sm"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                 />
                               )}
                               Buy: {p.provider_name}
@@ -997,7 +1004,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-600/50 bg-slate-700/30 hover:bg-slate-700/50 hover:border-slate-500 transition-all group"
                         >
-                          <img src="/images/criterion-logo.jpg" alt="" className="h-5 w-auto rounded-sm" />
+                          <img src="/images/criterion-logo.jpg" alt="" className="h-5 w-auto rounded-sm" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                           <span className="text-sm text-slate-200">
                             Criterion{selectedFilm.criterion_spine ? ` #${selectedFilm.criterion_spine}` : ''}
                           </span>

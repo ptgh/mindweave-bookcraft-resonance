@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Plus, Eye, Share2 } from 'lucide-react';
+import { Plus, Share2 } from 'lucide-react';
 import { EnrichedPublisherBook } from '@/services/publisherService';
 import ShareBookModal from '@/components/ShareBookModal';
+import EnhancedBookCover from '@/components/EnhancedBookCover';
 
 interface PublisherBookCardProps {
   book: EnrichedPublisherBook;
@@ -17,24 +18,13 @@ const PublisherBookCard = ({ book, onLogSignal, onPreview }: PublisherBookCardPr
       <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-slate-600 transition-all duration-300">
         {/* Book cover and details */}
         <div className="flex space-x-3 mb-4">
-          <div className="flex-shrink-0 w-16 h-24 bg-slate-700/50 border border-slate-600 rounded overflow-hidden">
-            {book.cover_url ? (
-              <img 
-                src={book.cover_url} 
-                alt={book.title} 
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const fallback = target.nextElementSibling as HTMLElement;
-                  if (fallback) fallback.classList.remove('hidden');
-                }}
-              />
-            ) : null}
-            <div className={`w-full h-full flex items-center justify-center text-slate-400 ${book.cover_url ? 'hidden' : ''}`}>
-              <div className="w-8 h-12 border border-slate-600 rounded" />
-            </div>
-          </div>
+          <EnhancedBookCover
+            title={book.title}
+            author={book.author}
+            isbn={book.isbn || undefined}
+            coverUrl={book.cover_url || undefined}
+            className="w-16 h-24"
+          />
           
           <div className="flex-1 min-w-0">
             <h3 className="text-slate-200 font-medium text-sm leading-tight mb-1 line-clamp-2">

@@ -429,12 +429,16 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
                           alt={t.title || 'Book cover'}
                           className="w-16 h-24 object-cover rounded shadow-md group-hover:scale-105 transition-transform"
                           loading="lazy"
+                          onError={(e) => { 
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
+                            if (fallback) fallback.classList.remove('hidden');
+                          }}
                         />
-                      ) : (
-                        <div className="w-16 h-24 bg-slate-700 rounded flex items-center justify-center shadow-md">
-                          <BookOpen className="w-6 h-6 text-slate-500" />
-                        </div>
-                      )}
+                      ) : null}
+                      <div className={`w-16 h-24 bg-slate-700 rounded flex items-center justify-center shadow-md ${t.cover_url ? 'hidden' : ''}`}>
+                        <BookOpen className="w-6 h-6 text-slate-500" />
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -665,12 +669,16 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
                               alt={t.title || 'Book cover'}
                               className="w-full aspect-[2/3] object-cover rounded-lg group-hover:scale-105 transition-transform"
                               loading="lazy"
+                              onError={(e) => { 
+                                (e.target as HTMLImageElement).style.display = 'none';
+                                const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
+                                if (fallback) fallback.classList.remove('hidden');
+                              }}
                             />
-                          ) : (
-                            <div className="w-full aspect-[2/3] bg-slate-700 rounded-lg flex items-center justify-center">
-                              <BookOpen className="w-5 h-5 text-slate-500" />
-                            </div>
-                          )}
+                          ) : null}
+                          <div className={`w-full aspect-[2/3] bg-slate-700 rounded-lg flex items-center justify-center ${t.cover_url ? 'hidden' : ''}`}>
+                            <BookOpen className="w-5 h-5 text-slate-500" />
+                          </div>
                         </button>
                       ))}
                     </div>
