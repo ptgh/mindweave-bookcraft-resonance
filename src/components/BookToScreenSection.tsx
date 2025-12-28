@@ -81,8 +81,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const [tmdbTrailer, setTmdbTrailer] = useState<{ url: string; key: string } | null>(null);
-  const [isLoadingTrailer, setIsLoadingTrailer] = useState(false);
+  // Trailer is now sourced from film.trailer_url (no on-demand fetch)
 
   // Clean author names - remove encoding issues and truncate for display
   const cleanAuthorName = (author: string): string => {
@@ -297,31 +296,13 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const openFilmModal = async (film: FilmAdaptation) => {
     setSelectedFilm(film);
     setShowFilmModal(true);
-    setTmdbTrailer(null);
-    
-    // Fetch trailer from TMDB if not already stored
-    if (!film.trailer_url) {
-      setIsLoadingTrailer(true);
-      try {
-        const { data, error } = await supabase.functions.invoke('get-watch-providers', {
-          body: { filmTitle: film.film_title, filmYear: film.film_year, region: 'US' }
-        });
-        
-        if (!error && data?.success && data?.trailer?.key) {
-          setTmdbTrailer({ url: data.trailer.url, key: data.trailer.key });
-        }
-      } catch (e) {
-        console.error('Failed to fetch trailer:', e);
-      } finally {
-        setIsLoadingTrailer(false);
-      }
-    }
+    // Trailer is now sourced directly from film.trailer_url (enriched by admin tools)
+    // No on-demand fetch - if missing, UI shows "Trailer pending"
   };
 
   const closeFilmModal = () => {
     setShowFilmModal(false);
     setSelectedFilm(null);
-    setTmdbTrailer(null);
   };
 
   const handleAuthorClick = async (authorName: string) => {
@@ -631,10 +612,10 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto scrollbar-hide">
-              {/* Trailer */}
+              {/* Trailer - sourced from DB only */}
               <div className="aspect-video bg-black relative">
                 {(() => {
-                  const trailerKey = tmdbTrailer?.key || extractYouTubeId(selectedFilm.trailer_url || '');
+                  const trailerKey = extractYouTubeId(selectedFilm.trailer_url || '');
                   
                   if (trailerKey) {
                     return (
@@ -649,18 +630,11 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                     );
                   }
                   
-                  if (isLoadingTrailer) {
-                    return (
-                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950">
-                        <Loader2 className="w-10 h-10 text-amber-400/50 animate-spin mb-3" />
-                        <span className="text-sm text-muted-foreground">Finding trailer...</span>
-                      </div>
-                    );
-                  }
-                  
+                  // No trailer in DB - show pending state with YouTube search fallback
                   return (
                     <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950">
                       <Film className="w-12 h-12 text-amber-400/30 mb-3" />
+                      <span className="text-sm text-muted-foreground mb-3">Trailer pending</span>
                       <a
                         href={getYouTubeSearchUrl(selectedFilm.film_title)}
                         target="_blank"
@@ -668,7 +642,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                         className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
                       >
                         <Play className="w-4 h-4 fill-white" />
-                        Watch on YouTube
+                        Search YouTube
                       </a>
                     </div>
                   );
