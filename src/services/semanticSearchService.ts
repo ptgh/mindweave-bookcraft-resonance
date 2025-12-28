@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { invokeAdminFunction } from '@/utils/adminFunctions';
 
 export interface SemanticSearchResult {
   id: string;
@@ -134,16 +135,14 @@ export async function generateBookEmbedding(book: {
   metadata?: Record<string, unknown>;
 }): Promise<boolean> {
   try {
-    const { data, error } = await supabase.functions.invoke('generate-embedding', {
-      body: { singleBook: book },
-    });
+    const { data, error } = await invokeAdminFunction('generate-embedding', { singleBook: book });
 
     if (error) {
       console.error('Embedding generation error:', error);
       return false;
     }
 
-    return data?.success === true;
+    return (data as { success?: boolean })?.success === true;
   } catch (error) {
     console.error('Failed to generate embedding:', error);
     return false;
@@ -161,9 +160,7 @@ export async function generateBatchEmbeddings(books: Array<{
   metadata?: Record<string, unknown>;
 }>): Promise<{ successful: number; total: number }> {
   try {
-    const { data, error } = await supabase.functions.invoke('generate-embedding', {
-      body: { books },
-    });
+    const { data, error } = await invokeAdminFunction('generate-embedding', { books });
 
     if (error) {
       console.error('Batch embedding generation error:', error);
@@ -171,7 +168,7 @@ export async function generateBatchEmbeddings(books: Array<{
     }
 
     return {
-      successful: data?.successful || 0,
+      successful: (data as { successful?: number })?.successful || 0,
       total: books.length,
     };
   } catch (error) {
@@ -184,20 +181,19 @@ export async function generateTransmissionEmbeddings(
   limit: number = 50
 ): Promise<{ processed: number; skipped: number; errors: number; total: number }> {
   try {
-    const { data, error } = await supabase.functions.invoke('generate-transmission-embeddings', {
-      body: { limit, skipExisting: true },
-    });
+    const { data, error } = await invokeAdminFunction('generate-transmission-embeddings', { limit, skipExisting: true });
 
     if (error) {
       console.error('Transmission embedding generation error:', error);
       throw new Error(error.message || 'Failed to generate embeddings');
     }
 
+    const typedData = data as { processed?: number; skipped?: number; errors?: number; total?: number } | null;
     return {
-      processed: data?.processed || 0,
-      skipped: data?.skipped || 0,
-      errors: data?.errors || 0,
-      total: data?.total || 0,
+      processed: typedData?.processed || 0,
+      skipped: typedData?.skipped || 0,
+      errors: typedData?.errors || 0,
+      total: typedData?.total || 0,
     };
   } catch (error) {
     console.error('Failed to generate transmission embeddings:', error);

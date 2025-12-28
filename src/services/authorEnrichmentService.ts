@@ -1,5 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
+import { invokeAdminFunction } from "@/utils/adminFunctions";
 
 export interface EnrichmentJob {
   id: string;
@@ -64,16 +64,17 @@ export const getAuthorDataSources = async (authorId: string): Promise<AuthorData
 export const queueAuthorForEnrichment = async (authorId: string): Promise<void> => {
   console.log('Queueing author for enrichment via edge function:', authorId);
   try {
-    const { data, error } = await supabase.functions.invoke('queue-author-enrichment', {
-      body: { authorId, priority: 9 }
+    const { data, error } = await invokeAdminFunction('queue-author-enrichment', {
+      authorId,
+      priority: 9
     });
 
     if (error) {
       console.error('queue-author-enrichment error:', error);
       throw error;
     }
-    if (!data?.success) {
-      throw new Error(data?.message || 'Failed to queue author');
+    if (!(data as { success?: boolean })?.success) {
+      throw new Error((data as { message?: string })?.message || 'Failed to queue author');
     }
     console.log('Successfully queued author:', data);
   } catch (err) {
@@ -86,9 +87,9 @@ export const triggerEnrichmentJob = async (authorId?: string): Promise<{ success
   console.log('Triggering author enrichment job...', authorId ? `(authorId: ${authorId})` : '');
   
   try {
-    const { data, error } = await supabase.functions.invoke('enrich-author-data', {
-      body: authorId ? { authorId } : {}
-    });
+    const { data, error } = await invokeAdminFunction('enrich-author-data', 
+      authorId ? { authorId } : undefined
+    );
     
     if (error) {
       console.error('Enrichment job error:', error);
@@ -96,7 +97,7 @@ export const triggerEnrichmentJob = async (authorId?: string): Promise<{ success
     }
     
     console.log('Enrichment job result:', data);
-    return data;
+    return data as { success: boolean; message: string; results?: any };
   } catch (error) {
     console.error('Error triggering enrichment job:', error);
     throw error;

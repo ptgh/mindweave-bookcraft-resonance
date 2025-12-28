@@ -10,6 +10,7 @@ import { Transmission } from '@/services/transmissionsService';
 import { getTransmissions } from '@/services/transmissionsService';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeAdminFunction } from '@/utils/adminFunctions';
 import { useEnhancedToast } from '@/hooks/use-enhanced-toast';
 import { AuthorPopup } from '@/components/AuthorPopup';
 import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
@@ -214,13 +215,13 @@ export function ChronoTimeline({ transmissions }: ChronoTimelineProps) {
         variant: "default"
       });
 
-      const { data, error } = await supabase.functions.invoke('enrich-timeline-data');
+      const { data, error } = await invokeAdminFunction('enrich-timeline-data');
       
       if (error) throw error;
       
       toast({
         title: "Enhancement Complete",
-        description: `Successfully enriched ${data.processed || 0} books with temporal metadata and context.`,
+        description: `Successfully enriched ${(data as { processed?: number })?.processed || 0} books with temporal metadata and context.`,
         variant: "success"
       });
       

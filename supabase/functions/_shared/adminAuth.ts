@@ -48,13 +48,87 @@ export async function requireUser(
 }
 
 /**
+ * Check if a user is an admin using multiple methods for robustness.
+ * 
+ * Tries in order:
+ * 1. has_role(_user_id, 'admin') RPC
+ * 2. is_admin() RPC (from migration 20251228110503)
+ * 3. Direct query to admins table (fallback)
+ * 
+ * Returns true if ANY method confirms admin status.
+ */
+async function checkIsAdmin(
+  supabase: ReturnType<typeof createClient>,
+  userId: string
+): Promise<boolean> {
+  // Method 1: Try has_role RPC
+  try {
+    const { data: hasRoleResult, error: hasRoleErr } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "admin",
+    });
+
+    if (!hasRoleErr && hasRoleResult === true) {
+      console.log("✅ [AdminAuth] Admin confirmed via has_role() RPC");
+      return true;
+    }
+    if (hasRoleErr) {
+      console.log("⚠️ [AdminAuth] has_role() RPC failed:", hasRoleErr.message);
+    }
+  } catch (e) {
+    console.log("⚠️ [AdminAuth] has_role() RPC exception:", e);
+  }
+
+  // Method 2: Try is_admin() RPC
+  try {
+    const { data: isAdminResult, error: isAdminErr } = await supabase.rpc("is_admin", {
+      _user_id: userId,
+    });
+
+    if (!isAdminErr && isAdminResult === true) {
+      console.log("✅ [AdminAuth] Admin confirmed via is_admin() RPC");
+      return true;
+    }
+    if (isAdminErr) {
+      console.log("⚠️ [AdminAuth] is_admin() RPC failed:", isAdminErr.message);
+    }
+  } catch (e) {
+    console.log("⚠️ [AdminAuth] is_admin() RPC exception:", e);
+  }
+
+  // Method 3: Direct query to admins table (fallback)
+  try {
+    const { data: adminRow, error: adminErr } = await supabase
+      .from("admins")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (!adminErr && adminRow) {
+      console.log("✅ [AdminAuth] Admin confirmed via admins table query");
+      return true;
+    }
+    if (adminErr) {
+      console.log("⚠️ [AdminAuth] admins table query failed:", adminErr.message);
+    }
+  } catch (e) {
+    console.log("⚠️ [AdminAuth] admins table query exception:", e);
+  }
+
+  return false;
+}
+
+/**
  * Middleware to require admin authorization OR internal function-to-function calls.
  * 
  * MODE A: Internal calls - If x-internal-secret header matches INTERNAL_EDGE_SECRET env var,
  *         the call is trusted (used for function-to-function calls).
  * 
  * MODE B: External calls - Requires a valid JWT token from an authenticated admin user.
- *         Uses the existing has_role() database function to check admin status.
+ *         Uses multiple methods to check admin status for robustness:
+ *         1. has_role() database function
+ *         2. is_admin() database function  
+ *         3. Direct admins table query (fallback)
  * 
  * @returns Either { userId: string | null } on success, or a Response object on failure
  */
@@ -91,16 +165,8 @@ export async function requireAdminOrInternal(
     return json(401, { error: "Invalid or expired token" });
   }
 
-  // Use the existing has_role() database function to check admin status
-  const { data: isAdmin, error: roleErr } = await supabase.rpc("has_role", {
-    _user_id: userData.user.id,
-    _role: "admin",
-  });
-
-  if (roleErr) {
-    console.log("❌ [AdminAuth] Role check failed:", roleErr.message);
-    return json(500, { error: "Role check failed", details: roleErr.message });
-  }
+  // Use robust multi-method admin check
+  const isAdmin = await checkIsAdmin(supabase, userData.user.id);
   
   if (!isAdmin) {
     console.log("❌ [AdminAuth] User is not an admin:", userData.user.id);
