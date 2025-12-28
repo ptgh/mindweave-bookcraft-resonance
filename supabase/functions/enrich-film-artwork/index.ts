@@ -3,10 +3,13 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { requireAdminOrInternal, corsHeaders } from "../_shared/adminAuth.ts";
 
-const TMDB_API_KEY = Deno.env.get('TMDB_API_KEY');
-const GOOGLE_BOOKS_API_KEY = Deno.env.get('GOOGLE_BOOKS_API_KEY');
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+// Helper for JSON responses with CORS
+function json(status: number, body: Record<string, unknown>): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
 
 interface Film {
   id: string;
@@ -26,16 +29,11 @@ interface TMDBResult {
 }
 
 // Fetch poster and rating from TMDB
-async function fetchTMDBData(filmTitle: string, year: number | null): Promise<{ posterUrl: string | null; rating: number | null }> {
-  if (!TMDB_API_KEY) {
-    console.log('TMDB_API_KEY not configured');
-    return { posterUrl: null, rating: null };
-  }
-
+async function fetchTMDBData(filmTitle: string, year: number | null, apiKey: string): Promise<{ posterUrl: string | null; rating: number | null }> {
   try {
     const query = encodeURIComponent(filmTitle);
     const yearParam = year ? `&year=${year}` : '';
-    const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${query}${yearParam}`;
+    const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${query}${yearParam}`;
     
     console.log(`Searching TMDB for: ${filmTitle} (${year || 'any year'})`);
     
@@ -65,7 +63,7 @@ async function fetchTMDBData(filmTitle: string, year: number | null): Promise<{ 
 }
 
 // Fetch book cover from Google Books
-async function fetchGoogleBooksCover(title: string, author: string, isbn: string | null): Promise<string | null> {
+async function fetchGoogleBooksCover(title: string, author: string, isbn: string | null, apiKey: string | null): Promise<string | null> {
   try {
     let query = '';
     
@@ -83,7 +81,7 @@ async function fetchGoogleBooksCover(title: string, author: string, isbn: string
     }
     
     // Add API key if available for higher rate limits
-    const apiKeyParam = GOOGLE_BOOKS_API_KEY ? `&key=${GOOGLE_BOOKS_API_KEY}` : '';
+    const apiKeyParam = apiKey ? `&key=${apiKey}` : '';
     const searchUrl = `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1${apiKeyParam}`;
     
     console.log(`Searching Google Books for: ${title} by ${author}`);
@@ -168,24 +166,60 @@ serve(async (req) => {
   const auth = await requireAdminOrInternal(req);
   if (auth instanceof Response) return auth;
 
+  // === ENV VAR NULL CHECKS ===
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const TMDB_API_KEY = Deno.env.get('TMDB_API_KEY');
+  const GOOGLE_BOOKS_API_KEY = Deno.env.get('GOOGLE_BOOKS_API_KEY');
+
+  if (!SUPABASE_URL) {
+    console.error('Missing SUPABASE_URL');
+    return json(500, { success: false, error: 'Server misconfiguration: SUPABASE_URL not set' });
+  }
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('Missing SUPABASE_SERVICE_ROLE_KEY');
+    return json(500, { success: false, error: 'Server misconfiguration: SUPABASE_SERVICE_ROLE_KEY not set' });
+  }
+  if (!TMDB_API_KEY) {
+    console.error('Missing TMDB_API_KEY');
+    return json(500, { success: false, error: 'Server misconfiguration: TMDB_API_KEY not set' });
+  }
+
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Fetch films missing posters, book covers, or ratings (limit 15 per run)
-    const { data: films, error: fetchError } = await supabase
+    // Parse optional filmIds from request body
+    let filmIds: string[] | undefined;
+    try {
+      const body = await req.json();
+      if (body.filmIds && Array.isArray(body.filmIds)) {
+        filmIds = body.filmIds;
+        console.log(`Processing specific films: ${filmIds.length} IDs provided`);
+      }
+    } catch {
+      // No body or invalid JSON - process batch
+    }
+
+    // Build query - if filmIds provided, filter to those; else get missing artwork
+    let query = supabase
       .from('sf_film_adaptations')
-      .select('id, film_title, film_year, book_title, book_author, poster_url, book_cover_url, book_isbn, imdb_rating')
-      .or('poster_url.is.null,book_cover_url.is.null,imdb_rating.is.null')
-      .limit(15);
+      .select('id, film_title, film_year, book_title, book_author, poster_url, book_cover_url, book_isbn, imdb_rating');
+
+    if (filmIds && filmIds.length > 0) {
+      // Process specific films
+      query = query.in('id', filmIds);
+    } else {
+      // Batch mode: get films missing artwork
+      query = query.or('poster_url.is.null,book_cover_url.is.null,imdb_rating.is.null').limit(15);
+    }
+
+    const { data: films, error: fetchError } = await query;
 
     if (fetchError) throw fetchError;
 
     if (!films || films.length === 0) {
-      console.log('All films have artwork!');
-      return new Response(
-        JSON.stringify({ success: true, message: 'All films already have artwork', updated: 0 }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.log('No films to process');
+      return json(200, { success: true, message: 'No films to process', updated: 0 });
     }
 
     console.log(`Processing ${films.length} films for artwork enrichment`);
@@ -200,7 +234,7 @@ serve(async (req) => {
       
       // Fetch poster and/or rating if missing
       if (!film.poster_url || !film.imdb_rating) {
-        const tmdbData = await fetchTMDBData(film.film_title, film.film_year);
+        const tmdbData = await fetchTMDBData(film.film_title, film.film_year, TMDB_API_KEY);
         if (!film.poster_url && tmdbData.posterUrl) {
           updates.poster_url = tmdbData.posterUrl;
           postersAdded++;
@@ -213,7 +247,7 @@ serve(async (req) => {
       
       // Fetch book cover if missing
       if (!film.book_cover_url) {
-        let coverUrl = await fetchGoogleBooksCover(film.book_title, film.book_author, film.book_isbn);
+        let coverUrl = await fetchGoogleBooksCover(film.book_title, film.book_author, film.book_isbn, GOOGLE_BOOKS_API_KEY || null);
         
         // Fallback to OpenLibrary
         if (!coverUrl) {
@@ -247,24 +281,18 @@ serve(async (req) => {
     const message = `Added ${postersAdded} posters, ${bookCoversAdded} book covers, and ${ratingsAdded} ratings`;
     console.log(message);
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message,
-        postersAdded,
-        bookCoversAdded,
-        ratingsAdded,
-        processed: films.length,
-        errors: errors.length > 0 ? errors : undefined
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return json(200, { 
+      success: true, 
+      message,
+      postersAdded,
+      bookCoversAdded,
+      ratingsAdded,
+      processed: films.length,
+      errors: errors.length > 0 ? errors : undefined
+    });
 
   } catch (error) {
     console.error('Film artwork enrichment error:', error);
-    return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return json(500, { success: false, error: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
