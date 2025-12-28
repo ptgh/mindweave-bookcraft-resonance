@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { searchGoogleBooks } from "./googleBooks/api";
+import { cleanPersonName } from "@/utils/textCleaners";
 
 export interface FilmAdaptationEnrichmentStats {
   totalFilms: number;
@@ -61,12 +62,8 @@ export const enrichFilmAdaptationBooks = async (
     try {
       onProgress?.(i + 1, filmsNeedingEnrichment.length);
       
-      // Clean author name for search
-      const cleanAuthor = film.book_author
-        .replace(/\s*\([^)]*\)\s*/g, '') // Remove parenthetical notes
-        .replace(/[\u0980-\u09FF]+/g, '') // Remove Bengali characters
-        .split(',')[0] // Take first author if multiple
-        .trim();
+      // Clean author name for search using centralized cleaner
+      const cleanAuthor = cleanPersonName(film.book_author).split(',')[0].trim();
 
       const searchQuery = `${film.book_title} ${cleanAuthor}`;
       const results = await searchGoogleBooks(searchQuery, 5);
@@ -167,12 +164,8 @@ export const refreshBrokenCovers = async (
     try {
       onProgress?.(i + 1, films.length);
       
-      // Clean author name for search
-      const cleanAuthor = film.book_author
-        .replace(/\s*\([^)]*\)\s*/g, '')
-        .replace(/[\u0980-\u09FF]+/g, '')
-        .split(',')[0]
-        .trim();
+      // Clean author name for search using centralized cleaner
+      const cleanAuthor = cleanPersonName(film.book_author).split(',')[0].trim();
 
       const searchQuery = `${film.book_title} ${cleanAuthor}`;
       const results = await searchGoogleBooks(searchQuery, 3);

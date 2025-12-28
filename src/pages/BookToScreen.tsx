@@ -8,6 +8,7 @@ import { useEnhancedToast } from '@/hooks/use-enhanced-toast';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { gsap } from 'gsap';
+import { cleanPersonName, truncateWithBreak } from '@/utils/textCleaners';
 
 interface AIRecommendation {
   film_title: string;
@@ -18,21 +19,10 @@ interface AIRecommendation {
   reason: string;
 }
 
-// Clean author names from AI responses
-const cleanAuthorName = (author: string): string => {
-  return author
-    .replace(/[\u0980-\u09FF]+/g, '') // Remove Bengali characters
-    .replace(/\s+(or|and)\s+/gi, ', ') // Normalize separators
-    .replace(/\s*\([^)]*\)\s*/g, ' ') // Remove parenthetical notes
-    .replace(/\s+/g, ' ')
-    .trim();
-};
-
+// Use centralized text cleaners
 const truncateText = (text: string, maxLength: number = 35): string => {
-  const cleaned = cleanAuthorName(text);
-  if (cleaned.length <= maxLength) return cleaned;
-  const breakPoint = cleaned.lastIndexOf(',', maxLength);
-  return cleaned.substring(0, breakPoint > 10 ? breakPoint : maxLength) + '...';
+  const { display } = truncateWithBreak(text, maxLength);
+  return display;
 };
 
 const BookToScreen: React.FC = () => {
