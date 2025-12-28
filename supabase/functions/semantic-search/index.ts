@@ -1,15 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, requireUser, createServiceClient, json } from "../_shared/adminAuth.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 interface SearchFilters {
   sourceTypes?: string[];
@@ -24,7 +17,6 @@ interface SearchRequest {
   limit?: number;
   threshold?: number;
   filters?: SearchFilters;
-  userId?: string;
   searchType?: 'semantic' | 'keyword' | 'hybrid';
 }
 
@@ -64,7 +56,7 @@ async function generateQueryEmbedding(query: string): Promise<number[]> {
 }
 
 async function semanticSearch(
-  supabase: ReturnType<typeof createClient>,
+  supabase: ReturnType<typeof createServiceClient>,
   embedding: number[],
   limit: number,
   threshold: number,
@@ -88,7 +80,7 @@ async function semanticSearch(
 
 // Fallback keyword search across multiple tables when embeddings are empty
 async function fallbackKeywordSearch(
-  supabase: ReturnType<typeof createClient>,
+  supabase: ReturnType<typeof createServiceClient>,
   query: string,
   limit: number,
   userId?: string
@@ -234,7 +226,7 @@ async function fallbackKeywordSearch(
 }
 
 async function keywordSearch(
-  supabase: ReturnType<typeof createClient>,
+  supabase: ReturnType<typeof createServiceClient>,
   query: string,
   limit: number
 ) {
@@ -309,60 +301,8 @@ function combineResults(
     }));
 }
 
-// Filter results to only include user's own transmissions
-async function filterUserTransmissions(
-  supabase: ReturnType<typeof createClient>,
-  results: Array<Record<string, unknown>>,
-  userId?: string
-): Promise<Array<Record<string, unknown>>> {
-  if (!userId) {
-    // If no user, filter out all transmission results (they're user-specific)
-    return results.filter(r => r.source_type !== 'transmission');
-  }
-  
-  // Get transmission IDs from results
-  const transmissionIds = results
-    .filter(r => r.source_type === 'transmission')
-    .map(r => {
-      // Extract transmission_id from metadata
-      const metadata = r.metadata as Record<string, unknown> | undefined;
-      return metadata?.transmission_id as number | undefined;
-    })
-    .filter((id): id is number => id !== undefined);
-  
-  if (transmissionIds.length === 0) {
-    return results;
-  }
-  
-  // Query to find which transmissions belong to this user
-  const { data: userTransmissions, error } = await supabase
-    .from('transmissions')
-    .select('id')
-    .eq('user_id', userId)
-    .in('id', transmissionIds);
-  
-  if (error) {
-    console.error('Error filtering user transmissions:', error);
-    // On error, filter out all transmissions to be safe
-    return results.filter(r => r.source_type !== 'transmission');
-  }
-  
-  const userTransmissionIds = new Set((userTransmissions || []).map(t => t.id));
-  console.log(`User owns ${userTransmissionIds.size} of ${transmissionIds.length} transmission results`);
-  
-  // Filter results: keep non-transmissions and only user's transmissions
-  return results.filter(r => {
-    if (r.source_type !== 'transmission') {
-      return true;
-    }
-    const metadata = r.metadata as Record<string, unknown> | undefined;
-    const transmissionId = metadata?.transmission_id as number | undefined;
-    return transmissionId !== undefined && userTransmissionIds.has(transmissionId);
-  });
-}
-
 async function logSearchQuery(
-  supabase: ReturnType<typeof createClient>,
+  supabase: ReturnType<typeof createServiceClient>,
   query: string,
   embedding: number[] | null,
   resultCount: number,
@@ -391,6 +331,10 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Require authenticated user
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   const startTime = Date.now();
 
   try {
@@ -404,20 +348,16 @@ serve(async (req) => {
       limit = 20,
       threshold = 0.3,
       filters,
-      userId,
       searchType = 'hybrid',
     } = body;
 
     if (!query || query.trim().length === 0) {
-      return new Response(
-        JSON.stringify({ error: 'Query is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return json(400, { error: 'Query is required' });
     }
 
     console.log(`Semantic search: "${query}" (type: ${searchType}, limit: ${limit})`);
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createServiceClient();
 
     let results: Array<Record<string, unknown>> = [];
     let queryEmbedding: number[] | null = null;
@@ -457,18 +397,13 @@ serve(async (req) => {
     } else {
       // Fallback: search across multiple tables when embeddings are empty
       console.log('Using fallback keyword search across author_books, publisher_books, transmissions');
-      const fallbackResults = await fallbackKeywordSearch(supabase, query, limit, userId);
+      const fallbackResults = await fallbackKeywordSearch(supabase, query, limit, auth.userId);
       results = fallbackResults.map(r => ({
         ...r,
         combined_score: r.similarity || 0.5,
         match_type: 'keyword',
       }));
     }
-
-    // NOTE: We intentionally do NOT filter out non-user results here
-    // Semantic search is for DISCOVERY - users should see all books (author_books, publisher_books)
-    // Transmissions are already filtered by userId in fallbackKeywordSearch
-    // This allows users to discover new books and add them to their library
 
     const responseTimeMs = Date.now() - startTime;
 
@@ -481,28 +416,24 @@ serve(async (req) => {
       searchType,
       filters,
       responseTimeMs,
-      userId
+      auth.userId
     );
 
     console.log(`Search completed: ${results.length} results in ${responseTimeMs}ms`);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        query,
-        results,
-        resultCount: results.length,
-        searchType: hasEmbeddings ? searchType : 'fallback_keyword',
-        responseTimeMs,
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return json(200, {
+      success: true,
+      query,
+      results,
+      resultCount: results.length,
+      searchType: hasEmbeddings ? searchType : 'fallback_keyword',
+      responseTimeMs,
+    });
 
   } catch (error) {
-    console.error('Error in semantic-search:', error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    console.error('Semantic search error:', error);
+    return json(500, { 
+      error: error instanceof Error ? error.message : 'Search failed' 
+    });
   }
 });

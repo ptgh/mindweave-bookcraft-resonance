@@ -1,10 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, requireUser, createUserClient, json } from "../_shared/adminAuth.ts";
 
 interface AnalysisRequest {
   userId: string;
@@ -24,21 +19,20 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Require authenticated user
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
-    );
+    const supabase = createUserClient(auth.token);
 
-    const { userId, forceRefresh = false }: AnalysisRequest = await req.json();
+    const { forceRefresh = false }: AnalysisRequest = await req.json();
 
-    if (!userId) {
-      throw new Error('userId is required');
-    }
+    // Use authenticated user's ID
+    const userId = auth.userId;
 
     // Fetch user's books
-    const { data: transmissions, error: transmissionsError } = await supabaseClient
+    const { data: transmissions, error: transmissionsError } = await supabase
       .from('transmissions')
       .select('title, author, publication_year, temporal_context_tags')
       .eq('user_id', userId);
@@ -49,10 +43,7 @@ serve(async (req) => {
     }
 
     if (!transmissions || transmissions.length === 0) {
-      return new Response(
-        JSON.stringify({ error: 'No books found' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-      );
+      return json(404, { error: 'No books found' });
     }
 
     // Helper to derive era from publication year
@@ -77,7 +68,7 @@ serve(async (req) => {
 
     // Check cache unless force refresh
     if (!forceRefresh) {
-      const { data: cached } = await supabaseClient
+      const { data: cached } = await supabase
         .from('temporal_analysis_cache')
         .select('analysis, generated_at, temporal_signature')
         .eq('user_id', userId)
@@ -89,10 +80,7 @@ serve(async (req) => {
         
         if (cacheAge < sevenDays) {
           console.log('Returning cached analysis');
-          return new Response(
-            JSON.stringify(cached.analysis),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          return json(200, cached.analysis);
         }
       }
     }
@@ -170,17 +158,11 @@ Keep responses specific to these books. Be concise but insightful. Do not use as
       console.error('AI API error:', aiResponse.status, errorText);
       
       if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
-        );
+        return json(429, { error: 'Rate limit exceeded. Please try again in a moment.' });
       }
       
       if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'AI usage limit reached. Please add credits to your workspace.' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
-        );
+        return json(402, { error: 'AI usage limit reached. Please add credits to your workspace.' });
       }
       
       throw new Error(`AI API error: ${aiResponse.status}`);
@@ -193,7 +175,7 @@ Keep responses specific to these books. Be concise but insightful. Do not use as
     const analysis: TemporalAnalysis = parseAnalysis(analysisText, tagToBooks);
 
     // Cache the result
-    const { error: cacheError } = await supabaseClient
+    const { error: cacheError } = await supabase
       .from('temporal_analysis_cache')
       .upsert(
         {
@@ -211,17 +193,11 @@ Keep responses specific to these books. Be concise but insightful. Do not use as
       console.error('Error caching analysis:', cacheError);
     }
 
-    return new Response(
-      JSON.stringify(analysis),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return json(200, analysis);
 
   } catch (error) {
     console.error('Error in analyze-temporal-context:', error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+    return json(500, { error: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 

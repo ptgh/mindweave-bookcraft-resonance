@@ -1,12 +1,6 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, requireUser, createServiceClient, json } from "../_shared/adminAuth.ts";
 
 interface BrainNode {
   id: string;
@@ -46,9 +40,8 @@ interface ChatRequest {
   message: string;
   conversationId?: string;
   messages?: ChatMessage[];
-  userName?: string; // User's first name for personalization
-  userInsights?: string; // Learned preferences from past interactions
-  userId?: string; // User ID for saving insights
+  userName?: string;
+  userInsights?: string;
   brainData: {
     nodes: BrainNode[];
     links: BookLink[];
@@ -62,6 +55,10 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Require authenticated user
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   try {
     // Check if Lovable API key is configured
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
@@ -69,18 +66,11 @@ serve(async (req) => {
     
     if (!lovableApiKey) {
       console.error('Lovable API key not found in environment variables');
-      return new Response(JSON.stringify({ 
-        error: 'Lovable AI is not configured. Please contact support.' 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json(500, { error: 'Lovable AI is not configured. Please contact support.' });
     }
 
     // Initialize Supabase client for conversation storage
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createServiceClient();
 
     // Parse request body
     let requestBody;
@@ -89,25 +79,15 @@ serve(async (req) => {
       console.log('Request received successfully');
     } catch (parseError) {
       console.error('Failed to parse request body:', parseError);
-      return new Response(JSON.stringify({ 
-        error: 'Invalid request format' 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json(400, { error: 'Invalid request format' });
     }
 
-    const { message, conversationId, messages = [], brainData, userTransmissions = [], userName, userInsights, userId }: ChatRequest = requestBody;
+    const { message, conversationId, messages = [], brainData, userTransmissions = [], userName, userInsights }: ChatRequest = requestBody;
 
     // Validate required fields
     if (!message) {
       console.error('Missing message in request');
-      return new Response(JSON.stringify({ 
-        error: 'Message is required' 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return json(400, { error: 'Message is required' });
     }
 
     console.log('Request validation passed:', {
@@ -135,9 +115,6 @@ serve(async (req) => {
     const lowerMessage = message.toLowerCase();
     const isAddingBook = bookAddingPhrases.some(phrase => lowerMessage.includes(phrase));
     
-    // Detect "auto add" wording (skip questions, add immediately)
-    const wantsAutoAdd = /\b(just add|add now|please add|no questions|skip|go ahead)\b/i.test(message);
-
     // Define book extraction tool
     const bookExtractionTool = {
       type: "function",
@@ -162,7 +139,7 @@ serve(async (req) => {
             suggestedTags: {
               type: "array",
               items: { type: "string" },
-              description: "Conceptual SF tags from taxonomy: Cyberpunk, Post-Cyberpunk, Space Opera, Hard Science Fiction, Biopunk, Golden Age, Block Universe Compatible, Time Dilation, Chrono Loops, Technological Shamanism, Utopian Collapse, Mega-Corporate Systems, Off-Earth Civilisations, Dystopian Systems, Nonlinear Structure, Dream Logic, Archive-Based, Memory Distortion, Cybernetic Enhancement, Quantum Consciousness, Neural Interface, Posthuman Evolution"
+              description: "Conceptual SF tags from taxonomy"
             },
             needsClarification: {
               type: "boolean",
@@ -179,52 +156,14 @@ serve(async (req) => {
       }
     };
 
-    // Define insight saving tool
-    const saveInsightTool = {
-      type: "function",
-      function: {
-        name: "save_user_insight",
-        description: "Save a notable insight about the user's reading preferences, patterns, or interests. Use when you discover something meaningful about their reading behavior.",
-        parameters: {
-          type: "object",
-          properties: {
-            insight: { 
-              type: "string", 
-              description: "The insight to save (e.g., 'Prefers hard SF with philosophical themes', 'Strong interest in AI consciousness narratives', 'Gravitates toward 1960s-1980s classics')" 
-            },
-            category: {
-              type: "string",
-              enum: ["theme_preference", "author_preference", "era_preference", "reading_pattern", "emotional_response", "genre_preference"],
-              description: "Category of the insight"
-            },
-            confidence: {
-              type: "string",
-              enum: ["high", "medium", "low"],
-              description: "How confident you are in this insight based on evidence"
-            }
-          },
-          required: ["insight", "category", "confidence"]
-        }
-      }
-    };
-
-    // Detect if this might be a good time to extract insights (pattern discussion, preference revelation)
-    const insightPhrases = [
-      'i love', 'i prefer', 'my favorite', 'i always', 'i never', 'i tend to',
-      'i really enjoy', 'i don\'t like', 'i\'m drawn to', 'i find myself',
-      'what i look for', 'what appeals to me', 'what interests me'
-    ];
-    const mightHaveInsight = insightPhrases.some(phrase => lowerMessage.includes(phrase)) || 
-                             messages.length >= 4; // After some conversation, look for patterns
-
     // Build personalized greeting instruction
     const userGreeting = userName 
-      ? `The user's name is ${userName}. Address them by name occasionally (not every message) to create a personal connection. Use their name naturally in context, especially when giving insights or recommendations.`
+      ? `The user's name is ${userName}. Address them by name occasionally to create a personal connection.`
       : 'The user has not provided their name.';
 
     // Build user insights context if available
     const userInsightsContext = userInsights 
-      ? `\nUSER INSIGHTS (learned from past interactions):\n${userInsights}\n\nUse these insights to personalize your responses and make connections to their known preferences.`
+      ? `\nUSER INSIGHTS (learned from past interactions):\n${userInsights}\n\nUse these insights to personalize your responses.`
       : '';
 
     const systemPrompt = `You are the Neural Assistant for leafnode—a personal science fiction library and knowledge graph application.
@@ -233,26 +172,7 @@ ${userGreeting}
 ${userInsightsContext}
 
 ABOUT LEAFNODE:
-Leafnode helps readers build and explore their personal SF reading network. It's not just a book tracker—it's a tool for discovering thematic connections, conceptual patterns, and intellectual threads across your science fiction collection. Think of it as your "second brain" for sci-fi reading, visualizing how books, themes, and ideas connect in your literary journey.
-
-LEAFNODE FEATURES & NAVIGATION:
-- HOME (/): The main landing page with featured content and quick access to your library
-- SIGNAL BROWSER (/transmissions): Browse and search your entire book collection (transmissions)
-- NEURAL MAP (/brain): Interactive 3D visualization of your reading network - books as nodes, themes as connections
-- AUTHOR MATRIX (/authors): Explore sci-fi authors, their works, and influence networks
-- PUBLISHER RESONANCE (/publishers): Discover curated publisher series like Penguin Science Fiction
-- DISCOVERY (/discovery): Find new books based on your reading patterns and preferences
-- READING INSIGHTS (/insights): AI-generated analysis of your reading habits and patterns
-- THREAD MAP (/threads): Visualize thematic threads connecting your books
-
-TERMINOLOGY:
-- "Transmissions" = Books in your library
-- "Neural Map" = The 3D visualization of book connections
-- "Conceptual Nodes" = Thematic tags connecting books
-- "Context Tags" = Broader intellectual themes
-- "Resonance" = How strongly a book connects to themes
-- "Clusters" = Groups of related books by theme
-- "Bridges" = Books that connect multiple clusters
+Leafnode helps readers build and explore their personal SF reading network. It's a tool for discovering thematic connections, conceptual patterns, and intellectual threads across your science fiction collection.
 
 USER'S COLLECTION:
 ${transmissionsContext}
@@ -266,95 +186,31 @@ Brain Analysis:
 ${brainContext}` : ''}
 
 CAPABILITIES:
-- Identify thematic clusters (groups of 2+ books exploring the same theme)
-- Detect conceptual bridges (books that connect multiple themes)
-- Understand connection patterns and reading velocity trends
-- Suggest recommendations based on cluster gaps and bridge opportunities
-- Explore temporal patterns and author relationships
-- Analyze influence networks between authors
-- Identify SF genre patterns (Cyberpunk, Hard SF, Space Opera, etc.)
-- Recognize genre evolution and cross-genre connections
+- Identify thematic clusters
+- Detect conceptual bridges
+- Suggest recommendations based on cluster gaps
 - Help users ADD BOOKS naturally through conversation
 - Navigate users to relevant parts of the leafnode site
-- Remember and build on past conversations
-
-BOOK ADDING & TERMINOLOGY:
-In this library, books are called "TRANSMISSIONS" - it's the poetic term for cataloging sci-fi books. Users may say "add it to my transmissions", "catalogue this", or "add to my list". All mean the same thing: add a book to their library.
-
-When users mention reading a book or wanting to add a book (including saying "transmission" or "catalogue"), use the extract_book_data tool to:
-- Extract title and author accurately
-- Infer reading status from context (just finished = read, currently = reading, want to = want-to-read)
-- Detect sentiment (positive, neutral, negative, mixed) from their description
-- Suggest 3-5 relevant Conceptual Tags from the official taxonomy based on book context
-- Determine if clarification would improve tagging
-
-TRIPLE TAXONOMY SYSTEM:
-The library uses THREE classification systems working together:
-1. GENRES: SF subgenres like Cyberpunk, Hard SF, Space Opera, Biopunk, etc.
-2. CONCEPTUAL NODES: Thematic sci-fi tags like "Cyberpunk", "Neural Interface", "Time Dilation" (use ONLY from official list)
-3. CONTEXT TAGS: Broader intellectual themes like "Mathematics", "Philosophy", "Social hierarchy", "Ethics"
-
-PATTERN RECOGNITION:
-- Proactively mention detected clusters when relevant
-- Point out bridge books that connect genres, themes, OR contexts
-- Identify reading velocities and patterns across taxonomies
-- Suggest books that would strengthen weak clusters or create new bridges
-- Recognize cross-taxonomy patterns
-- Detect multi-dimensional connections
-
-GUARD RAILS - SCIENCE FICTION FOCUS:
-You are specialized in science fiction literature and related topics. Keep conversations focused on:
-✓ Science fiction books, authors, themes, and recommendations
-✓ The user's reading patterns, preferences, and library management
-✓ SF-adjacent topics: technology, futurism, philosophy of mind, space exploration, AI ethics
-✓ Literature and storytelling craft as it relates to SF
-✓ Navigating and using leafnode features
-
-Gently redirect off-topic conversations back to science fiction. If asked about completely unrelated topics (cooking recipes, sports scores, etc.), politely explain that you're specialized in science fiction and offer to discuss their reading interests instead.
-
-However, allow for EXPANDED conversation that connects to SF:
-- Philosophy discussions that relate to SF themes (consciousness, ethics, free will)
-- Technology discussions relevant to SF concepts
-- Historical events that inspired SF works
-- Scientific concepts explored in SF literature
-- Personal reading experiences and emotional responses to books
 
 RESPONSE STYLE:
 - Write in clear, flowing paragraphs
-- Do NOT use bold markdown (**text**) or asterisks for emphasis
+- Do NOT use bold markdown or asterisks for emphasis
 - Write naturally as if speaking to someone
-- Use proper paragraph breaks for readability
-- Keep your tone conversational, insightful, and focused on SF
-- When helpful, reference specific leafnode features or pages the user might explore
-
-LEARNING USER PREFERENCES:
-You have access to a save_user_insight tool. Use it when you discover meaningful patterns about the user's reading preferences. Save insights when:
-- The user explicitly states preferences ("I love...", "I prefer...", "My favorite...")
-- You detect clear patterns in their library (strong theme clusters, author preferences)
-- They share emotional responses to books that reveal their tastes
-- After analyzing their collection, you identify notable tendencies
-
-Only save HIGH-QUALITY insights that would genuinely help personalize future conversations. Don't save trivial observations. Examples of good insights:
-- "Strongly prefers hard SF with rigorous scientific accuracy"
-- "Drawn to philosophical explorations of consciousness and identity"
-- "Shows nostalgic affinity for Golden Age authors, especially Asimov and Clarke"
-- "Appreciates complex narrative structures and non-linear storytelling"
-- "Interested in the intersection of technology and social critique"`;
+- Keep your tone conversational, insightful, and focused on SF`;
 
     console.log('Making Lovable AI request...');
-    console.log('Using model: google/gemini-2.5-flash (FREE until Oct 6, 2025)');
     
     // Build message history for context
     const conversationMessages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
-      ...messages, // Previous conversation
-      { role: 'user', content: message } // Current message
+      ...messages,
+      { role: 'user', content: message }
     ];
 
     console.log(`Message history: ${conversationMessages.length} messages`);
     
-    // Build request body - add tools based on context
-    const aiRequestBody: any = {
+    // Build request body
+    const aiRequestBody: Record<string, unknown> = {
       model: 'google/gemini-2.5-flash',
       messages: conversationMessages,
       temperature: 0.7,
@@ -362,22 +218,10 @@ Only save HIGH-QUALITY insights that would genuinely help personalize future con
     };
 
     // Add tools based on detected intent
-    const tools = [];
-    
     if (isAddingBook) {
       console.log('Book-adding intent detected, enabling extraction tool');
-      tools.push(bookExtractionTool);
+      aiRequestBody.tools = [bookExtractionTool];
       aiRequestBody.tool_choice = { type: "function", function: { name: "extract_book_data" } };
-    }
-    
-    // Add insight tool when appropriate (has userId and might have insight-worthy content)
-    if (userId && mightHaveInsight && !isAddingBook) {
-      console.log('Insight opportunity detected, enabling save_user_insight tool');
-      tools.push(saveInsightTool);
-    }
-    
-    if (tools.length > 0) {
-      aiRequestBody.tools = tools;
     }
     
     // Call Lovable AI Gateway
@@ -401,578 +245,123 @@ Only save HIGH-QUALITY insights that would genuinely help personalize future con
       });
       
       if (response.status === 429) {
-        return new Response(JSON.stringify({ 
-          error: 'Rate limit exceeded. Please try again in a moment.',
-          errorCode: 'RATE_LIMIT'
-        }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      } else if (response.status === 402) {
-        return new Response(JSON.stringify({ 
-          error: 'AI credits depleted. Please add credits in Settings > Workspace > Usage.',
-          errorCode: 'NO_CREDITS'
-        }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      } else {
-        return new Response(JSON.stringify({ 
-          error: `AI service error (${response.status}): ${errorText}`,
-          errorCode: 'AI_ERROR'
-        }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-    }
-
-    let data;
-    try {
-      data = await response.json();
-      console.log('Lovable AI response parsed successfully');
-    } catch (jsonError) {
-      console.error('Failed to parse Lovable AI response:', jsonError);
-      return new Response(JSON.stringify({ 
-        error: 'Invalid response from AI service' 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Check for tool calls
-    if (data.choices[0]?.message?.tool_calls && data.choices[0].message.tool_calls.length > 0) {
-      const toolCall = data.choices[0].message.tool_calls[0];
-      console.log('Tool call detected:', toolCall.function.name);
-      
-      // Handle save_user_insight tool
-      if (toolCall.function.name === 'save_user_insight') {
-        try {
-          const insightData = JSON.parse(toolCall.function.arguments);
-          console.log('Saving user insight:', insightData);
-          
-          if (userId && insightData.insight) {
-            // Fetch current reading preferences
-            const { data: profileData } = await supabase
-              .from('profiles')
-              .select('reading_preferences')
-              .eq('id', userId)
-              .single();
-            
-            const currentPrefs = (profileData?.reading_preferences as Record<string, any>) || {};
-            const existingInsights = currentPrefs.neural_assistant_insights || '';
-            
-            // Format the new insight
-            const timestamp = new Date().toISOString().split('T')[0];
-            const newInsight = `[${timestamp}] (${insightData.category}, ${insightData.confidence}): ${insightData.insight}`;
-            
-            // Append to existing insights (keep last 10 insights max)
-            const insightLines = existingInsights ? existingInsights.split('\n') : [];
-            insightLines.push(newInsight);
-            const updatedInsights = insightLines.slice(-10).join('\n');
-            
-            // Update profile
-            await supabase
-              .from('profiles')
-              .update({
-                reading_preferences: {
-                  ...currentPrefs,
-                  neural_assistant_insights: updatedInsights
-                }
-              })
-              .eq('id', userId);
-            
-            console.log('User insight saved successfully');
-          }
-        } catch (insightError) {
-          console.error('Failed to save insight:', insightError);
-          // Continue without failing - insight saving is non-critical
-        }
-        
-        // After saving insight, the AI should still provide a response
-        // Check if there's content in the message
-        if (data.choices[0]?.message?.content) {
-          const aiResponse = data.choices[0].message.content;
-          const formattedResponse = formatAIResponse(aiResponse);
-          const highlights = extractHighlights(aiResponse, brainData);
-          
-          return new Response(JSON.stringify({ 
-            response: formattedResponse,
-            highlights,
-            insightSaved: true
-          }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
+        return json(429, { error: 'Rate limit exceeded. Please try again in a moment.', errorCode: 'RATE_LIMIT' });
       }
       
-      // Handle book extraction tool
-      if (toolCall.function.name === 'extract_book_data') {
+      if (response.status === 402) {
+        return json(402, { error: 'AI credits exhausted. Please add credits.', errorCode: 'CREDITS_EXHAUSTED' });
+      }
+      
+      throw new Error(`Lovable AI error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('Lovable AI response received');
+
+    const choice = data.choices?.[0];
+    if (!choice) {
+      throw new Error('No response from AI');
+    }
+
+    // Handle tool calls (book extraction)
+    if (choice.message?.tool_calls && choice.message.tool_calls.length > 0) {
+      const toolCall = choice.message.tool_calls[0];
+      if (toolCall.function?.name === 'extract_book_data') {
         try {
           const bookData = JSON.parse(toolCall.function.arguments);
           console.log('Extracted book data:', bookData);
           
-          // Normalize defaults
-          bookData.suggestedTags = Array.isArray(bookData.suggestedTags) ? bookData.suggestedTags : [];
-          bookData.status = bookData.status || 'want-to-read';
-          bookData.sentiment = bookData.sentiment || 'neutral';
-          
-          // Determine if auto-add (no clarification needed OR user explicitly wants it)
-          const autoAdd = wantsAutoAdd || bookData.needsClarification === false;
-          
-          // Generate a friendly message with action options
-          const confirmationMessage = autoAdd
-            ? `Adding "${bookData.title}" by ${bookData.author} to your library...`
-            : `I can add "${bookData.title}" by ${bookData.author}. Would you like me to just add it now, or review details first?`;
-          
-          // Return structured book extraction response
-          return new Response(JSON.stringify({ 
-            type: 'book_extraction',
-            bookData: bookData,
-            autoAdd: autoAdd,
-            message: confirmationMessage
-          }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          return json(200, {
+            reply: `I found "${bookData.title}" by ${bookData.author}. Would you like me to add it to your library?`,
+            conversationId: conversationId || crypto.randomUUID(),
+            bookData,
+            actionType: 'add_book'
           });
         } catch (parseError) {
           console.error('Failed to parse book data:', parseError);
-          // Fall through to normal response
         }
       }
     }
+
+    // Regular text response
+    const reply = choice.message?.content || 'I apologize, but I was unable to generate a response.';
     
-    // Fallback: if book-adding intent detected but tool wasn't called, try regex extraction
-    if (isAddingBook && (!data.choices[0]?.message?.tool_calls || data.choices[0].message.tool_calls.length === 0)) {
-      console.log('Book-adding intent detected but no tool call - attempting fallback extraction');
-      
-      // Try to extract title and author from message
-      const patterns = [
-        /add\s+"([^"]+)"\s+by\s+([^.,;]+)/i,
-        /add\s+(.+?)\s+by\s+([^\n.,;]+)/i,
-        /"([^"]+)"\s+by\s+([^.,;]+)/i,
-        /please add\s+(.+?)\s+by\s+([^\n.,;]+)/i
-      ];
-      
-      let title = null;
-      let author = null;
-      
-      for (const pattern of patterns) {
-        const match = message.match(pattern);
-        if (match) {
-          title = match[1].trim();
-          author = match[2].trim();
-          break;
-        }
-      }
-      
-      if (title && author) {
-        console.log('Fallback extraction successful:', { title, author });
-        
-        const bookData = {
-          title,
-          author,
-          status: 'want-to-read',
-          sentiment: 'neutral',
-          suggestedTags: [],
-          needsClarification: false
-        };
-        
-        const confirmationMessage = wantsAutoAdd
-          ? `Adding "${title}" by ${author} to your library...`
-          : `I can add "${title}" by ${author}. Would you like me to just add it now, or review details first?`;
-        
-        return new Response(JSON.stringify({ 
-          type: 'book_extraction',
-          bookData: bookData,
-          autoAdd: wantsAutoAdd,
-          message: confirmationMessage
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-    }
+    // Extract any highlighted books from the response
+    const highlights = extractHighlights(reply, brainData?.nodes || []);
 
-    if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
-      console.error('Invalid AI response structure:', data);
-      return new Response(JSON.stringify({ 
-        error: 'Invalid response structure from AI service' 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const aiResponse = data.choices[0].message.content;
-    console.log('AI response received, length:', aiResponse.length);
-
-    // Format the response for better readability
-    const formattedResponse = formatAIResponse(aiResponse);
-
-    // Analyze response for actionable highlights
-    const highlights = extractHighlights(aiResponse, brainData);
-    console.log('Extracted highlights:', highlights);
-
-    // Store conversation if conversationId provided
-    if (conversationId) {
-      try {
-        // Store user message
-        await supabase.from('chat_messages').insert({
-          conversation_id: conversationId,
-          role: 'user',
-          content: message
-        });
-
-        // Store assistant response
-        await supabase.from('chat_messages').insert({
-          conversation_id: conversationId,
-          role: 'assistant',
-          content: formattedResponse,
-          highlights: highlights
-        });
-
-        console.log('Conversation saved successfully');
-      } catch (dbError) {
-        console.error('Failed to save conversation:', dbError);
-        // Don't fail the request if conversation storage fails
-      }
-    }
-
-    return new Response(JSON.stringify({ 
-      response: formattedResponse,
-      highlights: highlights 
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    return json(200, {
+      reply,
+      conversationId: conversationId || crypto.randomUUID(),
+      highlights
     });
 
   } catch (error) {
-    console.error('Unexpected error in brain-chat function:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    
-    return new Response(JSON.stringify({ 
-      error: `Failed to process chat request: ${errorMessage}` 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    console.error('Error in brain-chat:', error);
+    return json(500, { 
+      error: error instanceof Error ? error.message : 'An unexpected error occurred' 
     });
   }
 });
 
-function generateBrainContext(brainData: { nodes: BrainNode[], links: BookLink[], activeFilters: string[] }): string {
+function generateBrainContext(brainData: ChatRequest['brainData']): string {
+  if (!brainData || !brainData.nodes || brainData.nodes.length === 0) {
+    return '';
+  }
+
   const { nodes, links } = brainData;
   
-  if (!nodes || nodes.length === 0) {
-    return "No books in the library yet.";
-  }
-  
-  try {
-    // Analyze connection patterns
-    const connectionStats = links.reduce((acc, link) => {
-      acc[link.type] = (acc[link.type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+  // Count tag frequencies
+  const tagFreq: Record<string, number> = {};
+  nodes.forEach(node => {
+    node.tags.forEach(tag => {
+      tagFreq[tag] = (tagFreq[tag] || 0) + 1;
+    });
+  });
 
-    // Analyze conceptual tag frequencies
-    const conceptualTagFrequency = nodes.reduce((acc, node) => {
-      if (node.tags && Array.isArray(node.tags)) {
-        node.tags.forEach(tag => {
-          if (tag && tag.trim() !== '') {
-            acc[tag] = (acc[tag] || 0) + 1;
-          }
-        });
-      }
-      return acc;
-    }, {} as Record<string, number>);
+  const topTags = Object.entries(tagFreq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([tag, count]) => `${tag} (${count})`)
+    .join(', ');
 
-    const topConceptualTags = Object.entries(conceptualTagFrequency)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 10)
-      .map(([tag, count]) => `${tag} (${count})`);
+  // Count author frequencies
+  const authorFreq: Record<string, number> = {};
+  nodes.forEach(node => {
+    authorFreq[node.author] = (authorFreq[node.author] || 0) + 1;
+  });
 
-    // Analyze context tag frequencies
-    const contextTagFrequency = nodes.reduce((acc, node) => {
-      if (node.contextTags && Array.isArray(node.contextTags)) {
-        node.contextTags.forEach(tag => {
-          if (tag && tag.trim() !== '') {
-            acc[tag] = (acc[tag] || 0) + 1;
-          }
-        });
-      }
-      return acc;
-    }, {} as Record<string, number>);
+  const topAuthors = Object.entries(authorFreq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([author, count]) => `${author} (${count})`)
+    .join(', ');
 
-    const topContextTags = Object.entries(contextTagFrequency)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 8)
-      .map(([tag, count]) => `${tag} (${count})`);
-
-    // Detect thematic clusters (2+ books with same tag)
-    const clusters = Object.entries(conceptualTagFrequency)
-      .filter(([, count]) => count >= 2)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 5)
-      .map(([tag, count]) => `"${tag}" cluster (${count} books)`);
-
-    // Detect conceptual bridges (books connecting multiple themes)
-    const bridgeBooks = nodes.map(node => {
-      if (!node.tags || node.tags.length < 2) return null;
-      
-      // Count how many other books share each tag
-      const tagConnections = node.tags.map(tag => {
-        const othersWithTag = nodes.filter(n => 
-          n.id !== node.id && n.tags?.includes(tag)
-        ).length;
-        return { tag, connections: othersWithTag };
-      }).filter(t => t.connections > 0);
-      
-      if (tagConnections.length >= 2) {
-        return {
-          title: node.title,
-          bridgingThemes: tagConnections.map(t => t.tag).slice(0, 3)
-        };
-      }
-      return null;
-    }).filter(Boolean).slice(0, 3);
-
-    // Analyze author networks
-    const authorBooks = nodes.reduce((acc, node) => {
-      if (node.author && node.author !== 'Unknown Author') {
-        acc[node.author] = (acc[node.author] || 0) + 1;
-      }
-      return acc;
-    }, {} as Record<string, number>);
-
-    const topAuthors = Object.entries(authorBooks)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 5)
-      .map(([author, count]) => `${author} (${count} books)`);
-
-    // Find highly connected nodes
-    const nodeConnections = nodes.map(node => {
-      const connections = links.filter(link => 
-        link.fromId === node.id || link.toId === node.id
-      ).length;
-      return { title: node.title, connections };
-    }).sort((a, b) => b.connections - a.connections).slice(0, 5);
-
-    const maxPossibleConnections = nodes.length * (nodes.length - 1) / 2;
-    const density = maxPossibleConnections > 0 ? ((links.length / maxPossibleConnections) * 100).toFixed(2) : '0';
-
-    let context = `
-Connection Types: ${Object.entries(connectionStats).map(([type, count]) => `${type}: ${count}`).join(', ')}
-
-Conceptual Nodes (SF Themes): ${topConceptualTags.join(', ')}
-
-Context Tags (Broader Themes): ${topContextTags.length > 0 ? topContextTags.join(', ') : 'None yet'}
-
-Most Prolific Authors: ${topAuthors.join(', ')}
-
-Most Connected Books: ${nodeConnections.map(n => `"${n.title}" (${n.connections} connections)`).join(', ')}
-
-Network Density: ${density}% connectivity`;
-
-    // Add pattern recognition insights with triple-taxonomy awareness
-    if (clusters.length > 0) {
-      context += `\n\nThematic Clusters Detected (2+ books): ${clusters.join(', ')}`;
-      context += `\n\nNote: These clusters combine Conceptual Nodes (SF themes), Context Tags (broader intellectual themes), and SF genre classification (Cyberpunk, Hard SF, Space Opera, etc.) to create a triple taxonomy for comprehensive multi-dimensional pattern analysis.`;
-    }
-
-    if (bridgeBooks.length > 0) {
-      context += `\n\nBridge Books (connecting multiple themes across taxonomies): ${bridgeBooks.map(b => 
-        `"${b.title}" (bridges: ${b.bridgingThemes.join(', ')})`
-      ).join(', ')}`;
-      context += `\n\nThese bridges are particularly valuable for identifying cross-taxonomy connections, genre evolution, and thematic intersections across multiple conceptual dimensions.`;
-    }
-
-    // Add cross-taxonomy pattern insights
-    const crossPatterns = detectCrossTaxonomyPatterns(nodes);
-    if (crossPatterns.length > 0) {
-      context += `\n\nCross-Taxonomy Patterns: ${crossPatterns.join(', ')}`;
-    }
-
-    return context.trim();
-
-  } catch (error) {
-    console.error('Error generating brain context:', error);
-    return `Library contains ${nodes.length} books with ${links.length} connections.`;
-  }
-}
-
-function formatAIResponse(response: string): string {
-  try {
-    // Remove markdown bold formatting
-    let formatted = response.replace(/\*\*([^*]+)\*\*/g, '$1');
-    
-    // Remove single asterisks used for emphasis
-    formatted = formatted.replace(/\*([^*]+)\*/g, '$1');
-    
-    // Ensure proper paragraph spacing by normalizing line breaks
-    // Replace multiple line breaks with double line breaks for paragraphs
-    formatted = formatted.replace(/\n{3,}/g, '\n\n');
-    
-    // Clean up any remaining markdown artifacts
-    formatted = formatted.replace(/#{1,6}\s/g, '');
-    
-    return formatted.trim();
-  } catch (error) {
-    console.error('Error formatting AI response:', error);
-    return response;
-  }
+  return `Top Themes: ${topTags}
+Top Authors: ${topAuthors}
+Connection Types: ${links.length} total connections`;
 }
 
 function generateTransmissionsContext(transmissions: UserTransmission[]): string {
   if (!transmissions || transmissions.length === 0) {
-    return "The user hasn't added any books to their collection yet. Encourage them to add their favorite sci-fi books to start building their neural reading network!";
+    return 'No books in collection yet.';
   }
 
-  try {
-    const totalBooks = transmissions.length;
-    
-    // Extract all tags
-    const allTags = transmissions
-      .flatMap(t => t.tags ? t.tags.split(',').map(tag => tag.trim()) : [])
-      .filter(tag => tag !== '');
-    
-    const tagFrequency = allTags.reduce((acc, tag) => {
-      acc[tag] = (acc[tag] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+  const recent = transmissions.slice(0, 20);
+  const bookList = recent.map(t => 
+    `- "${t.title}" by ${t.author}${t.publication_year ? ` (${t.publication_year})` : ''}${t.tags ? ` [${t.tags}]` : ''}`
+  ).join('\n');
 
-    const topTags = Object.entries(tagFrequency)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 12)
-      .map(([tag, count]) => `${tag} (${count})`);
-
-    // Author analysis
-    const authors = transmissions
-      .map(t => t.author)
-      .filter(a => a && a !== 'Unknown Author');
-    
-    const authorFrequency = authors.reduce((acc, author) => {
-      acc[author] = (acc[author] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const topAuthors = Object.entries(authorFrequency)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 8)
-      .map(([author, count]) => `${author} (${count} books)`);
-
-    // Extract historical context tags
-    const historicalTags = transmissions
-      .flatMap(t => t.historical_context_tags || [])
-      .filter(tag => tag);
-    
-    const historicalFreq = historicalTags.reduce((acc, tag) => {
-      acc[tag] = (acc[tag] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const topHistorical = Object.entries(historicalFreq)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 6)
-      .map(([tag, count]) => `${tag} (${count})`);
-
-    // Recent additions
-    const recentBooks = transmissions
-      .slice(0, 5)
-      .map(t => `"${t.title}" by ${t.author}`);
-
-    // Books with notes
-    const booksWithNotes = transmissions.filter(t => t.notes && t.notes.trim() !== '');
-    
-    let context = `Total Books in Collection: ${totalBooks}
-
-Most Common Themes: ${topTags.join(', ')}
-
-Top Authors: ${topAuthors.join(', ')}`;
-
-    if (topHistorical.length > 0) {
-      context += `\n\nHistorical Context Tags: ${topHistorical.join(', ')}`;
-    }
-
-    context += `\n\nRecently Added: ${recentBooks.join(', ')}`;
-
-    if (booksWithNotes.length > 0) {
-      context += `\n\n${booksWithNotes.length} books have personal notes/reflections.`;
-    }
-
-    // Sample a few books with their full details
-    const sampleBooks = transmissions.slice(0, 3).map(t => {
-      let bookDetail = `"${t.title}" by ${t.author}`;
-      if (t.tags) bookDetail += ` [Tags: ${t.tags}]`;
-      if (t.notes) bookDetail += ` (Note: ${t.notes.substring(0, 100)}${t.notes.length > 100 ? '...' : ''})`;
-      return bookDetail;
-    });
-
-    if (sampleBooks.length > 0) {
-      context += `\n\nSample Books:\n${sampleBooks.join('\n')}`;
-    }
-
-    return context;
-  } catch (error) {
-    console.error('Error generating transmissions context:', error);
-    return `User has ${transmissions.length} books in their collection.`;
-  }
+  return `Collection size: ${transmissions.length} books\n\nRecent books:\n${bookList}`;
 }
 
-function detectCrossTaxonomyPatterns(nodes: BrainNode[]): string[] {
-  const patterns: string[] = [];
-  const conceptualTags = new Set(nodes.flatMap(n => n.tags || []));
-  const contextTags = new Set(nodes.flatMap(n => n.contextTags || []));
+function extractHighlights(text: string, nodes: BrainNode[]): string[] {
+  const highlights: string[] = [];
   
-  // Find books with both strong conceptual and context tag presence
-  conceptualTags.forEach(conceptualTag => {
-    contextTags.forEach(contextTag => {
-      const matchingBooks = nodes.filter(node => 
-        (node.tags || []).includes(conceptualTag) && 
-        (node.contextTags || []).includes(contextTag)
-      );
-      
-      if (matchingBooks.length >= 2) {
-        patterns.push(`${conceptualTag} + ${contextTag} (${matchingBooks.length} books)`);
-      }
-    });
+  nodes.forEach(node => {
+    if (text.toLowerCase().includes(node.title.toLowerCase())) {
+      highlights.push(node.id);
+    }
   });
   
-  return patterns.slice(0, 5);
-}
-
-function extractHighlights(response: string, brainData: { nodes: BrainNode[], links: BookLink[] }): { nodeIds: string[], linkIds: string[], tags: string[] } {
-  const highlights = {
-    nodeIds: [] as string[],
-    linkIds: [] as string[],
-    tags: [] as string[]
-  };
-
-  try {
-    // Extract book titles mentioned in response
-    brainData.nodes.forEach(node => {
-      if (response.toLowerCase().includes(node.title.toLowerCase())) {
-        highlights.nodeIds.push(node.id);
-      }
-    });
-
-    // Extract conceptual tags mentioned in response
-    const allConceptualTags = Array.from(new Set(brainData.nodes.flatMap(node => node.tags || [])));
-    allConceptualTags.forEach(tag => {
-      if (tag && response.toLowerCase().includes(tag.toLowerCase())) {
-        highlights.tags.push(tag);
-      }
-    });
-
-    // Extract context tags mentioned in response
-    const allContextTags = Array.from(new Set(brainData.nodes.flatMap(node => node.contextTags || [])));
-    allContextTags.forEach(tag => {
-      if (tag && response.toLowerCase().includes(tag.toLowerCase())) {
-        highlights.tags.push(tag);
-      }
-    });
-
-    console.log('Highlights extracted:', highlights);
-  } catch (error) {
-    console.error('Error extracting highlights:', error);
-  }
-
   return highlights;
 }

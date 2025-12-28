@@ -1,10 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, requireUser, createUserClient, json } from "../_shared/adminAuth.ts";
 
 interface UserTransmission {
   title: string;
@@ -22,6 +17,10 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Require authenticated user
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   try {
     const { userTransmissions, forceRegenerate = false } = await req.json();
 
@@ -30,36 +29,17 @@ serve(async (req) => {
     }
 
     if (userTransmissions.length < 3) {
-      return new Response(
-        JSON.stringify({ error: 'At least 3 books required for temporal analysis' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return json(400, { error: 'At least 3 books required for temporal analysis' });
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Authenticate user
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      throw new Error('Authentication failed');
-    }
+    const supabase = createUserClient(auth.token);
 
     // Check for cached analysis (unless force regenerate)
     if (!forceRegenerate) {
       const { data: cached } = await supabase
         .from('reading_insights')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', auth.userId)
         .eq('timeframe', 'temporal')
         .order('generated_at', { ascending: false })
         .limit(1)
@@ -70,15 +50,12 @@ serve(async (req) => {
         const sevenDays = 7 * 24 * 60 * 60 * 1000;
         
         if (cacheAge < sevenDays) {
-          return new Response(
-            JSON.stringify({
-              narrative: cached.narrative,
-              metadata: cached.metadata,
-              generatedAt: cached.generated_at,
-              cached: true
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          return json(200, {
+            narrative: cached.narrative,
+            metadata: cached.metadata,
+            generatedAt: cached.generated_at,
+            cached: true
+          });
         }
       }
     }
@@ -173,7 +150,7 @@ Write in an engaging, insightful tone that makes literary history come alive. Us
     const { error: insertError } = await supabase
       .from('reading_insights')
       .insert({
-        user_id: user.id,
+        user_id: auth.userId,
         narrative,
         timeframe: 'temporal',
         metadata,
@@ -184,27 +161,18 @@ Write in an engaging, insightful tone that makes literary history come alive. Us
       console.error('Error storing temporal analysis:', insertError);
     }
 
-    return new Response(
-      JSON.stringify({
-        narrative,
-        metadata,
-        generatedAt: new Date().toISOString(),
-        cached: false
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return json(200, {
+      narrative,
+      metadata,
+      generatedAt: new Date().toISOString(),
+      cached: false
+    });
 
   } catch (error) {
     console.error('Temporal analysis error:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Unknown error occurred' 
-      }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+    return json(500, { 
+      error: error instanceof Error ? error.message : 'Unknown error occurred' 
+    });
   }
 });
 
