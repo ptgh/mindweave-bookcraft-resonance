@@ -411,6 +411,24 @@ export function AdminDataHealthPanel() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh Stats
             </Button>
+
+            <Button
+              variant="ghost"
+              onClick={async () => {
+                try {
+                  const { data, error } = await supabase.functions.invoke('admin-count-films');
+                  if (error) throw error;
+                  console.log('[AdminDiagnostic] Results:', data);
+                  toast.success('Diagnostic logged to console');
+                } catch (e) {
+                  console.error('Diagnostic failed:', e);
+                  toast.error('Diagnostic failed - check console');
+                }
+              }}
+            >
+              <Database className="h-4 w-4 mr-2" />
+              Run Diagnostic
+            </Button>
           </div>
 
           <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
