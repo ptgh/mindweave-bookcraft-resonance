@@ -1,3 +1,4 @@
+import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
@@ -36,7 +37,11 @@ const container = document.getElementById("root")!;
 const root = createRoot(container);
 
 // Use concurrent features for better loading
-root.render(<App />);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
 
 // Ensure proper touch targets after initial render
 setTimeout(() => {
