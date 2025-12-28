@@ -81,17 +81,18 @@ export const AdminBooksPanel: React.FC = () => {
   const handleEnrichCovers = async () => {
     setIsEnrichingCovers(true);
     try {
-      const { data, error } = await supabase.functions.invoke('enrich-book-covers');
+      const { invokeAdminFunction } = await import('@/utils/adminFunctions');
+      const { data, error } = await invokeAdminFunction('enrich-book-covers');
       if (error) throw error;
       toast({
         title: 'Cover Enrichment Complete',
-        description: `Updated ${data?.updated || 0} book covers`,
+        description: `Updated ${(data as { updated?: number })?.updated || 0} book covers`,
         variant: 'success',
       });
       fetchBooks();
     } catch (error) {
       console.error('Error enriching covers:', error);
-      toast({ title: 'Error', description: 'Failed to enrich covers', variant: 'destructive' });
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'Failed to enrich covers', variant: 'destructive' });
     } finally {
       setIsEnrichingCovers(false);
     }

@@ -110,15 +110,20 @@ Return ONLY valid JSON:
       throw new Error('No content in AI response');
     }
 
-    // Parse analysis
+    // Parse analysis - clean JSON parsing
     let analysis;
     try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      const jsonStr = jsonMatch ? jsonMatch[0] : content;
-      analysis = JSON.parse(jsonStr);
+      let cleanContent = content.trim();
+      // Remove markdown code blocks if present
+      if (cleanContent.startsWith('```json')) cleanContent = cleanContent.slice(7);
+      if (cleanContent.startsWith('```')) cleanContent = cleanContent.slice(3);
+      if (cleanContent.endsWith('```')) cleanContent = cleanContent.slice(0, -3);
+      cleanContent = cleanContent.trim();
+      
+      analysis = JSON.parse(cleanContent);
     } catch (e) {
-      console.error('Failed to parse AI response:', content);
-      throw new Error('Failed to parse analysis');
+      console.error('Failed to parse AI response:', content.substring(0, 200));
+      throw new Error('Failed to parse analysis - invalid JSON from AI');
     }
 
     // Cache the results
