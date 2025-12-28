@@ -1,10 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, requireUser, createUserClient, json } from "../_shared/adminAuth.ts";
 
 interface TagSuggestion {
   name: string;
@@ -17,20 +12,18 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Require authenticated user
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   try {
     const { title, author, description, currentTags, userTaggingPatterns } = await req.json();
 
     if (!title || !author) {
-      return new Response(
-        JSON.stringify({ error: 'Title and author are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return json(400, { error: 'Title and author are required' });
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createUserClient(auth.token);
 
     // Create book identifier for caching
     const bookIdentifier = `${title.toLowerCase().trim()}|${author.toLowerCase().trim()}`;
@@ -51,10 +44,7 @@ serve(async (req) => {
       
       if (cacheAge < thirtyDays) {
         console.log('Returning cached tag suggestions');
-        return new Response(
-          JSON.stringify({ suggestions: cached.suggested_tags }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return json(200, { suggestions: cached.suggested_tags });
       }
     }
 
@@ -145,16 +135,10 @@ Suggest appropriate conceptual tags.`;
 
     console.log(`Generated ${suggestions.length} tag suggestions for "${title}"`);
 
-    return new Response(
-      JSON.stringify({ suggestions }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return json(200, { suggestions });
 
   } catch (error) {
     console.error('Error in ai-tag-suggestions:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return json(500, { error: (error as Error).message });
   }
 });

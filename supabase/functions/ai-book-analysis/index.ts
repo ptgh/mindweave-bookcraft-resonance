@@ -1,29 +1,23 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, requireUser, createUserClient, json } from "../_shared/adminAuth.ts";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Require authenticated user
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   try {
     const { title, author, isbn, description } = await req.json();
 
     if (!title || !author) {
-      return new Response(
-        JSON.stringify({ error: 'Title and author are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return json(400, { error: 'Title and author are required' });
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createUserClient(auth.token);
 
     // Check cache first
     const bookIdentifier = `${title.toLowerCase()}-${author.toLowerCase()}`.replace(/\s+/g, '-');
@@ -41,10 +35,7 @@ serve(async (req) => {
       const thirtyDays = 30 * 24 * 60 * 60 * 1000;
       if (cacheAge < thirtyDays) {
         console.log('Returning cached book analysis');
-        return new Response(
-          JSON.stringify(cachedData.analysis_data),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return json(200, cachedData.analysis_data);
       }
     }
 
@@ -94,10 +85,7 @@ Return ONLY valid JSON:
       console.error('AI API error:', aiResponse.status, errorText);
       
       if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return json(429, { error: 'Rate limit exceeded. Please try again in a moment.' });
       }
       
       throw new Error(`AI API error: ${aiResponse.status}`);
@@ -135,16 +123,10 @@ Return ONLY valid JSON:
 
     console.log(`Generated analysis for "${title}"`);
 
-    return new Response(
-      JSON.stringify(analysis),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return json(200, analysis);
 
   } catch (error) {
     console.error('Error in ai-book-analysis:', error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return json(500, { error: error instanceof Error ? error.message : 'Internal server error' });
   }
 });

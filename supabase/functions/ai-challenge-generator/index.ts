@@ -1,10 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from 'jsr:@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, requireUser, createUserClient, json } from "../_shared/adminAuth.ts";
 
 interface Transmission {
   id: string;
@@ -21,22 +16,12 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Require authenticated user
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing authorization header');
-    }
-
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      throw new Error('User not authenticated');
-    }
+    const supabase = createUserClient(auth.token);
 
     const { forceRegenerate } = await req.json();
 
@@ -45,21 +30,18 @@ Deno.serve(async (req) => {
       const { data: existingChallenges } = await supabase
         .from('reading_challenges')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', auth.userId)
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(1);
 
       if (existingChallenges && existingChallenges.length > 0) {
         const challenge = existingChallenges[0];
-        return new Response(
-          JSON.stringify({
-            challenges: [challenge],
-            cached: true,
-            generatedAt: challenge.created_at
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return json(200, {
+          challenges: [challenge],
+          cached: true,
+          generatedAt: challenge.created_at
+        });
       }
     }
 
@@ -67,29 +49,26 @@ Deno.serve(async (req) => {
     const { data: transmissions, error: transmissionsError } = await supabase
       .from('transmissions')
       .select('id, title, author, tags, publication_year, created_at, reading_velocity_score')
-      .eq('user_id', user.id)
+      .eq('user_id', auth.userId)
       .order('created_at', { ascending: false });
 
     if (transmissionsError) throw transmissionsError;
 
     if (!transmissions || transmissions.length < 3) {
-      return new Response(
-        JSON.stringify({
-          error: 'Need at least 3 books to generate challenges',
-          message: 'Add more books to your library to unlock personalized reading challenges.'
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      return json(400, {
+        error: 'Need at least 3 books to generate challenges',
+        message: 'Add more books to your library to unlock personalized reading challenges.'
+      });
     }
 
     // Analyze transmissions
-    const analysis = analyzeTransmissions(transmissions);
+    const analysis = analyzeTransmissions(transmissions as Transmission[]);
 
     // Generate challenges using Lovable AI
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
 
-    const prompt = buildChallengePrompt(transmissions, analysis);
+    const prompt = buildChallengePrompt(transmissions as Transmission[], analysis);
 
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -135,7 +114,7 @@ Deno.serve(async (req) => {
     const { data: savedChallenge, error: saveError } = await supabase
       .from('reading_challenges')
       .insert({
-        user_id: user.id,
+        user_id: auth.userId,
         challenge_type: challengeData.type,
         title: challengeData.title,
         description: challengeData.description,
@@ -152,21 +131,15 @@ Deno.serve(async (req) => {
 
     if (saveError) throw saveError;
 
-    return new Response(
-      JSON.stringify({
-        challenges: [savedChallenge],
-        cached: false,
-        generatedAt: new Date().toISOString()
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return json(200, {
+      challenges: [savedChallenge],
+      cached: false,
+      generatedAt: new Date().toISOString()
+    });
 
   } catch (error) {
     console.error('Error in ai-challenge-generator:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return json(500, { error: (error as Error).message });
   }
 });
 
@@ -214,7 +187,7 @@ function analyzeTransmissions(transmissions: Transmission[]) {
   };
 }
 
-function buildChallengePrompt(transmissions: Transmission[], analysis: any): string {
+function buildChallengePrompt(transmissions: Transmission[], analysis: ReturnType<typeof analyzeTransmissions>): string {
   return `Analyze this sci-fi reader's collection and create ONE personalized reading challenge.
 
 COLLECTION STATS:

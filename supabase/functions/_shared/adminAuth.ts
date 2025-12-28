@@ -5,11 +5,47 @@ export const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-internal-secret, x-client-info, apikey, content-type",
 };
 
-const json = (status: number, body: Record<string, unknown>) =>
+/**
+ * Helper to create a JSON Response with corsHeaders
+ */
+export const json = (status: number, body: Record<string, unknown>) =>
   new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+
+/**
+ * Require a valid logged-in user (Bearer token).
+ * Uses SUPABASE_ANON_KEY (not service role) so RLS applies.
+ * 
+ * @returns Either { userId: string, token: string } on success, or a Response object on failure
+ */
+export async function requireUser(
+  req: Request
+): Promise<{ userId: string; token: string } | Response> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    console.log("❌ [Auth] Missing or invalid Authorization header");
+    return json(401, { error: "Missing Authorization bearer token" });
+  }
+
+  const token = authHeader.replace("Bearer ", "").trim();
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+  const supabase = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const { data: userData, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !userData?.user) {
+    console.log("❌ [Auth] Invalid or expired token:", userErr?.message);
+    return json(401, { error: "Invalid or expired token" });
+  }
+
+  console.log("✅ [Auth] User authorized:", userData.user.id);
+  return { userId: userData.user.id, token };
+}
 
 /**
  * Middleware to require admin authorization OR internal function-to-function calls.
@@ -84,4 +120,16 @@ export function createServiceClient() {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   
   return createClient(supabaseUrl, serviceRoleKey);
+}
+
+/**
+ * Helper to create a Supabase client with the user's token for RLS-protected operations.
+ */
+export function createUserClient(token: string) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  
+  return createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
 }

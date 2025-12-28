@@ -1,10 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, requireUser, createUserClient, json } from "../_shared/adminAuth.ts";
 
 interface UserTransmission {
   title: string;
@@ -21,54 +16,29 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Require authenticated user
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   try {
     const { userTransmissions, timeframe = 'all', forceRegenerate = false } = await req.json();
 
     if (!userTransmissions || !Array.isArray(userTransmissions)) {
-      return new Response(
-        JSON.stringify({ error: 'userTransmissions array is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return json(400, { error: 'userTransmissions array is required' });
     }
 
     if (userTransmissions.length < 3) {
-      return new Response(
-        JSON.stringify({ error: 'Need at least 3 books to generate insights' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return json(400, { error: 'Need at least 3 books to generate insights' });
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Get user ID from auth
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Authentication required' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid authentication' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const userId = user.id;
+    const supabase = createUserClient(auth.token);
 
     // Check for existing narrative if not forcing regeneration
     if (!forceRegenerate) {
       const { data: existingInsight } = await supabase
         .from('reading_insights')
         .select('narrative, metadata, generated_at')
-        .eq('user_id', userId)
+        .eq('user_id', auth.userId)
         .eq('timeframe', timeframe)
         .order('generated_at', { ascending: false })
         .limit(1)
@@ -76,15 +46,12 @@ serve(async (req) => {
 
       if (existingInsight) {
         console.log('Returning existing reading insight');
-        return new Response(
-          JSON.stringify({
-            narrative: existingInsight.narrative,
-            metadata: existingInsight.metadata,
-            generated_at: existingInsight.generated_at,
-            cached: true
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return json(200, {
+          narrative: existingInsight.narrative,
+          metadata: existingInsight.metadata,
+          generated_at: existingInsight.generated_at,
+          cached: true
+        });
       }
     }
 
@@ -154,10 +121,7 @@ Total length: 600-900 words.`;
       console.error('AI API error:', aiResponse.status, errorText);
       
       if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return json(429, { error: 'Rate limit exceeded. Please try again in a moment.' });
       }
       
       throw new Error(`AI API error: ${aiResponse.status}`);
@@ -181,7 +145,7 @@ Total length: 600-900 words.`;
     const { error: insertError } = await supabase
       .from('reading_insights')
       .insert({
-        user_id: userId,
+        user_id: auth.userId,
         narrative,
         metadata,
         timeframe,
@@ -192,24 +156,18 @@ Total length: 600-900 words.`;
       console.error('Failed to store insight:', insertError);
     }
 
-    console.log(`Generated reading narrative for user ${userId}`);
+    console.log(`Generated reading narrative for user ${auth.userId}`);
 
-    return new Response(
-      JSON.stringify({
-        narrative,
-        metadata,
-        generated_at: new Date().toISOString(),
-        cached: false
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return json(200, {
+      narrative,
+      metadata,
+      generated_at: new Date().toISOString(),
+      cached: false
+    });
 
   } catch (error) {
     console.error('Error in ai-reading-narrative:', error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return json(500, { error: error instanceof Error ? error.message : 'Internal server error' });
   }
 });
 
@@ -220,7 +178,7 @@ function generateReadingContext(transmissions: UserTransmission[]): string {
   const allTags: string[] = [];
   transmissions.forEach(t => {
     let tagList: string[] = [];
-    const value = (t as any).tags;
+    const value = (t as Record<string, unknown>).tags;
     if (Array.isArray(value)) {
       tagList = value.map(String);
     } else if (typeof value === 'string') {

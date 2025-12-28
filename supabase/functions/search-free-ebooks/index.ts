@@ -1,10 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsHeaders, requireUser, createServiceClient, json } from "../_shared/adminAuth.ts";
 
 interface SearchRequest {
   title: string;
@@ -31,8 +26,12 @@ interface ArchiveItem {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
+
+  // Require authenticated user
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
 
   try {
     const { title, author, isbn }: SearchRequest = await req.json()
@@ -43,11 +42,8 @@ serve(async (req) => {
 
     console.log(`Searching for: "${title}" by ${author}`)
 
-    // Initialize Supabase client
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    // Use service client for caching (writes to free_ebook_links)
+    const supabase = createServiceClient();
 
     let gutenbergResult = null
     let archiveResult = null
@@ -218,20 +214,9 @@ serve(async (req) => {
       archive: archiveResult
     }
 
-    return new Response(
-      JSON.stringify(result),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
-    )
+    return json(200, result);
   } catch (error) {
     console.error('Search error:', error)
-    return new Response(
-      JSON.stringify({ error: error.message, hasLinks: false }),
-      {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
-    )
+    return json(400, { error: (error as Error).message, hasLinks: false });
   }
 })
