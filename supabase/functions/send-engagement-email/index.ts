@@ -13,14 +13,9 @@ import {
   Section,
   Img,
 } from 'npm:@react-email/components@0.0.22'
-import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { requireAdminOrInternal, corsHeaders, createServiceClient } from "../_shared/adminAuth.ts"
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY') as string)
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
 
 // Curated book recommendations for engagement
 const FEATURED_BOOKS = [
@@ -148,13 +143,14 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
+  // Require admin authorization
+  const auth = await requireAdminOrInternal(req)
+  if (auth instanceof Response) return auth
+
   try {
     console.log('Starting engagement email send...')
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = createServiceClient()
 
     // Get all confirmed users
     const { data: users, error: usersError } = await supabase.auth.admin.listUsers()
