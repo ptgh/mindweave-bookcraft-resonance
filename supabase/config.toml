@@ -159,3 +159,6 @@ verify_jwt = false
 
 [functions.enrich-imsdb-scripts]
 verify_jwt = false
+
+[functions.admin-count-films]
+verify_jwt = false

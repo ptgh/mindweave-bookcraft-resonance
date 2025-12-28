@@ -148,6 +148,18 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
             : null,
         }));
         setAdaptations(mapped);
+        
+        // Admin debug: Log data health stats
+        if (import.meta.env.DEV || isAdmin) {
+          const stats = {
+            total: mapped.length,
+            withBookId: mapped.filter(f => f.book_id).length,
+            withPoster: mapped.filter(f => f.poster_url).length,
+            withTrailer: mapped.filter(f => f.trailer_url).length,
+            criterion: mapped.filter(f => f.is_criterion_collection).length,
+          };
+          console.log('[BookToScreen] Data health:', stats);
+        }
       } catch (error) {
         console.error('Error fetching film adaptations:', error);
       } finally {
@@ -156,7 +168,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     };
 
     fetchAdaptations();
-  }, []);
+  }, [isAdmin]);
 
   // Helper: Check if film is in Criterion Collection (DB fields as source-of-truth)
   const isCriterionFilm = (film: FilmAdaptation): boolean => {
