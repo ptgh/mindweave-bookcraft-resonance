@@ -11,13 +11,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { supabase } from "@/integrations/supabase/client";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { generateTransmissionEmbeddings } from "@/services/semanticSearchService";
-import { RefreshCw, Clock, Sparkles } from "lucide-react";
+import { invokeAdminFunction } from "@/utils/adminFunctions";
+import { RefreshCw, Clock, Sparkles, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 
 const AdminEnrichment = () => {
   const { toast } = useEnhancedToast();
   const [isEnrichingTemporal, setIsEnrichingTemporal] = useState(false);
   const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false);
+  const [isTestingAuth, setIsTestingAuth] = useState(false);
   const [enrichmentProgress, setEnrichmentProgress] = useState({ processed: 0, total: 0 });
   const [embeddingProgress, setEmbeddingProgress] = useState({ processed: 0, skipped: 0, total: 0 });
 
@@ -92,6 +94,36 @@ const AdminEnrichment = () => {
     }
   };
 
+  const handleTestAdminAuth = async () => {
+    setIsTestingAuth(true);
+    try {
+      const { data, error } = await invokeAdminFunction<{ ok: boolean; userId: string | null; mode: string }>("admin-whoami");
+      
+      if (error) {
+        toast({
+          title: "Auth Test Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Auth Test Passed",
+        description: `Mode: ${data?.mode} | User: ${data?.userId?.slice(0, 8) || 'internal'}...`,
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Auth Test Error",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTestingAuth(false);
+    }
+  };
+
   return (
     <ProtectedAdminRoute>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -108,6 +140,39 @@ const AdminEnrichment = () => {
           </div>
           
           <div className="space-y-6">
+            {/* Admin Auth Test */}
+            <Card className="border-green-500/30 bg-green-950/20">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-green-400" />
+                  <CardTitle>Admin Auth Test</CardTitle>
+                </div>
+                <CardDescription>
+                  Test bearer token wiring, admin detection, and CORS
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={handleTestAdminAuth}
+                  disabled={isTestingAuth}
+                  variant="outline"
+                  className="border-green-500/50 text-green-400 hover:bg-green-500/10"
+                >
+                  {isTestingAuth ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Testing...
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="w-4 h-4 mr-2" />
+                      Test Admin Auth (whoami)
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+
             {/* Temporal Context Enrichment */}
             <Card>
               <CardHeader>
