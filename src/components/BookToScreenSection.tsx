@@ -16,15 +16,7 @@ import { preloadImages, getHighQualityDisplayUrl } from '@/utils/performance';
 import { cleanPersonName, truncateWithBreak } from '@/utils/textCleaners';
 import { 
   getYouTubeSearchUrl, 
-  extractYouTubeId, 
-  getCriterionBrowseUrl, 
-  getArrowBrowseUrl,
-  getCriterionPurchaseUrl,
-  getArrowPurchaseUrl,
-  getCriterionFilm,
-  getArrowFilm,
-  CRITERION_SF_FILMS,
-  ARROW_SF_FILMS
+  extractYouTubeId
 } from '@/utils/streamingLinks';
 import { FilterMode } from './BookToScreenSelector';
 
@@ -172,32 +164,21 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
 
   // Helper: Check if film is in Criterion Collection (DB fields as source-of-truth)
   const isCriterionFilm = (film: FilmAdaptation): boolean => {
-    return film.is_criterion_collection === true ||
-           film.criterion_url !== null ||
-           getCriterionFilm(film.film_title, film.film_year) !== null;
+    return film.is_criterion_collection === true || film.criterion_url !== null;
   };
 
-  // Helper: Get Criterion link (DB fields first, then hardcoded list, then fallback)
+  // Helper: Get Criterion link (DB fields first, then fallback)
   const getCriterionLink = (film: FilmAdaptation): string | null => {
     if (film.criterion_url) return film.criterion_url;
-    const fromList = getCriterionPurchaseUrl(film.film_title, film.film_year);
-    if (fromList) return fromList;
     if (film.is_criterion_collection) {
       return "https://www.criterion.com/shop/browse/list?genre=science-fiction";
     }
     return null;
   };
 
-  // Filter adaptations based on mode and search query
+  // Filter adaptations based on search query only (all films shown)
   const filteredAdaptations = React.useMemo(() => {
     let result = adaptations;
-    
-    // Filter by mode - DB fields are source-of-truth, hardcoded list is fallback
-    if (filterMode === 'criterion') {
-      result = result.filter(film => isCriterionFilm(film));
-    } else if (filterMode === 'arrow') {
-      result = result.filter(film => getArrowFilm(film.film_title, film.film_year) !== null);
-    }
     
     // Filter by search query
     if (searchQuery.trim()) {
@@ -211,7 +192,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     }
     
     return result;
-  }, [adaptations, filterMode, searchQuery]);
+  }, [adaptations, searchQuery]);
 
   // Visible films for infinite scroll
   const visibleFilms = filteredAdaptations.slice(0, visibleCount);
@@ -450,28 +431,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     setShowDirectorPopup(true);
   };
 
-  // Get mode-specific info
-  const getModeInfo = () => {
-    if (filterMode === 'criterion') {
-      return {
-        browseUrl: getCriterionBrowseUrl(),
-        browseText: 'Browse on Criterion',
-        count: CRITERION_SF_FILMS.length,
-        label: 'Criterion Collection'
-      };
-    }
-    if (filterMode === 'arrow') {
-      return {
-        browseUrl: getArrowBrowseUrl(),
-        browseText: 'Browse on Arrow',
-        count: ARROW_SF_FILMS.length,
-        label: 'Arrow Films'
-      };
-    }
-    return null;
-  };
-
-  const modeInfo = getModeInfo();
+  // No mode-specific info needed - showing all films
 
   if (isLoading) {
     return (
@@ -496,11 +456,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
         <p className="text-muted-foreground">
           {searchQuery 
             ? `No films found matching "${searchQuery}"`
-            : filterMode === 'criterion' 
-              ? 'No Criterion Collection films found. Click "Scan Signal Collection ✨ AI" to populate with Criterion titles.'
-              : filterMode === 'arrow'
-                ? 'No Arrow Films found in your collection.'
-                : 'No film adaptations found'}
+            : 'No film adaptations found'}
         </p>
       </div>
     );
@@ -521,22 +477,10 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
       )}
 
       {/* Film count indicator */}
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
+      <div className="text-sm text-muted-foreground">
         <span>
           Showing {visibleFilms.length} of {filteredAdaptations.length} films
-          {modeInfo && ` (${modeInfo.label})`}
         </span>
-        {modeInfo && (
-          <a
-            href={modeInfo.browseUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-amber-400 hover:text-amber-300 transition-colors inline-flex items-center gap-1 text-xs"
-          >
-            {modeInfo.browseText}
-            <ExternalLink className="w-3 h-3" />
-          </a>
-        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -981,40 +925,23 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                   </a>
                 </div>
 
-                {/* Buy Physical Section - styled like book's publisher section */}
-                {(isCriterionFilm(selectedFilm) || getArrowFilm(selectedFilm.film_title, selectedFilm.film_year)) && (
+                {/* Buy Physical Section - only Criterion if applicable */}
+                {isCriterionFilm(selectedFilm) && (
                   <div className="space-y-2">
                     <p className="text-slate-500 text-xs font-medium uppercase tracking-wider">Buy Physical</p>
                     <div className="flex gap-2 flex-wrap">
-                      {/* Criterion Collection - DB fields as source-of-truth */}
-                      {isCriterionFilm(selectedFilm) && (
-                        <a
-                          href={getCriterionLink(selectedFilm) || getCriterionBrowseUrl()}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-600/50 bg-slate-700/30 hover:bg-slate-700/50 hover:border-slate-500 transition-all group"
-                        >
-                          <img src="/images/criterion-logo.jpg" alt="" className="h-5 w-auto rounded-sm" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                          <span className="text-sm text-slate-200">
-                            Criterion{selectedFilm.criterion_spine ? ` #${selectedFilm.criterion_spine}` : ''}
-                          </span>
-                          <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-200" />
-                        </a>
-                      )}
-
-                      {/* Arrow Films */}
-                      {getArrowFilm(selectedFilm.film_title, selectedFilm.film_year) && (
-                        <a
-                          href={getArrowPurchaseUrl(selectedFilm.film_title, selectedFilm.film_year)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-red-600/30 bg-red-900/20 hover:bg-red-900/40 hover:border-red-500/50 transition-all group"
-                        >
-                          <span className="text-red-500 font-bold text-sm">▶</span>
-                          <span className="text-sm text-red-200">Arrow</span>
-                          <ExternalLink className="w-3.5 h-3.5 text-red-400 group-hover:text-red-200" />
-                        </a>
-                      )}
+                      <a
+                        href={getCriterionLink(selectedFilm) || "https://www.criterion.com/shop/browse?genre=science-fiction"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-600/50 bg-slate-700/30 hover:bg-slate-700/50 hover:border-slate-500 transition-all group"
+                      >
+                        <img src="/images/criterion-logo.jpg" alt="" className="h-5 w-auto rounded-sm" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        <span className="text-sm text-slate-200">
+                          Criterion{selectedFilm.criterion_spine ? ` #${selectedFilm.criterion_spine}` : ''}
+                        </span>
+                        <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-200" />
+                      </a>
                     </div>
                   </div>
                 )}

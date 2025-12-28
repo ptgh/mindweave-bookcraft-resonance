@@ -22,7 +22,6 @@ const TestBrain = lazy(() => import("./pages/TestBrain"));
 const Community = lazy(() => import("./pages/Community"));
 const BookToScreen = lazy(() => import("./pages/BookToScreen"));
 const AdminEnrichment = lazy(() => import("./pages/AdminEnrichment"));
-const AdminPopulate = lazy(() => import("./pages/AdminPopulate"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -102,7 +101,7 @@ const AppRoutes = () => {
           <Route path="/community" element={<Community />} />
           <Route path="/book-to-screen" element={<BookToScreen />} />
           <Route path="/admin/enrichment" element={<AdminEnrichment />} />
-          <Route path="/admin/populate" element={<AdminPopulate />} />
+          <Route path="/admin/populate" element={<Navigate to="/admin/enrichment" replace />} />
           <Route path="/unsubscribe/:token" element={<Unsubscribe />} />
           <Route path="/share/book/:id" element={<ShareBook />} />
           <Route path="/auth" element={<Navigate to="/" replace />} />

@@ -26,7 +26,6 @@ const truncateText = (text: string, maxLength: number = 35): string => {
 };
 
 const BookToScreen: React.FC = () => {
-  const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [isAILoading, setIsAILoading] = useState(false);
   const [aiRecommendations, setAIRecommendations] = useState<AIRecommendation[]>([]);
   const [addedFilms, setAddedFilms] = useState<string[]>([]);
@@ -136,8 +135,8 @@ const BookToScreen: React.FC = () => {
           {/* Selector Buttons */}
           <div className="flex justify-center mb-8">
             <BookToScreenSelector
-              selected={filterMode}
-              onSelect={setFilterMode}
+              selected="all"
+              onSelect={() => {}}
               onAIScan={handleAIScan}
               isAILoading={isAILoading}
             />
@@ -193,7 +192,7 @@ const BookToScreen: React.FC = () => {
           <BookToScreenSection 
             key={refreshKey}
             showTitle={false} 
-            filterMode={filterMode} 
+            filterMode="all" 
             searchQuery={searchQuery}
           />
         </main>
