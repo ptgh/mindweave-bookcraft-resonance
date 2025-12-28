@@ -103,17 +103,18 @@ export const AdminExternalLinksPanel: React.FC = () => {
   const handleEnrichCriterion = async () => {
     setIsEnrichingCriterion(true);
     try {
-      const { data, error } = await supabase.functions.invoke('enrich-criterion-links');
+      const { invokeAdminFunction } = await import('@/utils/adminFunctions');
+      const { data, error } = await invokeAdminFunction('enrich-criterion-links');
       if (error) throw error;
       toast({
         title: 'Criterion Enrichment Complete',
-        description: data?.message || 'Links updated',
+        description: (data as { message?: string })?.message || 'Links updated',
         variant: 'success',
       });
       fetchFilms();
     } catch (error) {
       console.error('Error enriching Criterion:', error);
-      toast({ title: 'Error', description: 'Failed to enrich Criterion links', variant: 'destructive' });
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'Failed to enrich Criterion links', variant: 'destructive' });
     } finally {
       setIsEnrichingCriterion(false);
     }
@@ -122,17 +123,18 @@ export const AdminExternalLinksPanel: React.FC = () => {
   const handleEnrichAppleTV = async () => {
     setIsEnrichingAppleTV(true);
     try {
-      const { data, error } = await supabase.functions.invoke('enrich-apple-tv-links');
+      const { invokeAdminFunction } = await import('@/utils/adminFunctions');
+      const { data, error } = await invokeAdminFunction('enrich-apple-tv-links');
       if (error) throw error;
       toast({
         title: 'Apple TV Enrichment Complete',
-        description: data?.message || 'Links cleaned',
+        description: (data as { message?: string })?.message || 'Links cleaned',
         variant: 'success',
       });
       fetchFilms();
     } catch (error) {
       console.error('Error enriching Apple TV:', error);
-      toast({ title: 'Error', description: 'Failed to enrich Apple TV links', variant: 'destructive' });
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'Failed to enrich Apple TV links', variant: 'destructive' });
     } finally {
       setIsEnrichingAppleTV(false);
     }

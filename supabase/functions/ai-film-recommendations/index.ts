@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { requireAdminOrInternal, corsHeaders } from "../_shared/adminAuth.ts";
 
 interface AIRecommendation {
   film_title: string;
@@ -19,6 +15,10 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Require admin authorization (writes to sf_film_adaptations)
+  const auth = await requireAdminOrInternal(req);
+  if (auth instanceof Response) return auth;
 
   try {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -113,16 +113,30 @@ Return ONLY a valid JSON array with this exact structure:
     
     console.log('AI response received, parsing...');
 
-    // Extract JSON from response
+    // Extract JSON from response - clean parsing
     let recommendations: AIRecommendation[] = [];
     try {
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        recommendations = JSON.parse(jsonMatch[0]);
+      let cleanContent = content.trim();
+      // Remove markdown code blocks if present
+      if (cleanContent.startsWith('```json')) cleanContent = cleanContent.slice(7);
+      if (cleanContent.startsWith('```')) cleanContent = cleanContent.slice(3);
+      if (cleanContent.endsWith('```')) cleanContent = cleanContent.slice(0, -3);
+      cleanContent = cleanContent.trim();
+      
+      recommendations = JSON.parse(cleanContent);
+      
+      if (!Array.isArray(recommendations)) {
+        throw new Error('Response is not an array');
       }
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
-      recommendations = [];
+      return new Response(JSON.stringify({ 
+        error: 'Failed to parse AI response as valid JSON',
+        recommendations: []
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     console.log(`Parsed ${recommendations.length} recommendations`);

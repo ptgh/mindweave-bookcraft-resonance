@@ -116,10 +116,20 @@ Deno.serve(async (req) => {
     const aiData = await aiResponse.json();
     let content = aiData.choices[0].message.content;
     
-    // Strip markdown code blocks if present
-    content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    // Clean JSON parsing - remove markdown code blocks
+    content = content.trim();
+    if (content.startsWith('```json')) content = content.slice(7);
+    if (content.startsWith('```')) content = content.slice(3);
+    if (content.endsWith('```')) content = content.slice(0, -3);
+    content = content.trim();
     
-    const challengeData = JSON.parse(content);
+    let challengeData;
+    try {
+      challengeData = JSON.parse(content);
+    } catch (parseError) {
+      console.error('Failed to parse challenge JSON:', content.substring(0, 200));
+      throw new Error('Failed to parse AI response as valid JSON');
+    }
 
     // Save challenge to database
     const { data: savedChallenge, error: saveError } = await supabase

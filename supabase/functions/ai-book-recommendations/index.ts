@@ -130,15 +130,24 @@ Return ONLY a JSON array, no markdown:
       throw new Error('No content in AI response');
     }
 
-    // Parse recommendations
+    // Parse recommendations - clean JSON parsing
     let recommendations;
     try {
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      const jsonStr = jsonMatch ? jsonMatch[0] : content;
-      recommendations = JSON.parse(jsonStr);
+      let cleanContent = content.trim();
+      // Remove markdown code blocks if present
+      if (cleanContent.startsWith('```json')) cleanContent = cleanContent.slice(7);
+      if (cleanContent.startsWith('```')) cleanContent = cleanContent.slice(3);
+      if (cleanContent.endsWith('```')) cleanContent = cleanContent.slice(0, -3);
+      cleanContent = cleanContent.trim();
+      
+      recommendations = JSON.parse(cleanContent);
+      
+      if (!Array.isArray(recommendations)) {
+        throw new Error('Response is not an array');
+      }
     } catch (e) {
-      console.error('Failed to parse AI response:', content);
-      throw new Error('Failed to parse recommendations');
+      console.error('Failed to parse AI response:', content.substring(0, 200));
+      throw new Error('Failed to parse recommendations - invalid JSON from AI');
     }
 
     const result = {

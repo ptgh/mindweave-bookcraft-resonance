@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      admins: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       author_ai_analysis: {
         Row: {
           analysis_data: Json
@@ -1677,6 +1692,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: { _user_id?: string }; Returns: boolean }
       log_book_interaction: {
         Args: {
           p_book_author: string
