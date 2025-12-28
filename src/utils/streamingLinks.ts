@@ -5,6 +5,44 @@
  * - Falls back to service-specific search when needed
  */
 
+// ============= Title Matching Helpers =============
+
+/**
+ * Normalize a title for comparison:
+ * - lowercase
+ * - remove leading articles (the, a, an)
+ * - remove punctuation
+ * - collapse whitespace
+ */
+export function normalizeTitle(title: string): string {
+  return (title || "")
+    .toLowerCase()
+    .trim()
+    .replace(/^(the|a|an)\s+/i, "")
+    .replace(/[^\w\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Check if a search title matches a canonical entry (including aliases)
+ */
+function matchesTitle(search: string, canonical: { title: string; aliases?: string[] }): boolean {
+  const s = normalizeTitle(search);
+  if (normalizeTitle(canonical.title) === s) return true;
+  if (canonical.aliases?.some(a => normalizeTitle(a) === s)) return true;
+  return false;
+}
+
+// ============= Film Types =============
+
+interface CatalogFilm {
+  title: string;
+  url?: string;
+  year?: number;
+  aliases?: string[];
+}
+
 // Google "Watch Film" method - works universally
 export function getGoogleWatchLink(filmTitle: string, year?: number | null): string {
   const query = year ? `${filmTitle} ${year} stream` : `${filmTitle} stream`;
@@ -24,63 +62,63 @@ export function getProviderDirectLink(filmTitle: string, providerName: string, t
  * Last updated: December 2024
  * Only includes films that are book adaptations or original SF works
  */
-export const CRITERION_SF_FILMS: { title: string; url?: string }[] = [
+export const CRITERION_SF_FILMS: CatalogFilm[] = [
   // Classic SF Literature Adaptations
-  { title: 'Solaris', url: 'https://www.criterion.com/films/578-solaris' },
-  { title: 'Stalker', url: 'https://www.criterion.com/films/28600-stalker' },
-  { title: 'Fahrenheit 451', url: 'https://www.criterion.com/films/334-fahrenheit-451' },
-  { title: '2001: A Space Odyssey', url: 'https://www.criterion.com/films/211-2001-a-space-odyssey' },
-  { title: 'A Clockwork Orange', url: 'https://www.criterion.com/films/27600-a-clockwork-orange' },
-  { title: 'The Andromeda Strain', url: 'https://www.criterion.com/films/28845-the-andromeda-strain' },
-  { title: 'The Time Machine', url: 'https://www.criterion.com/films/29517-the-time-machine' },
-  { title: 'War of the Worlds', url: 'https://www.criterion.com/films/28997-the-war-of-the-worlds' },
-  { title: 'The Incredible Shrinking Man', url: 'https://www.criterion.com/films/29506-the-incredible-shrinking-man' },
-  { title: 'Invasion of the Body Snatchers', url: 'https://www.criterion.com/films/360-invasion-of-the-body-snatchers' },
-  { title: 'Naked Lunch', url: 'https://www.criterion.com/films/485-naked-lunch' },
-  { title: 'The Man Who Fell to Earth', url: 'https://www.criterion.com/films/28730-the-man-who-fell-to-earth' },
-  { title: 'Nineteen Eighty-Four', url: 'https://www.criterion.com/films/29123-nineteen-eighty-four' },
-  { title: 'On the Silver Globe', url: 'https://www.criterion.com/films/29019-on-the-silver-globe' },
-  { title: 'Fantastic Planet', url: 'https://www.criterion.com/films/310-fantastic-planet' },
-  { title: 'Things to Come', url: 'https://www.criterion.com/films/29149-things-to-come' },
-  { title: 'Village of the Damned', url: 'https://www.criterion.com/films/29507-village-of-the-damned' },
-  { title: 'When Worlds Collide', url: 'https://www.criterion.com/films/29511-when-worlds-collide' },
+  { title: 'Solaris', url: 'https://www.criterion.com/films/578-solaris', year: 1972 },
+  { title: 'Stalker', url: 'https://www.criterion.com/films/28600-stalker', year: 1979 },
+  { title: 'Fahrenheit 451', url: 'https://www.criterion.com/films/334-fahrenheit-451', year: 1966 },
+  { title: '2001: A Space Odyssey', url: 'https://www.criterion.com/films/211-2001-a-space-odyssey', year: 1968, aliases: ['2001 A Space Odyssey'] },
+  { title: 'A Clockwork Orange', url: 'https://www.criterion.com/films/27600-a-clockwork-orange', year: 1971 },
+  { title: 'The Andromeda Strain', url: 'https://www.criterion.com/films/28845-the-andromeda-strain', year: 1971 },
+  { title: 'The Time Machine', url: 'https://www.criterion.com/films/29517-the-time-machine', year: 1960 },
+  { title: 'War of the Worlds', url: 'https://www.criterion.com/films/28997-the-war-of-the-worlds', year: 1953, aliases: ['The War of the Worlds'] },
+  { title: 'The Incredible Shrinking Man', url: 'https://www.criterion.com/films/29506-the-incredible-shrinking-man', year: 1957 },
+  { title: 'Invasion of the Body Snatchers', url: 'https://www.criterion.com/films/360-invasion-of-the-body-snatchers', year: 1956 },
+  { title: 'Naked Lunch', url: 'https://www.criterion.com/films/485-naked-lunch', year: 1991 },
+  { title: 'The Man Who Fell to Earth', url: 'https://www.criterion.com/films/28730-the-man-who-fell-to-earth', year: 1976 },
+  { title: 'Nineteen Eighty-Four', url: 'https://www.criterion.com/films/29123-nineteen-eighty-four', year: 1984, aliases: ['1984'] },
+  { title: 'On the Silver Globe', url: 'https://www.criterion.com/films/29019-on-the-silver-globe', year: 1988 },
+  { title: 'Fantastic Planet', url: 'https://www.criterion.com/films/310-fantastic-planet', year: 1973, aliases: ['La Planète sauvage'] },
+  { title: 'Things to Come', url: 'https://www.criterion.com/films/29149-things-to-come', year: 1936 },
+  { title: 'Village of the Damned', url: 'https://www.criterion.com/films/29507-village-of-the-damned', year: 1960 },
+  { title: 'When Worlds Collide', url: 'https://www.criterion.com/films/29511-when-worlds-collide', year: 1951 },
   
   // Cronenberg SF Films
-  { title: 'Videodrome', url: 'https://www.criterion.com/films/227-videodrome' },
-  { title: 'Scanners', url: 'https://www.criterion.com/films/652-scanners' },
-  { title: 'The Fly', url: 'https://www.criterion.com/films/28655-the-fly' },
-  { title: 'eXistenZ', url: 'https://www.criterion.com/films/28936-existenz' },
-  { title: 'Dead Ringers', url: 'https://www.criterion.com/films/28654-dead-ringers' },
-  { title: 'Crimes of the Future', url: 'https://www.criterion.com/films/31156-crimes-of-the-future' },
+  { title: 'Videodrome', url: 'https://www.criterion.com/films/227-videodrome', year: 1983 },
+  { title: 'Scanners', url: 'https://www.criterion.com/films/652-scanners', year: 1981 },
+  { title: 'The Fly', url: 'https://www.criterion.com/films/28655-the-fly', year: 1986 },
+  { title: 'eXistenZ', url: 'https://www.criterion.com/films/28936-existenz', year: 1999, aliases: ['Existenz'] },
+  { title: 'Dead Ringers', url: 'https://www.criterion.com/films/28654-dead-ringers', year: 1988 },
+  { title: 'Crimes of the Future', url: 'https://www.criterion.com/films/31156-crimes-of-the-future', year: 2022 },
   
   // Other Criterion SF
-  { title: 'RoboCop', url: 'https://www.criterion.com/films/27839-robocop' },
-  { title: 'Brazil', url: 'https://www.criterion.com/films/216-brazil' },
-  { title: '12 Monkeys', url: 'https://www.criterion.com/films/29001-12-monkeys' },
-  { title: 'La Jetée', url: 'https://www.criterion.com/films/275-la-jetee' },
-  { title: 'Godzilla', url: 'https://www.criterion.com/films/332-godzilla' },
-  { title: 'Repo Man', url: 'https://www.criterion.com/films/27651-repo-man' },
-  { title: 'Tetsuo: The Iron Man', url: 'https://www.criterion.com/films/28671-tetsuo-the-iron-man' },
-  { title: 'World on a Wire', url: 'https://www.criterion.com/films/27523-world-on-a-wire' },
-  { title: 'The Blob', url: 'https://www.criterion.com/films/27587-the-blob' },
-  { title: 'Alphaville', url: 'https://www.criterion.com/films/259-alphaville' },
-  { title: 'Seconds', url: 'https://www.criterion.com/films/27654-seconds' },
-  { title: 'Quatermass and the Pit', url: 'https://www.criterion.com/films/29010-quatermass-and-the-pit' },
-  { title: 'Silent Running', url: 'https://www.criterion.com/films/28737-silent-running' },
-  { title: 'Dark Star', url: 'https://www.criterion.com/films/28736-dark-star' },
-  { title: 'Phase IV', url: 'https://www.criterion.com/films/29008-phase-iv' },
-  { title: 'Eraserhead', url: 'https://www.criterion.com/films/29002-eraserhead' },
-  { title: 'Until the End of the World', url: 'https://www.criterion.com/films/29002-until-the-end-of-the-world' },
-  { title: 'Altered States', url: 'https://www.criterion.com/films/29506-altered-states' },
-  { title: 'The Dead Zone', url: 'https://www.criterion.com/films/28665-the-dead-zone' },
-  { title: 'Metropolis', url: 'https://www.criterion.com/films/292-metropolis' },
-  { title: 'Dark City', url: 'https://www.criterion.com/films/29100-dark-city' },
-  { title: 'Forbidden Planet', url: 'https://www.criterion.com/films/29515-forbidden-planet' },
-  { title: 'The Day the Earth Stood Still', url: 'https://www.criterion.com/films/29520-the-day-the-earth-stood-still' },
-  { title: 'It Came from Outer Space', url: 'https://www.criterion.com/films/29518-it-came-from-outer-space' },
-  { title: 'Possession', url: 'https://www.criterion.com/films/29003-possession' },
-  { title: 'Safe', url: 'https://www.criterion.com/films/27657-safe' },
-  { title: 'Alien', url: 'https://www.criterion.com/films/29516-alien' },
+  { title: 'RoboCop', url: 'https://www.criterion.com/films/27839-robocop', year: 1987 },
+  { title: 'Brazil', url: 'https://www.criterion.com/films/216-brazil', year: 1985 },
+  { title: '12 Monkeys', url: 'https://www.criterion.com/films/29001-12-monkeys', year: 1995, aliases: ['Twelve Monkeys'] },
+  { title: 'La Jetée', url: 'https://www.criterion.com/films/275-la-jetee', year: 1962, aliases: ['La Jetee'] },
+  { title: 'Godzilla', url: 'https://www.criterion.com/films/332-godzilla', year: 1954, aliases: ['Gojira'] },
+  { title: 'Repo Man', url: 'https://www.criterion.com/films/27651-repo-man', year: 1984 },
+  { title: 'Tetsuo: The Iron Man', url: 'https://www.criterion.com/films/28671-tetsuo-the-iron-man', year: 1989, aliases: ['Tetsuo'] },
+  { title: 'World on a Wire', url: 'https://www.criterion.com/films/27523-world-on-a-wire', year: 1973, aliases: ['Welt am Draht'] },
+  { title: 'The Blob', url: 'https://www.criterion.com/films/27587-the-blob', year: 1958 },
+  { title: 'Alphaville', url: 'https://www.criterion.com/films/259-alphaville', year: 1965 },
+  { title: 'Seconds', url: 'https://www.criterion.com/films/27654-seconds', year: 1966 },
+  { title: 'Quatermass and the Pit', url: 'https://www.criterion.com/films/29010-quatermass-and-the-pit', year: 1967 },
+  { title: 'Silent Running', url: 'https://www.criterion.com/films/28737-silent-running', year: 1972 },
+  { title: 'Dark Star', url: 'https://www.criterion.com/films/28736-dark-star', year: 1974 },
+  { title: 'Phase IV', url: 'https://www.criterion.com/films/29008-phase-iv', year: 1974 },
+  { title: 'Eraserhead', url: 'https://www.criterion.com/films/29002-eraserhead', year: 1977 },
+  { title: 'Until the End of the World', url: 'https://www.criterion.com/films/29002-until-the-end-of-the-world', year: 1991, aliases: ['Bis ans Ende der Welt'] },
+  { title: 'Altered States', url: 'https://www.criterion.com/films/29506-altered-states', year: 1980 },
+  { title: 'The Dead Zone', url: 'https://www.criterion.com/films/28665-the-dead-zone', year: 1983 },
+  { title: 'Metropolis', url: 'https://www.criterion.com/films/292-metropolis', year: 1927 },
+  { title: 'Dark City', url: 'https://www.criterion.com/films/29100-dark-city', year: 1998 },
+  { title: 'Forbidden Planet', url: 'https://www.criterion.com/films/29515-forbidden-planet', year: 1956 },
+  { title: 'The Day the Earth Stood Still', url: 'https://www.criterion.com/films/29520-the-day-the-earth-stood-still', year: 1951 },
+  { title: 'It Came from Outer Space', url: 'https://www.criterion.com/films/29518-it-came-from-outer-space', year: 1953 },
+  { title: 'Possession', url: 'https://www.criterion.com/films/29003-possession', year: 1981 },
+  { title: 'Safe', url: 'https://www.criterion.com/films/27657-safe', year: 1995 },
+  { title: 'Alien', url: 'https://www.criterion.com/films/29516-alien', year: 1979 },
 ];
 
 /**
@@ -89,72 +127,92 @@ export const CRITERION_SF_FILMS: { title: string; url?: string }[] = [
  * Last updated: December 2024
  * Only includes SF films that are book adaptations or original SF works
  */
-export const ARROW_SF_FILMS: { title: string; url?: string }[] = [
+export const ARROW_SF_FILMS: CatalogFilm[] = [
   // Major Book Adaptations
-  { title: 'The Thing', url: 'https://www.arrowfilms.com/p/the-thing-blu-ray/11536071/' },
-  { title: 'Dune', url: 'https://www.arrowfilms.com/p/dune-4k-uhd/13324926/' },
-  { title: 'The Andromeda Strain', url: 'https://www.arrowfilms.com/p/the-andromeda-strain-blu-ray/12087616/' },
-  { title: 'The Incredible Shrinking Man', url: 'https://www.arrowfilms.com/p/the-incredible-shrinking-man-blu-ray/11536064/' },
-  { title: 'Slaughterhouse-Five', url: 'https://www.arrowfilms.com/p/slaughterhouse-five-blu-ray/11483546/' },
-  { title: 'Battle Royale', url: 'https://www.arrowfilms.com/p/battle-royale-dvd/10851177/' },
-  { title: 'Aniara', url: 'https://www.arrowfilms.com/p/aniara-blu-ray/12237636/' },
+  { title: 'The Thing', url: 'https://www.arrowfilms.com/p/the-thing-blu-ray/11536071/', year: 1982 },
+  { title: 'Dune', url: 'https://www.arrowfilms.com/p/dune-4k-uhd/13324926/', year: 1984 },
+  { title: 'The Andromeda Strain', url: 'https://www.arrowfilms.com/p/the-andromeda-strain-blu-ray/12087616/', year: 1971 },
+  { title: 'The Incredible Shrinking Man', url: 'https://www.arrowfilms.com/p/the-incredible-shrinking-man-blu-ray/11536064/', year: 1957 },
+  { title: 'Slaughterhouse-Five', url: 'https://www.arrowfilms.com/p/slaughterhouse-five-blu-ray/11483546/', year: 1972, aliases: ['Slaughterhouse Five'] },
+  { title: 'Battle Royale', url: 'https://www.arrowfilms.com/p/battle-royale-dvd/10851177/', year: 2000, aliases: ['Batoru rowaiaru'] },
+  { title: 'Aniara', url: 'https://www.arrowfilms.com/p/aniara-blu-ray/12237636/', year: 2018 },
   
   // Other Arrow SF
-  { title: 'Videodrome', url: 'https://www.arrowfilms.com/p/videodrome-blu-ray/11174916/' },
-  { title: 'Demolition Man', url: 'https://www.arrowfilms.com/p/4k/demolition-man-4k-ultra-hd/16288117/' },
-  { title: 'Donnie Darko', url: 'https://www.arrowfilms.com/p/donnie-darko-blu-ray/11371348/' },
-  { title: '12 Monkeys', url: 'https://www.arrowfilms.com/p/12-monkeys-blu-ray/11836816/' },
-  { title: 'Rollerball', url: 'https://www.arrowfilms.com/p/rollerball-blu-ray/11070126/' },
-  { title: 'The Stuff', url: 'https://www.arrowfilms.com/p/the-stuff-blu-ray/11488922/' },
-  { title: 'Mega Time Squad', url: 'https://www.arrowfilms.com/p/mega-time-squad-blu-ray/12053059/' },
-  { title: 'Burst City', url: 'https://www.arrowfilms.com/p/burst-city-blu-ray/12688896/' },
-  { title: 'Terra Formars', url: 'https://www.arrowfilms.com/p/terra-formars-blu-ray/12032961/' },
-  { title: 'Bullet Ballet', url: 'https://www.arrowfilms.com/p/bullet-ballet-blu-ray/10853083/' },
-  { title: 'In the Aftermath', url: 'https://www.arrowfilms.com/p/in-the-aftermath-blu-ray/12053057/' },
-  { title: 'The Invisible Man Appears', url: 'https://www.arrowfilms.com/p/the-invisible-man-appears-the-invisible-man-vs-the-human-fly-blu-ray/12767969/' },
-  { title: 'Tomorrow I\'ll Wake Up and Scald Myself with Tea', url: 'https://www.arrowfilms.com/p/tomorrow-ill-wake-up-and-scald-myself-with-tea-dvd/12771563/' },
+  { title: 'Videodrome', url: 'https://www.arrowfilms.com/p/videodrome-blu-ray/11174916/', year: 1983 },
+  { title: 'Demolition Man', url: 'https://www.arrowfilms.com/p/4k/demolition-man-4k-ultra-hd/16288117/', year: 1993 },
+  { title: 'Donnie Darko', url: 'https://www.arrowfilms.com/p/donnie-darko-blu-ray/11371348/', year: 2001 },
+  { title: '12 Monkeys', url: 'https://www.arrowfilms.com/p/12-monkeys-blu-ray/11836816/', year: 1995, aliases: ['Twelve Monkeys'] },
+  { title: 'Rollerball', url: 'https://www.arrowfilms.com/p/rollerball-blu-ray/11070126/', year: 1975 },
+  { title: 'The Stuff', url: 'https://www.arrowfilms.com/p/the-stuff-blu-ray/11488922/', year: 1985 },
+  { title: 'Mega Time Squad', url: 'https://www.arrowfilms.com/p/mega-time-squad-blu-ray/12053059/', year: 2018 },
+  { title: 'Burst City', url: 'https://www.arrowfilms.com/p/burst-city-blu-ray/12688896/', year: 1982 },
+  { title: 'Terra Formars', url: 'https://www.arrowfilms.com/p/terra-formars-blu-ray/12032961/', year: 2016 },
+  { title: 'Bullet Ballet', url: 'https://www.arrowfilms.com/p/bullet-ballet-blu-ray/10853083/', year: 1998 },
+  { title: 'In the Aftermath', url: 'https://www.arrowfilms.com/p/in-the-aftermath-blu-ray/12053057/', year: 1988 },
+  { title: 'The Invisible Man Appears', url: 'https://www.arrowfilms.com/p/the-invisible-man-appears-the-invisible-man-vs-the-human-fly-blu-ray/12767969/', year: 1949 },
+  { title: 'Tomorrow I\'ll Wake Up and Scald Myself with Tea', url: 'https://www.arrowfilms.com/p/tomorrow-ill-wake-up-and-scald-myself-with-tea-dvd/12771563/', year: 1977 },
 ];
 
-// Check if a film is in the Criterion Collection
-export function getCriterionFilm(filmTitle: string): { title: string; url?: string } | null {
-  const normalizedTitle = filmTitle.toLowerCase().trim();
-  return CRITERION_SF_FILMS.find(film => {
-    const filmLower = film.title.toLowerCase();
-    return filmLower === normalizedTitle ||
-           normalizedTitle.includes(filmLower) ||
-           filmLower.includes(normalizedTitle);
-  }) || null;
+// ============= Safe Film Matching =============
+
+/**
+ * Find a Criterion film by title, with optional year disambiguation.
+ * Returns null if ambiguous (multiple matches without year to disambiguate).
+ */
+export function getCriterionFilm(filmTitle: string, year?: number | null): CatalogFilm | null {
+  const candidates = CRITERION_SF_FILMS.filter(film => matchesTitle(filmTitle, film));
+  
+  if (candidates.length === 0) return null;
+  if (candidates.length === 1) return candidates[0];
+  
+  // Multiple matches - try to disambiguate by year
+  if (year) {
+    const exactYear = candidates.find(c => c.year === year);
+    if (exactYear) return exactYear;
+  }
+  
+  // Ambiguous - return null to avoid false positive
+  return null;
 }
 
-// Check if a film is in Arrow Films
-export function getArrowFilm(filmTitle: string): { title: string; url?: string } | null {
-  const normalizedTitle = filmTitle.toLowerCase().trim();
-  return ARROW_SF_FILMS.find(film => {
-    const filmLower = film.title.toLowerCase();
-    return filmLower === normalizedTitle ||
-           normalizedTitle.includes(filmLower) ||
-           filmLower.includes(normalizedTitle);
-  }) || null;
+/**
+ * Find an Arrow film by title, with optional year disambiguation.
+ * Returns null if ambiguous (multiple matches without year to disambiguate).
+ */
+export function getArrowFilm(filmTitle: string, year?: number | null): CatalogFilm | null {
+  const candidates = ARROW_SF_FILMS.filter(film => matchesTitle(filmTitle, film));
+  
+  if (candidates.length === 0) return null;
+  if (candidates.length === 1) return candidates[0];
+  
+  // Multiple matches - try to disambiguate by year
+  if (year) {
+    const exactYear = candidates.find(c => c.year === year);
+    if (exactYear) return exactYear;
+  }
+  
+  // Ambiguous - return null to avoid false positive
+  return null;
 }
 
 // Legacy compatibility
-export function isCriterionFilm(filmTitle: string): boolean {
-  return getCriterionFilm(filmTitle) !== null;
+export function isCriterionFilm(filmTitle: string, year?: number | null): boolean {
+  return getCriterionFilm(filmTitle, year) !== null;
 }
 
-export function isArrowFilm(filmTitle: string): boolean {
-  return getArrowFilm(filmTitle) !== null;
+export function isArrowFilm(filmTitle: string, year?: number | null): boolean {
+  return getArrowFilm(filmTitle, year) !== null;
 }
 
 // Get purchase URL with fallback to search
-export function getCriterionPurchaseUrl(filmTitle: string): string {
-  const film = getCriterionFilm(filmTitle);
+export function getCriterionPurchaseUrl(filmTitle: string, year?: number | null): string {
+  const film = getCriterionFilm(filmTitle, year);
   if (film?.url) return film.url;
   return `https://www.criterion.com/search#stq=${encodeURIComponent(filmTitle)}`;
 }
 
-export function getArrowPurchaseUrl(filmTitle: string): string {
-  const film = getArrowFilm(filmTitle);
+export function getArrowPurchaseUrl(filmTitle: string, year?: number | null): string {
+  const film = getArrowFilm(filmTitle, year);
   if (film?.url) return film.url;
   return `https://www.arrowfilms.com/search?q=${encodeURIComponent(filmTitle)}`;
 }

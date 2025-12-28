@@ -143,11 +143,11 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const filteredAdaptations = React.useMemo(() => {
     let result = adaptations;
     
-    // Filter by mode - ONLY use verified lists, not database flags
+    // Filter by mode - ONLY use verified lists with year disambiguation
     if (filterMode === 'criterion') {
-      result = result.filter(film => getCriterionFilm(film.film_title) !== null);
+      result = result.filter(film => getCriterionFilm(film.film_title, film.film_year) !== null);
     } else if (filterMode === 'arrow') {
-      result = result.filter(film => getArrowFilm(film.film_title) !== null);
+      result = result.filter(film => getArrowFilm(film.film_title, film.film_year) !== null);
     }
     
     // Filter by search query
@@ -772,14 +772,14 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                 </div>
 
                 {/* Buy Physical Section - styled like book's publisher section */}
-                {(getCriterionFilm(selectedFilm.film_title) || getArrowFilm(selectedFilm.film_title)) && (
+                {(getCriterionFilm(selectedFilm.film_title, selectedFilm.film_year) || getArrowFilm(selectedFilm.film_title, selectedFilm.film_year)) && (
                   <div className="space-y-2">
                     <p className="text-slate-500 text-xs font-medium uppercase tracking-wider">Buy Physical</p>
                     <div className="flex gap-2 flex-wrap">
                       {/* Criterion Collection */}
-                      {getCriterionFilm(selectedFilm.film_title) && (
+                      {getCriterionFilm(selectedFilm.film_title, selectedFilm.film_year) && (
                         <a
-                          href={getCriterionPurchaseUrl(selectedFilm.film_title)}
+                          href={getCriterionPurchaseUrl(selectedFilm.film_title, selectedFilm.film_year)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-600/50 bg-slate-700/30 hover:bg-slate-700/50 hover:border-slate-500 transition-all group"
@@ -791,9 +791,9 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                       )}
 
                       {/* Arrow Films */}
-                      {getArrowFilm(selectedFilm.film_title) && (
+                      {getArrowFilm(selectedFilm.film_title, selectedFilm.film_year) && (
                         <a
-                          href={getArrowPurchaseUrl(selectedFilm.film_title)}
+                          href={getArrowPurchaseUrl(selectedFilm.film_title, selectedFilm.film_year)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 px-3 py-2 rounded-lg border border-red-600/30 bg-red-900/20 hover:bg-red-900/40 hover:border-red-500/50 transition-all group"
