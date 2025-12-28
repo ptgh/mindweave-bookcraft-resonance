@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Suspense, lazy, useEffect } from "react";
 import { EnhancedToaster } from "@/components/ui/enhanced-toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";

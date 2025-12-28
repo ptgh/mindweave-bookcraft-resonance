@@ -1,15 +1,15 @@
 // Authentication hook for Supabase session management
-import { useState, useEffect } from "react";
+import * as React from "react";
 import type { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 // Custom hook to manage authentication state
-export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+export function useAuth() {
+  const [user, setUser] = React.useState<User | null>(null);
+  const [session, setSession] = React.useState<Session | null>(null);
+  const [loading, setLoading] = React.useState(true);
 
-  useEffect(() => {
+  React.useEffect(() => {
     console.log('Auth hook initializing...');
     
     let isMounted = true;
@@ -78,4 +78,4 @@ export const useAuth = () => {
     loading,
     signOut
   };
-};
+}
