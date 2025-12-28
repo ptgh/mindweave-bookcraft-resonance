@@ -1,6 +1,7 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { requireAdminOrInternal, corsHeaders } from "../_shared/adminAuth.ts";
+import { requireAdminOrInternal, corsHeaders, json } from "../_shared/adminAuth.ts";
+
+const MAX_BOOKS = 100; // Sane limit to prevent runaway inserts
 
 interface CuratedBook {
   title: string;
@@ -8,7 +9,7 @@ interface CuratedBook {
   category: string;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -16,7 +17,12 @@ serve(async (req) => {
 
   // Require admin authorization
   const auth = await requireAdminOrInternal(req);
-  if (auth instanceof Response) return auth;
+  if (!auth.ok) {
+    return auth.error!;
+  }
+
+  console.log(`[populate-curated-books] Authorized - userId: ${auth.userId || 'internal'}`);
+
 
   try {
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
@@ -24,13 +30,10 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
     if (!lovableApiKey) {
-      return new Response(JSON.stringify({ 
+      return json({ 
         success: false, 
         error: 'LOVABLE_API_KEY not configured' 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      }, { status: 500 });
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -71,13 +74,10 @@ No markdown, no explanations, just the JSON array.`
 
     if (!response.ok) {
       console.error('Gemini API error:', response.status);
-      return new Response(JSON.stringify({ 
+      return json({ 
         success: false, 
         error: `AI API error: ${response.status}` 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      }, { status: 500 });
     }
 
     const data = await response.json();
@@ -106,35 +106,31 @@ No markdown, no explanations, just the JSON array.`
         throw new Error('Response is not an array');
       }
       
-      // Validate each book has required fields
-      books = books.filter(book => 
-        typeof book.title === 'string' && 
-        typeof book.author === 'string' && 
-        book.title.length > 0 && 
-        book.author.length > 0
-      );
+      // Validate each book has required fields and apply cap
+      books = books
+        .filter(book => 
+          typeof book.title === 'string' && 
+          typeof book.author === 'string' && 
+          book.title.trim().length > 0 && 
+          book.author.trim().length > 0
+        )
+        .slice(0, MAX_BOOKS); // Cap to prevent runaway inserts
       
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
       console.error('Raw content:', geminiContent.substring(0, 500));
-      return new Response(JSON.stringify({ 
+      return json({ 
         success: false, 
         error: 'Failed to parse AI response as valid JSON',
         details: parseError instanceof Error ? parseError.message : 'Parse error'
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      }, { status: 500 });
     }
 
     if (books.length === 0) {
-      return new Response(JSON.stringify({ 
+      return json({ 
         success: false, 
         error: 'No valid books found in AI response' 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      }, { status: 500 });
     }
 
     console.log(`Parsed ${books.length} books from AI response`);
@@ -173,25 +169,20 @@ No markdown, no explanations, just the JSON array.`
 
     console.log(`Population complete: ${booksAdded} added, ${booksSkipped} skipped`);
 
-    return new Response(JSON.stringify({
+    return json({
       success: true,
       stats: {
         booksAdded,
         booksSkipped,
         totalProcessed: books.length,
       }
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error('Error populating curated books:', error);
-    return new Response(JSON.stringify({
+    return json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    }, { status: 500 });
   }
 });
