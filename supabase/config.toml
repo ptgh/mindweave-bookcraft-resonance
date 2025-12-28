@@ -156,3 +156,6 @@ verify_jwt = false
 
 [functions.cache-watch-providers]
 verify_jwt = false
+
+[functions.enrich-imsdb-scripts]
+verify_jwt = false

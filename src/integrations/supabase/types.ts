@@ -1391,6 +1391,9 @@ export type Database = {
           notable_differences: string | null
           poster_url: string | null
           rotten_tomatoes_score: number | null
+          script_last_checked: string | null
+          script_source: string | null
+          script_url: string | null
           source: string | null
           streaming_availability: Json | null
           trailer_url: string | null
@@ -1423,6 +1426,9 @@ export type Database = {
           notable_differences?: string | null
           poster_url?: string | null
           rotten_tomatoes_score?: number | null
+          script_last_checked?: string | null
+          script_source?: string | null
+          script_url?: string | null
           source?: string | null
           streaming_availability?: Json | null
           trailer_url?: string | null
@@ -1455,6 +1461,9 @@ export type Database = {
           notable_differences?: string | null
           poster_url?: string | null
           rotten_tomatoes_score?: number | null
+          script_last_checked?: string | null
+          script_source?: string | null
+          script_url?: string | null
           source?: string | null
           streaming_availability?: Json | null
           trailer_url?: string | null

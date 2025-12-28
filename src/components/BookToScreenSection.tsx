@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Film, Book, Star, Calendar, Trophy, ExternalLink, Play, Loader2, X, Sparkles, Tv } from 'lucide-react';
+import { Film, Book, Star, Calendar, Trophy, ExternalLink, Play, Loader2, X, Sparkles, Tv, FileText } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -68,6 +68,9 @@ interface FilmAdaptation {
   // Book linking fields
   book_id?: string | null;
   match_confidence?: number | null;
+  // Script fields
+  script_url?: string | null;
+  script_source?: string | null;
 }
 
 interface BookToScreenSectionProps {
@@ -693,10 +696,18 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                   </button>
                 </div>
 
-                {/* AI-suggested badge */}
-                {film.source === 'ai_suggested' && (
-                  <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border/20">
-                    <span className="text-[10px] text-violet-400 font-medium">✨ AI Suggested</span>
+                {/* Badges row - AI suggested and Script */}
+                {(film.source === 'ai_suggested' || film.script_url) && (
+                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/20">
+                    {film.source === 'ai_suggested' && (
+                      <span className="text-[10px] text-violet-400 font-medium">✨ AI Suggested</span>
+                    )}
+                    {film.script_url && (
+                      <span className="inline-flex items-center gap-1 text-[10px] text-cyan-400 font-medium bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">
+                        <FileText className="w-3 h-3" />
+                        Script
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -1022,6 +1033,18 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                 >
                   Close
                 </button>
+                {/* Read Screenplay button - only when script_url exists */}
+                {selectedFilm.script_url && (
+                  <a
+                    href={selectedFilm.script_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 hover:text-cyan-300 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Read Screenplay
+                  </a>
+                )}
                 {/* Only show View Book button for adaptations, not original screenplays */}
                 {selectedFilm.adaptation_type !== 'original' && (
                   <button 
