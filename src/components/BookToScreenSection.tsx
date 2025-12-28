@@ -13,6 +13,7 @@ import { DirectorPopup } from '@/components/DirectorPopup';
 import { ScifiAuthor } from '@/services/scifiAuthorsService';
 import { MediaImage } from '@/components/ui/media-image';
 import { preloadImages, getHighQualityDisplayUrl } from '@/utils/performance';
+import { cleanPersonName, truncateWithBreak } from '@/utils/textCleaners';
 import { 
   getYouTubeSearchUrl, 
   extractYouTubeId, 
@@ -110,31 +111,8 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const loadMoreRef = useRef<HTMLDivElement>(null);
   // Trailer is now sourced from film.trailer_url (no on-demand fetch)
 
-  // Clean author names - remove encoding issues and truncate for display
-  const cleanAuthorName = (author: string): string => {
-    // Remove Bengali/other script characters and clean up common AI formatting issues
-    return author
-      .replace(/[\u0980-\u09FF]+/g, '') // Remove Bengali characters
-      .replace(/\s+(or|and|,)\s+/gi, ', ') // Normalize separators
-      .replace(/\s*\([^)]*\)\s*/g, ' ') // Remove parenthetical notes
-      .replace(/\s+/g, ' ') // Clean up extra spaces
-      .trim();
-  };
-
-  const truncateAuthors = (author: string, maxLength: number = 30): { display: string; full: string } => {
-    const cleaned = cleanAuthorName(author);
-    if (cleaned.length <= maxLength) {
-      return { display: cleaned, full: cleaned };
-    }
-    // Find a good break point (comma or space)
-    const breakPoint = cleaned.lastIndexOf(',', maxLength) > 10 
-      ? cleaned.lastIndexOf(',', maxLength) 
-      : cleaned.lastIndexOf(' ', maxLength);
-    return {
-      display: cleaned.substring(0, breakPoint > 10 ? breakPoint : maxLength) + '...',
-      full: cleaned
-    };
-  };
+  // Use centralized text cleaners
+  const truncateAuthors = (author: string, maxLength: number = 20) => truncateWithBreak(author, maxLength);
 
   // Check if user is admin on mount
   useEffect(() => {
@@ -160,7 +138,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
         
         const mapped: FilmAdaptation[] = (data || []).map(item => ({
           ...item,
-          book_author: cleanAuthorName(item.book_author), // Clean on fetch
+          book_author: cleanPersonName(item.book_author), // Clean on fetch
           streaming_availability: typeof item.streaming_availability === 'object' && item.streaming_availability !== null
             ? item.streaming_availability as Record<string, string>
             : null,

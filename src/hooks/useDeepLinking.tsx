@@ -1,5 +1,6 @@
 
 import { useState, useCallback, useMemo } from 'react';
+import { normalizeForMatching } from '@/utils/textCleaners';
 
 export interface DeepLinkInfo {
   type: 'google';
@@ -75,9 +76,9 @@ export const useDeepLinking = () => {
     }
     // Fallback: Generate search URL if we have title and author
     else if (title && author && title.length > 2 && author.length > 2) {
-      // Create a more targeted search query
-      const cleanTitle = title.replace(/[^\w\s]/g, '').trim();
-      const cleanAuthor = author.replace(/[^\w\s]/g, '').trim();
+      // Create a more targeted search query using centralized cleaners
+      const cleanTitle = normalizeForMatching(title);
+      const cleanAuthor = normalizeForMatching(author);
       const query = encodeURIComponent(`"${cleanTitle}" "${cleanAuthor}"`);
       const searchUrl = `https://books.google.com/books?q=${query}&source=gbs_navlinks_s`;
       console.log('Generated search URL:', searchUrl);
