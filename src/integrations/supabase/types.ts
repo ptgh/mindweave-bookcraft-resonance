@@ -1393,6 +1393,9 @@ export type Database = {
           streaming_availability: Json | null
           trailer_url: string | null
           updated_at: string | null
+          watch_providers: Json | null
+          watch_providers_region: string | null
+          watch_providers_updated_at: string | null
         }
         Insert: {
           adaptation_type?: string | null
@@ -1420,6 +1423,9 @@ export type Database = {
           streaming_availability?: Json | null
           trailer_url?: string | null
           updated_at?: string | null
+          watch_providers?: Json | null
+          watch_providers_region?: string | null
+          watch_providers_updated_at?: string | null
         }
         Update: {
           adaptation_type?: string | null
@@ -1447,6 +1453,9 @@ export type Database = {
           streaming_availability?: Json | null
           trailer_url?: string | null
           updated_at?: string | null
+          watch_providers?: Json | null
+          watch_providers_region?: string | null
+          watch_providers_updated_at?: string | null
         }
         Relationships: []
       }
