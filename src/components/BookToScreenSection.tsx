@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Film, Book, Star, Calendar, Trophy, ExternalLink, Play, Loader2, X, Sparkles, Tv, FileText } from 'lucide-react';
+import { Film, Book, Star, Calendar, Trophy, ExternalLink, Play, Loader2, X, Sparkles, Tv, FileText, Search, Database, Check, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -73,6 +75,17 @@ interface BookToScreenSectionProps {
   searchQuery?: string;
 }
 
+interface ExternalFilmResult {
+  tmdb_id: number;
+  title: string;
+  year: number | null;
+  overview: string;
+  poster_url: string | null;
+  rating: number;
+  in_collection: boolean;
+  just_added?: boolean;
+}
+
 const BATCH_SIZE = 12;
 
 export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({ 
@@ -96,6 +109,12 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const [modalProviders, setModalProviders] = useState<WatchProviders | null>(null);
   const [isLoadingProviders, setIsLoadingProviders] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  
+  // External search state
+  const [showExternalSearch, setShowExternalSearch] = useState(false);
+  const [externalResults, setExternalResults] = useState<ExternalFilmResult[]>([]);
+  const [isSearchingExternal, setIsSearchingExternal] = useState(false);
+  const [addingFilmId, setAddingFilmId] = useState<number | null>(null);
   const authorRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const directorRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -210,10 +229,87 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     }
   }, [visibleFilms]);
 
-  // Reset visible count when filters change
+  // Reset visible count and external search when filters change
   useEffect(() => {
     setVisibleCount(BATCH_SIZE);
+    setShowExternalSearch(false);
+    setExternalResults([]);
   }, [filterMode, searchQuery]);
+
+  // External TMDB search function
+  const searchExternal = async () => {
+    if (!searchQuery.trim() || searchQuery.length < 2) return;
+    
+    setIsSearchingExternal(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('search-external-films', {
+        body: { query: searchQuery }
+      });
+      
+      if (error) throw error;
+      setExternalResults(data.results || []);
+      setShowExternalSearch(true);
+    } catch (err) {
+      console.error('External search failed:', err);
+      toast.error('External search failed');
+    } finally {
+      setIsSearchingExternal(false);
+    }
+  };
+
+  // Add film from external results to collection
+  const addFilmToCollection = async (film: ExternalFilmResult) => {
+    setAddingFilmId(film.tmdb_id);
+    try {
+      const { data, error } = await supabase.functions.invoke('add-external-film', {
+        body: {
+          tmdb_id: film.tmdb_id,
+          title: film.title,
+          year: film.year,
+          poster_url: film.poster_url
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast.success(data.message);
+      
+      // Mark as added in results
+      setExternalResults(prev => 
+        prev.map(r => r.tmdb_id === film.tmdb_id ? { ...r, in_collection: true, just_added: true } : r)
+      );
+      
+      // Refresh the main list by refetching
+      const { data: refreshedData } = await supabase
+        .from('sf_film_adaptations')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (refreshedData) {
+        const mapped: FilmAdaptation[] = refreshedData.map(item => ({
+          ...item,
+          book_author: cleanPersonName(item.book_author),
+          streaming_availability: typeof item.streaming_availability === 'object' && item.streaming_availability !== null
+            ? item.streaming_availability as Record<string, string>
+            : null,
+          awards: Array.isArray(item.awards) ? item.awards as Array<{ name: string; year: number }> : null,
+          watch_providers: typeof item.watch_providers === 'object' && item.watch_providers !== null
+            ? item.watch_providers as WatchProviders
+            : null,
+        }));
+        setAdaptations(mapped);
+      }
+      
+    } catch (err: any) {
+      if (err.message?.includes('already in collection')) {
+        toast.info('Film already in collection');
+      } else {
+        toast.error('Failed to add film');
+      }
+    } finally {
+      setAddingFilmId(null);
+    }
+  };
 
   // Infinite scroll observer
   useEffect(() => {
@@ -449,15 +545,33 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     );
   }
 
-  if (filteredAdaptations.length === 0) {
+  if (filteredAdaptations.length === 0 && !showExternalSearch) {
     return (
-      <div className={cn("text-center py-12", className)}>
-        <Film className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
-        <p className="text-muted-foreground">
-          {searchQuery 
-            ? `No films found matching "${searchQuery}"`
-            : 'No film adaptations found'}
-        </p>
+      <div className={cn("space-y-6", className)}>
+        <div className="text-center py-12">
+          <Film className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+          <p className="text-muted-foreground mb-4">
+            {searchQuery 
+              ? `No films found matching "${searchQuery}"`
+              : 'No film adaptations found'}
+          </p>
+          
+          {/* External search prompt for admins */}
+          {isAdmin && searchQuery.trim().length >= 2 && (
+            <Button 
+              onClick={searchExternal}
+              disabled={isSearchingExternal}
+              className="gap-2"
+            >
+              {isSearchingExternal ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Search className="w-4 h-4" />
+              )}
+              Search Film Database (TMDB)
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
@@ -472,6 +586,104 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
             <Badge variant="outline" className="text-xs border-amber-400/30 text-amber-400">
               {filteredAdaptations.length} Adaptations
             </Badge>
+          </div>
+        </div>
+      )}
+
+      {/* External Search Prompt - when no local results but admin */}
+      {isAdmin && searchQuery.trim().length >= 2 && filteredAdaptations.length === 0 && !showExternalSearch && (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground mb-3">No films found in collection for "{searchQuery}"</p>
+          <Button 
+            onClick={searchExternal}
+            disabled={isSearchingExternal}
+            className="gap-2"
+          >
+            {isSearchingExternal ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Search className="w-4 h-4" />
+            )}
+            Search Film Database (TMDB)
+          </Button>
+        </div>
+      )}
+
+      {/* External Search Results */}
+      {showExternalSearch && externalResults.length > 0 && (
+        <div className="mb-8 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-slate-200 flex items-center gap-2">
+              <Database className="w-5 h-5 text-blue-400" />
+              External Results for "{searchQuery}"
+            </h3>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => { setShowExternalSearch(false); setExternalResults([]); }}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {externalResults.map((film) => (
+              <div 
+                key={film.tmdb_id}
+                className="flex gap-3 p-3 bg-slate-900/50 rounded-lg border border-slate-700"
+              >
+                {film.poster_url ? (
+                  <img 
+                    src={film.poster_url} 
+                    alt={film.title}
+                    className="w-16 h-24 object-cover rounded"
+                  />
+                ) : (
+                  <div className="w-16 h-24 bg-slate-700 rounded flex items-center justify-center">
+                    <Film className="w-6 h-6 text-slate-500" />
+                  </div>
+                )}
+                
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium text-slate-200 truncate">
+                    {film.title} {film.year && `(${film.year})`}
+                  </h4>
+                  {film.rating > 0 && (
+                    <div className="flex items-center gap-1 text-xs text-amber-400 mt-1">
+                      <Star className="w-3 h-3 fill-current" />
+                      {film.rating.toFixed(1)}
+                    </div>
+                  )}
+                  <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                    {film.overview || 'No description available'}
+                  </p>
+                  
+                  <div className="mt-2">
+                    {film.in_collection ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-green-400">
+                        <Check className="w-3 h-3" />
+                        {film.just_added ? 'Just added!' : 'In collection'}
+                      </span>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => addFilmToCollection(film)}
+                        disabled={addingFilmId === film.tmdb_id}
+                        className="h-7 text-xs"
+                      >
+                        {addingFilmId === film.tmdb_id ? (
+                          <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                        ) : (
+                          <Plus className="w-3 h-3 mr-1" />
+                        )}
+                        Add to Collection
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

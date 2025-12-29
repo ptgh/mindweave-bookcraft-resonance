@@ -162,3 +162,9 @@ verify_jwt = false
 
 [functions.admin-count-films]
 verify_jwt = false
+
+[functions.search-external-films]
+verify_jwt = false
+
+[functions.add-external-film]
+verify_jwt = false
