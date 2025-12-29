@@ -9,6 +9,7 @@ interface AIRecommendation {
   year: number;
   director: string;
   reason: string;
+  type?: 'NEW' | 'REDISCOVERY';
 }
 
 // Helper for JSON responses with CORS
@@ -98,28 +99,73 @@ serve(async (req) => {
     const existingTitles = existingFilms?.map(f => f.film_title.toLowerCase()) || [];
     const existingTitlesStr = existingFilms?.map(f => f.film_title).join(', ') || '';
 
-const systemPrompt = `You are a science fiction film expert. Your task is to suggest classic SF book-to-film adaptations that would be interesting for a curated collection.
+const systemPrompt = `You have been doing an exceptional job curating this science fiction film collection — the suggestions so far have been excellent and the database has grown to ${existingFilms?.length || 0} quality films. 
 
-Focus on:
-- Classic and influential SF adaptations (1920s-2020s)
-- Films based on renowned SF literature
-- Critically acclaimed adaptations
-- Mix of well-known classics and hidden gems
-- Diverse range of directors and authors
+However, as the collection expands, finding genuinely new titles becomes harder. We need your help to dig deeper and uncover films that haven't yet been suggested. Keep processing the way you have been — your judgment on quality has been spot-on — but push further into overlooked corners of SF cinema.
 
-IMPORTANT: Use only English characters in your responses. Author names must be in English/Latin script only (e.g., "Isaac Asimov" not transliterated names). If there are multiple authors, separate with commas only.
+AUDIENCE:
+- Serious science fiction enthusiasts who value both literature and cinema
+- Appreciate critically acclaimed work, not just popular titles
+- English-speaking (UK, US, Australia, Canada)
 
-Existing films in collection (AVOID suggesting these): ${existingTitlesStr}`;
+STRICT REQUIREMENTS:
+- FEATURE FILMS ONLY — no TV series, no miniseries, no anthology episodes
+- English-language priority (80%), international films only if widely acclaimed and easily available in English (20%)
+- Films must have critical credibility (festival recognition, respected director, strong reviews, or cult classic status)
+- Popular films are welcome IF they have genuine merit
 
-    const userPrompt = `Suggest 6 science fiction film adaptations that are NOT already in the collection. For each, provide:
-1. Film title (exact title as commonly known)
-2. Book title (the source material)
-3. Author (of the book/source)
-4. Year of film release
-5. Director
-6. A brief reason why it's notable (1 sentence)
+QUALITY INDICATORS (at least one required):
+- Based on work by respected SF author (Asimov, Dick, Le Guin, Clarke, Bradbury, Vonnegut, Wells, Heinlein, etc.)
+- Directed by acclaimed filmmaker
+- Festival recognition or major award nominations
+- Strong critical reviews (not just box office success)
+- Recognized cult classic status
+- Significant influence on the genre
 
-Return ONLY a valid JSON array with this exact structure:
+CATEGORIES TO EXPLORE (dig deep here):
+- Overlooked 1960s-80s literary adaptations
+- Acclaimed indie SF films
+- British SF cinema
+- Recent prestige SF (A24, streaming originals with critical acclaim)
+- Lesser-known Philip K. Dick adaptations
+- Films based on SF short stories
+- Directorial passion projects adapting classic novels
+- Commonwealth SF (Australia, Canada, New Zealand)
+- Thoughtful 1990s-2000s SF that got lost in the blockbuster era
+
+AVOID:
+- TV series, miniseries, limited series (feature films only)
+- Films without critical credibility
+- Hard-to-find international films without English availability
+
+IMPORTANT: Use only English/Latin characters in your responses.
+
+EXISTING FILMS IN COLLECTION — DO NOT SUGGEST THESE (${existingFilms?.length || 0} total):
+${existingTitlesStr}`;
+
+    const userPrompt = `Suggest 6 science fiction FEATURE FILMS (no TV series) based on books or short stories.
+
+Your curation has been excellent — the collection is now ${existingFilms?.length || 0} films strong. We need you to dig deeper to find quality titles not yet included.
+
+Audience: Discerning SF book lovers and cinephiles who value quality and credibility.
+
+Requirements:
+- FEATURE FILMS ONLY (theatrical or streaming feature, 70+ minutes)
+- No TV series, miniseries, or anthology episodes
+- Prioritize English-language (max 1 international film, must be acclaimed and available in English)
+- Each film must have critical merit (awards, respected director, strong reviews, or cult status)
+- Popular films welcome if genuinely good
+- 4-5 NEW films not yet in the collection
+- 1-2 REDISCOVERY picks from existing collection
+
+Push into overlooked areas:
+- 1970s-80s adaptations that aren't the obvious picks
+- Indie SF with theatrical or streaming release
+- British and Commonwealth cinema
+- Recent prestige SF (2015-2024)
+- Short story adaptations
+
+Return ONLY valid JSON:
 [
   {
     "film_title": "...",
@@ -127,9 +173,12 @@ Return ONLY a valid JSON array with this exact structure:
     "author": "...",
     "year": 1999,
     "director": "...",
-    "reason": "..."
+    "reason": "Why it has merit (awards, critical reception, influence, quality)",
+    "type": "NEW" or "REDISCOVERY"
   }
-]`;
+]
+
+Use only English/Latin characters for all names.`;
 
     console.log('Calling Lovable AI for film recommendations...');
 
