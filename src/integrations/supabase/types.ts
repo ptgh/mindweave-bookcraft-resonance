@@ -1497,6 +1497,8 @@ export type Database = {
           script_url: string | null
           source: string | null
           streaming_availability: Json | null
+          tmdb_id: number | null
+          tmdb_rating: number | null
           trailer_url: string | null
           updated_at: string | null
           watch_providers: Json | null
@@ -1532,6 +1534,8 @@ export type Database = {
           script_url?: string | null
           source?: string | null
           streaming_availability?: Json | null
+          tmdb_id?: number | null
+          tmdb_rating?: number | null
           trailer_url?: string | null
           updated_at?: string | null
           watch_providers?: Json | null
@@ -1567,6 +1571,8 @@ export type Database = {
           script_url?: string | null
           source?: string | null
           streaming_availability?: Json | null
+          tmdb_id?: number | null
+          tmdb_rating?: number | null
           trailer_url?: string | null
           updated_at?: string | null
           watch_providers?: Json | null
