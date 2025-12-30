@@ -23,13 +23,14 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { tmdb_id, title, year, poster_url } = await req.json();
+    const { tmdb_id, title, year, poster_url, preview_only } = await req.json();
 
     if (!tmdb_id || !title) {
       return json(400, { error: 'tmdb_id and title required' });
     }
 
-    console.log(`[add-external-film] Adding film: "${title}" (${year}) - TMDB ID: ${tmdb_id}`);
+    const isPreviewMode = preview_only === true;
+    console.log(`[add-external-film] ${isPreviewMode ? 'Previewing' : 'Adding'} film: "${title}" (${year}) - TMDB ID: ${tmdb_id}`);
 
     const supabase = createServiceClient();
 
@@ -133,6 +134,20 @@ If UNCERTAIN, make your best assessment based on your knowledge. Respond ONLY wi
       }
     } catch (aiError) {
       console.warn('[add-external-film] AI request error:', aiError);
+    }
+
+    // If preview mode, return the book info without inserting
+    if (isPreviewMode) {
+      console.log('[add-external-film] Preview mode - returning book info without inserting');
+      return json(200, {
+        preview: true,
+        director: director,
+        book_info: bookInfo,
+        tmdb_details: {
+          imdb_id: details.imdb_id,
+          rating: details.vote_average,
+        }
+      });
     }
 
     // Insert into database
