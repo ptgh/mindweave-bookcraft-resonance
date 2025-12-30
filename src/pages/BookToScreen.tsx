@@ -6,7 +6,8 @@ import { BookToScreenSelector, FilterMode } from '@/components/BookToScreenSelec
 import { supabase } from '@/integrations/supabase/client';
 import { useEnhancedToast } from '@/hooks/use-enhanced-toast';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, Database, Loader2 } from 'lucide-react';
 import { gsap } from 'gsap';
 import { cleanPersonName, truncateWithBreak } from '@/utils/textCleaners';
 
@@ -31,6 +32,8 @@ const BookToScreen: React.FC = () => {
   const [addedFilms, setAddedFilms] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isSearchingTMDB, setIsSearchingTMDB] = useState(false);
+  const [triggerExternalSearch, setTriggerExternalSearch] = useState(0);
   const { toast } = useEnhancedToast();
   const aiPanelRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -98,6 +101,18 @@ const BookToScreen: React.FC = () => {
     }
   }, [toast]);
 
+  const handleSearchTMDB = () => {
+    if (!searchQuery.trim() || searchQuery.length < 2) {
+      toast({
+        title: 'Enter Search Term',
+        description: 'Please enter at least 2 characters to search',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setTriggerExternalSearch(prev => prev + 1);
+  };
+
   return (
     <>
       <SEOHead 
@@ -117,18 +132,37 @@ const BookToScreen: React.FC = () => {
             </p>
           </div>
 
-          {/* Search Bar */}
-          <div className="max-w-md mx-auto mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search films, books, authors, directors..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-muted/20 border-border/30 focus:border-amber-400/50"
-              />
+          {/* Search Bar with TMDB Button */}
+          <div className="max-w-lg mx-auto mb-6">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search films, books, authors, directors..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && searchQuery.length >= 2 && handleSearchTMDB()}
+                  className="pl-10 bg-muted/20 border-border/30 focus:border-amber-400/50"
+                />
+              </div>
+              {searchQuery.trim().length >= 2 && (
+                <Button
+                  onClick={handleSearchTMDB}
+                  disabled={isSearchingTMDB}
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs border-blue-500/30 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 whitespace-nowrap"
+                >
+                  {isSearchingTMDB ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Database className="w-3.5 h-3.5" />
+                  )}
+                  TMDB
+                </Button>
+              )}
             </div>
           </div>
 
@@ -194,6 +228,8 @@ const BookToScreen: React.FC = () => {
             showTitle={false} 
             filterMode="all" 
             searchQuery={searchQuery}
+            triggerExternalSearch={triggerExternalSearch}
+            onSearchingChange={setIsSearchingTMDB}
           />
         </main>
       </div>

@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { createPortal } from 'react-dom';
 import { gsap } from 'gsap';
 import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
+import { AddFilmPreviewModal } from '@/components/AddFilmPreviewModal';
 import { EnrichedPublisherBook } from '@/services/publisherService';
 import { AuthorPopup } from '@/components/AuthorPopup';
 import { DirectorPopup } from '@/components/DirectorPopup';
@@ -73,6 +74,8 @@ interface BookToScreenSectionProps {
   showTitle?: boolean;
   filterMode?: FilterMode;
   searchQuery?: string;
+  triggerExternalSearch?: number; // Increment to trigger search
+  onSearchingChange?: (isSearching: boolean) => void;
 }
 
 interface ExternalFilmResult {
@@ -92,7 +95,9 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   className, 
   showTitle = true,
   filterMode = 'all',
-  searchQuery = ''
+  searchQuery = '',
+  triggerExternalSearch = 0,
+  onSearchingChange,
 }) => {
   const [adaptations, setAdaptations] = useState<FilmAdaptation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -114,7 +119,8 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const [showExternalSearch, setShowExternalSearch] = useState(false);
   const [externalResults, setExternalResults] = useState<ExternalFilmResult[]>([]);
   const [isSearchingExternal, setIsSearchingExternal] = useState(false);
-  const [addingFilmId, setAddingFilmId] = useState<number | null>(null);
+  const [filmToPreview, setFilmToPreview] = useState<ExternalFilmResult | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const authorRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const directorRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -257,59 +263,54 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     }
   };
 
-  // Add film from external results to collection
-  const addFilmToCollection = async (film: ExternalFilmResult) => {
-    setAddingFilmId(film.tmdb_id);
-    try {
-      const { data, error } = await supabase.functions.invoke('add-external-film', {
-        body: {
-          tmdb_id: film.tmdb_id,
-          title: film.title,
-          year: film.year,
-          poster_url: film.poster_url
-        }
-      });
-      
-      if (error) throw error;
-      
-      toast.success(data.message);
-      
+  // Open preview modal for a film
+  const openPreviewModal = (film: ExternalFilmResult) => {
+    setFilmToPreview(film);
+    setShowPreviewModal(true);
+  };
+
+  // Handle successful add from preview modal
+  const handleFilmAdded = async () => {
+    if (filmToPreview) {
       // Mark as added in results
       setExternalResults(prev => 
-        prev.map(r => r.tmdb_id === film.tmdb_id ? { ...r, in_collection: true, just_added: true } : r)
+        prev.map(r => r.tmdb_id === filmToPreview.tmdb_id ? { ...r, in_collection: true, just_added: true } : r)
       );
-      
-      // Refresh the main list by refetching
-      const { data: refreshedData } = await supabase
-        .from('sf_film_adaptations')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (refreshedData) {
-        const mapped: FilmAdaptation[] = refreshedData.map(item => ({
-          ...item,
-          book_author: cleanPersonName(item.book_author),
-          streaming_availability: typeof item.streaming_availability === 'object' && item.streaming_availability !== null
-            ? item.streaming_availability as Record<string, string>
-            : null,
-          awards: Array.isArray(item.awards) ? item.awards as Array<{ name: string; year: number }> : null,
-          watch_providers: typeof item.watch_providers === 'object' && item.watch_providers !== null
-            ? item.watch_providers as WatchProviders
-            : null,
-        }));
-        setAdaptations(mapped);
-      }
-      
-    } catch (err: any) {
-      if (err.message?.includes('already in collection')) {
-        toast.info('Film already in collection');
-      } else {
-        toast.error('Failed to add film');
-      }
-    } finally {
-      setAddingFilmId(null);
+    }
+    
+    // Refresh the main list by refetching
+    const { data: refreshedData } = await supabase
+      .from('sf_film_adaptations')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (refreshedData) {
+      const mapped: FilmAdaptation[] = refreshedData.map(item => ({
+        ...item,
+        book_author: cleanPersonName(item.book_author),
+        streaming_availability: typeof item.streaming_availability === 'object' && item.streaming_availability !== null
+          ? item.streaming_availability as Record<string, string>
+          : null,
+        awards: Array.isArray(item.awards) ? item.awards as Array<{ name: string; year: number }> : null,
+        watch_providers: typeof item.watch_providers === 'object' && item.watch_providers !== null
+          ? item.watch_providers as WatchProviders
+          : null,
+      }));
+      setAdaptations(mapped);
     }
   };
+
+  // Trigger external search when prop changes
+  useEffect(() => {
+    if (triggerExternalSearch > 0 && searchQuery.trim().length >= 2) {
+      searchExternal();
+    }
+  }, [triggerExternalSearch]);
+
+  // Notify parent of search state changes
+  useEffect(() => {
+    onSearchingChange?.(isSearchingExternal);
+  }, [isSearchingExternal, onSearchingChange]);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -668,15 +669,10 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => addFilmToCollection(film)}
-                        disabled={addingFilmId === film.tmdb_id}
+                        onClick={() => openPreviewModal(film)}
                         className="h-7 text-xs"
                       >
-                        {addingFilmId === film.tmdb_id ? (
-                          <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                        ) : (
-                          <Plus className="w-3 h-3 mr-1" />
-                        )}
+                        <Plus className="w-3 h-3 mr-1" />
                         Add to Collection
                       </Button>
                     )}
@@ -1227,6 +1223,15 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
             openFilmModal(film);
           }
         }}
+      />
+      <AddFilmPreviewModal
+        film={filmToPreview}
+        isOpen={showPreviewModal}
+        onClose={() => {
+          setShowPreviewModal(false);
+          setFilmToPreview(null);
+        }}
+        onAdded={handleFilmAdded}
       />
     </div>
   );
