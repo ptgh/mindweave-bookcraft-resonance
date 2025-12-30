@@ -1,4 +1,4 @@
-import { corsHeaders, json, requireAdminOrInternal, createServiceClient } from "../_shared/adminAuth.ts";
+import { corsHeaders, json, requireUser, createServiceClient } from "../_shared/adminAuth.ts";
 
 const TMDB_API_KEY = Deno.env.get('TMDB_API_KEY');
 
@@ -17,8 +17,8 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Require admin auth
-  const auth = await requireAdminOrInternal(req);
+  // Require authenticated user (not admin-only)
+  const auth = await requireUser(req);
   if (auth instanceof Response) return auth;
 
   if (!TMDB_API_KEY) {

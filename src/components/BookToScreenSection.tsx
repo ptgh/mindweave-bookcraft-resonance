@@ -556,8 +556,8 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
               : 'No film adaptations found'}
           </p>
           
-          {/* External search prompt for admins */}
-          {isAdmin && searchQuery.trim().length >= 2 && (
+          {/* External search prompt */}
+          {searchQuery.trim().length >= 2 && (
             <Button 
               onClick={searchExternal}
               disabled={isSearchingExternal}
@@ -590,8 +590,8 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
         </div>
       )}
 
-      {/* External Search Prompt - when no local results but admin */}
-      {isAdmin && searchQuery.trim().length >= 2 && filteredAdaptations.length === 0 && !showExternalSearch && (
+      {/* External Search Prompt - when no local results */}
+      {searchQuery.trim().length >= 2 && filteredAdaptations.length === 0 && !showExternalSearch && (
         <div className="text-center py-8">
           <p className="text-muted-foreground mb-3">No films found in collection for "{searchQuery}"</p>
           <Button 
