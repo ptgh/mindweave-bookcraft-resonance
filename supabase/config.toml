@@ -168,3 +168,6 @@ verify_jwt = false
 
 [functions.add-external-film]
 verify_jwt = false
+
+[functions.enrich-screenplay-data]
+verify_jwt = false

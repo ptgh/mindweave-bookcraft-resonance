@@ -10,7 +10,7 @@ import { createPortal } from 'react-dom';
 import { gsap } from 'gsap';
 import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
 import { AddFilmPreviewModal } from '@/components/AddFilmPreviewModal';
-import { OriginalScreenplayModal } from '@/components/OriginalScreenplayModal';
+
 import { EnrichedPublisherBook } from '@/services/publisherService';
 import { AuthorPopup } from '@/components/AuthorPopup';
 import { DirectorPopup } from '@/components/DirectorPopup';
@@ -122,8 +122,6 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const [isSearchingExternal, setIsSearchingExternal] = useState(false);
   const [filmToPreview, setFilmToPreview] = useState<ExternalFilmResult | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [showScreenplayModal, setShowScreenplayModal] = useState(false);
-  const [screenplayFilm, setScreenplayFilm] = useState<FilmAdaptation | null>(null);
   const authorRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const directorRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -416,11 +414,6 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   }, []);
 
   const openBookPreview = (film: FilmAdaptation) => {
-    // For original screenplays, there's no source book to preview
-    if (film.adaptation_type === 'original') {
-      return;
-    }
-
     // If film has a linked book_id, fetch the real publisher book
     if (film.book_id) {
       fetchLinkedBook(film.book_id).then(() => {
@@ -429,7 +422,23 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
       return;
     }
     
-    // Fallback: create synthetic book from film data
+    // For original screenplays, create a synthetic book with screenplay info
+    if (film.adaptation_type === 'original') {
+      const book: EnrichedPublisherBook = {
+        id: film.id,
+        title: film.film_title, // Use film title for original screenplays
+        author: film.book_author || film.director || 'Unknown Writer',
+        series_id: '',
+        created_at: new Date().toISOString(),
+        cover_url: undefined, // No book cover for screenplays
+        // Add screenplay context as editorial note
+        editorial_note: `Original screenplay for ${film.film_title} (${film.film_year || 'unknown year'})${film.director ? `. Directed by ${film.director}` : ''}.${film.script_url ? ' Script available on IMSDb.' : ''}`,
+      };
+      setSelectedBook(book);
+      return;
+    }
+    
+    // Fallback: create synthetic book from film adaptation data
     const book: EnrichedPublisherBook = {
       id: film.id,
       title: film.book_title,
@@ -711,14 +720,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                 <div className="flex gap-3">
                   {/* Book/Source Card with Cover */}
                   <button
-                    onClick={() => {
-                      if (film.adaptation_type === 'original') {
-                        setScreenplayFilm(film);
-                        setShowScreenplayModal(true);
-                      } else {
-                        openBookPreview(film);
-                      }
-                    }}
+                    onClick={() => openBookPreview(film)}
                     className={`flex-1 rounded-lg border transition-all text-left group overflow-hidden ${
                       film.adaptation_type === 'original'
                         ? 'bg-violet-500/10 hover:bg-violet-500/20 border-violet-500/30 hover:border-violet-400/50 cursor-pointer'
@@ -1242,17 +1244,6 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
           setFilmToPreview(null);
         }}
         onAdded={handleFilmAdded}
-      />
-      <OriginalScreenplayModal
-        isOpen={showScreenplayModal}
-        onClose={() => {
-          setShowScreenplayModal(false);
-          setScreenplayFilm(null);
-        }}
-        filmTitle={screenplayFilm?.film_title || ''}
-        director={screenplayFilm?.director || null}
-        year={screenplayFilm?.film_year || null}
-        writer={screenplayFilm?.book_author || undefined}
       />
     </div>
   );
