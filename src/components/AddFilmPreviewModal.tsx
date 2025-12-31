@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Film, Book, User, Loader2, Check, AlertCircle, Sparkles } from 'lucide-react';
+import { Database, Book, User, Loader2, Check, AlertCircle, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -121,7 +121,7 @@ export const AddFilmPreviewModal: React.FC<AddFilmPreviewModalProps> = ({
       <DialogContent className="sm:max-w-md bg-slate-900 border-slate-700">
         <DialogHeader>
           <DialogTitle className="text-slate-200 flex items-center gap-2">
-            <Film className="w-5 h-5 text-amber-400" />
+            <Database className="w-5 h-5 text-blue-400" />
             Add to Collection
           </DialogTitle>
         </DialogHeader>
@@ -137,7 +137,7 @@ export const AddFilmPreviewModal: React.FC<AddFilmPreviewModalProps> = ({
               />
             ) : (
               <div className="w-20 h-28 bg-slate-800 rounded-lg flex items-center justify-center">
-                <Film className="w-8 h-8 text-slate-600" />
+                <Database className="w-8 h-8 text-slate-600" />
               </div>
             )}
             <div className="flex-1">

@@ -33,10 +33,13 @@ Deno.serve(async (req) => {
       return json(400, { error: 'Query must be at least 2 characters' });
     }
 
-    console.log(`[search-external-films] Searching TMDB for: "${query}"`);
+    console.log(`[search-external-films] Searching TMDB for SF films: "${query}"`);
 
-    // Search TMDB
+    // Search TMDB with Science Fiction genre filter (genre_id 878)
     const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&include_adult=false`;
+    
+    // Also get genre list to filter results
+    const SF_GENRE_ID = 878; // TMDB Science Fiction genre ID
     
     const tmdbRes = await fetch(searchUrl);
     if (!tmdbRes.ok) {
@@ -46,8 +49,15 @@ Deno.serve(async (req) => {
     
     const tmdbData = await tmdbRes.json();
     
-    // Format results
-    const results: TMDBResult[] = tmdbData.results
+    // Filter to only Science Fiction films (genre_id 878)
+    const sfFilms = tmdbData.results.filter((film: any) => 
+      film.genre_ids?.includes(SF_GENRE_ID)
+    );
+    
+    console.log(`[search-external-films] Found ${tmdbData.results.length} total, ${sfFilms.length} are SF`);
+    
+    // Format results - only SF films
+    const results: TMDBResult[] = sfFilms
       .slice(0, 10)
       .map((film: any) => ({
         tmdb_id: film.id,
