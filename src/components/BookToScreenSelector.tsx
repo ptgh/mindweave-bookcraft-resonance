@@ -29,15 +29,15 @@ export const BookToScreenSelector: React.FC<BookToScreenSelectorProps> = ({
         </div>
       </div>
 
-      {/* AI Scan Button - matching size with All Films */}
+      {/* AI Scan Button - exact same container and sizing as All Films */}
       <div className="inline-flex items-center bg-muted/30 rounded-lg p-1 border border-border/30">
         <button
           onClick={onAIScan}
           disabled={isAILoading}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-gradient-to-r from-violet-500/20 to-fuchsia-500/20 text-violet-300 hover:from-violet-500/30 hover:to-fuchsia-500/30 hover:text-violet-200 transition-all border border-violet-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-violet-300 bg-violet-500/20 border border-violet-500/40 hover:bg-violet-500/30 hover:text-violet-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Sparkles className={`w-3.5 h-3.5 ${isAILoading ? 'animate-pulse' : ''}`} />
-          AI Scan ✨
+          AI Scan
         </button>
       </div>
     </div>
