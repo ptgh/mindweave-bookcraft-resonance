@@ -10,7 +10,6 @@ import { createPortal } from 'react-dom';
 import { gsap } from 'gsap';
 import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
 import { AddFilmPreviewModal } from '@/components/AddFilmPreviewModal';
-import { ScriptPreviewModal } from '@/components/ScriptPreviewModal';
 
 import { EnrichedPublisherBook } from '@/services/publisherService';
 import { AuthorPopup } from '@/components/AuthorPopup';

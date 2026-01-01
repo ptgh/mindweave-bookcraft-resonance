@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X, ExternalLink, Smartphone, Globe, Plus, Share2 } from "lucide-react";
+import { X, ExternalLink, Smartphone, Globe, Plus, Share2, FileText, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EnrichedPublisherBook } from "@/services/publisherService";
@@ -12,22 +12,103 @@ import { gsap } from "gsap";
 import { analyticsService } from "@/services/analyticsService";
 import { getOptimizedSettings } from "@/utils/performance";
 import ShareBookModal from "@/components/ShareBookModal";
+import { supabase } from "@/integrations/supabase/client";
+import { ScifiAuthor } from "@/services/scifiAuthorsService";
+import { AuthorPopup } from "@/components/AuthorPopup";
+
+// Script data interface for original screenplays
+interface ScriptData {
+  film_title: string;
+  film_year: number | null;
+  director: string | null;
+  book_author: string; // screenwriters
+  poster_url: string | null;
+  script_url: string | null;
+  script_source: string | null;
+  notable_differences?: string | null;
+}
 
 interface EnhancedBookPreviewModalProps {
   book: EnrichedPublisherBook;
   onClose: () => void;
   onAddBook: (book: EnrichedPublisherBook) => void;
+  // Optional script mode for original screenplays
+  scriptData?: ScriptData | null;
 }
 
-const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPreviewModalProps) => {
+const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: EnhancedBookPreviewModalProps) => {
   const [appleBook, setAppleBook] = useState<AppleBook | null>(null);
   const [googleFallback, setGoogleFallback] = useState<any>(null);
   const [freeEbooks, setFreeEbooks] = useState<EbookSearchResult | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!scriptData); // Don't load for scripts
   const [error, setError] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const { toast } = useEnhancedToast();
   const digitalCopyButtonRef = useRef<HTMLButtonElement>(null);
+  
+  // Script mode - for original screenplays
+  const isScriptMode = !!scriptData;
+  
+  // Script writer popup state
+  const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
+  const [showAuthorPopup, setShowAuthorPopup] = useState(false);
+
+  // Parse writers from book_author field (e.g., "Fred Dekker & Shane Black")
+  const parseWriters = (authorString: string): string[] => {
+    if (!authorString || authorString === 'Unknown Screenwriter') return [];
+    return authorString
+      .split(/\s*[&,]\s*|\s+and\s+/i)
+      .map(name => name.trim())
+      .filter(name => name.length > 0 && name !== 'Unknown Screenwriter');
+  };
+
+  const writers = scriptData ? parseWriters(scriptData.book_author) : [];
+
+  // Handle writer click - open AuthorPopup
+  const handleWriterClick = async (writerName: string) => {
+    const { data } = await supabase
+      .from('scifi_authors')
+      .select('*')
+      .ilike('name', `%${writerName}%`)
+      .limit(1)
+      .single();
+
+    if (data) {
+      setSelectedAuthor(data as ScifiAuthor);
+    } else {
+      setSelectedAuthor({
+        id: 'temp',
+        name: writerName,
+        created_at: '',
+        updated_at: '',
+      } as ScifiAuthor);
+    }
+    setShowAuthorPopup(true);
+  };
+
+  // Get script URL - prefer direct PDF if available
+  const getScriptUrl = (): string | null => {
+    if (!scriptData?.script_url) return null;
+    
+    // If it's already a PDF URL, use it directly
+    if (scriptData.script_url.endsWith('.pdf') || scriptData.script_url.includes('/pdf/')) {
+      return scriptData.script_url;
+    }
+    
+    // If it's a ScriptSlug page URL, try to construct direct PDF link
+    if (scriptData.script_url.includes('scriptslug.com/script/')) {
+      const scriptPath = scriptData.script_url.split('/script/')[1];
+      if (scriptPath) {
+        return `https://assets.scriptslug.com/live/pdf/scripts/${scriptPath}.pdf`;
+      }
+    }
+    
+    return scriptData.script_url;
+  };
+
+  const scriptUrl = getScriptUrl();
+  const scriptSourceLabel = scriptData?.script_source === 'scriptslug' ? 'ScriptSlug' : 
+                           scriptData?.script_source === 'imsdb' ? 'IMSDb' : 'Script';
 
   // GSAP hover animations for digital copy button
   useEffect(() => {
@@ -62,6 +143,12 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   }, [appleBook, freeEbooks]);
 
   useEffect(() => {
+    // Skip API calls for script mode - scripts don't need book lookups
+    if (isScriptMode) {
+      setLoading(false);
+      return;
+    }
+    
     const fetchBookData = async () => {
       const startTime = Date.now();
       setLoading(true);
@@ -218,7 +305,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
     };
 
     fetchBookData();
-  }, [book.title, book.author, book.isbn]);
+  }, [book.title, book.author, book.isbn, isScriptMode]);
 
   const handleDigitalCopyAction = () => {
     // Apple Books
@@ -300,11 +387,19 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
     }
   };
 
-  const displayData = appleBook || googleFallback || book;
-  const coverUrl = book.cover_url || book.google_cover_url || appleBook?.coverUrl || googleFallback?.coverUrl;
+  // For scripts, use script data; for books, use API results or fallback
+  const displayData = isScriptMode 
+    ? { title: scriptData!.film_title, author: scriptData!.book_author }
+    : (appleBook || googleFallback || book);
   
-  // Description - use API results or editorial note
-  const description = appleBook?.description || googleFallback?.description || book.editorial_note;
+  const coverUrl = isScriptMode 
+    ? scriptData!.poster_url 
+    : (book.cover_url || book.google_cover_url || appleBook?.coverUrl || googleFallback?.coverUrl);
+  
+  // Description - use API results or editorial note (not for scripts)
+  const description = isScriptMode 
+    ? scriptData?.notable_differences 
+    : (appleBook?.description || googleFallback?.description || book.editorial_note);
 
   // Determine which digital copy option to show
   const getDigitalCopyInfo = () => {
@@ -356,9 +451,9 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
         <div className="p-3 border-b border-slate-700 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+              <div className={`w-2 h-2 ${isScriptMode ? 'bg-cyan-400' : 'bg-blue-400'} rounded-full`}></div>
               <span className="text-slate-200 text-base font-medium">
-                Signal Preview
+                {isScriptMode ? 'Original Screenplay' : 'Signal Preview'}
               </span>
             </div>
             <button
@@ -375,7 +470,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
           {loading ? (
             <div className="text-center py-12">
               <div className="w-12 h-12 mx-auto mb-4 border-2 border-slate-600/30 border-t-blue-400 rounded-full animate-spin" />
-              <p className="text-slate-400">Loading book preview...</p>
+              <p className="text-slate-400">Loading preview...</p>
             </div>
           ) : error ? (
             <div className="text-center py-12">
@@ -384,15 +479,15 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
             </div>
           ) : (
             <div className="space-y-4 p-4">
-              {/* Book details */}
+              {/* Cover + Info */}
               <div className="flex space-x-4">
-                {/* Book cover */}
+                {/* Cover */}
                 <div className="flex-shrink-0 w-24 h-36 bg-slate-700/50 border border-slate-600 rounded-lg overflow-hidden relative shadow-lg">
                   {coverUrl ? (
                     <img 
                       src={coverUrl} 
                       alt={displayData.title} 
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
@@ -402,25 +497,93 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                     />
                   ) : null}
                   <div className={`absolute inset-0 flex items-center justify-center text-slate-400 ${coverUrl ? 'hidden' : ''}`}>
-                    <div className="w-12 h-16 border-2 border-slate-600 rounded flex items-center justify-center">
-                      <div className="w-6 h-8 border border-slate-600 rounded" />
-                    </div>
+                    {isScriptMode ? (
+                      <FileText className="w-8 h-8 text-cyan-400/50" />
+                    ) : (
+                      <div className="w-12 h-16 border-2 border-slate-600 rounded flex items-center justify-center">
+                        <div className="w-6 h-8 border border-slate-600 rounded" />
+                      </div>
+                    )}
                   </div>
                 </div>
                 
-                {/* Book info */}
+                {/* Info */}
                 <div className="flex-1 space-y-2">
                   <div>
                     <h2 className="text-slate-200 font-bold text-xl leading-tight">
                       {displayData.title}
                     </h2>
-                    <p className="text-slate-400 text-base font-medium">{displayData.author}</p>
+                    {isScriptMode ? (
+                      <>
+                        <Badge variant="outline" className="mt-1 text-cyan-400 border-cyan-400/30 bg-cyan-400/10 text-xs">
+                          Original Screenplay
+                        </Badge>
+                        {scriptData?.film_year && (
+                          <p className="text-muted-foreground text-sm mt-1">{scriptData.film_year}</p>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-slate-400 text-base font-medium">{displayData.author}</p>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Synopsis */}
-              {description && (
+              {/* Script Mode: Writers Section */}
+              {isScriptMode && writers.length > 0 && (
+                <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700/50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <User className="w-4 h-4 text-emerald-400" />
+                    <span className="text-sm font-medium text-emerald-300">Written by</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {writers.map((writer, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleWriterClick(writer)}
+                        className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 hover:border-emerald-400/50 rounded-lg text-sm text-emerald-300 hover:text-emerald-200 transition-all flex items-center gap-1.5"
+                      >
+                        <User className="w-3 h-3" />
+                        {writer}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Script Mode: Director */}
+              {isScriptMode && scriptData?.director && (
+                <div className="text-sm text-muted-foreground">
+                  <span className="text-amber-400">Director:</span> {scriptData.director}
+                </div>
+              )}
+
+              {/* Script Mode: Read Script Button */}
+              {isScriptMode && scriptUrl && (
+                <a
+                  href={scriptUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-lg transition-colors"
+                >
+                  <FileText className="w-5 h-5" />
+                  Read Script on {scriptSourceLabel}
+                  <ExternalLink className="w-4 h-4 ml-1" />
+                </a>
+              )}
+
+              {/* Script Mode: No script available */}
+              {isScriptMode && !scriptUrl && (
+                <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-700/50 text-center">
+                  <FileText className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Script not yet available in our database
+                  </p>
+                </div>
+              )}
+
+              {/* Book Mode: Synopsis */}
+              {!isScriptMode && description && (
                 <div className="space-y-2">
                   <h3 className="text-slate-200 font-semibold text-base">Synopsis</h3>
                   <div className="text-slate-400 text-sm leading-relaxed max-h-32 overflow-y-auto scrollbar-hide">
@@ -433,8 +596,8 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                 </div>
               )}
               
-              {/* Publisher Hard Copy Section */}
-              {book.publisher_link && (
+              {/* Book Mode: Publisher Hard Copy Section */}
+              {!isScriptMode && book.publisher_link && (
                 <div className="border border-slate-700 rounded-lg p-2 bg-slate-700/20 mb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -461,35 +624,36 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                 </div>
               )}
 
-              {/* Digital Copy Section */}
-              <div className="border border-slate-700 rounded-lg p-2 bg-slate-700/20">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Smartphone className="w-4 h-4 text-slate-400" />
-                    <div className="flex items-center space-x-2">
-                      <span className="text-slate-200 text-sm font-medium">{digitalCopyInfo.service}</span>
-                      {digitalCopyInfo.hasPrice && (
-                        <span className="text-slate-400 text-sm">{digitalCopyInfo.price}</span>
-                      )}
+              {/* Book Mode: Digital Copy Section */}
+              {!isScriptMode && (
+                <div className="border border-slate-700 rounded-lg p-2 bg-slate-700/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Smartphone className="w-4 h-4 text-slate-400" />
+                      <div className="flex items-center space-x-2">
+                        <span className="text-slate-200 text-sm font-medium">{digitalCopyInfo.service}</span>
+                        {digitalCopyInfo.hasPrice && (
+                          <span className="text-slate-400 text-sm">{digitalCopyInfo.price}</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <button
-                    ref={digitalCopyButtonRef}
-                    onClick={digitalCopyInfo.disabled ? undefined : handleDigitalCopyAction}
-                    disabled={digitalCopyInfo.disabled}
-                    className={`h-9 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-xs rounded-lg transition-all duration-300 ease-in-out ${
-                       digitalCopyInfo.disabled 
-                         ? 'text-slate-500 cursor-not-allowed' 
-                         : 'text-[#cdd6f4] hover:border-[#89b4fa]'
-                     }`}
-                     style={{
-                       boxShadow: "0 0 0px transparent"
-                     }}
-                   >
-                     {digitalCopyInfo.buttonText}
-                   </button>
+                    <button
+                      ref={digitalCopyButtonRef}
+                      onClick={digitalCopyInfo.disabled ? undefined : handleDigitalCopyAction}
+                      disabled={digitalCopyInfo.disabled}
+                      className={`h-9 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-xs rounded-lg transition-all duration-300 ease-in-out ${
+                         digitalCopyInfo.disabled 
+                           ? 'text-slate-500 cursor-not-allowed' 
+                           : 'text-[#cdd6f4] hover:border-[#89b4fa]'
+                       }`}
+                       style={{
+                         boxShadow: "0 0 0px transparent"
+                       }}
+                     >
+                       {digitalCopyInfo.buttonText}
+                     </button>
+                   </div>
                  </div>
-               </div>
             </div>
           )}
         </div>
