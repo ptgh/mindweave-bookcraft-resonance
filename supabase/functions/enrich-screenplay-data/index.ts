@@ -23,16 +23,125 @@ function normalizeTitle(title: string): string {
 
 interface ScreenplayInfo {
   writers: string[];
-  director: string | null;
-  isOriginalScreenplay: boolean;
   scriptUrl: string | null;
-  confidence: number;
+  scriptPdfUrl: string | null;
+  source: 'scriptslug' | 'imsdb' | 'tmdb' | 'ai' | null;
 }
 
 interface TMDBCrewMember {
   job: string;
   name: string;
   department: string;
+}
+
+// Firecrawl to scrape ScriptSlug for writer info and PDF link
+async function scrapeScriptSlugWithFirecrawl(title: string, year: number | null): Promise<ScreenplayInfo | null> {
+  const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY');
+  
+  if (!firecrawlApiKey) {
+    console.log('FIRECRAWL_API_KEY not configured, skipping ScriptSlug scrape');
+    return null;
+  }
+
+  const normalized = normalizeTitle(title);
+  const variants = year 
+    ? [`${normalized}-${year}`, normalized]
+    : [normalized];
+
+  for (const variant of variants) {
+    const pageUrl = `https://www.scriptslug.com/script/${variant}`;
+    const pdfUrl = `https://assets.scriptslug.com/live/pdf/scripts/${variant}.pdf`;
+    
+    console.log(`Scraping ScriptSlug: ${pageUrl}`);
+    
+    try {
+      const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${firecrawlApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: pageUrl,
+          formats: ['markdown'],
+          onlyMainContent: true,
+          waitFor: 2000,
+        }),
+      });
+
+      if (!response.ok) {
+        console.log(`ScriptSlug page not found: ${pageUrl}`);
+        continue;
+      }
+
+      const data = await response.json();
+      const markdown = data.data?.markdown || data.markdown || '';
+      
+      if (!markdown || markdown.length < 100) {
+        console.log(`No content found at ${pageUrl}`);
+        continue;
+      }
+
+      // Parse writers from markdown
+      // ScriptSlug format: "Written by Writer Name" or "Screenplay by Writer Name"
+      const writers: string[] = [];
+      
+      // Look for "Written by" pattern
+      const writtenByMatch = markdown.match(/(?:Written|Screenplay|Script)\s+by[:\s]+([^\n]+)/i);
+      if (writtenByMatch) {
+        const writerStr = writtenByMatch[1].trim();
+        // Split by &, and, or comma
+        const parsedWriters = writerStr
+          .split(/\s*[&,]\s*|\s+and\s+/i)
+          .map((w: string) => w.trim())
+          .filter((w: string) => w.length > 0 && w.length < 50);
+        writers.push(...parsedWriters);
+      }
+
+      // Also look for explicit writer names in common patterns
+      const writerPatterns = [
+        /Writer[s]?[:\s]+([^\n]+)/i,
+        /Screenwriter[s]?[:\s]+([^\n]+)/i,
+      ];
+
+      for (const pattern of writerPatterns) {
+        const match = markdown.match(pattern);
+        if (match && writers.length === 0) {
+          const parsed = match[1]
+            .split(/\s*[&,]\s*|\s+and\s+/i)
+            .map((w: string) => w.trim())
+            .filter((w: string) => w.length > 0 && w.length < 50);
+          writers.push(...parsed);
+        }
+      }
+
+      // Verify PDF exists
+      let verifiedPdfUrl: string | null = null;
+      try {
+        const pdfCheck = await fetch(pdfUrl, { method: 'HEAD' });
+        if (pdfCheck.ok) {
+          verifiedPdfUrl = pdfUrl;
+          console.log(`Verified PDF at: ${pdfUrl}`);
+        }
+      } catch {
+        console.log(`PDF not accessible at: ${pdfUrl}`);
+      }
+
+      if (writers.length > 0 || verifiedPdfUrl) {
+        console.log(`ScriptSlug found: Writers: ${writers.join(', ')}, PDF: ${verifiedPdfUrl || 'not found'}`);
+        return {
+          writers: [...new Set(writers)], // Remove duplicates
+          scriptUrl: verifiedPdfUrl || pageUrl,
+          scriptPdfUrl: verifiedPdfUrl,
+          source: 'scriptslug',
+        };
+      }
+    } catch (err) {
+      console.error(`Error scraping ${pageUrl}:`, err);
+    }
+  }
+
+  return null;
 }
 
 // Fetch screenwriters from TMDB credits API
@@ -71,34 +180,7 @@ async function fetchTMDBScreenwriters(tmdbId: number): Promise<string[]> {
   }
 }
 
-// Try to find script URL from ScriptSlug
-async function fetchScriptSlugUrl(title: string, year: number | null): Promise<string | null> {
-  const normalized = normalizeTitle(title);
-  const variants = year 
-    ? [`${normalized}-${year}`, normalized]
-    : [normalized];
-  
-  for (const variant of variants) {
-    const url = `https://www.scriptslug.com/script/${variant}`;
-    try {
-      const response = await fetch(url, { 
-        method: 'HEAD',
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; LeafNode/1.0)' }
-      });
-      
-      if (response.ok) {
-        console.log(`Found ScriptSlug script at: ${url}`);
-        return url;
-      }
-    } catch {
-      // Continue to next variant
-    }
-  }
-  
-  return null;
-}
-
-// Try to find script URL from IMSDb
+// Try to find script URL from IMSDb (fallback)
 async function fetchIMSDbScriptUrl(title: string): Promise<string | null> {
   const urlVariants = [
     title.replace(/\s+/g, '-'),
@@ -135,26 +217,19 @@ async function analyzeScreenplayWithAI(
   filmTitle: string, 
   filmYear: number | null,
   director: string | null
-): Promise<ScreenplayInfo> {
+): Promise<string[]> {
   const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
   
   if (!lovableApiKey) {
     console.error('LOVABLE_API_KEY not configured');
-    return {
-      writers: director ? [director] : [],
-      director,
-      isOriginalScreenplay: true,
-      scriptUrl: null,
-      confidence: 0.3
-    };
+    return [];
   }
 
   const prompt = `Who wrote the screenplay for the science fiction film "${filmTitle}" (${filmYear || 'unknown year'})? Director: ${director || 'Unknown'}
 
 Return ONLY valid JSON in this format:
 {
-  "writers": ["Writer Name 1", "Writer Name 2"],
-  "confidence": 0.9
+  "writers": ["Writer Name 1", "Writer Name 2"]
 }
 
 List the actual screenwriter names. Do not include the director unless they also wrote the screenplay.`;
@@ -178,13 +253,7 @@ List the actual screenwriter names. Do not include the director unless they also
 
     if (!response.ok) {
       console.error('AI API error:', response.status, await response.text());
-      return {
-        writers: director ? [director] : [],
-        director,
-        isOriginalScreenplay: true,
-        scriptUrl: null,
-        confidence: 0.3
-      };
+      return [];
     }
 
     const data = await response.json();
@@ -194,25 +263,13 @@ List the actual screenwriter names. Do not include the director unless they also
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
-      return {
-        writers: parsed.writers || [],
-        director,
-        isOriginalScreenplay: true,
-        scriptUrl: null,
-        confidence: parsed.confidence || 0.7
-      };
+      return parsed.writers || [];
     }
   } catch (err) {
     console.error('AI analysis failed:', err);
   }
 
-  return {
-    writers: director ? [director] : [],
-    director,
-    isOriginalScreenplay: true,
-    scriptUrl: null,
-    confidence: 0.3
-  };
+  return [];
 }
 
 async function requireAdminOrInternal(req: Request): Promise<{ authorized: boolean; userId: string | null; errorResponse?: Response }> {
@@ -308,7 +365,7 @@ Deno.serve(async (req) => {
       // Only process original screenplays that need enrichment
       query = query
         .eq('adaptation_type', 'original')
-        .or('book_author.is.null,book_author.eq.Unknown Screenwriter');
+        .or('book_author.is.null,book_author.eq.Unknown Screenwriter,script_url.is.null');
     }
 
     const { data: films, error: fetchError } = await query;
@@ -329,36 +386,46 @@ Deno.serve(async (req) => {
 
     let enriched = 0;
     let failed = 0;
-    const results: Array<{ id: string; title: string; writers: string[]; status: string }> = [];
+    const results: Array<{ id: string; title: string; writers: string[]; scriptUrl: string | null; status: string }> = [];
 
     for (const film of films) {
       try {
         let writers: string[] = [];
         let scriptUrl: string | null = film.script_url;
+        let scriptSource: string | null = null;
 
-        // Step 1: Try TMDB credits first (most reliable)
-        if (film.tmdb_id) {
+        // Step 1: PRIMARY - Try ScriptSlug with Firecrawl (best for both writers + PDF)
+        const scriptSlugData = await scrapeScriptSlugWithFirecrawl(film.film_title, film.film_year);
+        
+        if (scriptSlugData) {
+          if (scriptSlugData.writers.length > 0) {
+            writers = scriptSlugData.writers;
+          }
+          if (scriptSlugData.scriptUrl) {
+            scriptUrl = scriptSlugData.scriptUrl;
+            scriptSource = 'scriptslug';
+          }
+          console.log(`ScriptSlug result for ${film.film_title}: Writers=${writers.join(', ')}, URL=${scriptUrl}`);
+        }
+
+        // Step 2: If no writers from ScriptSlug, try TMDB credits
+        if (writers.length === 0 && film.tmdb_id) {
           writers = await fetchTMDBScreenwriters(film.tmdb_id);
           console.log(`TMDB credits for ${film.film_title}: ${writers.join(', ') || 'none found'}`);
         }
 
-        // Step 2: If no TMDB writers, use AI fallback
+        // Step 3: If still no writers, use AI as last resort
         if (writers.length === 0) {
-          const screenplayInfo = await analyzeScreenplayWithAI(
-            film.film_title,
-            film.film_year,
-            film.director
-          );
-          writers = screenplayInfo.writers;
-          console.log(`AI analysis for ${film.film_title}: ${writers.join(', ')}`);
+          writers = await analyzeScreenplayWithAI(film.film_title, film.film_year, film.director);
+          console.log(`AI analysis for ${film.film_title}: ${writers.join(', ') || 'none'}`);
         }
 
-        // Step 3: Find script URL (IMSDb first, then ScriptSlug)
+        // Step 4: SECONDARY - If no script URL yet, try IMSDb
         if (!scriptUrl) {
-          scriptUrl = await fetchIMSDbScriptUrl(film.film_title);
-          
-          if (!scriptUrl) {
-            scriptUrl = await fetchScriptSlugUrl(film.film_title, film.film_year);
+          const imsdbUrl = await fetchIMSDbScriptUrl(film.film_title);
+          if (imsdbUrl) {
+            scriptUrl = imsdbUrl;
+            scriptSource = 'imsdb';
           }
         }
 
@@ -382,7 +449,7 @@ Deno.serve(async (req) => {
 
         if (scriptUrl) {
           updateData.script_url = scriptUrl;
-          updateData.script_source = scriptUrl.includes('imsdb') ? 'imsdb' : 'scriptslug';
+          updateData.script_source = scriptSource || (scriptUrl.includes('imsdb') ? 'imsdb' : 'scriptslug');
         }
 
         const { error: updateError } = await supabase
@@ -393,20 +460,20 @@ Deno.serve(async (req) => {
         if (updateError) {
           console.error(`Failed to update ${film.film_title}:`, updateError);
           failed++;
-          results.push({ id: film.id, title: film.film_title, writers: [], status: 'failed' });
+          results.push({ id: film.id, title: film.film_title, writers: [], scriptUrl: null, status: 'failed' });
         } else {
           enriched++;
-          console.log(`Enriched: ${film.film_title} - Writers: ${writerString}`);
-          results.push({ id: film.id, title: film.film_title, writers, status: 'enriched' });
+          console.log(`Enriched: ${film.film_title} - Writers: ${writerString}, Script: ${scriptUrl || 'none'}`);
+          results.push({ id: film.id, title: film.film_title, writers, scriptUrl, status: 'enriched' });
         }
 
-        // Rate limiting
-        await new Promise(r => setTimeout(r, 500));
+        // Rate limiting - be gentle with ScriptSlug
+        await new Promise(r => setTimeout(r, 1000));
         
       } catch (err) {
         console.error(`Error processing ${film.film_title}:`, err);
         failed++;
-        results.push({ id: film.id, title: film.film_title, writers: [], status: 'error' });
+        results.push({ id: film.id, title: film.film_title, writers: [], scriptUrl: null, status: 'error' });
       }
     }
 
