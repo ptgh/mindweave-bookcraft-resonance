@@ -65,6 +65,17 @@ const CURATED_SCRIPTS: Array<{ title: string; year: number; url: string }> = [
   { title: "The Thing", year: 1982, url: "https://imsdb.com/scripts/Thing,-The.html" },
   { title: "RoboCop", year: 1987, url: "https://imsdb.com/scripts/Robocop.html" },
   { title: "The Fly", year: 1986, url: "https://imsdb.com/scripts/Fly,-The.html" },
+  
+  // Predator franchise
+  { title: "Predator", year: 1987, url: "https://imsdb.com/scripts/Predator.html" },
+  { title: "Predator 2", year: 1990, url: "https://imsdb.com/scripts/Predator-2.html" },
+  
+  // Additional classics
+  { title: "Badlands", year: 1973, url: "https://imsdb.com/scripts/Badlands.html" },
+  { title: "THX 1138", year: 1971, url: "https://imsdb.com/scripts/THX-1138.html" },
+  { title: "Logan's Run", year: 1976, url: "https://imsdb.com/scripts/Logans-Run.html" },
+  { title: "Westworld", year: 1973, url: "https://imsdb.com/scripts/Westworld.html" },
+  { title: "Silent Running", year: 1972, url: "https://imsdb.com/scripts/Silent-Running.html" },
 ];
 
 function json(status: number, body: Record<string, unknown>): Response {
@@ -74,29 +85,47 @@ function json(status: number, body: Record<string, unknown>): Response {
   });
 }
 
-// Verify URL is accessible via HEAD or Range request
+// Verify URL is accessible via HEAD or GET request
+// Also check that the page actually contains script content (not a 404 page)
 async function verifyUrl(url: string): Promise<boolean> {
   try {
-    // Try HEAD first
-    const headRes = await fetch(url, { method: 'HEAD' });
-    if (headRes.ok) {
-      console.log(`HEAD verified: ${url}`);
-      return true;
-    }
-
-    // Fallback: GET with Range header for partial content
-    const rangeRes = await fetch(url, {
+    // Use GET to actually check page content
+    const res = await fetch(url, { 
       method: 'GET',
-      headers: { 'Range': 'bytes=0-0' }
+      headers: { 
+        'User-Agent': 'Mozilla/5.0 (compatible; ScriptEnricher/1.0)'
+      }
     });
     
-    // Accept 200 (full response) or 206 (partial content)
-    if (rangeRes.ok || rangeRes.status === 206) {
-      console.log(`Range GET verified: ${url}`);
+    if (!res.ok) {
+      console.log(`URL failed: ${url} (status: ${res.status})`);
+      return false;
+    }
+
+    // Check if the page contains actual script content
+    const text = await res.text();
+    
+    // IMSDb script pages contain "<pre>" tags with the actual script
+    // or specific markers that indicate it's a valid script page
+    const hasScriptContent = text.includes('<pre>') || 
+                            text.includes('FADE IN') || 
+                            text.includes('INT.') ||
+                            text.includes('EXT.') ||
+                            text.includes('Final Draft') ||
+                            text.includes('Dialogue and Continuity');
+    
+    if (hasScriptContent) {
+      console.log(`Verified script content at: ${url}`);
+      return true;
+    }
+    
+    // Check if it's at least a valid IMSDb movie page (might link to script)
+    if (text.includes('Read "') && text.includes('Script"')) {
+      console.log(`Found IMSDb movie page (no direct script): ${url}`);
       return true;
     }
 
-    console.log(`URL failed verification: ${url} (status: ${rangeRes.status})`);
+    console.log(`URL accessible but no script content: ${url}`);
     return false;
   } catch (err) {
     console.error(`URL verification error for ${url}:`, err);
@@ -111,6 +140,95 @@ function normalizeTitle(title: string): string {
     .replace(/[^a-z0-9\s]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+// Generate possible IMSDb URL patterns for a film title
+function generateImsdbUrlPatterns(title: string): string[] {
+  const patterns: string[] = [];
+  
+  // Clean the title
+  let cleanTitle = title
+    .replace(/['']/g, "'")  // Normalize quotes
+    .replace(/[""]/g, '"')  // Normalize quotes
+    .trim();
+  
+  // Pattern 1: Simple hyphenation (e.g., "Ex Machina" -> "Ex-Machina")
+  const hyphenated = cleanTitle
+    .replace(/[^a-zA-Z0-9\s]/g, '')  // Remove special chars
+    .replace(/\s+/g, '-')            // Spaces to hyphens
+    .replace(/-+/g, '-');             // Clean multiple hyphens
+  patterns.push(`https://imsdb.com/scripts/${hyphenated}.html`);
+  
+  // Pattern 2: "The X" -> "X,-The" pattern (common for movies starting with "The")
+  if (cleanTitle.toLowerCase().startsWith('the ')) {
+    const withoutThe = cleanTitle.substring(4);
+    const thePattern = withoutThe
+      .replace(/[^a-zA-Z0-9\s]/g, '')
+      .replace(/\s+/g, '-');
+    patterns.push(`https://imsdb.com/scripts/${thePattern},-The.html`);
+  }
+  
+  // Pattern 3: "A X" -> "X,-A" pattern
+  if (cleanTitle.toLowerCase().startsWith('a ')) {
+    const withoutA = cleanTitle.substring(2);
+    const aPattern = withoutA
+      .replace(/[^a-zA-Z0-9\s]/g, '')
+      .replace(/\s+/g, '-');
+    patterns.push(`https://imsdb.com/scripts/${aPattern},-A.html`);
+  }
+  
+  // Pattern 4: Remove "The" entirely
+  if (cleanTitle.toLowerCase().startsWith('the ')) {
+    const withoutThe = cleanTitle.substring(4)
+      .replace(/[^a-zA-Z0-9\s]/g, '')
+      .replace(/\s+/g, '-');
+    patterns.push(`https://imsdb.com/scripts/${withoutThe}.html`);
+  }
+  
+  // Pattern 5: First word only (for single-word titles or when full title fails)
+  const firstWord = cleanTitle.split(/\s+/)[0].replace(/[^a-zA-Z0-9]/g, '');
+  if (firstWord.length > 3 && firstWord !== hyphenated) {
+    patterns.push(`https://imsdb.com/scripts/${firstWord}.html`);
+  }
+  
+  // Pattern 6: Numbers spelled out (e.g., "2001" -> might need different handling)
+  const numberMappings: Record<string, string> = {
+    '12': 'Twelve',
+    '2': 'Two',
+    '3': 'Three',
+    '4': 'Four',
+    '5': 'Five',
+    '6': 'Six',
+    '7': 'Seven',
+    '8': 'Eight',
+    '9': 'Nine',
+    '10': 'Ten',
+  };
+  
+  for (const [num, word] of Object.entries(numberMappings)) {
+    if (cleanTitle.includes(num)) {
+      const numberedPattern = cleanTitle
+        .replace(num, word)
+        .replace(/[^a-zA-Z0-9\s]/g, '')
+        .replace(/\s+/g, '-');
+      patterns.push(`https://imsdb.com/scripts/${numberedPattern}.html`);
+    }
+  }
+  
+  // Pattern 7: Colon handling - "Title: Subtitle" -> "Title---Subtitle" or "Title-Subtitle"
+  if (cleanTitle.includes(':')) {
+    const colonVariant = cleanTitle
+      .replace(/:\s*/g, '-')
+      .replace(/[^a-zA-Z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+    if (!patterns.includes(`https://imsdb.com/scripts/${colonVariant}.html`)) {
+      patterns.push(`https://imsdb.com/scripts/${colonVariant}.html`);
+    }
+  }
+  
+  // Deduplicate patterns
+  return [...new Set(patterns)];
 }
 
 async function requireAdminOrInternal(req: Request): Promise<{ authorized: boolean; userId: string | null; errorResponse?: Response }> {
@@ -185,15 +303,24 @@ Deno.serve(async (req) => {
       return json(500, { error: 'Server configuration error' });
     }
 
-    // Parse optional filmIds from request
+    // Parse optional filmIds and options from request
     let filmIds: string[] | null = null;
+    let onlyMissing = false;
+    let limit = 50; // Default limit per run
+    
     try {
       const body = await req.json();
       if (body.filmIds && Array.isArray(body.filmIds)) {
         filmIds = body.filmIds;
       }
+      if (body.onlyMissing === true) {
+        onlyMissing = true;
+      }
+      if (body.limit && typeof body.limit === 'number') {
+        limit = Math.min(body.limit, 100); // Cap at 100
+      }
     } catch {
-      // No body or invalid JSON - process all
+      // No body or invalid JSON - process with defaults
     }
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
@@ -201,11 +328,16 @@ Deno.serve(async (req) => {
     // Fetch films that need script enrichment
     let query = supabase
       .from('sf_film_adaptations')
-      .select('id, film_title, film_year, script_url, script_last_checked');
+      .select('id, film_title, film_year, script_url, script_source, script_last_checked');
 
     if (filmIds && filmIds.length > 0) {
       query = query.in('id', filmIds);
+    } else if (onlyMissing) {
+      // Only process films without script_url
+      query = query.is('script_url', null);
     }
+    
+    query = query.limit(limit);
 
     const { data: films, error: fetchError } = await query;
 
@@ -217,23 +349,25 @@ Deno.serve(async (req) => {
     if (!films || films.length === 0) {
       return json(200, { 
         message: 'No films to process',
-        stats: { processed: 0, linked: 0, verified: 0, failed: 0 }
+        stats: { processed: 0, linked: 0, verified: 0, failed: 0, discovered: 0 }
       });
     }
 
-    console.log(`Processing ${films.length} films for script enrichment`);
+    console.log(`Processing ${films.length} films for IMSDb script enrichment`);
 
     let linked = 0;
     let verified = 0;
     let failed = 0;
+    let discovered = 0; // New scripts found via URL pattern generation
+    const results: Array<{ title: string; status: string; url?: string }> = [];
 
     for (const film of films) {
       const normalizedFilmTitle = normalizeTitle(film.film_title);
       
-      // Find matching curated script
+      // Step 1: Check curated list first (most reliable)
       const curatedScript = CURATED_SCRIPTS.find(script => {
         const normalizedScriptTitle = normalizeTitle(script.title);
-        // Match by title and optionally year
+        // Match by title
         if (normalizedFilmTitle === normalizedScriptTitle) {
           // If we have year info, verify it matches (with some tolerance)
           if (film.film_year && script.year) {
@@ -244,73 +378,127 @@ Deno.serve(async (req) => {
         // Also check if film title contains script title or vice versa
         if (normalizedFilmTitle.includes(normalizedScriptTitle) || 
             normalizedScriptTitle.includes(normalizedFilmTitle)) {
+          if (film.film_year && script.year) {
+            return Math.abs(film.film_year - script.year) <= 1;
+          }
           return true;
         }
         return false;
       });
 
-      if (!curatedScript) {
-        // No curated script for this film, just update last_checked
+      if (curatedScript) {
+        // Verify the curated URL
+        const isValid = await verifyUrl(curatedScript.url);
+
+        if (isValid) {
+          const { error: updateError } = await supabase
+            .from('sf_film_adaptations')
+            .update({
+              script_url: curatedScript.url,
+              script_source: 'imsdb',
+              script_last_checked: new Date().toISOString()
+            })
+            .eq('id', film.id);
+
+          if (updateError) {
+            console.error(`Failed to update script for ${film.film_title}:`, updateError);
+            failed++;
+            results.push({ title: film.film_title, status: 'update_error' });
+          } else {
+            if (film.script_url) {
+              verified++;
+              results.push({ title: film.film_title, status: 'verified', url: curatedScript.url });
+            } else {
+              linked++;
+              results.push({ title: film.film_title, status: 'linked', url: curatedScript.url });
+            }
+            console.log(`✅ Curated script linked for: ${film.film_title}`);
+          }
+        } else {
+          failed++;
+          results.push({ title: film.film_title, status: 'curated_url_failed' });
+          console.log(`❌ Curated URL failed for: ${film.film_title}`);
+        }
+        
+        await new Promise(r => setTimeout(r, 300));
+        continue;
+      }
+
+      // Step 2: No curated script - try to discover via URL patterns
+      if (!film.script_url) {
+        console.log(`🔍 Attempting URL discovery for: ${film.film_title}`);
+        
+        const urlPatterns = generateImsdbUrlPatterns(film.film_title);
+        let foundUrl: string | null = null;
+        
+        for (const url of urlPatterns) {
+          console.log(`  Trying: ${url}`);
+          const isValid = await verifyUrl(url);
+          
+          if (isValid) {
+            foundUrl = url;
+            break;
+          }
+          
+          // Small delay between attempts
+          await new Promise(r => setTimeout(r, 500));
+        }
+        
+        if (foundUrl) {
+          const { error: updateError } = await supabase
+            .from('sf_film_adaptations')
+            .update({
+              script_url: foundUrl,
+              script_source: 'imsdb',
+              script_last_checked: new Date().toISOString()
+            })
+            .eq('id', film.id);
+
+          if (updateError) {
+            console.error(`Failed to update discovered script for ${film.film_title}:`, updateError);
+            failed++;
+            results.push({ title: film.film_title, status: 'update_error' });
+          } else {
+            discovered++;
+            results.push({ title: film.film_title, status: 'discovered', url: foundUrl });
+            console.log(`🎉 Discovered script for: ${film.film_title} -> ${foundUrl}`);
+          }
+        } else {
+          // No script found - update last_checked
+          await supabase
+            .from('sf_film_adaptations')
+            .update({ script_last_checked: new Date().toISOString() })
+            .eq('id', film.id);
+          
+          results.push({ title: film.film_title, status: 'not_found' });
+          console.log(`⚪ No script found for: ${film.film_title}`);
+        }
+      } else {
+        // Already has a script URL - just update last_checked
         await supabase
           .from('sf_film_adaptations')
           .update({ script_last_checked: new Date().toISOString() })
           .eq('id', film.id);
-        continue;
+        
+        results.push({ title: film.film_title, status: 'already_has_script' });
       }
 
-      // Verify the URL is accessible
-      const isValid = await verifyUrl(curatedScript.url);
-
-      if (isValid) {
-        // Update with verified script URL
-        const { error: updateError } = await supabase
-          .from('sf_film_adaptations')
-          .update({
-            script_url: curatedScript.url,
-            script_source: 'imsdb',
-            script_last_checked: new Date().toISOString()
-          })
-          .eq('id', film.id);
-
-        if (updateError) {
-          console.error(`Failed to update script for ${film.film_title}:`, updateError);
-          failed++;
-        } else {
-          if (film.script_url) {
-            verified++;
-            console.log(`Re-verified script for: ${film.film_title}`);
-          } else {
-            linked++;
-            console.log(`Linked script for: ${film.film_title}`);
-          }
-        }
-      } else {
-        // URL failed verification - clear script_url if it was set to this broken URL
-        await supabase
-          .from('sf_film_adaptations')
-          .update({ 
-            script_url: null,
-            script_last_checked: new Date().toISOString() 
-          })
-          .eq('id', film.id);
-        failed++;
-        console.log(`Script URL failed verification for: ${film.film_title}`);
-      }
-
-      // Small delay between URL checks to be respectful
-      await new Promise(r => setTimeout(r, 200));
+      // Delay between films to be respectful to IMSDb
+      await new Promise(r => setTimeout(r, 300));
     }
 
-    console.log(`Script enrichment complete: ${linked} linked, ${verified} verified, ${failed} failed`);
+    console.log(`Script enrichment complete: ${linked} linked, ${discovered} discovered, ${verified} verified, ${failed} failed`);
 
     return json(200, {
-      message: 'Script enrichment complete',
+      message: 'IMSDb script enrichment complete',
       stats: {
         processed: films.length,
-        linked,
-        verified,
+        linked,      // From curated list
+        discovered,  // Found via URL patterns
+        verified,    // Re-verified existing
         failed
-      }
+      },
+      results
     });
 
   } catch (err) {
