@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Film, Book, Star, Calendar, Trophy, ExternalLink, Play, Loader2, X, Sparkles, Tv, FileText, Search, Database, Check, Plus } from 'lucide-react';
+import { Film, Book, Star, Calendar, Trophy, ExternalLink, Play, Loader2, X, Tv, FileText, Search, Database, Check, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
@@ -422,27 +422,12 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
       return;
     }
     
-    // For original screenplays, create a synthetic book with screenplay info
-    if (film.adaptation_type === 'original') {
-      const book: EnrichedPublisherBook = {
-        id: film.id,
-        title: film.film_title, // Use film title for original screenplays
-        author: film.book_author || film.director || 'Unknown Writer',
-        series_id: '',
-        created_at: new Date().toISOString(),
-        cover_url: undefined, // No book cover for screenplays
-        // Add screenplay context as editorial note
-        editorial_note: `Original screenplay for ${film.film_title} (${film.film_year || 'unknown year'})${film.director ? `. Directed by ${film.director}` : ''}.${film.script_url ? ' Script available on IMSDb.' : ''}`,
-      };
-      setSelectedBook(book);
-      return;
-    }
-    
-    // Fallback: create synthetic book from film adaptation data
+    // Create synthetic book from film adaptation data (works for both adaptations and originals)
+    // book_title now contains "(original screenplay)" suffix for originals
     const book: EnrichedPublisherBook = {
       id: film.id,
-      title: film.book_title,
-      author: film.book_author,
+      title: film.book_title, // For originals: "Film Title (original screenplay)"
+      author: film.book_author, // For originals: screenwriter name from TMDB
       series_id: '',
       created_at: new Date().toISOString(),
       cover_url: film.book_cover_url || undefined,
@@ -721,71 +706,42 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                   {/* Book/Source Card with Cover */}
                   <button
                     onClick={() => openBookPreview(film)}
-                    className={`flex-1 rounded-lg border transition-all text-left group overflow-hidden ${
-                      film.adaptation_type === 'original'
-                        ? 'bg-violet-500/10 hover:bg-violet-500/20 border-violet-500/30 hover:border-violet-400/50 cursor-pointer'
-                        : 'bg-muted/20 hover:bg-muted/40 border-border/20 hover:border-primary/40'
-                    }`}
+                    className="flex-1 rounded-lg border transition-all text-left group overflow-hidden bg-muted/20 hover:bg-muted/40 border-border/20 hover:border-primary/40"
                   >
                     <div className="flex gap-2 h-full">
                       {/* Cover wrapper - do not change dimensions */}
                       <div className="w-16 h-24 flex-shrink-0 overflow-hidden rounded-sm">
-                        {film.adaptation_type === 'original' ? (
-                          <div className="w-full h-full bg-gradient-to-br from-violet-600/30 to-purple-800/40 flex items-center justify-center">
-                            <Sparkles className="w-6 h-6 text-violet-400" />
-                          </div>
-                        ) : (
-                          <MediaImage
-                            src={film.book_cover_url}
-                            alt={film.book_title}
-                            type="book"
-                            quality="optimized"
-                            fallbackIcon={<Book className="w-6 h-6 text-primary/40" />}
-                            aspectRatio="auto"
-                            className="w-full h-full object-cover"
-                          />
-                        )}
+                        <MediaImage
+                          src={film.book_cover_url}
+                          alt={film.book_title}
+                          type="book"
+                          quality="optimized"
+                          fallbackIcon={<Book className="w-6 h-6 text-primary/40" />}
+                          aspectRatio="auto"
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <div className="flex-1 py-2 pr-2 min-w-0 flex flex-col">
                         <div className="flex items-center gap-1 mb-1">
-                          {film.adaptation_type === 'original' ? (
-                            <>
-                              <Sparkles className="w-3 h-3 text-violet-400 flex-shrink-0" />
-                              <span className="text-[9px] uppercase tracking-wider text-violet-400 font-medium">Original</span>
-                            </>
-                          ) : (
-                            <>
-                              <Book className="w-3 h-3 text-primary flex-shrink-0" />
-                              <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">Book</span>
-                            </>
-                          )}
+                          <Book className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">Book</span>
                         </div>
-                        <h4 className={`text-[11px] sm:text-xs font-medium line-clamp-3 transition-colors leading-snug mb-auto ${
-                          film.adaptation_type === 'original'
-                            ? 'text-foreground group-hover:text-violet-400'
-                            : 'text-foreground group-hover:text-primary'
-                        }`}>
-                          {film.adaptation_type === 'original' ? film.film_title : film.book_title}
+                        <h4 className="text-[11px] sm:text-xs font-medium line-clamp-3 transition-colors leading-snug mb-auto text-foreground group-hover:text-primary">
+                          {film.book_title}
                         </h4>
                         {/* Author/Writer + Year - fixed height row */}
                         <div className="mt-2 space-y-0.5">
                           <button
                             ref={el => { if (el) authorRefs.current.set(film.id + '-author', el); }}
                             onClick={(e) => { e.stopPropagation(); handleAuthorClick(authorFull); }}
-                            className={`text-[10px] relative inline-block truncate max-w-full ${
-                              film.adaptation_type === 'original' ? 'text-violet-300' : 'text-emerald-400'
-                            }`}
+                            className="text-[10px] relative inline-block truncate max-w-full text-emerald-400"
                             title={authorFull !== authorDisplay ? authorFull : undefined}
                           >
-                            {film.adaptation_type === 'original' ? (film.director || 'Writer/Director') : authorDisplay}
-                            <span className={`gsap-underline absolute bottom-0 left-0 w-0 h-0.5 ${
-                              film.adaptation_type === 'original' ? 'bg-violet-400' : 'bg-emerald-400'
-                            }`} />
+                            {authorDisplay}
+                            <span className="gsap-underline absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-400" />
                           </button>
                           <p className="text-[10px] text-muted-foreground/70">
-                            {film.adaptation_type === 'original' 
-                              ? 'Original Screenplay' 
-                              : film.book_publication_year || '—'}
+                            {film.book_publication_year || '—'}
                           </p>
                         </div>
                       </div>

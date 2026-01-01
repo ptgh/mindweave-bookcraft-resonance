@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X, ExternalLink, Smartphone, Globe, Plus, Share2, Sparkles, FileText, Clapperboard } from "lucide-react";
+import { X, ExternalLink, Smartphone, Globe, Plus, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EnrichedPublisherBook } from "@/services/publisherService";
@@ -303,9 +303,8 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
   const displayData = appleBook || googleFallback || book;
   const coverUrl = book.cover_url || book.google_cover_url || appleBook?.coverUrl || googleFallback?.coverUrl;
   
-  // Detect if this is an original screenplay (from film adaptation context)
-  const isOriginalScreenplay = book.editorial_note?.toLowerCase().includes('original screenplay') || false;
-  const description = appleBook?.description || googleFallback?.description || (isOriginalScreenplay ? null : book.editorial_note);
+  // Description - use API results or editorial note
+  const description = appleBook?.description || googleFallback?.description || book.editorial_note;
 
   // Determine which digital copy option to show
   const getDigitalCopyInfo = () => {
@@ -419,26 +418,6 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook }: EnhancedBookPrev
                   </div>
                 </div>
               </div>
-
-              {/* Original Screenplay Info Section */}
-              {isOriginalScreenplay && (
-                <div className="p-4 rounded-lg bg-violet-500/10 border border-violet-500/30">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-600/40 to-purple-800/50 flex items-center justify-center flex-shrink-0">
-                      <Clapperboard className="w-5 h-5 text-violet-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Sparkles className="w-3 h-3 text-violet-400" />
-                        <span className="text-xs font-medium text-violet-300 uppercase tracking-wider">Original Screenplay</span>
-                      </div>
-                      <p className="text-sm text-slate-300 leading-relaxed">
-                        {book.editorial_note || 'This film was created from an original screenplay rather than being adapted from a book.'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Synopsis */}
               {description && (
