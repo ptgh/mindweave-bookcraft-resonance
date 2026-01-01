@@ -213,8 +213,8 @@ export const AdminBooksPanel: React.FC = () => {
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {filteredBooks.slice(0, 50).map((book) => (
+          <div className="space-y-2 max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-track-muted/20 scrollbar-thumb-muted-foreground/30">
+            {filteredBooks.map((book) => (
               <div
                 key={book.id}
                 className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg border border-border/30 hover:border-emerald-400/30 transition-colors"
@@ -252,9 +252,9 @@ export const AdminBooksPanel: React.FC = () => {
                 </div>
               </div>
             ))}
-            {filteredBooks.length > 50 && (
-              <p className="text-center text-sm text-muted-foreground py-2">
-                Showing 50 of {filteredBooks.length} books. Use search to find specific books.
+            {filteredBooks.length === 0 && (
+              <p className="text-center text-sm text-muted-foreground py-4">
+                No books found matching your search.
               </p>
             )}
           </div>
