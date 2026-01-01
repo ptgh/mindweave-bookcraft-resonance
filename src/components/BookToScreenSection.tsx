@@ -961,6 +961,13 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                           Dir: {selectedFilm.director}
                         </button>
                       )}
+                      {/* Show screenwriter for original screenplays */}
+                      {selectedFilm.adaptation_type === 'original' && selectedFilm.book_author && 
+                       selectedFilm.book_author !== 'Unknown Screenwriter' && (
+                        <div className="text-emerald-400 text-sm">
+                          Written by: {selectedFilm.book_author}
+                        </div>
+                      )}
                       {selectedFilm.imdb_rating && (
                         <div className="flex items-center gap-1 text-amber-400">
                           <Star className="w-3.5 h-3.5 fill-amber-400" />
