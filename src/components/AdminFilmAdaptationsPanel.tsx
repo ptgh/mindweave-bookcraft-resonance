@@ -11,7 +11,7 @@ import { invokeAdminFunction } from "@/utils/adminFunctions";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { 
   Film, Plus, Pencil, Trash2, RefreshCw, Image, Video, 
-  Star, BookOpen, Loader2, Search, Check, Sparkles, Play, Award
+  Star, BookOpen, Loader2, Search, Check, Sparkles, Play, Award, FileText
 } from "lucide-react";
 
 interface StreamingAvailability {
@@ -38,6 +38,10 @@ interface FilmAdaptation {
   criterion_spine: number | null;
   is_criterion_collection: boolean | null;
   streaming_availability: StreamingAvailability | null;
+  // Screenplay fields
+  adaptation_type: string | null;
+  script_url: string | null;
+  script_source: string | null;
 }
 
 const emptyFilm: Partial<FilmAdaptation> = {
@@ -53,6 +57,10 @@ const emptyFilm: Partial<FilmAdaptation> = {
   trailer_url: '',
   criterion_spine: null,
   streaming_availability: {},
+  // Screenplay fields
+  adaptation_type: null,
+  script_url: '',
+  script_source: null,
 };
 
 export const AdminFilmAdaptationsPanel = () => {
@@ -316,6 +324,10 @@ export const AdminFilmAdaptationsPanel = () => {
         trailer_url: editingFilm.trailer_url || null,
         criterion_spine: editingFilm.criterion_spine,
         streaming_availability: cleanedStreaming && Object.keys(cleanedStreaming).length > 0 ? cleanedStreaming : null,
+        // Screenplay fields
+        adaptation_type: editingFilm.adaptation_type || null,
+        script_url: editingFilm.script_url || null,
+        script_source: editingFilm.script_source || null,
       };
 
       if (editingFilm.id) {
@@ -473,6 +485,61 @@ export const AdminFilmAdaptationsPanel = () => {
                         />
                       </div>
                     </div>
+
+                    {/* Screenplay Section - Only show for original screenplays */}
+                    {editingFilm.adaptation_type === 'original' && (
+                      <div className="space-y-3 p-3 bg-cyan-900/20 border border-cyan-500/30 rounded-lg">
+                        <h4 className="text-sm font-medium text-cyan-300 flex items-center gap-2">
+                          <FileText className="w-4 h-4" />
+                          Screenplay Data
+                        </h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label className="text-slate-300">Screenwriter(s)</Label>
+                            <Input
+                              value={editingFilm.book_author || ''}
+                              onChange={e => setEditingFilm({ ...editingFilm, book_author: e.target.value })}
+                              placeholder="e.g., Jim Thomas & John Thomas"
+                              className="bg-slate-800 border-slate-700"
+                            />
+                            <p className="text-xs text-muted-foreground">Use " & " to separate multiple writers</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-slate-300">Script URL</Label>
+                            <Input
+                              value={editingFilm.script_url || ''}
+                              onChange={e => setEditingFilm({ ...editingFilm, script_url: e.target.value })}
+                              placeholder="https://assets.scriptslug.com/..."
+                              className="bg-slate-800 border-slate-700"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label className="text-slate-300">Script Source</Label>
+                            <select
+                              value={editingFilm.script_source || ''}
+                              onChange={e => setEditingFilm({ ...editingFilm, script_source: e.target.value || null })}
+                              className="w-full h-10 px-3 bg-slate-800 border border-slate-700 rounded-md text-sm"
+                            >
+                              <option value="">Not specified</option>
+                              <option value="scriptslug">ScriptSlug</option>
+                              <option value="imsdb">IMSDb</option>
+                              <option value="other">Other</option>
+                            </select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-slate-300">Screenplay Cover URL</Label>
+                            <Input
+                              value={editingFilm.book_cover_url || ''}
+                              onChange={e => setEditingFilm({ ...editingFilm, book_cover_url: e.target.value })}
+                              placeholder="ScriptSlug poster URL"
+                              className="bg-slate-800 border-slate-700"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     <DialogFooter>
                       <DialogClose asChild>
