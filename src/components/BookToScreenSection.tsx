@@ -215,9 +215,14 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     return null;
   };
 
-  // Filter adaptations based on search query only (all films shown)
+  // Filter adaptations based on search query and filter mode
   const filteredAdaptations = React.useMemo(() => {
     let result = adaptations;
+    
+    // Filter by "has_script" mode
+    if (filterMode === 'has_script') {
+      result = result.filter(film => !!film.script_url);
+    }
     
     // Filter by search query
     if (searchQuery.trim()) {
@@ -231,7 +236,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     }
     
     return result;
-  }, [adaptations, searchQuery]);
+  }, [adaptations, searchQuery, filterMode]);
 
   // Visible films for infinite scroll
   const visibleFilms = filteredAdaptations.slice(0, visibleCount);
@@ -442,14 +447,14 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
         notable_differences: film.notable_differences,
       });
       // Create a synthetic book to satisfy modal requirements
-      // Prefer book_cover_url (ScriptSlug poster) over poster_url (film poster)
+      // For screenplays: use neutral script icon (no cover_url)
       const syntheticBook: EnrichedPublisherBook = {
         id: film.id,
         title: film.film_title, // Use film title for original screenplays
         author: film.book_author, // Screenwriters
         series_id: '',
         created_at: new Date().toISOString(),
-        cover_url: film.book_cover_url || film.poster_url || undefined,
+        cover_url: undefined, // Always use neutral script icon for screenplays
       };
       setSelectedBook(syntheticBook);
       return;
@@ -756,18 +761,22 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                     <div className="flex gap-2 h-full">
                       {/* Cover wrapper - do not change dimensions */}
                       <div className="w-16 h-24 flex-shrink-0 overflow-hidden rounded-sm">
-                        <MediaImage
-                          src={film.adaptation_type === 'original' ? film.poster_url : film.book_cover_url}
-                          alt={film.adaptation_type === 'original' ? film.film_title : film.book_title}
-                          type={film.adaptation_type === 'original' ? 'film' : 'book'}
-                          quality="optimized"
-                          fallbackIcon={film.adaptation_type === 'original' 
-                            ? <FileText className="w-6 h-6 text-cyan-400/40" />
-                            : <Book className="w-6 h-6 text-primary/40" />
-                          }
-                          aspectRatio="auto"
-                          className="w-full h-full object-cover"
-                        />
+                        {/* For original screenplays: always use neutral script icon */}
+                        {film.adaptation_type === 'original' ? (
+                          <div className="w-full h-full bg-gradient-to-br from-cyan-950/60 to-slate-900/80 flex items-center justify-center border border-cyan-500/20">
+                            <FileText className="w-8 h-8 text-cyan-400/60" />
+                          </div>
+                        ) : (
+                          <MediaImage
+                            src={film.book_cover_url}
+                            alt={film.book_title}
+                            type="book"
+                            quality="optimized"
+                            fallbackIcon={<Book className="w-6 h-6 text-primary/40" />}
+                            aspectRatio="auto"
+                            className="w-full h-full object-cover"
+                          />
+                        )}
                       </div>
                       <div className="flex-1 py-2 pr-2 min-w-0 flex flex-col">
                         <div className="flex items-center gap-1 mb-1">

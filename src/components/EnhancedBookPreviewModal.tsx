@@ -393,9 +393,10 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
     ? { title: scriptData!.film_title, author: scriptData!.book_author }
     : (appleBook || googleFallback || book);
   
-  // For scripts, prefer book_cover_url (ScriptSlug poster) over poster_url (film poster)
+  // For scripts, always use neutral script icon (no cover)
+  // For books, use cover hierarchy
   const coverUrl = isScriptMode 
-    ? (scriptData!.book_cover_url || scriptData!.poster_url)
+    ? null // Always show FileText icon for screenplays
     : (book.cover_url || book.google_cover_url || appleBook?.coverUrl || googleFallback?.coverUrl);
   
   // Description - use API results or editorial note (not for scripts)
