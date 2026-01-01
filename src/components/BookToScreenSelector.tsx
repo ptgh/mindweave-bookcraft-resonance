@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
-import { Film, Sparkles } from 'lucide-react';
+import { Film, Sparkles, FileText } from 'lucide-react';
 
-export type FilterMode = 'all';
+export type FilterMode = 'all' | 'has_script';
 
 interface BookToScreenSelectorProps {
   selected: FilterMode;
@@ -21,15 +21,37 @@ export const BookToScreenSelector: React.FC<BookToScreenSelectorProps> = ({
 }) => {
   return (
     <div className={`flex items-center gap-3 flex-wrap justify-center ${className}`}>
-      {/* All Films indicator */}
+      {/* All Films toggle */}
       <div className="inline-flex items-center bg-muted/30 rounded-lg p-1 border border-border/30">
-        <div className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-amber-400 bg-amber-500/20 border border-amber-500/40">
+        <button
+          onClick={() => onSelect('all')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+            selected === 'all'
+              ? 'text-amber-400 bg-amber-500/20 border border-amber-500/40'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent'
+          }`}
+        >
           <Film className="w-3.5 h-3.5" />
           All Films
-        </div>
+        </button>
       </div>
 
-      {/* AI Scan Button - exact same container and sizing as All Films */}
+      {/* Has Script filter */}
+      <div className="inline-flex items-center bg-muted/30 rounded-lg p-1 border border-border/30">
+        <button
+          onClick={() => onSelect('has_script')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+            selected === 'has_script'
+              ? 'text-cyan-400 bg-cyan-500/20 border border-cyan-500/40'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent'
+          }`}
+        >
+          <FileText className="w-3.5 h-3.5" />
+          Has Script
+        </button>
+      </div>
+
+      {/* AI Scan Button */}
       <div className="inline-flex items-center bg-muted/30 rounded-lg p-1 border border-border/30">
         <button
           onClick={onAIScan}
