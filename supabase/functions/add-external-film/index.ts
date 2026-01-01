@@ -73,10 +73,10 @@ Deno.serve(async (req) => {
 
     console.log(`[add-external-film] Director: ${director || 'unknown'}, IMDB: ${details.imdb_id || 'none'}`);
 
-    // Use AI to determine book source
+    // Use AI to determine book source AND get real screenwriter names
     const aiPrompt = `Is the film "${title}" (${year}) directed by ${director || 'unknown'} based on a book, novel, or short story?
 
-If YES, respond with JSON:
+If YES (based on existing written work), respond with JSON:
 {
   "is_adaptation": true,
   "book_title": "exact book title",
@@ -84,20 +84,27 @@ If YES, respond with JSON:
   "source_type": "novel" | "short_story" | "novella"
 }
 
-If NO (original screenplay), respond with:
+If NO (original screenplay NOT based on a book), respond with:
 {
   "is_adaptation": false,
-  "book_title": "${title}",
-  "book_author": "Original screenplay",
+  "book_title": "${title} (original screenplay)",
+  "book_author": "ACTUAL SCREENWRITER NAME(S)",
   "source_type": "original"
 }
+
+CRITICAL RULES FOR ORIGINAL SCREENPLAYS:
+- book_author MUST contain the REAL screenwriter name(s) who wrote the screenplay
+- Use " & " to separate multiple writers (e.g., "Jim Thomas & John Thomas")
+- Do NOT use the director's name unless they actually wrote the screenplay
+- Do NOT use "Original screenplay" as the author - use the real writer names
+- Examples: "Predator" -> "Jim Thomas & John Thomas", "Ex Machina" -> "Alex Garland"
 
 If UNCERTAIN, make your best assessment based on your knowledge. Respond ONLY with valid JSON.`;
 
     let bookInfo = {
       is_adaptation: false,
-      book_title: title,
-      book_author: 'Original screenplay',
+      book_title: `${title} (original screenplay)`,
+      book_author: 'Unknown Screenwriter', // Will be overwritten by AI or enrichment
       source_type: 'original'
     };
 
@@ -181,7 +188,8 @@ If UNCERTAIN, make your best assessment based on your knowledge. Respond ONLY wi
     const INTERNAL_SECRET = Deno.env.get('INTERNAL_EDGE_SECRET');
     
     if (SUPABASE_URL && INTERNAL_SECRET && inserted?.id) {
-      const enrichFunctions = ['enrich-film-artwork', 'enrich-trailer-urls'];
+      // Include screenplay enrichment for original screenplays
+      const enrichFunctions = ['enrich-film-artwork', 'enrich-trailer-urls', 'enrich-screenplay-data'];
       for (const func of enrichFunctions) {
         fetch(`${SUPABASE_URL}/functions/v1/${func}`, {
           method: 'POST',

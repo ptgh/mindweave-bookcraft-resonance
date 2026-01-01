@@ -25,8 +25,29 @@ interface ScreenplayInfo {
   writers: string[];
   scriptUrl: string | null;
   scriptPdfUrl: string | null;
+  posterUrl: string | null; // ScriptSlug cover image
   source: 'scriptslug' | 'imsdb' | 'tmdb' | 'ai' | null;
 }
+
+// Curated screenplay data for verified films (priority source)
+const CURATED_SCREENPLAYS: Array<{
+  title: string;
+  year: number;
+  writers: string[];
+  scriptSlugId: string | null;
+}> = [
+  { title: "Predator", year: 1987, writers: ["Jim Thomas", "John Thomas"], scriptSlugId: "predator-1987" },
+  { title: "The Predator", year: 2018, writers: ["Fred Dekker", "Shane Black"], scriptSlugId: "the-predator-2018" },
+  { title: "Ex Machina", year: 2015, writers: ["Alex Garland"], scriptSlugId: "ex-machina-2015" },
+  { title: "The Creator", year: 2023, writers: ["Gareth Edwards", "Chris Weitz"], scriptSlugId: null },
+  { title: "Blade Runner", year: 1982, writers: ["Hampton Fancher", "David Peoples"], scriptSlugId: "blade-runner-1982" },
+  { title: "Blade Runner 2049", year: 2017, writers: ["Hampton Fancher", "Michael Green"], scriptSlugId: "blade-runner-2049-2017" },
+  { title: "Alien", year: 1979, writers: ["Dan O'Bannon"], scriptSlugId: "alien-1979" },
+  { title: "Aliens", year: 1986, writers: ["James Cameron"], scriptSlugId: "aliens-1986" },
+  { title: "The Terminator", year: 1984, writers: ["James Cameron", "Gale Anne Hurd"], scriptSlugId: "the-terminator-1984" },
+  { title: "Terminator 2: Judgment Day", year: 1991, writers: ["James Cameron", "William Wisher"], scriptSlugId: "terminator-2-judgment-day-1991" },
+  { title: "The Matrix", year: 1999, writers: ["The Wachowskis"], scriptSlugId: "the-matrix-1999" },
+];
 
 interface TMDBCrewMember {
   job: string;
@@ -115,6 +136,15 @@ async function scrapeScriptSlugWithFirecrawl(title: string, year: number | null)
         }
       }
 
+      // Extract poster URL from ScriptSlug page
+      // Pattern: https://assets.scriptslug.com/live/img/x/posters/{id}/{slug}.jpg
+      let posterUrl: string | null = null;
+      const posterMatch = markdown.match(/assets\.scriptslug\.com\/live\/img\/[^"'\s\)]+\.(jpg|png|webp)/i);
+      if (posterMatch) {
+        posterUrl = `https://${posterMatch[0]}`;
+        console.log(`Found ScriptSlug poster: ${posterUrl}`);
+      }
+
       // Verify PDF exists
       let verifiedPdfUrl: string | null = null;
       try {
@@ -128,11 +158,12 @@ async function scrapeScriptSlugWithFirecrawl(title: string, year: number | null)
       }
 
       if (writers.length > 0 || verifiedPdfUrl) {
-        console.log(`ScriptSlug found: Writers: ${writers.join(', ')}, PDF: ${verifiedPdfUrl || 'not found'}`);
+        console.log(`ScriptSlug found: Writers: ${writers.join(', ')}, PDF: ${verifiedPdfUrl || 'not found'}, Poster: ${posterUrl || 'not found'}`);
         return {
           writers: [...new Set(writers)], // Remove duplicates
           scriptUrl: verifiedPdfUrl || pageUrl,
           scriptPdfUrl: verifiedPdfUrl,
+          posterUrl,
           source: 'scriptslug',
         };
       }
@@ -393,19 +424,40 @@ Deno.serve(async (req) => {
         let writers: string[] = [];
         let scriptUrl: string | null = film.script_url;
         let scriptSource: string | null = null;
+        let posterUrl: string | null = null;
 
-        // Step 1: PRIMARY - Try ScriptSlug with Firecrawl (best for both writers + PDF)
-        const scriptSlugData = await scrapeScriptSlugWithFirecrawl(film.film_title, film.film_year);
-        
-        if (scriptSlugData) {
-          if (scriptSlugData.writers.length > 0) {
-            writers = scriptSlugData.writers;
-          }
-          if (scriptSlugData.scriptUrl) {
-            scriptUrl = scriptSlugData.scriptUrl;
+        // Step 0: Check curated list FIRST (most reliable)
+        const curated = CURATED_SCREENPLAYS.find(
+          c => c.title.toLowerCase() === film.film_title.toLowerCase() && 
+               (c.year === film.film_year || !film.film_year)
+        );
+
+        if (curated) {
+          writers = curated.writers;
+          if (curated.scriptSlugId && !scriptUrl) {
+            scriptUrl = `https://assets.scriptslug.com/live/pdf/scripts/${curated.scriptSlugId}.pdf`;
             scriptSource = 'scriptslug';
           }
-          console.log(`ScriptSlug result for ${film.film_title}: Writers=${writers.join(', ')}, URL=${scriptUrl}`);
+          console.log(`Using curated data for ${film.film_title}: ${writers.join(' & ')}`);
+        }
+
+        // Step 1: PRIMARY - Try ScriptSlug with Firecrawl (best for both writers + PDF)
+        if (writers.length === 0 || !scriptUrl) {
+          const scriptSlugData = await scrapeScriptSlugWithFirecrawl(film.film_title, film.film_year);
+          
+          if (scriptSlugData) {
+            if (scriptSlugData.writers.length > 0 && writers.length === 0) {
+              writers = scriptSlugData.writers;
+            }
+            if (scriptSlugData.scriptUrl && !scriptUrl) {
+              scriptUrl = scriptSlugData.scriptUrl;
+              scriptSource = 'scriptslug';
+            }
+            if (scriptSlugData.posterUrl) {
+              posterUrl = scriptSlugData.posterUrl;
+            }
+            console.log(`ScriptSlug result for ${film.film_title}: Writers=${writers.join(', ')}, URL=${scriptUrl}, Poster=${posterUrl || 'none'}`);
+          }
         }
 
         // Step 2: If no writers from ScriptSlug, try TMDB credits
@@ -430,9 +482,10 @@ Deno.serve(async (req) => {
         }
 
         // Format writer string with " & " separator
+        // CRITICAL: Never fall back to director - use "Unknown Screenwriter" instead
         const writerString = writers.length > 0 
           ? writers.join(' & ')
-          : film.director || 'Unknown Screenwriter';
+          : 'Unknown Screenwriter';
 
         // Ensure book_title has "(original screenplay)" suffix
         const correctBookTitle = film.book_title?.includes('(original screenplay)')
@@ -452,6 +505,11 @@ Deno.serve(async (req) => {
           updateData.script_source = scriptSource || (scriptUrl.includes('imsdb') ? 'imsdb' : 'scriptslug');
         }
 
+        // Store ScriptSlug poster in book_cover_url for screenplays
+        if (posterUrl) {
+          updateData.book_cover_url = posterUrl;
+        }
+
         const { error: updateError } = await supabase
           .from('sf_film_adaptations')
           .update(updateData)
@@ -463,7 +521,7 @@ Deno.serve(async (req) => {
           results.push({ id: film.id, title: film.film_title, writers: [], scriptUrl: null, status: 'failed' });
         } else {
           enriched++;
-          console.log(`Enriched: ${film.film_title} - Writers: ${writerString}, Script: ${scriptUrl || 'none'}`);
+          console.log(`Enriched: ${film.film_title} - Writers: ${writerString}, Script: ${scriptUrl || 'none'}, Poster: ${posterUrl || 'none'}`);
           results.push({ id: film.id, title: film.film_title, writers, scriptUrl, status: 'enriched' });
         }
 

@@ -130,6 +130,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     director: string | null;
     book_author: string;
     poster_url: string | null;
+    book_cover_url: string | null; // ScriptSlug cover for screenplay
     script_url: string | null;
     script_source: string | null;
     notable_differences?: string | null;
@@ -435,18 +436,20 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
         director: film.director,
         book_author: film.book_author, // screenwriters
         poster_url: film.poster_url,
-        script_url: film.script_url,
-        script_source: film.script_source,
+        book_cover_url: film.book_cover_url || null, // ScriptSlug poster for screenplay
+        script_url: film.script_url || null,
+        script_source: film.script_source || null,
         notable_differences: film.notable_differences,
       });
       // Create a synthetic book to satisfy modal requirements
+      // Prefer book_cover_url (ScriptSlug poster) over poster_url (film poster)
       const syntheticBook: EnrichedPublisherBook = {
         id: film.id,
         title: film.film_title, // Use film title for original screenplays
         author: film.book_author, // Screenwriters
         series_id: '',
         created_at: new Date().toISOString(),
-        cover_url: film.poster_url || undefined, // Use poster for screenplay
+        cover_url: film.book_cover_url || film.poster_url || undefined,
       };
       setSelectedBook(syntheticBook);
       return;

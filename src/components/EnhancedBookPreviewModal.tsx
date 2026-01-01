@@ -23,6 +23,7 @@ interface ScriptData {
   director: string | null;
   book_author: string; // screenwriters
   poster_url: string | null;
+  book_cover_url: string | null; // ScriptSlug cover for screenplay
   script_url: string | null;
   script_source: string | null;
   notable_differences?: string | null;
@@ -392,8 +393,9 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
     ? { title: scriptData!.film_title, author: scriptData!.book_author }
     : (appleBook || googleFallback || book);
   
+  // For scripts, prefer book_cover_url (ScriptSlug poster) over poster_url (film poster)
   const coverUrl = isScriptMode 
-    ? scriptData!.poster_url 
+    ? (scriptData!.book_cover_url || scriptData!.poster_url)
     : (book.cover_url || book.google_cover_url || appleBook?.coverUrl || googleFallback?.coverUrl);
   
   // Description - use API results or editorial note (not for scripts)
