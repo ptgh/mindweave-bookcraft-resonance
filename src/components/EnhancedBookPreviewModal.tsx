@@ -642,18 +642,19 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
                       onClick={digitalCopyInfo.disabled ? undefined : handleDigitalCopyAction}
                       disabled={digitalCopyInfo.disabled}
                       className={`h-9 px-3 py-1.5 bg-transparent border border-[rgba(255,255,255,0.15)] text-xs rounded-lg transition-all duration-300 ease-in-out ${
-                         digitalCopyInfo.disabled 
-                           ? 'text-slate-500 cursor-not-allowed' 
-                           : 'text-[#cdd6f4] hover:border-[#89b4fa]'
-                       }`}
-                       style={{
-                         boxShadow: "0 0 0px transparent"
-                       }}
-                     >
-                       {digitalCopyInfo.buttonText}
-                     </button>
-                   </div>
-                 </div>
+                        digitalCopyInfo.disabled 
+                          ? 'text-slate-500 cursor-not-allowed' 
+                          : 'text-[#cdd6f4] hover:border-[#89b4fa]'
+                      }`}
+                      style={{
+                        boxShadow: "0 0 0px transparent"
+                      }}
+                    >
+                      {digitalCopyInfo.buttonText}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

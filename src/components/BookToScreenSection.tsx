@@ -1218,14 +1218,6 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
         }}
         onAdded={handleFilmAdded}
       />
-      <ScriptPreviewModal
-        film={selectedScriptFilm}
-        isVisible={showScriptModal}
-        onClose={() => {
-          setShowScriptModal(false);
-          setSelectedScriptFilm(null);
-        }}
-      />
     </div>
   );
 };
