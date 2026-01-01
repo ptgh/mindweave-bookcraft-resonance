@@ -10,6 +10,7 @@ import { createPortal } from 'react-dom';
 import { gsap } from 'gsap';
 import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
 import { AddFilmPreviewModal } from '@/components/AddFilmPreviewModal';
+import { ScriptPreviewModal } from '@/components/ScriptPreviewModal';
 
 import { EnrichedPublisherBook } from '@/services/publisherService';
 import { AuthorPopup } from '@/components/AuthorPopup';
@@ -122,6 +123,10 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const [isSearchingExternal, setIsSearchingExternal] = useState(false);
   const [filmToPreview, setFilmToPreview] = useState<ExternalFilmResult | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  
+  // Script preview modal state for original screenplays
+  const [showScriptModal, setShowScriptModal] = useState(false);
+  const [selectedScriptFilm, setSelectedScriptFilm] = useState<FilmAdaptation | null>(null);
   const authorRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const directorRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -414,6 +419,13 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   }, []);
 
   const openBookPreview = (film: FilmAdaptation) => {
+    // For original screenplays, open the ScriptPreviewModal instead
+    if (film.adaptation_type === 'original') {
+      setSelectedScriptFilm(film);
+      setShowScriptModal(true);
+      return;
+    }
+    
     // If film has a linked book_id, fetch the real publisher book
     if (film.book_id) {
       fetchLinkedBook(film.book_id).then(() => {
@@ -422,12 +434,11 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
       return;
     }
     
-    // Create synthetic book from film adaptation data (works for both adaptations and originals)
-    // book_title now contains "(original screenplay)" suffix for originals
+    // Create synthetic book from film adaptation data
     const book: EnrichedPublisherBook = {
       id: film.id,
-      title: film.book_title, // For originals: "Film Title (original screenplay)"
-      author: film.book_author, // For originals: screenwriter name from TMDB
+      title: film.book_title,
+      author: film.book_author,
       series_id: '',
       created_at: new Date().toISOString(),
       cover_url: film.book_cover_url || undefined,
@@ -1207,6 +1218,14 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
           setFilmToPreview(null);
         }}
         onAdded={handleFilmAdded}
+      />
+      <ScriptPreviewModal
+        film={selectedScriptFilm}
+        isVisible={showScriptModal}
+        onClose={() => {
+          setShowScriptModal(false);
+          setSelectedScriptFilm(null);
+        }}
       />
     </div>
   );
