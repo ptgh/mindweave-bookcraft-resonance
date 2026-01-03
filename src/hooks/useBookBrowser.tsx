@@ -177,6 +177,53 @@ export const useBookBrowser = () => {
           console.error('Error loading publisher books:', pubError);
         }
         
+        // 1c. Load books from sf_film_adaptations table (Book to Screen source books)
+        try {
+          const { data: filmBooks, error: filmError } = await supabase
+            .from('sf_film_adaptations')
+            .select('id, book_title, book_author, book_cover_url, book_isbn, book_publication_year, adaptation_type')
+            .neq('adaptation_type', 'original') // Exclude original screenplays
+            .not('book_title', 'is', null)
+            .order('created_at', { ascending: false })
+            .limit(50);
+          
+          if (filmError) throw filmError;
+          
+          console.log(`Found ${filmBooks?.length || 0} books in sf_film_adaptations table`);
+          
+          // Deduplicate by title+author combination
+          const seenFilmBooks = new Set<string>();
+          const transformedFilmBooks: EnhancedBookSuggestion[] = (filmBooks || [])
+            .filter(book => {
+              const key = `${book.book_title?.toLowerCase()}-${book.book_author?.toLowerCase()}`;
+              if (seenFilmBooks.has(key) || previouslyShownBooks.has(book.id)) return false;
+              seenFilmBooks.add(key);
+              return true;
+            })
+            .map((book: any) => ({
+              id: `film-${book.id}`,
+              title: book.book_title || '',
+              author: book.book_author || 'Unknown Author',
+              coverUrl: book.book_cover_url || '',
+              thumbnailUrl: book.book_cover_url || '',
+              smallThumbnailUrl: book.book_cover_url || '',
+              subtitle: '',
+              description: `Source material adapted to screen`,
+              publishedDate: book.book_publication_year?.toString() || '',
+              pageCount: undefined,
+              categories: ['Science Fiction', 'Film Adaptation'],
+              rating: undefined,
+              ratingsCount: undefined,
+              previewLink: '',
+              infoLink: ''
+            }));
+          
+          allBooks.push(...transformedFilmBooks);
+          console.log(`Added ${transformedFilmBooks.length} film adaptation source books to pool`);
+        } catch (filmError) {
+          console.error('Error loading film adaptation books:', filmError);
+        }
+        
         // 2. Mix in curated books every rotation
         const curatedBooks = getRandomCuratedBooks(6);
         console.log(`Including ${curatedBooks.length} curated books`);

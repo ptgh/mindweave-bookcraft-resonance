@@ -69,11 +69,26 @@ const BookBrowser = () => {
   const [authorPopupVisible, setAuthorPopupVisible] = useState(false);
   const [userBooksCount, setUserBooksCount] = useState(0);
   
+  // Search results from header search bar
+  const [searchResultBooks, setSearchResultBooks] = useState<EnhancedBookSuggestion[]>([]);
+  const [searchedAuthor, setSearchedAuthor] = useState<ScifiAuthor | null>(null);
+  
   // Related books from transmissions when navigating from Neural Map
   const [relatedBooks, setRelatedBooks] = useState<EnhancedBookSuggestion[]>([]);
   const [fetchedTransmission, setFetchedTransmission] = useState<EnhancedBookSuggestion | null>(null);
   const [highlightAnimating, setHighlightAnimating] = useState(false);
   const [isAddingToLibrary, setIsAddingToLibrary] = useState(false);
+  
+  // Handle search results from header
+  const handleSearchResults = useCallback((books: EnhancedBookSuggestion[], author?: ScifiAuthor) => {
+    setSearchResultBooks(books);
+    setSearchedAuthor(author || null);
+  }, []);
+  
+  const handleClearSearch = useCallback(() => {
+    setSearchResultBooks([]);
+    setSearchedAuthor(null);
+  }, []);
   
   // Load user book count for AI toggle visibility
   useEffect(() => {
@@ -304,8 +319,13 @@ const BookBrowser = () => {
     }
   };
 
-  // Combine books: spotlight/highlighted first, then related, then regular books
+  // Combine books: search results first, then spotlight/highlighted, then related, then regular books
   const displayBooks = useCallback((): EnhancedBookSuggestion[] => {
+    // If we have search results, show only those
+    if (searchResultBooks.length > 0) {
+      return searchResultBooks;
+    }
+    
     const result: EnhancedBookSuggestion[] = [];
     const seenIds = new Set<string>();
     
@@ -338,7 +358,7 @@ const BookBrowser = () => {
     }
     
     return result;
-  }, [spotlightBook, fetchedTransmission, relatedBooks, books]);
+  }, [spotlightBook, fetchedTransmission, relatedBooks, books, searchResultBooks]);
 
   const handleAuthorClick = async (authorName: string) => {
     console.log('Author clicked:', authorName);
@@ -375,6 +395,8 @@ const BookBrowser = () => {
               loading={loading}
               onDiscover={loadRandomBooks}
               userBooksCount={userBooksCount}
+              onSearchResults={handleSearchResults}
+              onClearSearch={handleClearSearch}
             />
           </div>
 
