@@ -8,6 +8,21 @@ export interface DeepLinkInfo {
   icon: string;
 }
 
+// Known Google Books IDs for specific titles (verified correct book editions)
+const KNOWN_GOOGLE_BOOKS_IDS: Record<string, string> = {
+  'earth abides|george r. stewart': 'izeOd3pOZXwC',
+  'earth abides|george stewart': 'izeOd3pOZXwC',
+  'the day of the triffids|john wyndham': 'mfm6PgAACAAJ',
+  'i am legend|richard matheson': 'mAKLoAEACAAJ',
+  'a canticle for leibowitz|walter m. miller jr.': 'oWv2AAAAQBAJ',
+  'a canticle for leibowitz|walter m. miller': 'oWv2AAAAQBAJ',
+  'flowers for algernon|daniel keyes': 'jqtUDgAAQBAJ',
+  'the body snatchers|jack finney': 'NpMRAAAAYAAJ',
+  'invasion of the body snatchers|jack finney': 'NpMRAAAAYAAJ',
+  'city|clifford d. simak': 'WvnKAAAAMAAJ',
+  'city|clifford simak': 'WvnKAAAAMAAJ',
+};
+
 export const useDeepLinking = () => {
   const [loadingIds, setLoadingIds] = useState<Set<number>>(new Set());
   
@@ -20,6 +35,23 @@ export const useDeepLinking = () => {
     const title = book.title || '';
     const author = book.author || '';
     const cacheKey = `${title}-${author}`;
+    
+    // Check for known Google Books ID first
+    const normalizedTitle = title.toLowerCase().trim();
+    const normalizedAuthor = author.toLowerCase().trim();
+    const lookupKey = `${normalizedTitle}|${normalizedAuthor}`;
+    const knownId = KNOWN_GOOGLE_BOOKS_IDS[lookupKey];
+    
+    if (knownId) {
+      console.log('Using known Google Books ID for:', title, '->', knownId);
+      const result: DeepLinkInfo = {
+        type: 'google',
+        url: `https://books.google.co.uk/books/about/${encodeURIComponent(title.replace(/ /g, '_'))}.html?id=${knownId}`,
+        icon: '📖'
+      };
+      urlCache.set(cacheKey, result);
+      return result;
+    }
     
     // Check cache first
     if (urlCache.has(cacheKey)) {
