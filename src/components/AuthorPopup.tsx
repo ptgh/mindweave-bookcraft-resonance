@@ -550,10 +550,23 @@ export const AuthorPopup: React.FC<AuthorPopupProps> = ({
                   window.open(currentAuthor.wikipedia_url, '_blank');
                   return;
                 }
-                // Priority 2: Use Wikipedia search (always works - redirects to article if found or shows search results)
-                const searchQuery = `${currentAuthor.name} science fiction author`;
-                const wikiSearchUrl = `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(searchQuery)}`;
-                window.open(wikiSearchUrl, '_blank');
+                // Priority 2: Construct direct Wikipedia URL from author name
+                // Replace spaces with underscores, remove periods from initials, handle special characters
+                const constructWikiUrl = (name: string): string => {
+                  // Clean the name: "George.r. Stewart" -> "George R. Stewart" -> "George_R._Stewart"
+                  let cleaned = name
+                    .replace(/\.(\w)/g, '. $1') // "George.r." -> "George. r."
+                    .replace(/\.\s+/g, '. ') // Normalize multiple spaces after periods
+                    .replace(/\s+/g, ' ') // Collapse multiple spaces
+                    .trim();
+                  
+                  // Standard Wikipedia URL format: spaces to underscores
+                  const wikiName = cleaned.replace(/\s+/g, '_');
+                  return `https://en.wikipedia.org/wiki/${encodeURIComponent(wikiName)}`;
+                };
+                
+                const directUrl = constructWikiUrl(currentAuthor.name);
+                window.open(directUrl, '_blank');
               }}
             >
               <ExternalLink className="w-4 h-4 mr-2" />

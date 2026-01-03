@@ -40,8 +40,38 @@ export interface EnhancedBookSuggestion {
 // Memoized search function for better performance
 const memoizedSearchBooks = memoize(searchGoogleBooks);
 
+// Known classic SF titles and authors that should always pass filter
+const CLASSIC_SF_TITLES = [
+  'earth abides', 'the day of the triffids', 'i am legend', 'the body snatchers',
+  'a canticle for leibowitz', 'city', 'way station', 'the chrysalids',
+  'the midwich cuckoos', 'the shrinking man', 'on the beach', 'alas babylon',
+  'the long tomorrow', 'level 7', 'a wrinkle in time', 'flowers for algernon',
+  'the demolished man', 'the stars my destination', 'more than human',
+  'childhood\'s end', 'fahrenheit 451', 'the martian chronicles'
+];
+
+const CLASSIC_SF_AUTHORS = [
+  'george r. stewart', 'george stewart', 'john wyndham', 'richard matheson',
+  'jack finney', 'walter m. miller', 'clifford simak', 'clifford d. simak',
+  'nevil shute', 'pat frank', 'leigh brackett', 'mordecai roshwald',
+  'theodore sturgeon', 'alfred bester', 'madeleine l\'engle', 'daniel keyes'
+];
+
 // Enhanced sci-fi filtering function
 const isSciFiBook = (book: any): boolean => {
+  const title = (book.title || '').toLowerCase();
+  const author = (book.author || '').toLowerCase();
+  
+  // Always accept known classic SF titles
+  if (CLASSIC_SF_TITLES.some(classic => title.includes(classic))) {
+    return true;
+  }
+  
+  // Always accept known classic SF authors
+  if (CLASSIC_SF_AUTHORS.some(classicAuthor => author.includes(classicAuthor))) {
+    return true;
+  }
+  
   const sciFiKeywords = [
     'science fiction', 'sci-fi', 'cyberpunk', 'dystopian', 'utopian',
     'space opera', 'time travel', 'artificial intelligence', 'robot',
@@ -50,17 +80,16 @@ const isSciFiBook = (book: any): boolean => {
     'steampunk', 'biopunk', 'nanopunk', 'alternate history',
     'virtual reality', 'genetic engineering', 'bioengineering',
     'terraforming', 'interstellar', 'galactic', 'quantum',
-    'dimensional', 'parallel universe', 'multiverse'
+    'dimensional', 'parallel universe', 'multiverse', 'apocalyptic',
+    'speculative fiction', 'fantasy', 'fiction / science fiction'
   ];
 
   const antiKeywords = [
     'climate policy', 'economics', 'politics', 'business',
-    'self-help', 'biography', 'memoir', 'history',
-    'religion', 'philosophy', 'psychology', 'sociology',
+    'self-help', 'biography', 'memoir',
+    'religion', 'psychology', 'sociology',
     'anthropology', 'education', 'health', 'medical',
-    'cookbook', 'travel', 'romance', 'mystery',
-    'thriller', 'horror', 'western', 'historical fiction',
-    'literary fiction', 'young adult', 'children',
+    'cookbook', 'travel', 'romance',
     'textbook', 'academic', 'reference'
   ];
 
@@ -68,14 +97,16 @@ const isSciFiBook = (book: any): boolean => {
   if (book.categories && Array.isArray(book.categories)) {
     const categoryText = book.categories.join(' ').toLowerCase();
     
-    // Reject if contains anti-keywords in categories
-    if (antiKeywords.some(keyword => categoryText.includes(keyword))) {
-      return false;
+    // Accept if contains sci-fi or fiction/general keywords in categories
+    if (sciFiKeywords.some(keyword => categoryText.includes(keyword)) || 
+        categoryText.includes('fiction')) {
+      return true;
     }
     
-    // Accept if contains sci-fi keywords in categories
-    if (sciFiKeywords.some(keyword => categoryText.includes(keyword))) {
-      return true;
+    // Reject only if contains anti-keywords AND no fiction category
+    if (antiKeywords.some(keyword => categoryText.includes(keyword)) &&
+        !categoryText.includes('fiction')) {
+      return false;
     }
   }
 
@@ -96,15 +127,20 @@ const isSciFiBook = (book: any): boolean => {
     return false;
   }
 
-  // Accept if contains sci-fi indicators
+  // Accept if contains sci-fi indicators or apocalyptic themes
   return sciFiKeywords.some(keyword => searchText.includes(keyword));
 };
 
 export const searchBooks = async (query: string): Promise<Book[]> => {
   try {
-    // Add sci-fi specific terms to the query
-    const sciFiQuery = `${query} science fiction OR sci-fi OR cyberpunk OR dystopian OR space opera`;
-    const books = await memoizedSearchBooks(sciFiQuery, 10);
+    // First try exact title search without SF modifiers (better for specific book lookups)
+    let books = await memoizedSearchBooks(`intitle:"${query}"`, 10);
+    
+    // If no results, fall back to broader search with SF terms
+    if (books.length === 0) {
+      const sciFiQuery = `${query} science fiction OR sci-fi OR speculative fiction`;
+      books = await memoizedSearchBooks(sciFiQuery, 10);
+    }
     
     return books
       .filter(book => isSciFiBook(book))
@@ -123,14 +159,23 @@ export const searchBooks = async (query: string): Promise<Book[]> => {
 
 export const searchBooksEnhanced = async (query: string, maxResults = 10, startIndex = 0, authorFilter?: string): Promise<EnhancedBookSuggestion[]> => {
   try {
-    // Use the exact query without modifications for better title accuracy
+    // When searching by author, use inauthor for better author-specific results
     const searchQuery = authorFilter 
-      ? `${query} inauthor:${authorFilter}`
+      ? `inauthor:"${authorFilter}"`
       : query;
     const books = await searchGoogleBooks(searchQuery, maxResults);
     
+    // When filtering by author, be more lenient with SF filter
+    // (authors already in our SF database are trusted to be SF authors)
+    const shouldFilterSF = !authorFilter;
+    
     return books
-      .filter(book => book.title && book.author && isSciFiBook(book))
+      .filter(book => {
+        if (!book.title || !book.author) return false;
+        // Skip SF filter if we're searching by a known SF author
+        if (!shouldFilterSF) return true;
+        return isSciFiBook(book);
+      })
       .map(book => ({
         id: book.id,
         title: book.title,
