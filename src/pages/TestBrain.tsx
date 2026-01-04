@@ -1306,70 +1306,35 @@ const TestBrain = () => {
 
         {tooltip && (
           <div 
-            className="absolute z-30 pointer-events-none animate-[float_4s_ease-in-out_infinite]"
+            className="absolute z-30 pointer-events-none"
             style={{ 
               left: tooltip.x - 100, 
               top: tooltip.y,
-              transform: 'translateX(-50%)',
-              animation: 'float 4s ease-in-out infinite'
+              transform: 'translateX(-50%)'
             }}
           >
-            {/* Energy particles */}
-            <div className="absolute -inset-8 pointer-events-none">
-              <div className="absolute top-0 left-1/4 w-1 h-1 bg-cyan-400 rounded-full animate-[ping_3s_ease-in-out_infinite]" style={{ animationDelay: '0s' }}></div>
-              <div className="absolute top-1/3 right-1/4 w-1 h-1 bg-blue-400 rounded-full animate-[ping_3s_ease-in-out_infinite]" style={{ animationDelay: '1s' }}></div>
-              <div className="absolute bottom-1/4 left-1/3 w-1 h-1 bg-cyan-300 rounded-full animate-[ping_3s_ease-in-out_infinite]" style={{ animationDelay: '2s' }}></div>
-            </div>
-
-            {/* Main card with holographic glass effect */}
-            <div className="relative group">
-              {/* Animated gradient border glow */}
-              <div className="absolute -inset-[2px] bg-gradient-to-r from-cyan-400/40 via-blue-500/40 to-cyan-400/40 rounded-2xl blur-sm animate-[pulse_3s_ease-in-out_infinite]"></div>
-              
-              {/* Outer glow layer */}
-              <div className="absolute -inset-[4px] bg-cyan-400/10 rounded-2xl blur-md"></div>
-              
-              {/* Card content */}
-              <div className="relative bg-slate-900/10 backdrop-blur-2xl border-2 border-cyan-400/30 rounded-2xl p-4 max-w-xs shadow-[0_0_30px_rgba(34,211,238,0.2),0_0_60px_rgba(34,211,238,0.1)] overflow-hidden">
-                {/* Scan line effect */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-400/5 to-transparent animate-[slide-down_3s_ease-in-out_infinite] pointer-events-none"></div>
-                
-                {/* Inner glow */}
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/5 via-transparent to-blue-500/5 rounded-2xl"></div>
-                
-                <div className="flex items-start space-x-4 relative">
-                  {tooltip.node.coverUrl && (
-                    <div className="relative w-12 h-16 flex-shrink-0 group/cover">
-                      {/* Cover glow effect */}
-                      <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400/40 to-blue-500/40 rounded-lg blur-md animate-[pulse_2s_ease-in-out_infinite]"></div>
-                      
-                      {/* Cover container with holographic border */}
-                      <div className="relative w-full h-full rounded-lg overflow-hidden border-2 border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.4)]">
-                        <img 
-                          src={tooltip.node.coverUrl} 
-                          alt={tooltip.node.title}
-                          className="w-full h-full object-cover"
-                        />
-                        {/* Shimmer overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-cyan-400/20 to-transparent animate-[shimmer_2s_ease-in-out_infinite]"></div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-cyan-300 text-sm mb-1 leading-tight tracking-wide drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
-                      {tooltip.node.title}
-                    </h4>
-                    <p className="text-xs text-cyan-400/60 mb-2 tracking-wider">
-                      {tooltip.node.author}
-                    </p>
-                    
-                    <div className="flex items-center gap-2 text-xs text-cyan-300 animate-pulse">
-                      <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full shadow-[0_0_6px_rgba(34,211,238,0.8)]"></div>
-                      <span className="drop-shadow-[0_0_4px_rgba(34,211,238,0.4)]">
-                        {links.filter(link => link.fromId === tooltip.node.id || link.toId === tooltip.node.id).length} connections
-                      </span>
-                    </div>
+            {/* Unified translucent card style - matches floating card */}
+            <div className="relative bg-slate-900/40 backdrop-blur-md border border-cyan-400/20 rounded-xl p-3 max-w-[220px] shadow-[0_0_20px_rgba(34,211,238,0.1)]">
+              <div className="flex items-center space-x-3">
+                {tooltip.node.coverUrl && (
+                  <div className="relative w-12 h-16 flex-shrink-0 rounded-lg overflow-hidden border border-cyan-400/25">
+                    <img 
+                      src={tooltip.node.coverUrl} 
+                      alt={tooltip.node.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium text-slate-100 text-sm leading-tight line-clamp-2">
+                    {tooltip.node.title}
+                  </h4>
+                  <p className="text-xs text-cyan-400/70 mt-0.5">
+                    {tooltip.node.author}
+                  </p>
+                  <div className="flex items-center gap-1.5 text-xs text-cyan-300/60 mt-1.5">
+                    <div className="w-1.5 h-1.5 bg-cyan-400/80 rounded-full"></div>
+                    <span>{links.filter(link => link.fromId === tooltip.node.id || link.toId === tooltip.node.id).length} connections</span>
                   </div>
                 </div>
               </div>
@@ -1378,7 +1343,7 @@ const TestBrain = () => {
         )}
       </div>
 
-      {/* Occasional floating mini-card */}
+      {/* Occasional floating mini-card - unified translucent style */}
       {floatingCard && !tooltip && !selectedNode && (
         <div 
           className="absolute z-25 animate-fade-in cursor-pointer"
@@ -1392,10 +1357,10 @@ const TestBrain = () => {
             setFloatingCard(null);
           }}
         >
-          <div className="relative bg-slate-900/40 backdrop-blur-md border border-cyan-400/15 rounded-xl p-3 max-w-[200px] shadow-[0_0_15px_rgba(34,211,238,0.08)] transition-all duration-200 hover:bg-slate-900/50 hover:border-cyan-400/25 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] hover:scale-105">
+          <div className="relative bg-slate-900/40 backdrop-blur-md border border-cyan-400/20 rounded-xl p-3 max-w-[220px] shadow-[0_0_20px_rgba(34,211,238,0.1)] transition-all duration-200 hover:bg-slate-900/50 hover:border-cyan-400/30 hover:scale-105">
             <div className="flex items-center space-x-3">
               {floatingCard.node.coverUrl && (
-                <div className="relative w-10 h-14 flex-shrink-0 rounded overflow-hidden border border-cyan-400/20 opacity-90">
+                <div className="relative w-12 h-16 flex-shrink-0 rounded-lg overflow-hidden border border-cyan-400/25">
                   <img 
                     src={floatingCard.node.coverUrl} 
                     alt={floatingCard.node.title}
@@ -1404,14 +1369,14 @@ const TestBrain = () => {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-cyan-300/80 text-xs leading-tight line-clamp-2">
+                <h4 className="font-medium text-slate-100 text-sm leading-tight line-clamp-2">
                   {floatingCard.node.title}
                 </h4>
-                <p className="text-[10px] text-cyan-400/40 mt-0.5">
+                <p className="text-xs text-cyan-400/70 mt-0.5">
                   {floatingCard.node.author}
                 </p>
-                <div className="flex items-center gap-1 text-[10px] text-cyan-300/50 mt-1">
-                  <div className="w-1 h-1 bg-cyan-400/60 rounded-full"></div>
+                <div className="flex items-center gap-1.5 text-xs text-cyan-300/60 mt-1.5">
+                  <div className="w-1.5 h-1.5 bg-cyan-400/80 rounded-full"></div>
                   <span>{links.filter(link => link.fromId === floatingCard.node.id || link.toId === floatingCard.node.id).length} connections</span>
                 </div>
               </div>

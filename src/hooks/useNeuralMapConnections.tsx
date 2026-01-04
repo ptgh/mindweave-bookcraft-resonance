@@ -39,8 +39,9 @@ const SCORE_SAME_PUBLISHER = 3;
 const MAX_THEME_CONTRIBUTION = 40;
 const MAX_SUBGENRE_CONTRIBUTION = 45;
 const MIN_CONNECTION_SCORE = 10;
-const MAX_VISIBLE_CONNECTIONS = 120;
-const LARGE_GRAPH_THRESHOLD = 120;
+// Performance: reduced max connections and lower threshold for bucketing
+const MAX_VISIBLE_CONNECTIONS = 80;
+const LARGE_GRAPH_THRESHOLD = 60;
 
 /**
  * Calculate connection strength between two books
@@ -203,11 +204,12 @@ function buildEdgesFromBuckets(
     }
   });
 
-  // Process tag buckets
+  // Process tag buckets - limit comparisons for performance
   tagBuckets.forEach(nodes => {
     if (nodes.length < 2) return;
-    for (let i = 0; i < Math.min(nodes.length, 10); i++) {
-      for (let j = i + 1; j < Math.min(nodes.length, 10); j++) {
+    const limit = Math.min(nodes.length, 6); // Reduced from 10 for performance
+    for (let i = 0; i < limit; i++) {
+      for (let j = i + 1; j < limit; j++) {
         const result = calculateConnectionStrength(nodes[i], nodes[j]);
         if (result.shouldConnect) {
           const key = [nodes[i].id, nodes[j].id].sort().join('|');
