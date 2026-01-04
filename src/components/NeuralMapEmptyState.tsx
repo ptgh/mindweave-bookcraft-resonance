@@ -17,30 +17,7 @@ const NeuralMapEmptyState = ({
 }: NeuralMapEmptyStateProps) => {
   const navigate = useNavigate();
 
-  // Sparse state: few books
-  if (nodeCount < 5 && nodeCount > 0) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center z-20 pointer-events-none">
-        <div className="bg-slate-900/80 backdrop-blur-md border border-slate-700/50 rounded-xl p-6 max-w-sm mx-4 text-center pointer-events-auto shadow-2xl">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-cyan-400/10 border border-cyan-400/30 flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-cyan-400" />
-          </div>
-          <h3 className="text-slate-200 font-medium mb-2">Growing Network</h3>
-          <p className="text-slate-400 text-sm mb-4">
-            You have {nodeCount} book{nodeCount !== 1 ? 's' : ''} in your collection. 
-            Add more to discover richer connections between themes, authors, and eras.
-          </p>
-          <Button
-            onClick={() => navigate('/book-browser')}
-            className="bg-cyan-600 hover:bg-cyan-500 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add More Books
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // Sparse state removed - network grows naturally as user adds transmissions
 
   // No connections state
   if (edgeCount === 0 && nodeCount >= 5) {
