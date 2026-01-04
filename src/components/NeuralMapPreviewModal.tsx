@@ -35,19 +35,19 @@ const NeuralMapPreviewModal = ({
       }}
     >
       <div className="relative w-full max-w-sm sm:max-w-md animate-in fade-in zoom-in-95 duration-200">
-        {/* Glow effect */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400/20 via-blue-500/20 to-cyan-400/20 rounded-2xl blur-lg" />
+        {/* Subtle glow effect */}
+        <div className="absolute -inset-1 bg-cyan-400/5 rounded-2xl blur-lg" />
         
-        <div className="relative bg-slate-900/95 border border-cyan-400/30 rounded-xl overflow-hidden shadow-2xl shadow-cyan-500/10">
+        <div className="relative bg-slate-900/60 backdrop-blur-xl border border-cyan-400/20 rounded-xl overflow-hidden shadow-[0_0_30px_rgba(34,211,238,0.1)]">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
+          <div className="flex items-center justify-between p-4 border-b border-cyan-400/10">
             <div className="flex items-center space-x-2">
-              <div className="w-2.5 h-2.5 bg-cyan-400 rounded-full animate-pulse" />
+              <div className="w-2 h-2 bg-cyan-400/80 rounded-full animate-pulse" />
               <span className="text-slate-200 text-sm font-medium">Signal Preview</span>
             </div>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-700/50"
+              className="text-slate-400 hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-700/30"
             >
               <X className="w-4 h-4" />
             </button>
@@ -57,7 +57,7 @@ const NeuralMapPreviewModal = ({
           <div className="p-4 sm:p-5">
             <div className="flex gap-4">
               {/* Book cover */}
-              <div className="flex-shrink-0 w-20 h-28 sm:w-24 sm:h-32 bg-slate-800/50 rounded-lg border border-slate-600/30 overflow-hidden relative">
+              <div className="flex-shrink-0 w-16 h-22 sm:w-20 sm:h-28 rounded-lg border border-cyan-400/25 overflow-hidden relative">
                 {node.coverUrl ? (
                   <>
                     <img 
@@ -71,29 +71,27 @@ const NeuralMapPreviewModal = ({
                         if (fallback) fallback.classList.remove('hidden');
                       }}
                     />
-                    <div className="hidden w-full h-full flex items-center justify-center text-slate-500">
-                      <BookOpen className="w-8 h-8" />
+                    <div className="hidden w-full h-full flex items-center justify-center text-slate-500 bg-slate-800/30">
+                      <BookOpen className="w-6 h-6" />
                     </div>
                   </>
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-500">
-                    <BookOpen className="w-8 h-8" />
+                  <div className="w-full h-full flex items-center justify-center text-slate-500 bg-slate-800/30">
+                    <BookOpen className="w-6 h-6" />
                   </div>
                 )}
-                {/* Cover glow */}
-                <div className="absolute inset-0 bg-gradient-to-t from-cyan-400/10 to-transparent pointer-events-none" />
               </div>
               
               {/* Book info */}
               <div className="flex-1 min-w-0">
-                <h3 className="text-slate-100 font-semibold text-base sm:text-lg leading-tight mb-1 line-clamp-2">
+                <h3 className="text-slate-100 font-medium text-base sm:text-lg leading-tight mb-1 line-clamp-2">
                   {node.title}
                 </h3>
-                <p className="text-cyan-400/80 text-sm mb-3">{node.author}</p>
+                <p className="text-cyan-400/70 text-sm mb-3">{node.author}</p>
                 
                 {/* Connection badge */}
-                <div className="flex items-center gap-2 text-xs text-slate-400 mb-3">
-                  <Link className="w-3.5 h-3.5 text-cyan-400" />
+                <div className="flex items-center gap-2 text-xs text-cyan-300/60 mb-3">
+                  <Link className="w-3.5 h-3.5 text-cyan-400/80" />
                   <span>{connectionCount} neural connections</span>
                 </div>
                 
@@ -103,13 +101,13 @@ const NeuralMapPreviewModal = ({
                     {node.tags.slice(0, 3).map((tag, i) => (
                       <span 
                         key={i}
-                        className="px-2 py-0.5 text-xs bg-cyan-400/10 text-cyan-300 rounded-full border border-cyan-400/20"
+                        className="px-2 py-0.5 text-xs bg-cyan-400/10 text-cyan-300/80 rounded-full border border-cyan-400/15"
                       >
                         {tag}
                       </span>
                     ))}
                     {node.tags.length > 3 && (
-                      <span className="px-2 py-0.5 text-xs text-slate-500">
+                      <span className="px-2 py-0.5 text-xs text-slate-500/70">
                         +{node.tags.length - 3}
                       </span>
                     )}
@@ -120,8 +118,8 @@ const NeuralMapPreviewModal = ({
             
             {/* Description if available */}
             {node.description && (
-              <div className="mt-4 pt-4 border-t border-slate-700/50">
-                <p className="text-slate-400 text-sm leading-relaxed line-clamp-3">
+              <div className="mt-4 pt-4 border-t border-cyan-400/10">
+                <p className="text-slate-400/80 text-sm leading-relaxed line-clamp-3">
                   {node.description}
                 </p>
               </div>
@@ -134,14 +132,14 @@ const NeuralMapPreviewModal = ({
               variant="outline"
               size="sm"
               onClick={onClose}
-              className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700/50 bg-transparent"
+              className="flex-1 border-cyan-400/20 text-slate-300 hover:bg-slate-700/30 bg-transparent"
             >
               Close
             </Button>
             <Button
               size="sm"
               onClick={handleSignalArchive}
-              className="flex-1 bg-cyan-600/80 hover:bg-cyan-600 text-white border-0"
+              className="flex-1 bg-cyan-600/60 hover:bg-cyan-600/80 text-white border border-cyan-400/30"
             >
               <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
               Signal Archive
