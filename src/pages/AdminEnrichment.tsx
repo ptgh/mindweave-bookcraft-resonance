@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { generateTransmissionEmbeddings } from "@/services/semanticSearchService";
 import { invokeAdminFunction } from "@/utils/adminFunctions";
-import { RefreshCw, Clock, Sparkles, ShieldCheck, Book, Film, Users, HardDrive, Activity } from "lucide-react";
+import { RefreshCw, Clock, Sparkles, ShieldCheck, Book, Film, Users, HardDrive, Activity, Tags } from "lucide-react";
 import { useState } from "react";
 
 const AdminEnrichment = () => {
@@ -26,8 +26,10 @@ const AdminEnrichment = () => {
   const [isEnrichingTemporal, setIsEnrichingTemporal] = useState(false);
   const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false);
   const [isTestingAuth, setIsTestingAuth] = useState(false);
+  const [isEnrichingTags, setIsEnrichingTags] = useState(false);
   const [enrichmentProgress, setEnrichmentProgress] = useState({ processed: 0, total: 0 });
   const [embeddingProgress, setEmbeddingProgress] = useState({ processed: 0, skipped: 0, total: 0 });
+  const [tagProgress, setTagProgress] = useState({ enriched: 0, processed: 0 });
 
   const handleTemporalEnrichment = async () => {
     setIsEnrichingTemporal(true);
@@ -130,6 +132,44 @@ const AdminEnrichment = () => {
     }
   };
 
+  const handleEnrichTags = async () => {
+    setIsEnrichingTags(true);
+    setTagProgress({ enriched: 0, processed: 0 });
+    
+    try {
+      toast({
+        title: "Starting Tag Enrichment",
+        description: "AI is analyzing transmissions and suggesting conceptual tags...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('enrich-transmission-tags', {
+        body: { limit: 50, minConfidence: 60 }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Tag Enrichment Complete",
+        description: `Enriched ${data.results?.enriched || 0} of ${data.results?.processed || 0} transmissions with AI-suggested tags.`,
+        variant: "success",
+      });
+
+      setTagProgress({ 
+        enriched: data.results?.enriched || 0, 
+        processed: data.results?.processed || 0 
+      });
+    } catch (error) {
+      console.error('Tag enrichment error:', error);
+      toast({
+        title: "Tag Enrichment Failed",
+        description: error instanceof Error ? error.message : "Failed to enrich tags",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEnrichingTags(false);
+    }
+  };
+
   return (
     <ProtectedAdminRoute>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -192,13 +232,31 @@ const AdminEnrichment = () => {
               Generate Embeddings
             </Button>
             
-            {(enrichmentProgress.total > 0 || embeddingProgress.total > 0) && (
+            <Button
+              onClick={handleEnrichTags}
+              disabled={isEnrichingTags}
+              variant="outline"
+              size="sm"
+              className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10"
+            >
+              {isEnrichingTags ? (
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Tags className="w-4 h-4 mr-2" />
+              )}
+              AI Tag Enrichment
+            </Button>
+            
+            {(enrichmentProgress.total > 0 || embeddingProgress.total > 0 || tagProgress.processed > 0) && (
               <div className="flex items-center gap-4 ml-auto text-sm text-muted-foreground">
                 {enrichmentProgress.total > 0 && (
                   <span>Temporal: {enrichmentProgress.processed}/{enrichmentProgress.total}</span>
                 )}
                 {embeddingProgress.total > 0 && (
                   <span>Embeddings: {embeddingProgress.processed} new, {embeddingProgress.skipped} skipped</span>
+                )}
+                {tagProgress.processed > 0 && (
+                  <span>Tags: {tagProgress.enriched}/{tagProgress.processed} enriched</span>
                 )}
               </div>
             )}

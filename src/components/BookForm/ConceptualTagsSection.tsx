@@ -11,6 +11,7 @@ interface ConceptualTagsSectionProps {
   bookAuthor?: string;
   bookDescription?: string;
   userTaggingPatterns?: string[];
+  isEditMode?: boolean;
 }
 
 const ConceptualTagsSection = ({ 
@@ -19,7 +20,8 @@ const ConceptualTagsSection = ({
   bookTitle,
   bookAuthor,
   bookDescription,
-  userTaggingPatterns 
+  userTaggingPatterns,
+  isEditMode = false
 }: ConceptualTagsSectionProps) => {
   const { selection } = useHapticFeedback();
   const canShowAISuggestions = bookTitle && bookAuthor && bookTitle.length > 2 && bookAuthor.length > 2;
@@ -57,6 +59,7 @@ const ConceptualTagsSection = ({
           currentTags={selectedTags}
           onTagSelect={handleTagToggle}
           userTaggingPatterns={userTaggingPatterns}
+          autoApply={!isEditMode && selectedTags.length === 0}
         />
       )}
     </div>
