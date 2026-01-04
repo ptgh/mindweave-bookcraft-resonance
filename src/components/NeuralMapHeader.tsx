@@ -1,4 +1,5 @@
 import { Badge } from "./ui/badge";
+import { X } from "lucide-react";
 
 interface NeuralMapHeaderProps {
   nodeCount: number;
@@ -12,6 +13,11 @@ interface NeuralMapHeaderProps {
     linkIds: string[];
     tags: string[];
   };
+  // New props for v2
+  focusedBookId?: string | null;
+  onExitFocus?: () => void;
+  visibleNodeCount?: number;
+  visibleEdgeCount?: number;
 }
 
 const NeuralMapHeader = ({ 
@@ -21,10 +27,38 @@ const NeuralMapHeader = ({
   allTags,
   onTagFilter,
   onClearFilters,
-  chatHighlights
+  chatHighlights,
+  focusedBookId,
+  onExitFocus,
+  visibleNodeCount,
+  visibleEdgeCount
 }: NeuralMapHeaderProps) => {
+  const displayNodeCount = visibleNodeCount ?? nodeCount;
+  const displayLinkCount = visibleEdgeCount ?? linkCount;
+  const isFiltered = activeFilters.length > 0;
+  const isFocused = !!focusedBookId;
+
   return (
     <>
+      {/* Exit Focus Button - Top right when in focus mode */}
+      {isFocused && onExitFocus && (
+        <button
+          onClick={onExitFocus}
+          className="fixed top-[70px] right-3 sm:right-4 z-40 px-3 py-1.5 bg-slate-800/90 backdrop-blur-sm border border-cyan-400/50 rounded-full text-cyan-300 text-xs font-medium flex items-center gap-1.5 hover:bg-slate-700 transition-colors shadow-lg active:scale-95"
+        >
+          <X className="w-3.5 h-3.5" />
+          Exit Focus
+        </button>
+      )}
+
+      {/* Filter Active Overlay - Shows counts when filtering */}
+      {isFiltered && (
+        <div className="fixed top-[70px] left-3 sm:left-4 z-40 px-3 py-1.5 bg-slate-800/90 backdrop-blur-sm border border-cyan-400/30 rounded-full text-slate-300 text-xs flex items-center gap-2 shadow-lg">
+          <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
+          <span>{displayNodeCount} books · {displayLinkCount} connections</span>
+        </div>
+      )}
+
       {/* Consolidated Footer Bar - Mobile Responsive */}
       <div className="fixed bottom-1 sm:bottom-4 left-1/2 -translate-x-1/2 z-40 bg-slate-900/60 backdrop-blur-lg border border-slate-700/30 rounded-full px-1.5 sm:px-4 py-1 sm:py-2 shadow-2xl shadow-slate-900/20 w-[calc(100vw-80px)] sm:max-w-7xl">
         <div className="flex items-center gap-2 sm:gap-4 flex-wrap sm:flex-nowrap justify-center">
@@ -40,12 +74,12 @@ const NeuralMapHeader = ({
             <div className="flex items-center gap-0.5">
               <div className="w-0.5 h-0.5 sm:w-1 sm:h-1 bg-cyan-400 rounded-full animate-pulse"></div>
               <span className="text-slate-400 text-[7px] sm:text-[9px] hidden sm:inline">Signals</span>
-              <span className="text-slate-200 text-[8px] sm:text-[10px] font-semibold">{nodeCount}</span>
+              <span className="text-slate-200 text-[8px] sm:text-[10px] font-semibold">{displayNodeCount}</span>
             </div>
             <div className="flex items-center gap-0.5">
               <div className="w-0.5 h-0.5 sm:w-1 sm:h-1 bg-cyan-400/50 rounded-full animate-pulse"></div>
               <span className="text-slate-400 text-[7px] sm:text-[9px] hidden sm:inline">Links</span>
-              <span className="text-slate-200 text-[8px] sm:text-[10px] font-semibold">{linkCount}</span>
+              <span className="text-slate-200 text-[8px] sm:text-[10px] font-semibold">{displayLinkCount}</span>
             </div>
           </div>
 
@@ -72,7 +106,7 @@ const NeuralMapHeader = ({
               {activeFilters.length > 0 && (
                 <button
                   onClick={onClearFilters}
-                  className="text-[7px] sm:text-[9px] text-cyan-400 hover:text-cyan-300 transition-colors px-1 sm:px-2 py-0.5 sm:py-1 bg-cyan-400/10 rounded-full whitespace-nowrap flex-shrink-0 ml-1"
+                  className="text-[7px] sm:text-[9px] text-cyan-400 hover:text-cyan-300 transition-colors px-1 sm:px-2 py-0.5 sm:py-1 bg-cyan-400/10 rounded-full whitespace-nowrap flex-shrink-0 ml-1 active:scale-95"
                 >
                   Clear
                 </button>
