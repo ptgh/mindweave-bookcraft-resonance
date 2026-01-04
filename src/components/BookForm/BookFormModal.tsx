@@ -21,14 +21,17 @@ const formSchema = z.object({
   status: z.enum(["reading", "read", "want-to-read"]),
   tags: z.array(z.string()).max(50).optional().default([]),
   notes: z.string().max(5000).optional().or(z.literal("")),
-  cover_url: z.string().url().max(2048).optional().or(z.literal("")),
+  cover_url: z.string().max(2048).optional().or(z.literal("")).refine(
+    (val) => !val || val === "" || val.startsWith("http://") || val.startsWith("https://"),
+    { message: "Cover URL must be a valid URL" }
+  ),
   rating: z.object({
     truth: z.boolean(),
     confirmed: z.boolean(),
     disrupted: z.boolean(),
     rewired: z.boolean(),
   }),
-  publisher_series_id: z.string().uuid().optional(),
+  publisher_series_id: z.string().uuid().optional().or(z.literal("")).or(z.undefined()),
 });
 interface BookFormData {
   title: string;
@@ -278,6 +281,7 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, editingBook }: BookFormModal
             bookTitle={formData.title}
             bookAuthor={formData.author}
             bookDescription={titleSearch}
+            isEditMode={!!editingBook}
           />
           
           <PersonalResonanceSection

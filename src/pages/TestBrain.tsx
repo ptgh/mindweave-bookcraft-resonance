@@ -157,11 +157,24 @@ const TestBrain = () => {
         console.log('Created nodes:', userNodes);
         setNodes(userNodes);
 
-        // Show only conceptual tags that are actually used in books
-        const uniqueTags = Array.from(new Set(
+        // Show conceptual tags that are actually used in books
+        // This makes the tag bar more relevant to the user's collection
+        const usedTags = Array.from(new Set(
           userNodes.flatMap(node => node.tags)
         )).filter(tag => tag && tag.trim() !== '');
-        setAllTags(uniqueTags);
+        
+        // Sort tags by frequency (most used first)
+        const tagCounts = new Map<string, number>();
+        userNodes.forEach(node => {
+          node.tags.forEach(tag => {
+            tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+          });
+        });
+        const sortedTags = usedTags.sort((a, b) => 
+          (tagCounts.get(b) || 0) - (tagCounts.get(a) || 0)
+        );
+        
+        setAllTags(sortedTags);
 
         // Connections are now computed by useNeuralMapConnections hook
         // No need to set links here - the hook handles it

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders, requireUser, createUserClient, json } from "../_shared/adminAuth.ts";
+import { CONCEPTUAL_TAGS } from "../_shared/conceptualTags.ts";
 
 interface TagSuggestion {
   name: string;
@@ -48,26 +49,8 @@ serve(async (req) => {
       }
     }
 
-    // Get available conceptual tags from constants
-    const availableTags = [
-      "AI Consciousness",
-      "Post-Singularity",
-      "Space Exploration",
-      "Cyberpunk",
-      "Time Travel",
-      "First Contact",
-      "Dystopian Future",
-      "Utopian Vision",
-      "Transhumanism",
-      "Virtual Reality",
-      "Climate Fiction",
-      "Hard SF",
-      "Soft SF",
-      "Philosophy",
-      "Existential",
-      "Political",
-      "Social Commentary"
-    ];
+    // Use official CONCEPTUAL_TAGS from shared constants
+    const availableTags = [...CONCEPTUAL_TAGS];
 
     // Call Lovable AI for tag suggestions
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
@@ -77,11 +60,11 @@ serve(async (req) => {
 
     const systemPrompt = `You are an expert science fiction literary analyst. Suggest relevant conceptual tags for science fiction books.
 
-Available tags: ${availableTags.join(', ')}
+Available tags (ONLY use these exact tags): ${availableTags.join(', ')}
 
 Rules:
-1. Suggest 3-5 tags maximum
-2. Return ONLY tags from the available list
+1. Suggest 2-4 tags maximum
+2. Return ONLY tags from the available list exactly as written
 3. Assign confidence scores (0-100)
 4. Provide brief reasons for each suggestion
 5. Consider user's tagging patterns if provided
@@ -90,13 +73,13 @@ Rules:
 Return JSON format:
 {
   "suggestions": [
-    { "name": "tag name", "confidence": 95, "reason": "brief explanation" }
+    { "name": "exact tag name from list", "confidence": 95, "reason": "brief explanation" }
   ]
 }`;
 
     const userPrompt = `Book: "${title}" by ${author}${description ? `\n\nDescription: ${description}` : ''}${userTaggingPatterns?.length ? `\n\nUser typically tags books with: ${userTaggingPatterns.join(', ')}` : ''}
 
-Suggest appropriate conceptual tags.`;
+Suggest appropriate conceptual tags from the available list.`;
 
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -124,7 +107,10 @@ Suggest appropriate conceptual tags.`;
     const content = aiData.choices[0].message.content;
     const parsed = JSON.parse(content);
     
-    const suggestions: TagSuggestion[] = parsed.suggestions || [];
+    // Filter to ensure only valid CONCEPTUAL_TAGS are returned
+    const suggestions: TagSuggestion[] = (parsed.suggestions || []).filter(
+      (s: TagSuggestion) => availableTags.includes(s.name)
+    );
 
     // Cache the results
     await supabase.from('book_ai_tags').insert({

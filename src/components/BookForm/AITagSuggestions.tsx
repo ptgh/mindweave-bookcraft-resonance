@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Sparkles, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Sparkles, ChevronDown, ChevronUp, Loader2, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,6 +18,7 @@ interface AITagSuggestionsProps {
   currentTags: string[];
   onTagSelect: (tag: string) => void;
   userTaggingPatterns?: string[];
+  autoApply?: boolean; // Auto-apply high confidence suggestions
 }
 
 export const AITagSuggestions = ({
@@ -27,21 +28,30 @@ export const AITagSuggestions = ({
   currentTags,
   onTagSelect,
   userTaggingPatterns,
+  autoApply = false,
 }: AITagSuggestionsProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<TagSuggestion[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [autoApplied, setAutoApplied] = useState(false);
   const { toast } = useToast();
 
-  const loadSuggestions = async () => {
-    if (hasLoaded) {
+  // Auto-load suggestions when autoApply is enabled and title/author are present
+  useEffect(() => {
+    if (autoApply && title && author && !hasLoaded && !isLoading && currentTags.length === 0) {
+      loadSuggestions(true);
+    }
+  }, [autoApply, title, author, hasLoaded, isLoading, currentTags.length]);
+
+  const loadSuggestions = async (silent = false) => {
+    if (hasLoaded && !silent) {
       setIsExpanded(!isExpanded);
       return;
     }
 
     setIsLoading(true);
-    setIsExpanded(true);
+    if (!silent) setIsExpanded(true);
 
     try {
       const { data, error } = await supabase.functions.invoke('ai-tag-suggestions', {
@@ -49,6 +59,7 @@ export const AITagSuggestions = ({
           title,
           author,
           description,
+          currentTags,
           userTaggingPatterns,
         },
       });
@@ -60,14 +71,39 @@ export const AITagSuggestions = ({
       if (data?.suggestions) {
         setSuggestions(data.suggestions);
         setHasLoaded(true);
+        
+        // Auto-apply high confidence tags if enabled and no tags selected yet
+        if (autoApply && currentTags.length === 0 && !autoApplied) {
+          const highConfidenceTags = data.suggestions
+            .filter((s: TagSuggestion) => s.confidence >= 75)
+            .slice(0, 3);
+          
+          if (highConfidenceTags.length > 0) {
+            highConfidenceTags.forEach((s: TagSuggestion) => {
+              if (!currentTags.includes(s.name)) {
+                onTagSelect(s.name);
+              }
+            });
+            setAutoApplied(true);
+            
+            if (!silent) {
+              toast({
+                title: 'AI Tags Applied',
+                description: `Added ${highConfidenceTags.length} suggested conceptual nodes`,
+              });
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('Failed to load tag suggestions:', error);
-      toast({
-        title: 'Failed to load suggestions',
-        description: error instanceof Error ? error.message : 'Please try again',
-        variant: 'destructive',
-      });
+      if (!silent) {
+        toast({
+          title: 'Failed to load suggestions',
+          description: error instanceof Error ? error.message : 'Please try again',
+          variant: 'destructive',
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -103,7 +139,7 @@ export const AITagSuggestions = ({
         type="button"
         variant="ghost"
         size="sm"
-        onClick={loadSuggestions}
+        onClick={() => loadSuggestions(false)}
         disabled={isLoading}
         className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
       >
@@ -132,7 +168,7 @@ export const AITagSuggestions = ({
                 <Badge
                   variant="outline"
                   className="cursor-pointer hover:bg-primary/10 hover:border-primary/50 transition-all"
-                  style={{ opacity: suggestion.confidence / 100 }}
+                  style={{ opacity: Math.max(0.6, suggestion.confidence / 100) }}
                 >
                   {suggestion.name}
                   <span className="ml-1.5 text-[10px] opacity-60">
@@ -161,8 +197,9 @@ export const AITagSuggestions = ({
               variant="secondary"
               size="sm"
               onClick={handleAcceptAll}
-              className="h-7 text-xs"
+              className="h-7 text-xs gap-1"
             >
+              <Wand2 className="h-3 w-3" />
               Accept All
             </Button>
           </div>

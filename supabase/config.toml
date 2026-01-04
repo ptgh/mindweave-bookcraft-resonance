@@ -171,3 +171,6 @@ verify_jwt = false
 
 [functions.enrich-screenplay-data]
 verify_jwt = false
+
+[functions.enrich-transmission-tags]
+verify_jwt = false
