@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 import { getTransmissions, Transmission } from '@/services/transmissionsService';
@@ -8,9 +8,12 @@ import { X } from 'lucide-react';
 import BrainChatInterface from '@/components/BrainChatInterface';
 import Header from '@/components/Header';
 import NeuralMapHeader from '@/components/NeuralMapHeader';
-import NeuralMapPreviewModal from '@/components/NeuralMapPreviewModal';
+import NeuralMapBottomSheet from '@/components/NeuralMapBottomSheet';
+import NeuralMapLegend from '@/components/NeuralMapLegend';
+import NeuralMapEmptyState from '@/components/NeuralMapEmptyState';
 import { useGSAPAnimations } from '@/hooks/useGSAPAnimations';
 import { usePatternRecognition } from '@/hooks/usePatternRecognition';
+import { useNeuralMapConnections, NeuralMapEdge } from '@/hooks/useNeuralMapConnections';
 import { filterConceptualTags, CONCEPTUAL_TAGS } from '@/constants/conceptualTags';
 
 // Register GSAP plugins
@@ -59,6 +62,9 @@ const TestBrain = () => {
   const [remappingActive, setRemappingActive] = useState(false);
   const [transmissions, setTransmissions] = useState<Transmission[]>([]);
   
+  // NEW: Focus mode state
+  const [focusedBookId, setFocusedBookId] = useState<string | null>(null);
+  
   // Initialize GSAP animations
   const { mainContainerRef } = useGSAPAnimations();
   
@@ -83,6 +89,38 @@ const TestBrain = () => {
     x: number;
     y: number;
   } | null>(null);
+
+  // NEW: Compute visible nodes based on tag filter
+  const visibleNodes = useMemo(() => {
+    if (activeFilters.length === 0) return nodes;
+    return nodes.filter(node => 
+      activeFilters.some(filter => 
+        node.tags.includes(filter) || node.contextTags.includes(filter)
+      )
+    );
+  }, [nodes, activeFilters]);
+
+  // NEW: Use the new connection hook for meaningful edges
+  const {
+    edges: computedEdges,
+    getDirectNeighbors,
+    getSecondDegreeNeighbors,
+    getTopRelated,
+    getConnectionBreakdown
+  } = useNeuralMapConnections(visibleNodes, activeFilters.length > 0 ? activeFilters[0] : null);
+
+  // NEW: Compute visible edges (sync with visibleNodes)
+  const visibleEdges = useMemo(() => {
+    const visibleNodeIds = new Set(visibleNodes.map(n => n.id));
+    return computedEdges.filter(edge => 
+      visibleNodeIds.has(edge.fromId) && visibleNodeIds.has(edge.toId)
+    );
+  }, [computedEdges, visibleNodes]);
+
+  // NEW: Sync links state with computed edges
+  useEffect(() => {
+    setLinks(visibleEdges as BookLink[]);
+  }, [visibleEdges]);
 
   // Initialize brain data from user's transmissions only
   useEffect(() => {
@@ -125,8 +163,8 @@ const TestBrain = () => {
         )).filter(tag => tag && tag.trim() !== '');
         setAllTags(uniqueTags);
 
-        const connections = generateOrganicConnections(userNodes);
-        setLinks(connections);
+        // Connections are now computed by useNeuralMapConnections hook
+        // No need to set links here - the hook handles it
 
         setLoading(false);
       } catch (error) {
@@ -839,36 +877,43 @@ const TestBrain = () => {
       gradient.setAttribute('x2', '100%');
       gradient.setAttribute('y2', '0%');
 
-      const getConnectionStyle = (type: string, strength: number) => {
-        switch (type) {
-          case 'tag_shared': 
-            return { 
-              colors: ['#00ffff', '#40e0d0', '#00d4ff'], 
-              intensity: 0.9 + strength * 0.1,
-              filter: 'neural-glow-intense'
-            };
-          case 'author_shared': 
-            return { 
-              colors: ['#00d4ff', '#0099ff', '#40e0d0'], 
-              intensity: 0.7 + strength * 0.1,
-              filter: 'neural-glow-strong'
-            };
-          case 'title_similarity': 
-            return { 
-              colors: ['#0099cc', '#00d4ff', '#40e0d0'], 
-              intensity: 0.6 + strength * 0.1,
-              filter: 'neural-glow-soft'
-            };
-          default: 
-            return { 
-              colors: ['#006699', '#0099cc', '#00d4ff'], 
-              intensity: 0.4 + strength * 0.1,
-              filter: 'neural-glow-soft'
-            };
+      // NEW: Score-based styling (preserving Leafnode aesthetic)
+      const getConnectionStyle = (conn: BookLink) => {
+        // Cast to NeuralMapEdge if it has score/reasons
+        const edge = conn as any;
+        const score = edge.score || (conn.strength * 50); // Fallback for legacy
+        const reasons = edge.reasons || [];
+        
+        // Base colors - keeping Leafnode cyan/teal aesthetic
+        const baseColors = ['#00ffff', '#40e0d0', '#00d4ff'];
+        
+        // Intensity based on score (10-100+ mapped to 0.4-1.0)
+        const intensity = Math.min(0.4 + (score / 100) * 0.6, 1.0);
+        
+        // Filter based on score
+        let filter = 'neural-glow-soft';
+        if (score >= 60) filter = 'neural-glow-intense';
+        else if (score >= 30) filter = 'neural-glow-strong';
+        
+        // Slightly warmer tint for same_author (subtle, not rainbow)
+        let colors = baseColors;
+        if (reasons.includes('same_author')) {
+          colors = ['#00e5ff', '#40f0e0', '#00e0ff']; // Slightly brighter cyan
         }
+        
+        // Check if era connection (for dashed styling)
+        const isEraConnection = reasons.includes('shared_era');
+        
+        return { 
+          colors, 
+          intensity,
+          filter,
+          isEraConnection,
+          score
+        };
       };
 
-      const style = getConnectionStyle(connection.type, connection.strength);
+      const style = getConnectionStyle(connection);
       
       // Create flowing gradient with multiple color stops
       const stops = [
@@ -891,8 +936,9 @@ const TestBrain = () => {
 
       defs.appendChild(gradient);
 
-      // Create main neural pathway - thinner but more alive
-      const baseWidth = Math.max(0.2, Math.min(connection.strength * 0.15 + 0.15, 0.8));
+      // Create main neural pathway - width based on score
+      const scoreNormalized = Math.min(style.score / 100, 1); // 0-1 range
+      const baseWidth = Math.max(0.3, Math.min(0.3 + scoreNormalized * 0.8, 1.1));
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       path.setAttribute('d', pathData);
       path.setAttribute('stroke', `url(#${gradientId})`);
@@ -902,11 +948,16 @@ const TestBrain = () => {
       path.setAttribute('filter', `url(#${style.filter})`);
       path.setAttribute('stroke-linecap', 'round');
       
+      // NEW: Dashed line for era connections
+      if (style.isEraConnection) {
+        path.setAttribute('stroke-dasharray', '4 3');
+      }
+      
       svg.appendChild(path);
 
       // Enhanced appearance with organic timing
       gsap.to(path, {
-        opacity: style.intensity * (connection.strength > 1.5 ? 1 : 0.8),
+        opacity: style.intensity * (style.score > 30 ? 1 : 0.8),
         duration: 2.5 + Math.random() * 1.5,
         delay: index * 0.08 + Math.random() * 0.5,
         ease: "power2.out"
@@ -915,7 +966,7 @@ const TestBrain = () => {
       // Living pulsing animation with natural variation
       gsap.to(path, {
         opacity: style.intensity * 1.2,
-        strokeWidth: baseWidth * (1.8 + connection.strength * 0.4),
+        strokeWidth: baseWidth * (1.5 + scoreNormalized * 0.5),
         duration: 3 + Math.random() * 2.5,
         ease: "sine.inOut",
         yoyo: true,
@@ -923,14 +974,15 @@ const TestBrain = () => {
         delay: Math.random() * 4
       });
 
-      // Optimized energy streams for stronger connections
-      if (connection.strength > 1.5 && activeParticlesRef.current < MAX_PARTICLES) {
+      // Optimized energy streams for stronger connections (based on score now)
+      if (style.score > 30 && activeParticlesRef.current < MAX_PARTICLES) {
         setTimeout(() => {
           const createEnergyStream = () => {
             if (activeParticlesRef.current >= MAX_PARTICLES) return;
             
-            // Reduced particle count
-            for (let stream = 0; stream < Math.min(connection.strength, 2); stream++) {
+            // Reduced particle count - max 2 streams
+            const streamCount = Math.min(Math.floor(style.score / 40) + 1, 2);
+            for (let stream = 0; stream < streamCount; stream++) {
               activeParticlesRef.current++;
               const energyParticle = document.createElement('div');
               energyParticle.style.cssText = `
@@ -1039,24 +1091,54 @@ const TestBrain = () => {
     setLinks(newConnections);
   };
 
+  // Apply opacity based on filters AND focus mode
   useEffect(() => {
     if (!canvasRef.current) return;
 
     const thoughtNodes = canvasRef.current.querySelectorAll('.thought-node');
     
+    // Get focus mode neighbors
+    const directNeighbors = focusedBookId ? new Set(getDirectNeighbors(focusedBookId)) : null;
+    const secondDegreeNeighbors = focusedBookId ? new Set(getSecondDegreeNeighbors(focusedBookId)) : null;
+    
     thoughtNodes.forEach((nodeElement) => {
       const nodeData = (nodeElement as any).nodeData as BrainNode;
-      const isVisible = activeFilters.length === 0 || 
-        activeFilters.some(filter => nodeData.tags.includes(filter));
+      
+      // First check tag filter
+      const isVisibleByFilter = activeFilters.length === 0 || 
+        activeFilters.some(filter => nodeData.tags.includes(filter) || nodeData.contextTags.includes(filter));
+
+      // Then apply focus mode opacity if active
+      let targetOpacity = 1;
+      let targetScale = 1;
+      
+      if (!isVisibleByFilter) {
+        targetOpacity = 0.15;
+        targetScale = 0.7;
+      } else if (focusedBookId) {
+        if (nodeData.id === focusedBookId) {
+          targetOpacity = 1;
+          targetScale = 1.2;
+        } else if (directNeighbors?.has(nodeData.id)) {
+          targetOpacity = 1;
+          targetScale = 1;
+        } else if (secondDegreeNeighbors?.has(nodeData.id)) {
+          targetOpacity = 0.6;
+          targetScale = 0.9;
+        } else {
+          targetOpacity = 0.15;
+          targetScale = 0.7;
+        }
+      }
 
       gsap.to(nodeElement, {
-        opacity: isVisible ? 1 : 0.15,
-        scale: isVisible ? 1 : 0.7,
+        opacity: targetOpacity,
+        scale: targetScale,
         duration: 0.5,
         ease: "power2.out"
       });
     });
-  }, [activeFilters]);
+  }, [activeFilters, focusedBookId, getDirectNeighbors, getSecondDegreeNeighbors]);
 
   useEffect(() => {
     if (!remappingActive) {
@@ -1149,6 +1231,10 @@ const TestBrain = () => {
         onTagFilter={handleTagFilter}
         onClearFilters={handleClearFilters}
         chatHighlights={chatHighlights}
+        focusedBookId={focusedBookId}
+        onExitFocus={() => setFocusedBookId(null)}
+        visibleNodeCount={visibleNodes.length}
+        visibleEdgeCount={visibleEdges.length}
       />
       
       <div className="fixed top-[60px] left-0 right-0 bottom-0">
@@ -1329,12 +1415,35 @@ const TestBrain = () => {
         onHighlight={handleChatHighlight}
       />
 
-      {/* Neural Map Preview Modal */}
+      {/* Legend */}
+      <NeuralMapLegend nodeCount={visibleNodes.length} edgeCount={visibleEdges.length} />
+
+      {/* Empty/Sparse States */}
+      <NeuralMapEmptyState 
+        nodeCount={visibleNodes.length} 
+        edgeCount={visibleEdges.length} 
+        isFiltered={activeFilters.length > 0}
+        onClearFilter={handleClearFilters}
+      />
+
+      {/* Neural Map Bottom Sheet (replaces old modal) */}
       {selectedNode && (
-        <NeuralMapPreviewModal
+        <NeuralMapBottomSheet
           node={selectedNode}
-          connections={links}
+          allNodes={nodes}
+          connectionBreakdown={getConnectionBreakdown(selectedNode.id)}
+          topRelated={getTopRelated(selectedNode.id, 4)}
           onClose={() => setSelectedNode(null)}
+          onFocusNetwork={() => {
+            setFocusedBookId(selectedNode.id);
+            setSelectedNode(null);
+          }}
+          onSelectRelated={(nodeId) => {
+            const relatedNode = nodes.find(n => n.id === nodeId);
+            if (relatedNode) {
+              setSelectedNode(relatedNode);
+            }
+          }}
         />
       )}
     </div>
