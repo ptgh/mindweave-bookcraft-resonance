@@ -1,0 +1,288 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { X, FileText, ExternalLink, Maximize2, Minimize2, Download, Sparkles, Calendar, Star, User } from 'lucide-react';
+import gsap from 'gsap';
+import { cn } from '@/lib/utils';
+
+interface ScreenplayReaderModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  screenplay: {
+    film_title: string;
+    director: string | null;
+    film_year: number | null;
+    imdb_rating: number | null;
+    poster_url: string | null;
+    script_url: string;
+  } | null;
+}
+
+export const ScreenplayReaderModal: React.FC<ScreenplayReaderModalProps> = ({
+  isOpen,
+  onClose,
+  screenplay
+}) => {
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // GSAP animation on open/close
+  useEffect(() => {
+    if (!overlayRef.current || !modalRef.current) return;
+
+    if (isOpen) {
+      // Prevent body scroll
+      document.body.style.overflow = 'hidden';
+      
+      const tl = gsap.timeline();
+      
+      tl.fromTo(
+        overlayRef.current,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, ease: 'power2.out' }
+      );
+      
+      tl.fromTo(
+        modalRef.current,
+        { 
+          opacity: 0, 
+          scale: 0.9, 
+          y: isMobile ? 100 : 50 
+        },
+        { 
+          opacity: 1, 
+          scale: 1, 
+          y: 0, 
+          duration: 0.4, 
+          ease: 'back.out(1.2)' 
+        },
+        '-=0.2'
+      );
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, isMobile]);
+
+  const handleClose = () => {
+    if (!overlayRef.current || !modalRef.current) {
+      onClose();
+      return;
+    }
+
+    const tl = gsap.timeline({
+      onComplete: onClose
+    });
+
+    tl.to(modalRef.current, {
+      opacity: 0,
+      scale: 0.9,
+      y: isMobile ? 100 : 50,
+      duration: 0.25,
+      ease: 'power2.in'
+    });
+
+    tl.to(overlayRef.current, {
+      opacity: 0,
+      duration: 0.2,
+      ease: 'power2.in'
+    }, '-=0.15');
+  };
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === overlayRef.current) {
+      handleClose();
+    }
+  };
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
+  if (!isOpen || !screenplay) return null;
+
+  // Build the script URL - ensure it's a proper PDF URL from ScriptSlug
+  const scriptUrl = screenplay.script_url;
+  const isScriptSlugPdf = scriptUrl.includes('scriptslug.com') && scriptUrl.endsWith('.pdf');
+
+  const modalContent = (
+    <div
+      ref={overlayRef}
+      className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center p-2 md:p-4"
+      onClick={handleOverlayClick}
+    >
+      <div
+        ref={modalRef}
+        className={cn(
+          "relative bg-slate-900/95 backdrop-blur-xl border border-violet-500/30 rounded-xl overflow-hidden shadow-2xl shadow-violet-900/30 flex flex-col",
+          isFullscreen 
+            ? "w-full h-full max-w-none rounded-none" 
+            : isMobile 
+              ? "w-full h-[95vh] max-w-lg" 
+              : "w-full max-w-5xl h-[90vh]"
+        )}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-3 md:p-4 border-b border-violet-500/20 bg-gradient-to-r from-violet-900/40 to-purple-900/40 flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            {screenplay.poster_url && !isMobile && (
+              <img
+                src={screenplay.poster_url}
+                alt={screenplay.film_title}
+                className="w-10 h-14 object-cover rounded shadow-lg flex-shrink-0"
+              />
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Sparkles className="w-4 h-4 text-violet-400 flex-shrink-0" />
+                <span className="text-xs text-violet-400 font-medium">Original Screenplay</span>
+              </div>
+              <h2 className="text-base md:text-lg font-semibold text-slate-100 truncate">
+                {screenplay.film_title}
+              </h2>
+              <div className="flex items-center gap-3 text-xs text-slate-400 flex-wrap">
+                {screenplay.director && (
+                  <span className="flex items-center gap-1">
+                    <User className="w-3 h-3" />
+                    {screenplay.director}
+                  </span>
+                )}
+                {screenplay.film_year && (
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    {screenplay.film_year}
+                  </span>
+                )}
+                {screenplay.imdb_rating && (
+                  <span className="flex items-center gap-1 text-amber-400">
+                    <Star className="w-3 h-3 fill-amber-400" />
+                    {screenplay.imdb_rating}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+            {/* Download/Open in new tab */}
+            <a
+              href={scriptUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-lg bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 hover:text-violet-200 transition-colors"
+              title="Open in new tab"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </a>
+            
+            {/* Fullscreen toggle - desktop only */}
+            {!isMobile && (
+              <button
+                onClick={toggleFullscreen}
+                className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 hover:text-slate-200 transition-colors"
+                title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+              >
+                {isFullscreen ? (
+                  <Minimize2 className="w-4 h-4" />
+                ) : (
+                  <Maximize2 className="w-4 h-4" />
+                )}
+              </button>
+            )}
+            
+            {/* Close button */}
+            <button
+              onClick={handleClose}
+              className="p-2 rounded-lg bg-slate-700/50 hover:bg-red-500/30 text-slate-300 hover:text-red-300 transition-colors"
+              title="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* PDF Viewer */}
+        <div className="flex-1 relative bg-slate-950 overflow-hidden">
+          {isScriptSlugPdf ? (
+            <>
+              {/* Desktop: embed PDF */}
+              <iframe
+                src={`${scriptUrl}#view=FitH`}
+                className="w-full h-full border-0 hidden md:block"
+                title={`${screenplay.film_title} Screenplay`}
+              />
+              
+              {/* Mobile: show a nice fallback with link */}
+              <div className="md:hidden flex flex-col items-center justify-center h-full p-6 text-center">
+                <div className="w-20 h-20 rounded-full bg-violet-500/20 flex items-center justify-center mb-4">
+                  <FileText className="w-10 h-10 text-violet-400" />
+                </div>
+                <h3 className="text-lg font-medium text-slate-200 mb-2">
+                  {screenplay.film_title}
+                </h3>
+                <p className="text-sm text-slate-400 mb-6 max-w-xs">
+                  Tap below to read the original screenplay in your PDF viewer
+                </p>
+                <a
+                  href={scriptUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-medium rounded-lg shadow-lg shadow-violet-900/50 transition-all hover:scale-105"
+                >
+                  <FileText className="w-5 h-5" />
+                  Read Screenplay
+                </a>
+                <p className="text-xs text-slate-500 mt-4">
+                  Powered by ScriptSlug
+                </p>
+              </div>
+            </>
+          ) : (
+            // Fallback for non-ScriptSlug scripts
+            <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+              <div className="w-16 h-16 rounded-full bg-slate-700/50 flex items-center justify-center mb-4">
+                <FileText className="w-8 h-8 text-slate-400" />
+              </div>
+              <p className="text-sm text-slate-400 mb-4">
+                Unable to display script inline
+              </p>
+              <a
+                href={scriptUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Open Script
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-2 md:p-3 border-t border-violet-500/20 bg-slate-900/80 flex items-center justify-between text-xs text-slate-500 flex-shrink-0">
+          <span className="flex items-center gap-1">
+            <FileText className="w-3 h-3" />
+            ScriptSlug
+          </span>
+          <span>Use ⌘/Ctrl + scroll to zoom</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(modalContent, document.body);
+};
+
+export default ScreenplayReaderModal;

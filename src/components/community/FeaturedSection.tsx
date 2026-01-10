@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, BookOpen, MessageSquare, TrendingUp, Globe, Sparkles, Film, Play, Star, Calendar } from 'lucide-react';
+import { User, BookOpen, MessageSquare, TrendingUp, Globe, Sparkles, Film, Play, Star, Calendar, FileText } from 'lucide-react';
 import { useFeaturedContent } from '@/hooks/useFeaturedContent';
 import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
+import ScreenplayReaderModal from '@/components/ScreenplayReaderModal';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import gsap from 'gsap';
@@ -17,6 +18,8 @@ interface FilmAdaptation {
   poster_url: string | null;
   trailer_url: string | null;
   adaptation_type?: string | null;
+  script_url?: string | null;
+  script_source?: string | null;
 }
 
 interface FeaturedSectionProps {
@@ -41,6 +44,7 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
   const [originalScreenplays, setOriginalScreenplays] = useState<FilmAdaptation[]>([]);
   const [currentOriginalIndex, setCurrentOriginalIndex] = useState(0);
   const [showOriginalTrailer, setShowOriginalTrailer] = useState(false);
+  const [showScreenplayReader, setShowScreenplayReader] = useState(false);
   
   // Modal state for notable works and featured book
   const [selectedBook, setSelectedBook] = useState<{
@@ -63,11 +67,13 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
       
       if (adaptations) setFeaturedFilms(adaptations);
 
-      // Fetch original screenplays
+      // Fetch original screenplays - only those with ScriptSlug scripts
       const { data: originals } = await supabase
         .from('sf_film_adaptations')
-        .select('id, film_title, book_title, book_author, film_year, director, imdb_rating, poster_url, trailer_url, adaptation_type')
+        .select('id, film_title, book_title, book_author, film_year, director, imdb_rating, poster_url, trailer_url, adaptation_type, script_url, script_source')
         .eq('adaptation_type', 'original')
+        .eq('script_source', 'scriptslug')
+        .not('script_url', 'is', null)
         .not('poster_url', 'is', null)
         .order('imdb_rating', { ascending: false })
         .limit(10);
@@ -455,13 +461,13 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
         {/* Original Screenplay Card */}
         <div
           ref={el => { cardsRef.current[4] = el; }}
-          onClick={featuredOriginal?.trailer_url ? () => setShowOriginalTrailer(true) : undefined}
+          onClick={featuredOriginal?.script_url ? () => setShowScreenplayReader(true) : undefined}
           className={cn(
             "rounded-xl border p-5 transition-all duration-300 hover:shadow-lg",
             "bg-violet-500/10",
             "border-violet-500/20 hover:border-violet-500/40",
             "hover:shadow-violet-500/10",
-            featuredOriginal?.trailer_url && "cursor-pointer"
+            featuredOriginal?.script_url && "cursor-pointer"
           )}
         >
           <div className="flex items-center justify-between mb-4">
@@ -489,15 +495,15 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
           {featuredOriginal ? (
             <div className="flex gap-3">
               {featuredOriginal.poster_url ? (
-                <div className="relative w-16 h-24 flex-shrink-0">
+                <div className="relative w-16 h-24 flex-shrink-0 group">
                   <img 
                     src={featuredOriginal.poster_url}
                     alt={featuredOriginal.film_title}
                     className="w-full h-full object-cover rounded-md shadow-md"
                   />
-                  {featuredOriginal.trailer_url && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-md opacity-0 hover:opacity-100 transition-opacity">
-                      <Play className="w-6 h-6 text-white" />
+                  {featuredOriginal.script_url && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-violet-900/60 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                      <FileText className="w-6 h-6 text-white" />
                     </div>
                   )}
                 </div>
@@ -528,6 +534,12 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
                     </span>
                   )}
                 </div>
+                {featuredOriginal.script_url && (
+                  <span className="text-[10px] text-violet-400/70 mt-1 flex items-center gap-1">
+                    <FileText className="w-2.5 h-2.5" />
+                    Tap to read screenplay
+                  </span>
+                )}
               </div>
             </div>
           ) : (
@@ -641,6 +653,20 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
           onAddBook={() => {}}
         />
       )}
+
+      {/* Screenplay Reader Modal */}
+      <ScreenplayReaderModal
+        isOpen={showScreenplayReader}
+        onClose={() => setShowScreenplayReader(false)}
+        screenplay={featuredOriginal ? {
+          film_title: featuredOriginal.film_title,
+          director: featuredOriginal.director,
+          film_year: featuredOriginal.film_year,
+          imdb_rating: featuredOriginal.imdb_rating,
+          poster_url: featuredOriginal.poster_url,
+          script_url: featuredOriginal.script_url || ''
+        } : null}
+      />
     </>
   );
 };
