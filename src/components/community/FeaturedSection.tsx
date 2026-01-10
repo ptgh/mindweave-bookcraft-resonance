@@ -3,6 +3,8 @@ import { User, BookOpen, MessageSquare, TrendingUp, Globe, Sparkles, Film, Play,
 import { useFeaturedContent } from '@/hooks/useFeaturedContent';
 import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
 import ScreenplayReaderModal from '@/components/ScreenplayReaderModal';
+import { AuthorPopup } from '@/components/AuthorPopup';
+import { ScifiAuthor } from '@/services/scifiAuthorsService';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import gsap from 'gsap';
@@ -52,6 +54,11 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
     author: string;
     cover_url?: string;
   } | null>(null);
+  
+  // Author popup state
+  const [showAuthorPopup, setShowAuthorPopup] = useState(false);
+  const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
+  const authorCardRef = useRef<HTMLDivElement>(null);
 
   // Fetch featured films (book adaptations) and original screenplays
   useEffect(() => {
@@ -171,6 +178,28 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
     });
   };
 
+  const handleAuthorClick = (authorName: string) => {
+    // Create a ScifiAuthor object from the featured author data
+    const author: ScifiAuthor = {
+      id: 'featured',
+      name: authorName,
+      nationality: featuredContent?.featured_author?.nationality || undefined,
+      notable_works: featuredContent?.featured_author?.notable_works || [],
+      bio: featuredContent?.featured_author?.bio || undefined,
+      wikipedia_url: featuredContent?.featured_author?.wikipedia_url || undefined,
+      birth_year: undefined,
+      death_year: undefined,
+      data_quality_score: undefined,
+      data_source: undefined,
+      needs_enrichment: true,
+      verification_status: undefined,
+      enrichment_attempts: undefined,
+      last_enriched: undefined
+    };
+    setSelectedAuthor(author);
+    setShowAuthorPopup(true);
+  };
+
   const extractYouTubeId = (url: string | null): string | null => {
     if (!url) return null;
     const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
@@ -219,14 +248,16 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
   return (
     <>
       <div ref={sectionRef} className={cn("grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4", className)}>
-        {/* Featured Author Card */}
+        {/* Featured Author Card - Clickable */}
         <div
-          ref={el => { cardsRef.current[0] = el; }}
+          ref={(el) => { cardsRef.current[0] = el; authorCardRef.current = el; }}
+          onClick={() => featuredContent?.featured_author && handleAuthorClick(featuredContent.featured_author.name)}
           className={cn(
             "rounded-xl border p-5 transition-all duration-300 hover:shadow-lg",
             colorClasses.blue.bg,
             colorClasses.blue.border,
-            colorClasses.blue.glow
+            colorClasses.blue.glow,
+            featuredContent?.featured_author && "cursor-pointer"
           )}
         >
           <div className="flex items-center gap-3 mb-4">
@@ -244,7 +275,7 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
                   {authorInitials}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-lg font-medium text-slate-200 truncate">
+                  <p className="text-lg font-medium text-slate-200 truncate hover:text-blue-300 transition-colors">
                     {featuredContent.featured_author.name}
                   </p>
                   {featuredContent.featured_author.nationality && (
@@ -269,7 +300,10 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
                       <button 
                         key={i}
                         ref={el => { workRefs.current[i] = el; }}
-                        onClick={() => handleWorkClick(work)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleWorkClick(work);
+                        }}
                         className="text-xs px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-300 truncate max-w-[120px] hover:bg-blue-500/20 hover:border-blue-500/40 transition-colors cursor-pointer"
                         title={`Preview "${work}"`}
                       >
@@ -293,20 +327,18 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
         {/* Featured Book Card - Clickable */}
         <div
           ref={el => { cardsRef.current[1] = el; }}
-          onClick={featuredContent?.featured_book ? handleBookClick : undefined}
           className={cn(
             "rounded-xl border p-5 transition-all duration-300 hover:shadow-lg",
             colorClasses.purple.bg,
             colorClasses.purple.border,
-            colorClasses.purple.glow,
-            featuredContent?.featured_book && "cursor-pointer"
+            colorClasses.purple.glow
           )}
         >
           <div className="flex items-center gap-3 mb-4">
             <div className={cn("p-2 rounded-lg", colorClasses.purple.icon)}>
               <BookOpen className="w-4 h-4" />
             </div>
-            <h3 className="text-sm font-medium text-slate-400">Hot Book</h3>
+            <h3 className="text-sm font-medium text-slate-400">Featured Book</h3>
           </div>
           
           {featuredContent?.featured_book ? (
@@ -316,21 +348,34 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
                 <img 
                   src={featuredContent.featured_book.cover_url}
                   alt={featuredContent.featured_book.title}
-                  className="w-16 h-24 object-cover rounded-md shadow-md flex-shrink-0 group-hover:scale-105 transition-transform"
+                  onClick={handleBookClick}
+                  className="w-16 h-24 object-cover rounded-md shadow-md flex-shrink-0 hover:scale-105 transition-transform cursor-pointer"
                 />
               ) : (
-                <div className="w-16 h-24 bg-slate-700 rounded-md flex items-center justify-center flex-shrink-0">
+                <div 
+                  onClick={handleBookClick}
+                  className="w-16 h-24 bg-slate-700 rounded-md flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-slate-600 transition-colors"
+                >
                   <BookOpen className="w-6 h-6 text-slate-500" />
                 </div>
               )}
               
               <div className="flex-1 min-w-0 flex flex-col justify-center">
-                <p className="text-lg font-medium text-slate-200 line-clamp-2 hover:text-purple-300 transition-colors">
+                <p 
+                  onClick={handleBookClick}
+                  className="text-lg font-medium text-slate-200 line-clamp-2 hover:text-purple-300 transition-colors cursor-pointer"
+                >
                   {featuredContent.featured_book.title}
                 </p>
-                <p className="text-sm text-slate-400 truncate">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAuthorClick(featuredContent.featured_book!.author);
+                  }}
+                  className="text-sm text-slate-400 truncate text-left hover:text-blue-300 transition-colors"
+                >
                   by {featuredContent.featured_book.author}
-                </p>
+                </button>
                 <p className="text-xs text-purple-400 mt-1">
                   {featuredContent.featured_book.post_count} discussions
                 </p>
@@ -666,6 +711,17 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
           poster_url: featuredOriginal.poster_url,
           script_url: featuredOriginal.script_url || ''
         } : null}
+      />
+
+      {/* Author Popup */}
+      <AuthorPopup
+        author={selectedAuthor}
+        isVisible={showAuthorPopup}
+        onClose={() => {
+          setShowAuthorPopup(false);
+          setSelectedAuthor(null);
+        }}
+        triggerRef={authorCardRef}
       />
     </>
   );
