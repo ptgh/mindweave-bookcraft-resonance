@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, FileText, ExternalLink, Maximize2, Minimize2, Download, Sparkles, Calendar, Star, User } from 'lucide-react';
+import { X, FileText, ExternalLink, Maximize2, Minimize2, Download, Sparkles, Calendar, Star, User, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import gsap from 'gsap';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +14,7 @@ interface ScreenplayReaderModalProps {
     imdb_rating: number | null;
     poster_url: string | null;
     script_url: string;
+    script_source?: string | null;
   } | null;
 }
 
@@ -26,6 +27,8 @@ export const ScreenplayReaderModal: React.FC<ScreenplayReaderModalProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(8); // PKD comic has 8 pages
 
   // Check if mobile
   useEffect(() => {
@@ -114,6 +117,26 @@ export const ScreenplayReaderModal: React.FC<ScreenplayReaderModalProps> = ({
   // Build the script URL - ensure it's a proper PDF URL from ScriptSlug
   const scriptUrl = screenplay.script_url;
   const isScriptSlugPdf = scriptUrl.includes('scriptslug.com') && scriptUrl.endsWith('.pdf');
+  
+  // Check if this is a local comic/page-based script
+  const isLocalComic = scriptUrl.startsWith('/scripts/') && !scriptUrl.endsWith('.pdf');
+  const isComic = screenplay.script_source === 'Comic Book';
+  
+  // Generate page URLs for comic readers
+  const getComicPageUrl = (pageNum: number) => {
+    if (scriptUrl.endsWith('/')) {
+      return `${scriptUrl}page-${pageNum}.webp`;
+    }
+    return `${scriptUrl}/page-${pageNum}.webp`;
+  };
+  
+  const handlePrevPage = () => {
+    setCurrentPage(prev => Math.max(1, prev - 1));
+  };
+  
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(totalPages, prev + 1));
+  };
 
   const modalContent = (
     <div
@@ -145,8 +168,14 @@ export const ScreenplayReaderModal: React.FC<ScreenplayReaderModalProps> = ({
             )}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <Sparkles className="w-4 h-4 text-violet-400 flex-shrink-0" />
-                <span className="text-xs text-violet-400 font-medium">Original Screenplay</span>
+                {isComic ? (
+                  <BookOpen className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                ) : (
+                  <Sparkles className="w-4 h-4 text-violet-400 flex-shrink-0" />
+                )}
+                <span className={`text-xs font-medium ${isComic ? 'text-amber-400' : 'text-violet-400'}`}>
+                  {isComic ? 'Biographical Comic' : 'Original Screenplay'}
+                </span>
               </div>
               <h2 className="text-base md:text-lg font-semibold text-slate-100 truncate">
                 {screenplay.film_title}
@@ -212,9 +241,48 @@ export const ScreenplayReaderModal: React.FC<ScreenplayReaderModalProps> = ({
           </div>
         </div>
 
-        {/* PDF Viewer */}
+        {/* Content Viewer */}
         <div className="flex-1 relative bg-slate-950 overflow-hidden">
-          {isScriptSlugPdf ? (
+          {isLocalComic || isComic ? (
+            // Comic Page Viewer
+            <div className="relative w-full h-full flex flex-col">
+              {/* Comic Page Display */}
+              <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
+                <img
+                  src={getComicPageUrl(currentPage)}
+                  alt={`Page ${currentPage} of ${totalPages}`}
+                  className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                />
+              </div>
+              
+              {/* Page Navigation */}
+              <div className="flex items-center justify-center gap-4 p-4 bg-slate-900/80 border-t border-violet-500/20">
+                <button
+                  onClick={handlePrevPage}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 hover:text-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-slate-200">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                </div>
+                
+                <button
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 hover:text-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Next page"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          ) : isScriptSlugPdf ? (
             <>
               {/* Desktop: embed PDF */}
               <iframe
@@ -273,10 +341,19 @@ export const ScreenplayReaderModal: React.FC<ScreenplayReaderModalProps> = ({
         {/* Footer */}
         <div className="p-2 md:p-3 border-t border-violet-500/20 bg-slate-900/80 flex items-center justify-between text-xs text-slate-500 flex-shrink-0">
           <span className="flex items-center gap-1">
-            <FileText className="w-3 h-3" />
-            ScriptSlug
+            {isComic ? (
+              <>
+                <BookOpen className="w-3 h-3" />
+                Robert Crumb / Weirdo Magazine
+              </>
+            ) : (
+              <>
+                <FileText className="w-3 h-3" />
+                ScriptSlug
+              </>
+            )}
           </span>
-          <span>Use ⌘/Ctrl + scroll to zoom</span>
+          <span>{isComic ? 'Use arrow keys or buttons to navigate' : 'Use ⌘/Ctrl + scroll to zoom'}</span>
         </div>
       </div>
     </div>
