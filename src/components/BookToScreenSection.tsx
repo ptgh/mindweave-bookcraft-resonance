@@ -25,13 +25,14 @@ import {
 import { FilterMode } from './BookToScreenSelector';
 
 
-// Provider from edge function response
+// Provider from Streaming Availability API
 interface WatchProvider {
-  id: number;
+  id: string;
   name: string;
-  logo: string | null;
-  priority: number;
-  deepLink: string | null;
+  logo: string;
+  deepLink: string;
+  price?: string;
+  quality?: string;
 }
 
 interface WatchProviders {
@@ -51,6 +52,9 @@ interface FilmAdaptation {
   film_year: number | null;
   director: string | null;
   imdb_rating: number | null;
+  imdb_id: string | null;
+  tmdb_id: number | null;
+  tmdb_rating: number | null;
   rotten_tomatoes_score: number | null;
   poster_url: string | null;
   trailer_url: string | null;
@@ -497,21 +501,34 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     return (now.getTime() - cacheDate.getTime()) < sevenDaysMs;
   }, []);
 
-  // Fetch and cache providers for a film
+  // Fetch and cache providers for a film using Streaming Availability API
   const fetchProviders = useCallback(async (film: FilmAdaptation) => {
     setIsLoadingProviders(true);
     try {
-      const { data, error } = await supabase.functions.invoke('get-watch-providers', {
+      // Use the new streaming links API with real deep links
+      const { data, error } = await supabase.functions.invoke('get-streaming-links', {
         body: { 
+          tmdbId: film.tmdb_id || undefined,
+          imdbId: film.imdb_id || undefined,
           title: film.film_title, 
           year: film.film_year,
-          region: 'GB' 
+          region: 'gb'
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Streaming links error:', error);
+        // Fallback to old get-watch-providers if new API fails
+        const fallback = await supabase.functions.invoke('get-watch-providers', {
+          body: { title: film.film_title, year: film.film_year, region: 'GB' }
+        });
+        if (fallback.data?.success && fallback.data?.providers) {
+          setModalProviders(fallback.data.providers as WatchProviders);
+        }
+        return;
+      }
 
-      if (data?.success && data?.providers) {
+      if (data?.providers) {
         setModalProviders(data.providers as WatchProviders);
         
         // Fire-and-forget cache if admin
@@ -1097,29 +1114,31 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                     )}
                   </div>
                   
-                  {/* Provider chips */}
+                  {/* Provider chips - Real deep links from Streaming Availability API */}
                   {modalProviders && (
                     <div className="space-y-2">
-                      {/* Streaming */}
+                      {/* Streaming (subscription services) */}
                       {modalProviders.streaming && modalProviders.streaming.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {modalProviders.streaming.map((p) => (
                             <a
                               key={p.id}
-                              href={p.deepLink || modalProviders.link || '#'}
+                              href={p.deepLink}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-green-500/10 text-green-400 text-xs border border-green-500/20 hover:bg-green-500/20 hover:border-green-500/40 transition-colors cursor-pointer"
+                              title={`Watch on ${p.name}`}
                             >
                               {p.logo && (
                                 <img 
                                   src={p.logo} 
-                                  alt="" 
-                                  className="w-4 h-4 rounded-sm"
+                                  alt={p.name} 
+                                  className="w-4 h-4 rounded-sm object-contain"
                                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                 />
                               )}
-                              {p.name}
+                              <span>{p.name}</span>
+                              <ExternalLink className="w-3 h-3 opacity-50" />
                             </a>
                           ))}
                         </div>
@@ -1131,20 +1150,22 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                           {modalProviders.rent.slice(0, 4).map((p) => (
                             <a
                               key={p.id}
-                              href={p.deepLink || modalProviders.link || '#'}
+                              href={p.deepLink}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-blue-500/10 text-blue-400 text-xs border border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/40 transition-colors cursor-pointer"
+                              title={`Rent on ${p.name}${p.price ? ` - ${p.price}` : ''}`}
                             >
                               {p.logo && (
                                 <img 
                                   src={p.logo} 
-                                  alt="" 
-                                  className="w-4 h-4 rounded-sm"
+                                  alt={p.name} 
+                                  className="w-4 h-4 rounded-sm object-contain"
                                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                 />
                               )}
-                              {p.name}
+                              <span>{p.name}</span>
+                              {p.price && <span className="text-blue-500/80 font-medium">{p.price}</span>}
                               <span className="text-blue-500/60 text-[10px]">Rent</span>
                             </a>
                           ))}
@@ -1157,20 +1178,22 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                           {modalProviders.buy.slice(0, 3).map((p) => (
                             <a
                               key={p.id}
-                              href={p.deepLink || modalProviders.link || '#'}
+                              href={p.deepLink}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-purple-500/10 text-purple-400 text-xs border border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/40 transition-colors cursor-pointer"
+                              title={`Buy on ${p.name}${p.price ? ` - ${p.price}` : ''}`}
                             >
                               {p.logo && (
                                 <img 
                                   src={p.logo} 
-                                  alt="" 
-                                  className="w-4 h-4 rounded-sm"
+                                  alt={p.name} 
+                                  className="w-4 h-4 rounded-sm object-contain"
                                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                 />
                               )}
-                              {p.name}
+                              <span>{p.name}</span>
+                              {p.price && <span className="text-purple-500/80 font-medium">{p.price}</span>}
                               <span className="text-purple-500/60 text-[10px]">Buy</span>
                             </a>
                           ))}
