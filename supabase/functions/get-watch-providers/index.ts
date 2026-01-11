@@ -30,32 +30,37 @@ interface WatchProviderResult {
   buy?: WatchProvider[];
 }
 
-// Provider deep link URLs (direct to service where possible)
-const providerDeepLinks: Record<number, string> = {
-  8: 'https://www.netflix.com', // Netflix
-  9: 'https://tv.apple.com', // Apple TV+
-  337: 'https://www.disneyplus.com', // Disney+
-  1899: 'https://www.max.com', // Max
-  15: 'https://www.hulu.com', // Hulu
-  119: 'https://www.amazon.com/gp/video', // Prime Video
-  384: 'https://www.hbomax.com', // HBO Max
-  386: 'https://www.peacocktv.com', // Peacock
-  531: 'https://www.paramountplus.com', // Paramount+
-  257: 'https://www.fubo.tv', // fuboTV
-  283: 'https://www.crunchyroll.com', // Crunchyroll
-  526: 'https://www.amc.com', // AMC+
-  350: 'https://tv.apple.com', // Apple TV
-  2: 'https://tv.apple.com', // Apple iTunes
-  3: 'https://play.google.com/store/movies', // Google Play Movies
-  192: 'https://www.youtube.com', // YouTube
-  10: 'https://www.amazon.com/gp/video', // Amazon Video
+// Provider search URL templates - {title} will be replaced with encoded movie title
+// These use search pages that actually work to find the movie
+const providerSearchTemplates: Record<number, (title: string, year?: string) => string> = {
+  8: (title, year) => `https://www.netflix.com/search?q=${encodeURIComponent(title)}`, // Netflix
+  9: (title, year) => `https://tv.apple.com/search?term=${encodeURIComponent(title)}`, // Apple TV+
+  337: (title, year) => `https://www.disneyplus.com/search?q=${encodeURIComponent(title)}`, // Disney+
+  1899: (title, year) => `https://www.max.com/search?q=${encodeURIComponent(title)}`, // Max
+  15: (title, year) => `https://www.hulu.com/search?q=${encodeURIComponent(title)}`, // Hulu
+  119: (title, year) => `https://www.amazon.co.uk/s?k=${encodeURIComponent(title + (year ? ` ${year}` : ''))}&i=instant-video`, // Prime Video UK
+  384: (title, year) => `https://www.max.com/search?q=${encodeURIComponent(title)}`, // HBO Max (now Max)
+  386: (title, year) => `https://www.peacocktv.com/search?q=${encodeURIComponent(title)}`, // Peacock
+  531: (title, year) => `https://www.paramountplus.com/search/?q=${encodeURIComponent(title)}`, // Paramount+
+  257: (title, year) => `https://www.fubo.tv/search?q=${encodeURIComponent(title)}`, // fuboTV
+  283: (title, year) => `https://www.crunchyroll.com/search?q=${encodeURIComponent(title)}`, // Crunchyroll
+  526: (title, year) => `https://www.amc.com/search?q=${encodeURIComponent(title)}`, // AMC+
+  350: (title, year) => `https://tv.apple.com/search?term=${encodeURIComponent(title)}`, // Apple TV
+  2: (title, year) => `https://tv.apple.com/search?term=${encodeURIComponent(title)}`, // Apple iTunes
+  3: (title, year) => `https://play.google.com/store/search?q=${encodeURIComponent(title)}&c=movies`, // Google Play Movies
+  192: (title, year) => `https://www.youtube.com/results?search_query=${encodeURIComponent(title + (year ? ` ${year}` : '') + ' full movie')}`, // YouTube
+  10: (title, year) => `https://www.amazon.co.uk/s?k=${encodeURIComponent(title + (year ? ` ${year}` : ''))}&i=instant-video`, // Amazon Video UK
   // UK-specific providers
-  103: 'https://www.nowtv.com', // NOW TV
-  29: 'https://www.sky.com/watch', // Sky Go
-  38: 'https://www.britbox.co.uk', // BritBox
-  39: 'https://www.itv.com/hub', // ITV Hub
-  41: 'https://www.channel4.com', // All 4
-  531: 'https://www.paramountplus.com', // Paramount+
+  103: (title, year) => `https://www.nowtv.com/search?q=${encodeURIComponent(title)}`, // NOW TV
+  29: (title, year) => `https://www.sky.com/watch/search?q=${encodeURIComponent(title)}`, // Sky Go
+  38: (title, year) => `https://www.britbox.co.uk/search?q=${encodeURIComponent(title)}`, // BritBox
+  39: (title, year) => `https://www.itv.com/watch/search/${encodeURIComponent(title)}`, // ITVX (was ITV Hub)
+  41: (title, year) => `https://www.channel4.com/search?q=${encodeURIComponent(title)}`, // All 4
+};
+
+// Fallback: Google search for provider + movie
+const getGoogleSearchLink = (providerName: string, title: string, year?: string): string => {
+  return `https://www.google.com/search?q=${encodeURIComponent(`watch ${title} ${year || ''} ${providerName}`.trim())}`
 };
 
 function json(data: unknown, options: { status?: number } = {}): Response {
@@ -137,15 +142,35 @@ Deno.serve(async (req) => {
       }
     }
     
-    // Format providers with deep links
+    // Movie info for constructing search URLs
+    const movieTitle = movie.title;
+    const movieYear = movie.release_date?.substring(0, 4);
+    
+    // Format providers with movie-specific search links
     const formatProviders = (providers: WatchProvider[] = []) => 
-      providers.map(p => ({
-        id: p.provider_id,
-        name: p.provider_name,
-        logo: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
-        priority: p.display_priority,
-        deepLink: providerDeepLinks[p.provider_id] || null,
-      }));
+      providers.map(p => {
+        // Try provider-specific search template first
+        const searchTemplate = providerSearchTemplates[p.provider_id];
+        let deepLink: string;
+        
+        if (searchTemplate) {
+          deepLink = searchTemplate(movieTitle, movieYear);
+        } else {
+          // Fallback to Google search for this provider + movie
+          deepLink = getGoogleSearchLink(p.provider_name, movieTitle, movieYear);
+        }
+        
+        return {
+          id: p.provider_id,
+          name: p.provider_name,
+          logo: p.logo_path ? `https://image.tmdb.org/t/p/original${p.logo_path}` : null,
+          priority: p.display_priority,
+          deepLink,
+        };
+      });
+
+    // TMDB watch page as primary link (most reliable)
+    const tmdbWatchLink = `https://www.themoviedb.org/movie/${movie.id}/watch?locale=${region}`;
 
     const result = {
       success: true,
@@ -153,10 +178,10 @@ Deno.serve(async (req) => {
       movie: {
         id: movie.id,
         title: movie.title,
-        year: movie.release_date?.substring(0, 4),
+        year: movieYear,
       },
       providers: {
-        link: regionProviders.link || null,
+        link: tmdbWatchLink, // Use TMDB's watch page as primary link
         streaming: formatProviders(regionProviders.flatrate),
         rent: formatProviders(regionProviders.rent),
         buy: formatProviders(regionProviders.buy),
