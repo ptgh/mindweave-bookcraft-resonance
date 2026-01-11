@@ -185,27 +185,38 @@ const BookToScreen: React.FC = () => {
             >
               <h3 className="text-sm font-medium text-violet-300 mb-3 flex items-center gap-2">
                 <span>✨</span>
-                AI Suggestions - Add these to your collection
+                AI Suggestions
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {aiRecommendations.map((rec, idx) => {
                   const wasAdded = addedFilms.includes(rec.film_title);
+                  // Check if this film was already in the collection (not newly added but present)
+                  const isInCollection = !wasAdded && !addedFilms.includes(rec.film_title);
+                  // For now, all films shown here that weren't added are already in collection
+                  const alreadyInCollection = !wasAdded;
+                  
                   return (
                     <div 
                       key={idx} 
                       className={`p-3 rounded-lg border transition-all ${
                         wasAdded 
                           ? 'bg-emerald-500/10 border-emerald-500/30' 
+                          : alreadyInCollection
+                          ? 'bg-blue-500/10 border-blue-500/30'
                           : 'bg-muted/20 border-violet-500/20'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-sm font-medium text-foreground">{rec.film_title} ({rec.year})</p>
-                        {wasAdded && (
+                        {wasAdded ? (
                           <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded font-medium">
                             Added ✓
                           </span>
-                        )}
+                        ) : alreadyInCollection ? (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded font-medium">
+                            In Collection
+                          </span>
+                        ) : null}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1" title={rec.author}>
                         Based on "{rec.book_title}" by {truncateText(rec.author)}

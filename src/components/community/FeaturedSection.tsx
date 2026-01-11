@@ -709,7 +709,8 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
           film_year: featuredOriginal.film_year,
           imdb_rating: featuredOriginal.imdb_rating,
           poster_url: featuredOriginal.poster_url,
-          script_url: featuredOriginal.script_url || ''
+          script_url: featuredOriginal.script_url || '',
+          script_source: featuredOriginal.script_source || null
         } : null}
       />
 
