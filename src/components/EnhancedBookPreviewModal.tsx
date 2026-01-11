@@ -526,7 +526,12 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
                         )}
                       </>
                     ) : (
-                      <p className="text-slate-400 text-base font-medium">{displayData.author}</p>
+                      <button
+                        onClick={() => handleWriterClick(displayData.author)}
+                        className="text-slate-400 text-base font-medium hover:text-emerald-400 transition-colors cursor-pointer text-left"
+                      >
+                        {displayData.author}
+                      </button>
                     )}
                   </div>
                 </div>
@@ -712,6 +717,18 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
             cover_url: coverUrl,
           }}
           onClose={() => setShowShareModal(false)}
+        />
+      )}
+
+      {/* Author Popup */}
+      {selectedAuthor && (
+        <AuthorPopup
+          author={selectedAuthor}
+          isVisible={showAuthorPopup}
+          onClose={() => {
+            setShowAuthorPopup(false);
+            setSelectedAuthor(null);
+          }}
         />
       )}
     </div>
