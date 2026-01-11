@@ -25,14 +25,18 @@ import {
 import { FilterMode } from './BookToScreenSelector';
 
 
+// Provider from edge function response
 interface WatchProvider {
-  provider_name: string;
-  provider_id: number;
-  logo_path?: string;
+  id: number;
+  name: string;
+  logo: string | null;
+  priority: number;
+  deepLink: string | null;
 }
 
 interface WatchProviders {
-  flatrate?: WatchProvider[];
+  link?: string | null;
+  streaming?: WatchProvider[];
   rent?: WatchProvider[];
   buy?: WatchProvider[];
 }
@@ -174,6 +178,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
             ? item.streaming_availability as Record<string, string>
             : null,
           awards: Array.isArray(item.awards) ? item.awards as Array<{ name: string; year: number }> : null,
+          // Handle both old DB format and new edge function format
           watch_providers: typeof item.watch_providers === 'object' && item.watch_providers !== null
             ? item.watch_providers as WatchProviders
             : null,
@@ -1095,24 +1100,27 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                   {/* Provider chips */}
                   {modalProviders && (
                     <div className="space-y-2">
-                      {/* Streaming (flatrate) */}
-                      {modalProviders.flatrate && modalProviders.flatrate.length > 0 && (
+                      {/* Streaming */}
+                      {modalProviders.streaming && modalProviders.streaming.length > 0 && (
                         <div className="flex flex-wrap gap-2">
-                          {modalProviders.flatrate.map((p) => (
-                            <span
-                              key={p.provider_id}
-                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-green-500/10 text-green-400 text-xs border border-green-500/20"
+                          {modalProviders.streaming.map((p) => (
+                            <a
+                              key={p.id}
+                              href={p.deepLink || modalProviders.link || '#'}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-green-500/10 text-green-400 text-xs border border-green-500/20 hover:bg-green-500/20 hover:border-green-500/40 transition-colors cursor-pointer"
                             >
-                              {p.logo_path && (
+                              {p.logo && (
                                 <img 
-                                  src={`https://image.tmdb.org/t/p/w45${p.logo_path}`} 
+                                  src={p.logo} 
                                   alt="" 
                                   className="w-4 h-4 rounded-sm"
                                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                 />
                               )}
-                              {p.provider_name}
-                            </span>
+                              {p.name}
+                            </a>
                           ))}
                         </div>
                       )}
@@ -1121,20 +1129,24 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                       {modalProviders.rent && modalProviders.rent.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {modalProviders.rent.slice(0, 4).map((p) => (
-                            <span
-                              key={p.provider_id}
-                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-blue-500/10 text-blue-400 text-xs border border-blue-500/20"
+                            <a
+                              key={p.id}
+                              href={p.deepLink || modalProviders.link || '#'}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-blue-500/10 text-blue-400 text-xs border border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/40 transition-colors cursor-pointer"
                             >
-                              {p.logo_path && (
+                              {p.logo && (
                                 <img 
-                                  src={`https://image.tmdb.org/t/p/w45${p.logo_path}`} 
+                                  src={p.logo} 
                                   alt="" 
                                   className="w-4 h-4 rounded-sm"
                                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                 />
                               )}
-                              Rent: {p.provider_name}
-                            </span>
+                              {p.name}
+                              <span className="text-blue-500/60 text-[10px]">Rent</span>
+                            </a>
                           ))}
                         </div>
                       )}
@@ -1143,22 +1155,31 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                       {modalProviders.buy && modalProviders.buy.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {modalProviders.buy.slice(0, 3).map((p) => (
-                            <span
-                              key={p.provider_id}
-                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-purple-500/10 text-purple-400 text-xs border border-purple-500/20"
+                            <a
+                              key={p.id}
+                              href={p.deepLink || modalProviders.link || '#'}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-purple-500/10 text-purple-400 text-xs border border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/40 transition-colors cursor-pointer"
                             >
-                              {p.logo_path && (
+                              {p.logo && (
                                 <img 
-                                  src={`https://image.tmdb.org/t/p/w45${p.logo_path}`} 
+                                  src={p.logo} 
                                   alt="" 
                                   className="w-4 h-4 rounded-sm"
                                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                 />
                               )}
-                              Buy: {p.provider_name}
-                            </span>
+                              {p.name}
+                              <span className="text-purple-500/60 text-[10px]">Buy</span>
+                            </a>
                           ))}
                         </div>
+                      )}
+                      
+                      {/* No providers in any category */}
+                      {(!modalProviders.streaming?.length && !modalProviders.rent?.length && !modalProviders.buy?.length) && (
+                        <p className="text-slate-500 text-xs">No UK streaming info found</p>
                       )}
                     </div>
                   )}
