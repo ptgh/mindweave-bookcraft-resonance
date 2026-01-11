@@ -19,6 +19,65 @@ export const BookToScreenSelector: React.FC<BookToScreenSelectorProps> = ({
   isAILoading = false,
   className = '',
 }) => {
+  const scanButtonRef = useRef<HTMLButtonElement>(null);
+  const scanTextRef = useRef<HTMLSpanElement>(null);
+  const dotsRef = useRef<HTMLSpanElement>(null);
+  const animationRef = useRef<gsap.core.Timeline | null>(null);
+
+  // GSAP scanning animation when AI is loading
+  useEffect(() => {
+    if (isAILoading && scanButtonRef.current) {
+      // Create pulsing glow effect on button
+      animationRef.current = gsap.timeline({ repeat: -1 });
+      
+      animationRef.current
+        .to(scanButtonRef.current, {
+          boxShadow: '0 0 20px rgba(139, 92, 246, 0.6), 0 0 40px rgba(139, 92, 246, 0.3)',
+          duration: 0.6,
+          ease: 'power2.inOut',
+        })
+        .to(scanButtonRef.current, {
+          boxShadow: '0 0 10px rgba(139, 92, 246, 0.3), 0 0 20px rgba(139, 92, 246, 0.1)',
+          duration: 0.6,
+          ease: 'power2.inOut',
+        });
+
+      // Animate scanning dots
+      if (dotsRef.current) {
+        gsap.to(dotsRef.current, {
+          opacity: 1,
+          duration: 0.3,
+        });
+        
+        const dotAnimation = gsap.timeline({ repeat: -1 });
+        dotAnimation
+          .to(dotsRef.current, { text: '.', duration: 0.3, ease: 'none' })
+          .to(dotsRef.current, { text: '..', duration: 0.3, ease: 'none' })
+          .to(dotsRef.current, { text: '...', duration: 0.3, ease: 'none' })
+          .to(dotsRef.current, { text: '', duration: 0.3, ease: 'none' });
+      }
+
+    } else {
+      // Cleanup animation
+      if (animationRef.current) {
+        animationRef.current.kill();
+        animationRef.current = null;
+      }
+      if (scanButtonRef.current) {
+        gsap.set(scanButtonRef.current, { boxShadow: 'none' });
+      }
+      if (dotsRef.current) {
+        gsap.set(dotsRef.current, { opacity: 0 });
+      }
+    }
+
+    return () => {
+      if (animationRef.current) {
+        animationRef.current.kill();
+      }
+    };
+  }, [isAILoading]);
+
   return (
     <div className={`flex items-center gap-3 flex-wrap justify-center ${className}`}>
       {/* All Films toggle */}
@@ -51,15 +110,23 @@ export const BookToScreenSelector: React.FC<BookToScreenSelectorProps> = ({
         </button>
       </div>
 
-      {/* AI Scan Button */}
+      {/* AI Scan Button with GSAP animation */}
       <div className="inline-flex items-center bg-muted/30 rounded-lg p-1 border border-border/30">
         <button
+          ref={scanButtonRef}
           onClick={onAIScan}
           disabled={isAILoading}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-violet-300 bg-violet-500/20 border border-violet-500/40 hover:bg-violet-500/30 hover:text-violet-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-violet-300 bg-violet-500/20 border border-violet-500/40 hover:bg-violet-500/30 hover:text-violet-200 transition-all disabled:cursor-not-allowed"
         >
           <Sparkles className={`w-3.5 h-3.5 ${isAILoading ? 'animate-pulse' : ''}`} />
-          AI Scan
+          <span ref={scanTextRef}>
+            {isAILoading ? 'Scanning' : 'AI Scan'}
+          </span>
+          <span 
+            ref={dotsRef} 
+            className="w-4 text-left opacity-0"
+            aria-hidden="true"
+          />
         </button>
       </div>
     </div>
