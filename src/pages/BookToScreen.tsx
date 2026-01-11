@@ -34,6 +34,7 @@ const BookToScreen: React.FC = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [isSearchingTMDB, setIsSearchingTMDB] = useState(false);
   const [triggerExternalSearch, setTriggerExternalSearch] = useState(0);
+  const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const { toast } = useEnhancedToast();
   const aiPanelRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -169,8 +170,8 @@ const BookToScreen: React.FC = () => {
           {/* Selector Buttons */}
           <div className="flex justify-center mb-8">
             <BookToScreenSelector
-              selected="all"
-              onSelect={() => {}}
+              selected={filterMode}
+              onSelect={setFilterMode}
               onAIScan={handleAIScan}
               isAILoading={isAILoading}
             />
@@ -226,7 +227,7 @@ const BookToScreen: React.FC = () => {
           <BookToScreenSection 
             key={refreshKey}
             showTitle={false} 
-            filterMode="all" 
+            filterMode={filterMode} 
             searchQuery={searchQuery}
             triggerExternalSearch={triggerExternalSearch}
             onSearchingChange={setIsSearchingTMDB}
