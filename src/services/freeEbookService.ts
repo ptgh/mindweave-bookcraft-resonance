@@ -94,26 +94,44 @@ export const getCachedFreeEbookLink = async (
 
     if (!candidates || candidates.length === 0) return null;
 
-    // Score and pick the best candidate
+    // Score and pick the best candidate with stricter matching
     const scoreRow = (r: any) => {
       const rt = normalize(r.book_title || '');
       const ra = normalize(r.book_author || '');
       let score = 0;
-      if (rt === normTitle) score += 20; else if (rt.includes(normTitle)) score += 8;
-      if (ra === normAuthor) score += 10; else if (ra.includes(normAuthor)) score += 4;
-      if (r.archive_url || r.gutenberg_url) score += 5; // prefer positive results
-      // Small bonus for recency is already handled by ordering; add tiny bump
+      
+      // Exact title match is critical
+      if (rt === normTitle) score += 20; 
+      else if (normTitle.includes(rt) || rt.includes(normTitle)) score += 8;
+      
+      // Author must reasonably match
+      if (ra === normAuthor) score += 10; 
+      else if (normAuthor.includes(ra) || ra.includes(normAuthor)) score += 4;
+      
+      // Bonus for having actual links
+      if (r.archive_url || r.gutenberg_url) score += 5;
+      
       return score;
     };
 
-    const best = [...candidates].sort((a, b) => scoreRow(b) - scoreRow(a))[0];
-    if (!best) return null;
+    const scored = candidates.map(c => ({ row: c, score: scoreRow(c) }));
+    const best = scored.sort((a, b) => b.score - a.score)[0];
+    
+    // Require minimum score of 15 to prevent false matches
+    // (exact title = 20, partial title+author = 12, which won't pass)
+    if (!best || best.score < 15) {
+      console.log('📚 [FreeEbook] No cached match above threshold', { 
+        bestScore: best?.score, 
+        candidateCount: candidates.length 
+      });
+      return null;
+    }
 
     return {
-      ...(best as any),
-      formats: typeof (best as any).formats === 'string'
-        ? JSON.parse((best as any).formats)
-        : (best as any).formats || {}
+      ...(best.row as any),
+      formats: typeof (best.row as any).formats === 'string'
+        ? JSON.parse((best.row as any).formats)
+        : (best.row as any).formats || {}
     } as FreeEbookLink;
   } catch (error) {
     console.error('Error in getCachedFreeEbookLink:', error);
