@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X, ExternalLink, Smartphone, Globe, Plus, Share2, FileText, User } from "lucide-react";
+import { X, ExternalLink, Smartphone, Globe, Plus, Share2, FileText, User, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EnrichedPublisherBook } from "@/services/publisherService";
@@ -12,21 +12,23 @@ import { gsap } from "gsap";
 import { analyticsService } from "@/services/analyticsService";
 import { getOptimizedSettings } from "@/utils/performance";
 import ShareBookModal from "@/components/ShareBookModal";
+import ScreenplayReaderModal from "@/components/ScreenplayReaderModal";
 import { supabase } from "@/integrations/supabase/client";
 import { ScifiAuthor } from "@/services/scifiAuthorsService";
 import { AuthorPopup } from "@/components/AuthorPopup";
 
-// Script data interface for original screenplays
+// Script/comic data interface for original screenplays and comics
 interface ScriptData {
   film_title: string;
   film_year: number | null;
   director: string | null;
-  book_author: string; // screenwriters
+  book_author: string; // screenwriters or comic artist
   poster_url: string | null;
-  book_cover_url: string | null; // ScriptSlug cover for screenplay
+  book_cover_url: string | null;
   script_url: string | null;
   script_source: string | null;
   notable_differences?: string | null;
+  adaptation_type?: string | null; // 'original', 'comic', etc.
 }
 
 interface EnhancedBookPreviewModalProps {
@@ -44,11 +46,13 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
   const [loading, setLoading] = useState(!scriptData); // Don't load for scripts
   const [error, setError] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showComicReader, setShowComicReader] = useState(false);
   const { toast } = useEnhancedToast();
   const digitalCopyButtonRef = useRef<HTMLButtonElement>(null);
   
-  // Script mode - for original screenplays
+  // Script or comic mode
   const isScriptMode = !!scriptData;
+  const isComicMode = scriptData?.adaptation_type === 'comic';
   
   // Script writer popup state
   const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
@@ -108,8 +112,10 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
   };
 
   const scriptUrl = getScriptUrl();
-  const scriptSourceLabel = scriptData?.script_source === 'scriptslug' ? 'ScriptSlug' : 
-                           scriptData?.script_source === 'imsdb' ? 'IMSDb' : 'Script';
+  const scriptSourceLabel = isComicMode ? 'Comic Book' :
+                           scriptData?.script_source === 'scriptslug' ? 'ScriptSlug' : 
+                           scriptData?.script_source === 'imsdb' ? 'IMSDb' : 
+                           scriptData?.script_source === 'Comic Book' ? 'Comic Book' : 'Script';
 
   // GSAP hover animations for digital copy button
   useEffect(() => {
@@ -388,15 +394,17 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
     }
   };
 
-  // For scripts, use script data; for books, use API results or fallback
+  // For scripts/comics, use script data; for books, use API results or fallback
   const displayData = isScriptMode 
-    ? { title: scriptData!.film_title, author: scriptData!.book_author }
+    ? { 
+        title: isComicMode ? book.title : scriptData!.film_title, 
+        author: scriptData!.book_author 
+      }
     : (appleBook || googleFallback || book);
   
-  // For scripts, always use neutral script icon (no cover)
-  // For books, use cover hierarchy
+  // For scripts, show neutral icon; for comics, show the comic cover; for books, use cover hierarchy
   const coverUrl = isScriptMode 
-    ? null // Always show FileText icon for screenplays
+    ? (isComicMode ? (book.cover_url || scriptData?.book_cover_url) : null)
     : (book.cover_url || book.google_cover_url || appleBook?.coverUrl || googleFallback?.coverUrl);
   
   // Description - use API results or editorial note (not for scripts)
@@ -454,9 +462,9 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
         <div className="p-3 border-b border-slate-700 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className={`w-2 h-2 ${isScriptMode ? 'bg-cyan-400' : 'bg-blue-400'} rounded-full`}></div>
+              <div className={`w-2 h-2 ${isComicMode ? 'bg-amber-400' : isScriptMode ? 'bg-cyan-400' : 'bg-blue-400'} rounded-full`}></div>
               <span className="text-slate-200 text-base font-medium">
-                {isScriptMode ? 'Original Screenplay' : 'Signal Preview'}
+                {isComicMode ? 'Biographical Comic' : isScriptMode ? 'Original Screenplay' : 'Signal Preview'}
               </span>
             </div>
             <button
@@ -500,7 +508,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
                     />
                   ) : null}
                   <div className={`absolute inset-0 flex items-center justify-center text-slate-400 ${coverUrl ? 'hidden' : ''}`}>
-                    {isScriptMode ? (
+                    {isScriptMode && !isComicMode ? (
                       <FileText className="w-8 h-8 text-cyan-400/50" />
                     ) : (
                       <div className="w-12 h-16 border-2 border-slate-600 rounded flex items-center justify-center">
@@ -566,18 +574,28 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
                 </div>
               )}
 
-              {/* Script Mode: Read Script Button */}
+              {/* Script/Comic Mode: Read Button */}
               {isScriptMode && scriptUrl && (
-                <a
-                  href={scriptUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-lg transition-colors"
-                >
-                  <FileText className="w-5 h-5" />
-                  Read Script on {scriptSourceLabel}
-                  <ExternalLink className="w-4 h-4 ml-1" />
-                </a>
+                isComicMode ? (
+                  <button
+                    onClick={() => setShowComicReader(true)}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg transition-colors"
+                  >
+                    <BookOpen className="w-5 h-5" />
+                    Read Comic Book
+                  </button>
+                ) : (
+                  <a
+                    href={scriptUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-lg transition-colors"
+                  >
+                    <FileText className="w-5 h-5" />
+                    Read Script on {scriptSourceLabel}
+                    <ExternalLink className="w-4 h-4 ml-1" />
+                  </a>
+                )
               )}
 
               {/* Script Mode: No script available */}
@@ -585,7 +603,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
                 <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-700/50 text-center">
                   <FileText className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">
-                    Script not yet available in our database
+                    {isComicMode ? 'Comic not yet available in our database' : 'Script not yet available in our database'}
                   </p>
                 </div>
               )}
@@ -729,6 +747,19 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
             setShowAuthorPopup(false);
             setSelectedAuthor(null);
           }}
+        />
+      )}
+
+      {/* Comic Reader Modal */}
+      {showComicReader && scriptData && (
+        <ScreenplayReaderModal
+          screenplay={{
+            film_title: scriptData.film_title,
+            script_url: scriptData.script_url || '',
+            script_source: 'Comic Book',
+          }}
+          isOpen={showComicReader}
+          onClose={() => setShowComicReader(false)}
         />
       )}
     </div>
