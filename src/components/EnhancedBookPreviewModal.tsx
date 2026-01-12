@@ -750,13 +750,14 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
         />
       )}
 
-      {/* Comic Reader Modal */}
-      {showComicReader && scriptData && (
+      {/* Comic Reader Modal - Rendered outside this modal's DOM via portal */}
+      {showComicReader && scriptData && scriptData.script_url && (
         <ScreenplayReaderModal
           screenplay={{
             film_title: scriptData.film_title,
-            script_url: scriptData.script_url || '',
+            script_url: scriptData.script_url,
             script_source: 'Comic Book',
+            poster_url: scriptData.book_cover_url,
           }}
           isOpen={showComicReader}
           onClose={() => setShowComicReader(false)}
