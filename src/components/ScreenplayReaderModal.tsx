@@ -9,10 +9,10 @@ interface ScreenplayReaderModalProps {
   onClose: () => void;
   screenplay: {
     film_title: string;
-    director: string | null;
-    film_year: number | null;
-    imdb_rating: number | null;
-    poster_url: string | null;
+    director?: string | null;
+    film_year?: number | null;
+    imdb_rating?: number | null;
+    poster_url?: string | null;
     script_url: string;
     script_source?: string | null;
   } | null;

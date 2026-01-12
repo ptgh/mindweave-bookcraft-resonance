@@ -131,17 +131,18 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const [filmToPreview, setFilmToPreview] = useState<ExternalFilmResult | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   
-  // Script data for original screenplays (passed to EnhancedBookPreviewModal)
+  // Script/comic data for original screenplays or comics (passed to EnhancedBookPreviewModal)
   const [selectedScriptData, setSelectedScriptData] = useState<{
     film_title: string;
     film_year: number | null;
     director: string | null;
     book_author: string;
     poster_url: string | null;
-    book_cover_url: string | null; // ScriptSlug cover for screenplay
+    book_cover_url: string | null;
     script_url: string | null;
     script_source: string | null;
     notable_differences?: string | null;
+    adaptation_type?: string | null;
   } | null>(null);
   
   const authorRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
@@ -441,29 +442,29 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   }, []);
 
   const openBookPreview = (film: FilmAdaptation) => {
-    // For original screenplays, open EnhancedBookPreviewModal in script mode
-    if (film.adaptation_type === 'original') {
+    // For original screenplays or comics, open EnhancedBookPreviewModal in special mode
+    if (film.adaptation_type === 'original' || film.adaptation_type === 'comic') {
       // Set script data for the modal
       setSelectedScriptData({
         film_title: film.film_title,
         film_year: film.film_year,
         director: film.director,
-        book_author: film.book_author, // screenwriters
+        book_author: film.book_author, // screenwriters or comic artist
         poster_url: film.poster_url,
-        book_cover_url: film.book_cover_url || null, // ScriptSlug poster for screenplay
+        book_cover_url: film.book_cover_url || null, // Cover for screenplay/comic
         script_url: film.script_url || null,
         script_source: film.script_source || null,
         notable_differences: film.notable_differences,
+        adaptation_type: film.adaptation_type, // Pass adaptation type
       });
       // Create a synthetic book to satisfy modal requirements
-      // For screenplays: use neutral script icon (no cover_url)
       const syntheticBook: EnrichedPublisherBook = {
         id: film.id,
-        title: film.film_title, // Use film title for original screenplays
-        author: film.book_author, // Screenwriters
+        title: film.adaptation_type === 'comic' ? film.book_title : film.film_title,
+        author: film.book_author,
         series_id: '',
         created_at: new Date().toISOString(),
-        cover_url: undefined, // Always use neutral script icon for screenplays
+        cover_url: film.adaptation_type === 'comic' ? film.book_cover_url || undefined : undefined,
       };
       setSelectedBook(syntheticBook);
       return;
@@ -900,7 +901,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                   </button>
                 </div>
 
-                {/* Badges row - AI suggested and Script */}
+                {/* Badges row - AI suggested and Script/Comic */}
                 {(film.source === 'ai_suggested' || film.script_url) && (
                   <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/20">
                     {film.source === 'ai_suggested' && (
@@ -909,7 +910,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                     {film.script_url && (
                       <span className="inline-flex items-center gap-1 text-[10px] text-cyan-400 font-medium bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">
                         <FileText className="w-3 h-3" />
-                        Script
+                        {film.adaptation_type === 'comic' ? 'Comic Book' : 'Script'}
                       </span>
                     )}
                   </div>
