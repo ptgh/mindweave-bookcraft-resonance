@@ -147,23 +147,23 @@ export const ScreenplayReaderModal: React.FC<ScreenplayReaderModalProps> = ({
       <div
         ref={modalRef}
         className={cn(
-          "relative bg-slate-900/95 backdrop-blur-xl border border-violet-500/30 rounded-xl overflow-hidden shadow-2xl shadow-violet-900/30 flex flex-col",
+          "relative bg-slate-900 backdrop-blur-xl border-2 border-violet-500/40 rounded-2xl overflow-hidden shadow-2xl shadow-violet-900/40 flex flex-col",
           isFullscreen 
             ? "w-full h-full max-w-none rounded-none" 
             : isMobile 
-              ? "w-full h-[95vh] max-w-lg" 
+              ? "w-full h-[95vh] max-w-lg mx-2" 
               : "w-full max-w-5xl h-[90vh]"
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-3 md:p-4 border-b border-violet-500/20 bg-gradient-to-r from-violet-900/40 to-purple-900/40 flex-shrink-0">
+        {/* Header - Polished with clear card definition */}
+        <div className="flex items-center justify-between p-3 md:p-4 border-b border-violet-500/30 bg-gradient-to-r from-violet-900/50 to-purple-900/50 flex-shrink-0">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             {screenplay.poster_url && !isMobile && (
               <img
                 src={screenplay.poster_url}
                 alt={screenplay.film_title}
-                className="w-10 h-14 object-cover rounded shadow-lg flex-shrink-0"
+                className="w-10 h-14 object-cover rounded-md shadow-lg flex-shrink-0 border border-violet-500/20"
               />
             )}
             <div className="min-w-0 flex-1">
@@ -203,37 +203,23 @@ export const ScreenplayReaderModal: React.FC<ScreenplayReaderModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-            {/* Download/Open in new tab */}
+          {/* Action buttons - Fixed sizing for even alignment */}
+          <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+            {/* Open in new tab */}
             <a
               href={scriptUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 rounded-lg bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 hover:text-violet-200 transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-lg bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 hover:text-violet-200 transition-colors"
               title="Open in new tab"
             >
               <ExternalLink className="w-4 h-4" />
             </a>
             
-            {/* Fullscreen toggle - desktop only */}
-            {!isMobile && (
-              <button
-                onClick={toggleFullscreen}
-                className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 hover:text-slate-200 transition-colors"
-                title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-              >
-                {isFullscreen ? (
-                  <Minimize2 className="w-4 h-4" />
-                ) : (
-                  <Maximize2 className="w-4 h-4" />
-                )}
-              </button>
-            )}
-            
             {/* Close button */}
             <button
               onClick={handleClose}
-              className="p-2 rounded-lg bg-slate-700/50 hover:bg-red-500/30 text-slate-300 hover:text-red-300 transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-700/50 hover:bg-red-500/30 text-slate-300 hover:text-red-300 transition-colors"
               title="Close"
             >
               <X className="w-4 h-4" />
@@ -338,22 +324,22 @@ export const ScreenplayReaderModal: React.FC<ScreenplayReaderModalProps> = ({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="p-2 md:p-3 border-t border-violet-500/20 bg-slate-900/80 flex items-center justify-between text-xs text-slate-500 flex-shrink-0">
-          <span className="flex items-center gap-1">
+        {/* Footer - Clear bottom definition */}
+        <div className="p-3 md:p-4 border-t-2 border-violet-500/30 bg-gradient-to-r from-slate-900 to-slate-800 flex items-center justify-between text-xs text-slate-400 flex-shrink-0 rounded-b-2xl">
+          <span className="flex items-center gap-1.5 font-medium">
             {isComic ? (
               <>
-                <BookOpen className="w-3 h-3" />
+                <BookOpen className="w-3.5 h-3.5 text-amber-400/70" />
                 Robert Crumb / Weirdo Magazine
               </>
             ) : (
               <>
-                <FileText className="w-3 h-3" />
+                <FileText className="w-3.5 h-3.5 text-violet-400/70" />
                 ScriptSlug
               </>
             )}
           </span>
-          <span>{isComic ? 'Use arrow keys or buttons to navigate' : 'Use ⌘/Ctrl + scroll to zoom'}</span>
+          <span className="text-slate-500">{isComic ? 'Use arrow keys or buttons to navigate' : 'Use ⌘/Ctrl + scroll to zoom'}</span>
         </div>
       </div>
     </div>

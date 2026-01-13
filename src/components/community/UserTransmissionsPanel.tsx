@@ -8,6 +8,60 @@ import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
 import type { EnrichedPublisherBook } from '@/services/publisherService';
 import { getHighQualityDisplayUrl } from '@/utils/performance';
 
+// Book cover component with proper fallback handling
+const BookCoverWithFallback: React.FC<{ 
+  coverUrl: string | null; 
+  title: string | null;
+}> = ({ coverUrl, title }) => {
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Reset error state when URL changes
+  useEffect(() => {
+    setHasError(false);
+    setIsLoading(true);
+  }, [coverUrl]);
+
+  if (!coverUrl || hasError) {
+    return (
+      <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-800 rounded flex flex-col items-center justify-center shadow-md border border-slate-600/30">
+        <BookOpen className="w-4 h-4 text-slate-500 mb-0.5" />
+        <span className="text-[6px] text-slate-500 text-center px-0.5 line-clamp-2 leading-tight">
+          {title?.slice(0, 20) || 'Book'}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {isLoading && (
+        <div className="absolute inset-0 bg-slate-700/50 rounded animate-pulse" />
+      )}
+      <img
+        src={getHighQualityDisplayUrl(coverUrl)}
+        alt={title || 'Book cover'}
+        className={cn(
+          "block w-full h-full bg-slate-800 object-cover rounded shadow-md group-hover:scale-105 transition-transform",
+          isLoading && "opacity-0"
+        )}
+        loading="lazy"
+        onLoad={() => setIsLoading(false)}
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          // Try original URL first, then give up
+          if (target.src !== coverUrl) {
+            target.src = coverUrl;
+          } else {
+            setHasError(true);
+            setIsLoading(false);
+          }
+        }}
+      />
+    </>
+  );
+};
+
 interface UserProfile {
   id: string;
   display_name: string | null;
@@ -185,7 +239,7 @@ export const UserTransmissionsPanel: React.FC<UserTransmissionsPanelProps> = ({
               <button
                 key={book.id}
                 ref={el => { booksRef.current[index] = el; }}
-                className="w-12 h-[72px] flex-shrink-0 flex-grow-0 group cursor-pointer text-left"
+                className="w-12 h-[72px] flex-shrink-0 flex-grow-0 group cursor-pointer text-left relative"
                 style={{ minWidth: '48px', maxWidth: '48px' }}
                 title={`${book.title} by ${book.author}`}
                 onClick={() => setSelectedBook({
@@ -197,25 +251,10 @@ export const UserTransmissionsPanel: React.FC<UserTransmissionsPanelProps> = ({
                   created_at: new Date().toISOString()
                 })}
               >
-                {book.cover_url ? (
-                  <img
-                    src={getHighQualityDisplayUrl(book.cover_url)}
-                    alt={book.title || 'Book cover'}
-                    className="block w-full h-full bg-slate-800 object-cover rounded shadow-md group-hover:scale-105 transition-transform"
-                    loading="lazy"
-                    onError={(e) => {
-                      // Fallback to original URL if high-quality fails
-                      const target = e.target as HTMLImageElement;
-                      if (target.src !== book.cover_url) {
-                        target.src = book.cover_url || '';
-                      }
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-slate-700 rounded flex items-center justify-center shadow-md">
-                    <BookOpen className="w-5 h-5 text-slate-500" />
-                  </div>
-                )}
+                <BookCoverWithFallback 
+                  coverUrl={book.cover_url} 
+                  title={book.title} 
+                />
               </button>
             ))}
           </div>
