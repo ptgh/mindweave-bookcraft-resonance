@@ -1,4 +1,4 @@
-import { BookOpen, LogOut, Instagram, Menu, Shield, ChevronDown, Database, Sparkles, User, Film } from "lucide-react";
+import { BookOpen, LogOut, Instagram, Menu, Shield, ChevronDown, Database, Sparkles, User, Film, Users } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { StandardButton } from "./ui/standard-button";
@@ -406,6 +406,21 @@ const Header = () => {
                   >
                     <Film className="w-4 h-4 text-amber-400/70" />
                     Book to Screen
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/community"
+                    onClick={handleMenuItemTap}
+                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                      location.pathname === '/community'
+                        ? 'text-emerald-400'
+                        : 'text-slate-200'
+                    }`}
+                  >
+                    <Users className="w-4 h-4 text-emerald-400/70" />
+                    Community
                   </Link>
                 </DropdownMenuItem>
 
