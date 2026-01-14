@@ -315,8 +315,37 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
   }, [book.title, book.author, book.isbn, isScriptMode]);
 
   const handleDigitalCopyAction = () => {
-    // Apple Books
-    if (appleBook) {
+    // Utility to normalize strings for comparison (duplicated here for access before render)
+    const normalizeForMatchAction = (s: string): string => 
+      s.toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\w\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const isValidMatchAction = (externalTitle: string | undefined, externalAuthor: string | undefined): boolean => {
+      if (!externalTitle) return false;
+      
+      const normBookTitle = normalizeForMatchAction(book.title);
+      const normExternalTitle = normalizeForMatchAction(externalTitle);
+      const normBookAuthor = normalizeForMatchAction(book.author);
+      const normExternalAuthor = normalizeForMatchAction(externalAuthor || '');
+      
+      const titleMatches = normExternalTitle === normBookTitle || 
+                           normExternalTitle.includes(normBookTitle) || 
+                           normBookTitle.includes(normExternalTitle);
+      
+      const authorMatches = !externalAuthor || 
+                            normExternalAuthor.includes(normBookAuthor.split(' ')[0]) ||
+                            normBookAuthor.includes(normExternalAuthor.split(' ')[0]);
+      
+      return titleMatches && authorMatches;
+    };
+
+    // Apple Books - only if validated
+    const isAppleValid = appleBook && isValidMatchAction(appleBook.title, appleBook.author);
+    if (isAppleValid) {
       // Open link FIRST (synchronously) to preserve user gesture for Safari
       try {
         const isAppleDevice = /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -355,7 +384,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
       return;
     }
 
-    // Internet Archive
+    // Internet Archive - already validated by freeEbookService
     if (freeEbooks?.archive?.url) {
       // Open link FIRST to preserve user gesture for Safari mobile
       window.location.href = freeEbooks.archive.url;
@@ -374,7 +403,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
       return;
     }
 
-    // Project Gutenberg
+    // Project Gutenberg - already validated by freeEbookService
     if (freeEbooks?.gutenberg?.url) {
       // Open link FIRST to preserve user gesture for Safari mobile
       window.location.href = freeEbooks.gutenberg.url;
@@ -394,33 +423,83 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
     }
   };
 
+  // Utility to normalize strings for comparison
+  const normalizeForMatch = (s: string): string => 
+    s.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  // Check if external result actually matches our book (prevents wrong cover images)
+  const isValidMatch = (externalTitle: string | undefined, externalAuthor: string | undefined): boolean => {
+    if (!externalTitle) return false;
+    
+    const normBookTitle = normalizeForMatch(book.title);
+    const normExternalTitle = normalizeForMatch(externalTitle);
+    const normBookAuthor = normalizeForMatch(book.author);
+    const normExternalAuthor = normalizeForMatch(externalAuthor || '');
+    
+    // Title must substantially match (exact or contains)
+    const titleMatches = normExternalTitle === normBookTitle || 
+                         normExternalTitle.includes(normBookTitle) || 
+                         normBookTitle.includes(normExternalTitle);
+    
+    // Author should at least partially match
+    const authorMatches = !externalAuthor || 
+                          normExternalAuthor.includes(normBookAuthor.split(' ')[0]) ||
+                          normBookAuthor.includes(normExternalAuthor.split(' ')[0]);
+    
+    return titleMatches && authorMatches;
+  };
+
+  // Validate external results before using their cover images
+  const validAppleBook = appleBook && isValidMatch(appleBook.title, appleBook.author) ? appleBook : null;
+  const validGoogleBook = googleFallback && isValidMatch(googleFallback.title, googleFallback.author) ? googleFallback : null;
+
+  // Log mismatches for debugging
+  if (appleBook && !validAppleBook) {
+    console.warn('⚠️ [BookPreview] Apple Books result mismatch - discarding:', {
+      requested: { title: book.title, author: book.author },
+      received: { title: appleBook.title, author: appleBook.author }
+    });
+  }
+  if (googleFallback && !validGoogleBook) {
+    console.warn('⚠️ [BookPreview] Google Books result mismatch - discarding:', {
+      requested: { title: book.title, author: book.author },
+      received: { title: googleFallback.title, author: googleFallback.author }
+    });
+  }
+
   // For scripts/comics, use script data; for books, use API results or fallback
   const displayData = isScriptMode 
     ? { 
         title: isComicMode ? book.title : scriptData!.film_title, 
         author: scriptData!.book_author 
       }
-    : (appleBook || googleFallback || book);
+    : (validAppleBook || validGoogleBook || book);
   
   // For scripts, show neutral icon; for comics, show the comic cover; for books, use cover hierarchy
+  // IMPORTANT: Only use external API cover if the result was validated as matching
   const coverUrl = isScriptMode 
     ? (isComicMode ? (book.cover_url || scriptData?.book_cover_url) : null)
-    : (book.cover_url || book.google_cover_url || appleBook?.coverUrl || googleFallback?.coverUrl);
+    : (book.cover_url || book.google_cover_url || validAppleBook?.coverUrl || validGoogleBook?.coverUrl);
   
-  // Description - use API results or editorial note (not for scripts)
+  // Description - use validated API results or editorial note (not for scripts)
   const description = isScriptMode 
     ? scriptData?.notable_differences 
-    : (appleBook?.description || googleFallback?.description || book.editorial_note);
+    : (validAppleBook?.description || validGoogleBook?.description || book.editorial_note);
 
-  // Determine which digital copy option to show
+  // Determine which digital copy option to show (use validated Apple result only)
   const getDigitalCopyInfo = () => {
-    if (appleBook) {
+    if (validAppleBook) {
       return {
         service: 'Apple Books',
         hasPrice: true,
-        price: appleBook.formattedPrice || 
-               (appleBook.price === 0 ? 'Free' : 
-                `${appleBook.currency || '£'}${appleBook.price || 'N/A'}`),
+        price: validAppleBook.formattedPrice || 
+               (validAppleBook.price === 0 ? 'Free' : 
+                `${validAppleBook.currency || '£'}${validAppleBook.price || 'N/A'}`),
         buttonText: 'Buy',
         disabled: false
       };
@@ -453,7 +532,7 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
   };
 
   const digitalCopyInfo = getDigitalCopyInfo();
-  const hasDigitalCopy = !!(appleBook || freeEbooks?.archive?.url || freeEbooks?.gutenberg?.url);
+  const hasDigitalCopy = !!(validAppleBook || freeEbooks?.archive?.url || freeEbooks?.gutenberg?.url);
 
   const modal = (
     <div className="fixed inset-0 z-[2000] flex h-[100dvh] w-screen items-center justify-center bg-background/50 backdrop-blur-sm p-4">
