@@ -34,6 +34,7 @@ export function MediaImage({
   const [displaySrc, setDisplaySrc] = useState<string | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const cacheRequested = useRef(false);
+  const prevSrcRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!src) {
@@ -41,8 +42,17 @@ export function MediaImage({
       return;
     }
 
-    setImageState('loading');
-    cacheRequested.current = false;
+    // Only reset to loading if src actually changed, not on re-renders
+    if (prevSrcRef.current !== src) {
+      // If we already have a displayed image, keep showing it while loading new one
+      if (displaySrc && imageState === 'loaded') {
+        // Don't reset to loading - keep showing current image
+      } else {
+        setImageState('loading');
+      }
+      cacheRequested.current = false;
+      prevSrcRef.current = src;
+    }
 
     const loadImage = async () => {
       // Try to get cached URL first
@@ -66,7 +76,10 @@ export function MediaImage({
         finalSrc = getOptimizedImageUrl(finalSrc);
       }
 
-      setDisplaySrc(finalSrc);
+      // Only update displaySrc if it actually changed
+      if (finalSrc !== displaySrc) {
+        setDisplaySrc(finalSrc);
+      }
 
       // Preload image to prevent layout shift
       preloadImage(finalSrc)

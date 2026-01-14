@@ -6,8 +6,7 @@ import { invokeAdminFunction } from "@/utils/adminFunctions";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { 
   Loader2, Database, CheckCircle2, BookOpen, Star, 
-  BarChart3, Image, AlertTriangle, Users, History,
-  RefreshCw, Eye, ImageOff, FileQuestion
+  BarChart3, RefreshCw, AlertTriangle, ImageOff, FileQuestion
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -44,17 +43,12 @@ export const AdminPopulateBooks = () => {
   const [loadingPenguin, setLoadingPenguin] = useState(false);
   const [loadingGollancz, setLoadingGollancz] = useState(false);
   const [loadingStats, setLoadingStats] = useState(false);
-  const [loadingCovers, setLoadingCovers] = useState(false);
-  const [loadingValidation, setLoadingValidation] = useState(false);
-  const [loadingEnrichment, setLoadingEnrichment] = useState(false);
   
   const [results, setResults] = useState<any>(null);
   const [penguinResults, setPenguinResults] = useState<PopulateResult | null>(null);
   const [gollanczResults, setGollanczResults] = useState<PopulateResult | null>(null);
   const [stats, setStats] = useState<DataStats | null>(null);
   const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([]);
-  const [coverEnrichmentResult, setCoverEnrichmentResult] = useState<any>(null);
-  const [enrichmentQueueStatus, setEnrichmentQueueStatus] = useState<any>(null);
   
   const { toast } = useEnhancedToast();
 
@@ -120,152 +114,7 @@ export const AdminPopulateBooks = () => {
     }
   };
 
-  const runValidation = async () => {
-    setLoadingValidation(true);
-    setValidationIssues([]);
-    
-    try {
-      const { data: noCoverBooks } = await supabase
-        .from('author_books')
-        .select('title, author_id')
-        .is('cover_url', null)
-        .limit(5);
-      
-      const { data: noDescBooks, count: noDescCount } = await supabase
-        .from('author_books')
-        .select('title, author_id', { count: 'exact' })
-        .is('description', null)
-        .limit(5);
-
-      const authorIds = [...new Set([
-        ...(noCoverBooks || []).map(b => b.author_id),
-        ...(noDescBooks || []).map(b => b.author_id)
-      ])].filter(Boolean);
-
-      const { data: authors } = await supabase
-        .from('scifi_authors')
-        .select('id, name')
-        .in('id', authorIds);
-
-      const authorMap = new Map(authors?.map(a => [a.id, a.name]) || []);
-
-      const issues: ValidationIssue[] = [];
-
-      if (noCoverBooks && noCoverBooks.length > 0) {
-        const { count } = await supabase
-          .from('author_books')
-          .select('id', { count: 'exact', head: true })
-          .is('cover_url', null);
-        
-        issues.push({
-          type: 'missing_cover',
-          count: count || 0,
-          samples: noCoverBooks.map(b => ({
-            title: b.title,
-            author: authorMap.get(b.author_id) || 'Unknown'
-          }))
-        });
-      }
-
-      if (noDescBooks && noDescBooks.length > 0) {
-        issues.push({
-          type: 'missing_description',
-          count: noDescCount || 0,
-          samples: noDescBooks.map(b => ({
-            title: b.title,
-            author: authorMap.get(b.author_id) || 'Unknown'
-          }))
-        });
-      }
-
-      setValidationIssues(issues);
-      
-      toast({
-        title: "Validation Complete",
-        description: `Found ${issues.length} issue types requiring attention.`,
-        variant: issues.length > 0 ? "default" : "success"
-      });
-    } catch (error: any) {
-      console.error('Validation error:', error);
-      toast({
-        title: "Validation Failed",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoadingValidation(false);
-    }
-  };
-
-  const handleEnrichCovers = async () => {
-    setLoadingCovers(true);
-    setCoverEnrichmentResult(null);
-    
-    try {
-      toast({
-        title: "Starting cover enrichment",
-        description: "Fetching missing covers from Google Books API...",
-      });
-
-      const { data, error } = await invokeAdminFunction('enrich-book-covers');
-
-      if (error) throw error;
-
-      setCoverEnrichmentResult(data);
-      await fetchStats();
-      
-      toast({
-        title: "Cover Enrichment Complete!",
-        description: `Updated ${(data as any).updated || 0} book covers.`,
-        duration: 5000,
-        variant: "success"
-      });
-    } catch (error: any) {
-      console.error('Error enriching covers:', error);
-      toast({
-        title: "Cover enrichment failed",
-        description: error.message || "Failed to enrich book covers",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingCovers(false);
-    }
-  };
-
-  const handleProcessEnrichmentQueue = async () => {
-    setLoadingEnrichment(true);
-    setEnrichmentQueueStatus(null);
-    
-    try {
-      toast({
-        title: "Processing enrichment queue",
-        description: "Enriching author data from Wikipedia and other sources...",
-      });
-
-      const { data, error } = await invokeAdminFunction('enrich-author-data');
-
-      if (error) throw error;
-
-      setEnrichmentQueueStatus(data);
-      await fetchStats();
-
-      toast({
-        title: "Enrichment Queue Processed!",
-        description: `Processed ${(data as any).processed || 0} authors.`,
-        duration: 5000,
-        variant: "success"
-      });
-    } catch (error: any) {
-      console.error('Error processing enrichment queue:', error);
-      toast({
-        title: "Enrichment processing failed",
-        description: error.message || "Failed to process enrichment queue",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingEnrichment(false);
-    }
-  };
+  // Note: Validation and enrichment functions are now in AdminDataHealthPanel and AdminEnrichmentPanel
 
   const handlePopulate = async () => {
     setLoading(true);
@@ -537,51 +386,17 @@ export const AdminPopulateBooks = () => {
         </CardContent>
       </Card>
 
-      {/* Enrichment Actions */}
-      <Card className="border-purple-700/50 bg-gradient-to-br from-purple-900/20 to-slate-800/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-purple-100">
-            <Image className="w-5 h-5 text-purple-400" />
-            Data Enrichment
-          </CardTitle>
-          <CardDescription className="text-purple-200/70">
-            Enrich book data with covers, descriptions, and metadata
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button
-              onClick={handleEnrichCovers}
-              disabled={loadingCovers}
-              variant="outline"
-              className="border-purple-500/50 text-purple-300 hover:bg-purple-900/30"
-            >
-              {loadingCovers ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Image className="w-4 h-4 mr-2" />}
-              Enrich Book Covers
-            </Button>
-            <Button
-              onClick={handleProcessEnrichmentQueue}
-              disabled={loadingEnrichment}
-              variant="outline"
-              className="border-blue-500/50 text-blue-300 hover:bg-blue-900/30"
-            >
-              {loadingEnrichment ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Users className="w-4 h-4 mr-2" />}
-              Process Author Enrichment
-            </Button>
-            <Button
-              onClick={runValidation}
-              disabled={loadingValidation}
-              variant="outline"
-              className="border-amber-500/50 text-amber-300 hover:bg-amber-900/30"
-            >
-              {loadingValidation ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Eye className="w-4 h-4 mr-2" />}
-              Run Data Validation
-            </Button>
-          </div>
-
-          {/* Validation Issues */}
-          {validationIssues.length > 0 && (
-            <div className="space-y-2">
+      {/* Data Validation Results */}
+      {validationIssues.length > 0 && (
+        <Card className="border-amber-700/50 bg-gradient-to-br from-amber-900/20 to-slate-800/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-amber-100">
+              <AlertTriangle className="w-5 h-5 text-amber-400" />
+              Validation Issues
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
               {validationIssues.map((issue, idx) => (
                 <div key={idx} className="bg-slate-900/50 p-3 rounded-lg">
                   <div className="flex items-center gap-2 text-amber-400 mb-2">
@@ -589,7 +404,7 @@ export const AdminPopulateBooks = () => {
                     <span className="font-semibold">{getIssueLabel(issue.type)}</span>
                     <Badge variant="outline" className="ml-auto">{issue.count} items</Badge>
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-400 max-h-32 overflow-y-auto">
                     {issue.samples.map((s, i) => (
                       <div key={i}>• {s.title} by {s.author}</div>
                     ))}
@@ -597,9 +412,9 @@ export const AdminPopulateBooks = () => {
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

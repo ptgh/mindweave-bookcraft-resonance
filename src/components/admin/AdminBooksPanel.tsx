@@ -213,7 +213,7 @@ export const AdminBooksPanel: React.FC = () => {
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="space-y-2 max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-track-muted/20 scrollbar-thumb-muted-foreground/30">
+          <div className="space-y-2 max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-track-muted/20 scrollbar-thumb-muted-foreground/30 rounded-lg">
             {filteredBooks.map((book) => (
               <div
                 key={book.id}

@@ -10,8 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { invokeAdminFunction } from "@/utils/adminFunctions";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { 
-  Film, Plus, Pencil, Trash2, RefreshCw, Image, Video, 
-  Star, BookOpen, Loader2, Search, Check, Sparkles, Play, Award, FileText
+  Film, Plus, Pencil, Trash2, RefreshCw, Image, 
+  Loader2, Search, Sparkles, Play, Award, FileText
 } from "lucide-react";
 
 interface StreamingAvailability {
@@ -624,8 +624,8 @@ export const AdminFilmAdaptationsPanel = () => {
           />
         </div>
 
-        {/* Films Table */}
-        <div className="max-h-96 overflow-y-auto">
+        {/* Films Table - Scrollable */}
+        <div className="max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-track-muted/20 scrollbar-thumb-muted-foreground/30 rounded-lg border border-border/30">
           <Table>
             <TableHeader>
               <TableRow>
