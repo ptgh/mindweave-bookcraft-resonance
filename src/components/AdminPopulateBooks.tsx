@@ -43,17 +43,12 @@ export const AdminPopulateBooks = () => {
   const [loadingPenguin, setLoadingPenguin] = useState(false);
   const [loadingGollancz, setLoadingGollancz] = useState(false);
   const [loadingStats, setLoadingStats] = useState(false);
-  const [loadingCovers, setLoadingCovers] = useState(false);
-  const [loadingValidation, setLoadingValidation] = useState(false);
-  const [loadingEnrichment, setLoadingEnrichment] = useState(false);
   
   const [results, setResults] = useState<any>(null);
   const [penguinResults, setPenguinResults] = useState<PopulateResult | null>(null);
   const [gollanczResults, setGollanczResults] = useState<PopulateResult | null>(null);
   const [stats, setStats] = useState<DataStats | null>(null);
   const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([]);
-  const [coverEnrichmentResult, setCoverEnrichmentResult] = useState<any>(null);
-  const [enrichmentQueueStatus, setEnrichmentQueueStatus] = useState<any>(null);
   
   const { toast } = useEnhancedToast();
 
