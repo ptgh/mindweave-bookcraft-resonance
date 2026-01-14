@@ -6,8 +6,7 @@ import { invokeAdminFunction } from "@/utils/adminFunctions";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { 
   Loader2, Database, CheckCircle2, BookOpen, Star, 
-  BarChart3, Image, AlertTriangle, Users, History,
-  RefreshCw, Eye, ImageOff, FileQuestion
+  BarChart3, RefreshCw, AlertTriangle, ImageOff, FileQuestion
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -537,51 +536,17 @@ export const AdminPopulateBooks = () => {
         </CardContent>
       </Card>
 
-      {/* Enrichment Actions */}
-      <Card className="border-purple-700/50 bg-gradient-to-br from-purple-900/20 to-slate-800/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-purple-100">
-            <Image className="w-5 h-5 text-purple-400" />
-            Data Enrichment
-          </CardTitle>
-          <CardDescription className="text-purple-200/70">
-            Enrich book data with covers, descriptions, and metadata
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button
-              onClick={handleEnrichCovers}
-              disabled={loadingCovers}
-              variant="outline"
-              className="border-purple-500/50 text-purple-300 hover:bg-purple-900/30"
-            >
-              {loadingCovers ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Image className="w-4 h-4 mr-2" />}
-              Enrich Book Covers
-            </Button>
-            <Button
-              onClick={handleProcessEnrichmentQueue}
-              disabled={loadingEnrichment}
-              variant="outline"
-              className="border-blue-500/50 text-blue-300 hover:bg-blue-900/30"
-            >
-              {loadingEnrichment ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Users className="w-4 h-4 mr-2" />}
-              Process Author Enrichment
-            </Button>
-            <Button
-              onClick={runValidation}
-              disabled={loadingValidation}
-              variant="outline"
-              className="border-amber-500/50 text-amber-300 hover:bg-amber-900/30"
-            >
-              {loadingValidation ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Eye className="w-4 h-4 mr-2" />}
-              Run Data Validation
-            </Button>
-          </div>
-
-          {/* Validation Issues */}
-          {validationIssues.length > 0 && (
-            <div className="space-y-2">
+      {/* Data Validation Results */}
+      {validationIssues.length > 0 && (
+        <Card className="border-amber-700/50 bg-gradient-to-br from-amber-900/20 to-slate-800/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-amber-100">
+              <AlertTriangle className="w-5 h-5 text-amber-400" />
+              Validation Issues
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
               {validationIssues.map((issue, idx) => (
                 <div key={idx} className="bg-slate-900/50 p-3 rounded-lg">
                   <div className="flex items-center gap-2 text-amber-400 mb-2">
@@ -589,7 +554,7 @@ export const AdminPopulateBooks = () => {
                     <span className="font-semibold">{getIssueLabel(issue.type)}</span>
                     <Badge variant="outline" className="ml-auto">{issue.count} items</Badge>
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-400 max-h-32 overflow-y-auto">
                     {issue.samples.map((s, i) => (
                       <div key={i}>• {s.title} by {s.author}</div>
                     ))}
@@ -597,9 +562,9 @@ export const AdminPopulateBooks = () => {
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
