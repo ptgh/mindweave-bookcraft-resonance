@@ -10,8 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { invokeAdminFunction } from "@/utils/adminFunctions";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { 
-  Film, Plus, Pencil, Trash2, RefreshCw, Image, Video, 
-  Star, BookOpen, Loader2, Search, Check, Sparkles, Play, Award, FileText
+  Film, Plus, Pencil, Trash2, RefreshCw, Image, 
+  Loader2, Search, Sparkles, Play, Award, FileText
 } from "lucide-react";
 
 interface StreamingAvailability {
