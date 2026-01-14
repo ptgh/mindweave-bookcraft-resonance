@@ -624,8 +624,8 @@ export const AdminFilmAdaptationsPanel = () => {
           />
         </div>
 
-        {/* Films Table */}
-        <div className="max-h-96 overflow-y-auto">
+        {/* Films Table - Scrollable */}
+        <div className="max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-track-muted/20 scrollbar-thumb-muted-foreground/30 rounded-lg border border-border/30">
           <Table>
             <TableHeader>
               <TableRow>
