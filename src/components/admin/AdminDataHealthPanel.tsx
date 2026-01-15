@@ -30,6 +30,7 @@ interface DataHealthStats {
   missing_criterion_url: number;
   missing_tmdb_id: number;
   missing_book_id: number;
+  missing_book_cover: number;
   missing_watch_providers: number;
   stale_watch_providers: number;
   missing_script_url: number;
@@ -63,7 +64,7 @@ export function AdminDataHealthPanel() {
       // Get total films and missing data counts
       const { data: films, error } = await supabase
         .from('sf_film_adaptations')
-        .select('id, poster_url, trailer_url, criterion_url, imdb_id, book_id, watch_providers, watch_providers_updated_at, script_url, is_criterion_collection');
+        .select('id, poster_url, trailer_url, criterion_url, imdb_id, book_id, book_cover_url, watch_providers, watch_providers_updated_at, script_url, is_criterion_collection, adaptation_type');
 
       if (error) throw error;
 
@@ -77,6 +78,8 @@ export function AdminDataHealthPanel() {
         missing_criterion_url: films?.filter(f => f.is_criterion_collection && !f.criterion_url).length || 0,
         missing_tmdb_id: films?.filter(f => !f.imdb_id).length || 0,
         missing_book_id: films?.filter(f => !f.book_id).length || 0,
+        // Only count missing book covers for non-original screenplays (books that should have covers)
+        missing_book_cover: films?.filter(f => f.adaptation_type !== 'original' && !f.book_cover_url).length || 0,
         missing_watch_providers: films?.filter(f => !f.watch_providers || Object.keys(f.watch_providers).length === 0).length || 0,
         stale_watch_providers: films?.filter(f => {
           if (!f.watch_providers_updated_at) return true;
@@ -256,6 +259,16 @@ export function AdminDataHealthPanel() {
                 {stats?.missing_book_id || 0}
               </p>
             </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Missing Book Covers</span>
+              </div>
+              <p className={`text-2xl font-bold ${getHealthColor(stats?.missing_book_cover || 0, stats?.total_films || 1)}`}>
+                {stats?.missing_book_cover || 0}
+              </p>
+            </div>
             
             <div className="space-y-1">
               <div className="flex items-center gap-2">
@@ -331,7 +344,7 @@ export function AdminDataHealthPanel() {
                   { name: 'Enrich Film Artwork', func: 'enrich-film-artwork' },
                   { name: 'Enrich Trailer URLs', func: 'enrich-trailer-urls' },
                   { name: 'Match Film Books', func: 'match-film-books' },
-                  { name: 'Enrich Book Covers', func: 'enrich-book-covers' },
+                  { name: 'Enrich Film Book Covers', func: 'enrich-film-book-covers' },
                 ];
                 
                 toast.info('Starting comprehensive enrichment (4 jobs)...');
@@ -435,10 +448,10 @@ export function AdminDataHealthPanel() {
 
             <Button
               variant="outline"
-              onClick={() => runEnrichmentJob('Enrich Book Covers', 'enrich-book-covers')}
-              disabled={runningJobs.has('Enrich Book Covers')}
+              onClick={() => runEnrichmentJob('Enrich Film Book Covers', 'enrich-film-book-covers')}
+              disabled={runningJobs.has('Enrich Film Book Covers')}
             >
-              {runningJobs.has('Enrich Book Covers') ? (
+              {runningJobs.has('Enrich Film Book Covers') ? (
                 <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <BookOpen className="h-4 w-4 mr-2" />
