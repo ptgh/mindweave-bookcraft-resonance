@@ -795,7 +795,8 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                             alt={film.book_title}
                             type="book"
                             quality="optimized"
-                            fallbackIcon={<Book className="w-6 h-6 text-primary/40" />}
+                            fallbackIcon={<Book className="w-5 h-5 text-slate-400" />}
+                            fallbackTitle={film.book_title}
                             aspectRatio="auto"
                             className="w-full h-full object-cover"
                           />

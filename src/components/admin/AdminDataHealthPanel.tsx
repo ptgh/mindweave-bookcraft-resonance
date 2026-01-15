@@ -16,7 +16,9 @@ import {
   Link2,
   Tv,
   FileText,
-  Activity
+  Activity,
+  Sparkles,
+  BookOpen
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -321,6 +323,38 @@ export function AdminDataHealthPanel() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3">
+            {/* ENRICH ALL - Primary action button */}
+            <Button
+              variant="default"
+              onClick={async () => {
+                const jobs = [
+                  { name: 'Enrich Film Artwork', func: 'enrich-film-artwork' },
+                  { name: 'Enrich Trailer URLs', func: 'enrich-trailer-urls' },
+                  { name: 'Match Film Books', func: 'match-film-books' },
+                  { name: 'Enrich Book Covers', func: 'enrich-book-covers' },
+                ];
+                
+                toast.info('Starting comprehensive enrichment (4 jobs)...');
+                
+                for (const job of jobs) {
+                  await runEnrichmentJob(job.name, job.func);
+                }
+                
+                toast.success('All enrichment jobs completed!');
+              }}
+              disabled={runningJobs.size > 0}
+              className="bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700"
+            >
+              {runningJobs.size > 0 ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4 mr-2" />
+              )}
+              Enrich All Data
+            </Button>
+
+            <Separator orientation="vertical" className="h-10" />
+            
             <Button
               variant="outline"
               onClick={() => runEnrichmentJob('Enrich Film Artwork', 'enrich-film-artwork')}
@@ -397,6 +431,19 @@ export function AdminDataHealthPanel() {
                 <FileText className="h-4 w-4 mr-2" />
               )}
               Enrich Scripts
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => runEnrichmentJob('Enrich Book Covers', 'enrich-book-covers')}
+              disabled={runningJobs.has('Enrich Book Covers')}
+            >
+              {runningJobs.has('Enrich Book Covers') ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <BookOpen className="h-4 w-4 mr-2" />
+              )}
+              Enrich Book Covers
             </Button>
 
             <Separator orientation="vertical" className="h-10" />
