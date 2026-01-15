@@ -47,10 +47,9 @@ const Header = () => {
 
   const isAdminRoute = location.pathname.startsWith('/admin');
 
-  // Admin submenu items
+  // Admin single menu item (consolidated)
   const adminMenuItems = [
     { to: '/admin/enrichment', label: 'Data Enrichment', icon: Sparkles },
-    { to: '/admin/populate', label: 'Populate Publishers', icon: Database },
   ];
   
   return (

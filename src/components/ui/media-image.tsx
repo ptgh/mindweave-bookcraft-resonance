@@ -9,6 +9,7 @@ interface MediaImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src
   type?: 'book' | 'film' | 'generic';
   quality?: 'optimized' | 'high' | 'social';
   fallbackIcon?: React.ReactNode;
+  fallbackTitle?: string; // Show title text in fallback
   aspectRatio?: 'poster' | 'square' | 'auto';
   showSkeleton?: boolean;
   enableCaching?: boolean;
@@ -24,6 +25,7 @@ export function MediaImage({
   type = 'generic',
   quality = 'optimized',
   fallbackIcon,
+  fallbackTitle,
   aspectRatio = 'poster',
   showSkeleton = true,
   enableCaching = true,
@@ -122,17 +124,22 @@ export function MediaImage({
     );
   }
 
-  // Show fallback icon on error
+  // Show fallback icon/title on error
   if (imageState === 'error' || !displaySrc) {
     return (
       <div 
         className={cn(
-          'bg-gradient-to-br from-muted/40 to-muted/20 flex items-center justify-center overflow-hidden',
+          'bg-gradient-to-br from-slate-700/80 to-slate-800/80 flex flex-col items-center justify-center overflow-hidden border border-slate-600/30',
           aspectClasses[aspectRatio],
           className
         )}
       >
         {fallbackIcon}
+        {fallbackTitle && (
+          <span className="text-[8px] text-slate-400 text-center px-1 mt-1 line-clamp-2 leading-tight max-w-full">
+            {fallbackTitle.slice(0, 30)}
+          </span>
+        )}
       </div>
     );
   }

@@ -432,7 +432,33 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
       .replace(/\s+/g, ' ')
       .trim();
 
+  // Extract meaningful words from a title (ignoring common words)
+  const extractKeywords = (s: string): string[] => {
+    const stopWords = new Set(['the', 'a', 'an', 'of', 'and', 'in', 'to', 'for', 'on', 'at']);
+    return normalizeForMatch(s)
+      .split(' ')
+      .filter(word => word.length > 2 && !stopWords.has(word));
+  };
+
+  // Calculate similarity score between two strings (0-100)
+  const calculateSimilarity = (s1: string, s2: string): number => {
+    const words1 = extractKeywords(s1);
+    const words2 = extractKeywords(s2);
+    
+    if (words1.length === 0 || words2.length === 0) return 0;
+    
+    let matchCount = 0;
+    for (const word of words1) {
+      if (words2.some(w => w.includes(word) || word.includes(w))) {
+        matchCount++;
+      }
+    }
+    
+    return (matchCount / Math.max(words1.length, words2.length)) * 100;
+  };
+
   // Check if external result actually matches our book (prevents wrong cover images)
+  // Uses STRICT matching to prevent mismatches like "The Medusa Touch" → wrong cover
   const isValidMatch = (externalTitle: string | undefined, externalAuthor: string | undefined): boolean => {
     if (!externalTitle) return false;
     
@@ -441,17 +467,49 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
     const normBookAuthor = normalizeForMatch(book.author);
     const normExternalAuthor = normalizeForMatch(externalAuthor || '');
     
-    // Title must substantially match (exact or contains)
-    const titleMatches = normExternalTitle === normBookTitle || 
-                         normExternalTitle.includes(normBookTitle) || 
-                         normBookTitle.includes(normExternalTitle);
+    // STRICT title matching: 
+    // 1. Exact match, OR
+    // 2. High similarity score (>= 80%), OR  
+    // 3. One title is a significant substring of the other (>50% overlap)
+    const titleExact = normExternalTitle === normBookTitle;
+    const titleSimilarity = calculateSimilarity(book.title, externalTitle);
+    const titleSubstringMatch = (
+      (normExternalTitle.includes(normBookTitle) && normBookTitle.length >= 5) ||
+      (normBookTitle.includes(normExternalTitle) && normExternalTitle.length >= 5)
+    );
     
-    // Author should at least partially match
+    const titleMatches = titleExact || titleSimilarity >= 80 || titleSubstringMatch;
+    
+    // STRICT author matching: Last name must match
+    const getLastName = (name: string): string => {
+      const parts = normalizeForMatch(name).split(' ');
+      return parts[parts.length - 1] || '';
+    };
+    
+    const bookLastName = getLastName(book.author);
+    const externalLastName = getLastName(externalAuthor || '');
+    
+    // Author last names must match (or external author not provided)
     const authorMatches = !externalAuthor || 
-                          normExternalAuthor.includes(normBookAuthor.split(' ')[0]) ||
-                          normBookAuthor.includes(normExternalAuthor.split(' ')[0]);
+                          externalLastName === bookLastName ||
+                          normExternalAuthor.includes(bookLastName) ||
+                          normBookAuthor.includes(externalLastName);
     
-    return titleMatches && authorMatches;
+    // Both must match for validation to pass
+    const isValid = titleMatches && authorMatches;
+    
+    // Debug logging for development
+    if (!isValid && (titleSimilarity > 30 || normExternalAuthor.includes(bookLastName))) {
+      console.log('[BookPreview] Near-match rejected:', {
+        book: { title: book.title, author: book.author },
+        external: { title: externalTitle, author: externalAuthor },
+        titleSimilarity,
+        titleMatches,
+        authorMatches
+      });
+    }
+    
+    return isValid;
   };
 
   // Validate external results before using their cover images
