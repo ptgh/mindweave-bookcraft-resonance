@@ -264,8 +264,8 @@ export const AdminExternalLinksPanel: React.FC = () => {
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {filteredFilms.map((film) => {
+          <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-track-muted/20 scrollbar-thumb-muted-foreground/30 pr-1">
+            {filteredFilms.slice(0, 100).map((film) => {
               const hasApple = hasValidStreamingLink(film.streaming_availability, 'apple');
               const hasCriterion = hasValidStreamingLink(film.streaming_availability, 'criterion');
               const isCriterionCandidate = CRITERION_SF_FILMS.some(cf => 
@@ -276,75 +276,75 @@ export const AdminExternalLinksPanel: React.FC = () => {
               return (
                 <div
                   key={film.id}
-                  className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg border border-border/30 hover:border-purple-400/30 transition-colors"
+                  className="flex items-center gap-2 p-2.5 bg-muted/20 rounded-lg border border-border/30 hover:border-purple-400/30 transition-colors"
                 >
                   {/* Poster Preview */}
-                  <div className="w-10 h-14 bg-muted/50 rounded overflow-hidden flex-shrink-0">
+                  <div className="w-8 h-12 bg-muted/50 rounded overflow-hidden flex-shrink-0">
                     {film.poster_url ? (
                       <img src={film.poster_url} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Film className="w-4 h-4 text-muted-foreground" />
+                        <Film className="w-3 h-3 text-muted-foreground" />
                       </div>
                     )}
                   </div>
                   
-                  {/* Info */}
+                  {/* Info - with truncated title */}
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-foreground truncate">{film.film_title}</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {hasApple ? (
-                        <Badge variant="outline" className="text-[10px] border-slate-500/30 text-slate-400">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Apple TV
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-[10px] border-slate-800/30 text-slate-500">
-                          <XCircle className="w-3 h-3 mr-1" />
+                    <p className="font-medium text-sm text-foreground truncate" title={film.film_title}>
+                      {film.film_title}
+                    </p>
+                    <div className="flex flex-wrap gap-1 mt-0.5">
+                      {hasApple && (
+                        <Badge variant="outline" className="text-[9px] px-1 py-0 border-slate-500/30 text-slate-400">
                           Apple TV
                         </Badge>
                       )}
-                      {hasCriterion ? (
-                        <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-400">
-                          <CheckCircle className="w-3 h-3 mr-1" />
+                      {hasCriterion && (
+                        <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-500/30 text-amber-400">
                           Criterion
                         </Badge>
-                      ) : isCriterionCandidate ? (
-                        <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-400">
-                          <Sparkles className="w-3 h-3 mr-1" />
-                          Criterion Candidate
+                      )}
+                      {!hasCriterion && isCriterionCandidate && (
+                        <Badge variant="outline" className="text-[9px] px-1 py-0 border-emerald-500/30 text-emerald-400">
+                          Candidate
                         </Badge>
-                      ) : null}
+                      )}
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-1">
+                  <div className="flex gap-0.5 flex-shrink-0">
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-8 w-8"
+                      className="h-7 w-7"
                       onClick={() => openAppleTVSearch(film.film_title)}
                       title="Search Apple TV"
                     >
-                      <Tv className="w-4 h-4" />
+                      <Tv className="w-3.5 h-3.5" />
                     </Button>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-8 w-8"
+                      className="h-7 w-7"
                       onClick={() => openCriterionSearch(film.film_title)}
                       title="Search Criterion"
                     >
-                      <img src="/images/criterion-logo.jpg" alt="" className="w-4 h-4 rounded-sm" />
+                      <img src="/images/criterion-logo.jpg" alt="" className="w-3.5 h-3.5 rounded-sm" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(film)}>
-                      <Edit2 className="w-4 h-4" />
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(film)}>
+                      <Edit2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 </div>
               );
             })}
+            {filteredFilms.length > 100 && (
+              <p className="text-xs text-muted-foreground text-center py-2">
+                Showing 100 of {filteredFilms.length} films. Use search to filter.
+              </p>
+            )}
           </div>
         )}
 

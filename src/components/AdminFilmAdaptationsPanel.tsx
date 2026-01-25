@@ -624,48 +624,66 @@ export const AdminFilmAdaptationsPanel = () => {
           />
         </div>
 
-        {/* Films Table - Scrollable */}
+        {/* Films Table - Scrollable with proper title handling */}
         <div className="max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-track-muted/20 scrollbar-thumb-muted-foreground/30 rounded-lg border border-border/30">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 bg-slate-900 z-10">
               <TableRow>
-                <TableHead>Film</TableHead>
-                <TableHead>Book</TableHead>
-                <TableHead>Year</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-20">Actions</TableHead>
+                <TableHead className="w-[200px]">Film</TableHead>
+                <TableHead className="w-[200px]">Book</TableHead>
+                <TableHead className="w-[60px]">Year</TableHead>
+                <TableHead className="w-[120px]">Status</TableHead>
+                <TableHead className="w-[80px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredFilms.slice(0, 50).map(film => (
-                <TableRow key={film.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {film.poster_url && <img src={film.poster_url} alt="" className="w-8 h-12 object-cover rounded" />}
-                      <div>
-                        <div className="font-medium">{film.film_title}</div>
-                        <div className="text-xs text-slate-400">{film.director}</div>
+              {filteredFilms.slice(0, 100).map(film => (
+                <TableRow key={film.id} className="hover:bg-muted/20">
+                  <TableCell className="py-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-8 h-12 flex-shrink-0 bg-muted/30 rounded overflow-hidden">
+                        {film.poster_url ? (
+                          <img src={film.poster_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Film className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm truncate max-w-[150px]" title={film.film_title}>
+                          {film.film_title}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate max-w-[150px]" title={film.director || ''}>
+                          {film.director || 'Unknown'}
+                        </p>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <div className="text-sm">{film.book_title}</div>
-                    <div className="text-xs text-slate-400">{film.book_author}</div>
-                  </TableCell>
-                  <TableCell>{film.film_year}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1 flex-wrap">
-                      {film.poster_url && <Badge variant="outline" className="text-[10px]">Poster</Badge>}
-                      {film.trailer_url && <Badge variant="outline" className="text-[10px]">Trailer</Badge>}
-                      {film.is_criterion_collection && <Badge className="text-[10px] bg-yellow-600">CC</Badge>}
+                  <TableCell className="py-2">
+                    <div className="min-w-0">
+                      <p className="text-sm truncate max-w-[180px]" title={film.book_title}>
+                        {film.book_title}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate max-w-[180px]" title={film.book_author}>
+                        {film.book_author}
+                      </p>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-2 text-sm">{film.film_year}</TableCell>
+                  <TableCell className="py-2">
+                    <div className="flex gap-1 flex-wrap">
+                      {film.poster_url && <Badge variant="outline" className="text-[10px] px-1">Poster</Badge>}
+                      {film.trailer_url && <Badge variant="outline" className="text-[10px] px-1">Trailer</Badge>}
+                      {film.is_criterion_collection && <Badge className="text-[10px] px-1 bg-yellow-600">CC</Badge>}
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-2">
                     <div className="flex gap-1">
-                      <Button size="sm" variant="ghost" onClick={() => { setEditingFilm(film); setIsDialogOpen(true); }}>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setEditingFilm(film); setIsDialogOpen(true); }}>
                         <Pencil className="w-3 h-3" />
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => handleDelete(film.id)}>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-400 hover:text-red-300" onClick={() => handleDelete(film.id)}>
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
@@ -675,6 +693,11 @@ export const AdminFilmAdaptationsPanel = () => {
             </TableBody>
           </Table>
         </div>
+        {filteredFilms.length > 100 && (
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            Showing 100 of {filteredFilms.length} films. Use search to filter.
+          </p>
+        )}
       </CardContent>
     </Card>
   );
