@@ -115,38 +115,49 @@ export const preloadCriticalResources = () => {
 };
 
 // Image optimization utility - balances quality and speed
+// IMPORTANT: Google Books content endpoint only reliably serves zoom=1
+// Forcing higher zoom causes 404s for many books
 export const getOptimizedImageUrl = (url: string, width?: number) => {
   if (!url) return '';
   
   const settings = getOptimizedSettings();
   
-  // For Google Books URLs
+  // For Google Books content endpoint - DO NOT modify zoom level
+  // These URLs only work at their original zoom level (usually 1)
+  if (url.includes('books.google.com/books/content') || 
+      url.includes('books.googleusercontent.com/books/content')) {
+    // Keep the URL exactly as-is - changing zoom breaks it
+    return url;
+  }
+  
+  // For other Google Books URLs (not content endpoint)
   if (url.includes('books.google') || url.includes('googleusercontent.com')) {
-    // Desktop: use zoom=2 for good quality, mobile: zoom=1 for speed
-    const zoomLevel = settings.reduceAnimations ? 1 : 2;
-    let optimized = url.replace(/zoom=\d+/, `zoom=${zoomLevel}`);
-    if (!optimized.includes('zoom=')) {
-      optimized = `${optimized}${optimized.includes('?') ? '&' : '?'}zoom=${zoomLevel}`;
+    // Only set zoom if not already present
+    if (!url.includes('zoom=')) {
+      const zoomLevel = settings.reduceAnimations ? 1 : 1; // Always use zoom=1 for reliability
+      return `${url}${url.includes('?') ? '&' : '?'}zoom=${zoomLevel}`;
     }
-    return optimized;
+    return url;
   }
   
   // For TMDB poster URLs - use higher quality on desktop
   if (url.includes('image.tmdb.org')) {
     if (settings.reduceAnimations) {
-      // Mobile: w342 for faster loading
       return url.replace(/\/w\d+\//, '/w342/');
     } else {
-      // Desktop: w780 for better quality
       return url.replace(/\/w\d+\//, '/w780/');
     }
+  }
+  
+  // For Open Library covers - ensure -L (large) size
+  if (url.includes('covers.openlibrary.org')) {
+    return url.replace(/-[SM]\.jpg/, '-L.jpg');
   }
   
   // Use smaller images on mobile devices
   if (settings.reduceAnimations && width) {
     const mobileWidth = Math.min(width, 400);
-    // If the URL supports dynamic resizing, modify it
-    if (url.includes('googleusercontent.com')) {
+    if (url.includes('googleusercontent.com') && !url.includes('books/content')) {
       return url.replace(/=s\d+/, `=s${mobileWidth}`);
     }
   }
