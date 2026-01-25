@@ -3,7 +3,7 @@ import { AdminPopulateBooks } from "@/components/AdminPopulateBooks";
 import { AdminFilmAdaptationsPanel } from "@/components/AdminFilmAdaptationsPanel";
 import { AdminDirectorsPanel } from "@/components/AdminDirectorsPanel";
 import { AdminImageUrlValidator } from "@/components/AdminImageUrlValidator";
-import { AdminBooksPanel, AdminTrailersPanel, AdminCachePanel } from "@/components/admin";
+import { AdminBooksPanel, AdminTrailersPanel, AdminCachePanel, AdminEventsPanel } from "@/components/admin";
 import Header from "@/components/Header";
 import { ProtectedAdminRoute } from "@/components/ProtectedAdminRoute";
 import { Button } from "@/components/ui/button";
@@ -394,6 +394,9 @@ const AdminEnrichment = () => {
 
             {/* SYSTEM TAB */}
             <TabsContent value="system" className="space-y-4">
+              {/* Events Management */}
+              <AdminEventsPanel />
+              
               <AdminCachePanel />
               
               {/* System Info */}
