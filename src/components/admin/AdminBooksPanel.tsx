@@ -213,41 +213,51 @@ export const AdminBooksPanel: React.FC = () => {
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="space-y-2 max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-track-muted/20 scrollbar-thumb-muted-foreground/30 rounded-lg">
-            {filteredBooks.map((book) => (
+          <div className="space-y-2 max-h-[450px] overflow-y-auto scrollbar-thin scrollbar-track-muted/20 scrollbar-thumb-muted-foreground/30 rounded-lg pr-1">
+            {filteredBooks.slice(0, 100).map((book) => (
               <div
                 key={book.id}
-                className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg border border-border/30 hover:border-emerald-400/30 transition-colors"
+                className="flex items-center gap-3 p-2.5 bg-muted/20 rounded-lg border border-border/30 hover:border-emerald-400/30 transition-colors"
               >
                 {/* Cover Preview */}
-                <div className="w-10 h-14 bg-muted/50 rounded overflow-hidden flex-shrink-0">
+                <div className="w-9 h-13 bg-muted/50 rounded overflow-hidden flex-shrink-0">
                   {book.cover_url ? (
                     <img src={book.cover_url} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <Book className="w-4 h-4 text-muted-foreground" />
+                      <Book className="w-3 h-3 text-muted-foreground" />
                     </div>
                   )}
                 </div>
                 
-                {/* Info */}
+                {/* Info - with proper title truncation and tooltip */}
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground truncate">{book.title || 'Untitled'}</p>
-                  <p className="text-sm text-muted-foreground truncate">{book.author || 'Unknown Author'}</p>
-                  <div className="flex gap-1 mt-1">
-                    {book.isbn && <Badge variant="outline" className="text-[10px]">ISBN</Badge>}
-                    {book.cover_url && <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-400">Cover</Badge>}
-                    {book.apple_link && <Badge variant="outline" className="text-[10px] border-blue-500/30 text-blue-400">Apple</Badge>}
+                  <p 
+                    className="font-medium text-sm text-foreground truncate" 
+                    title={book.title || 'Untitled'}
+                  >
+                    {book.title || 'Untitled'}
+                  </p>
+                  <p 
+                    className="text-xs text-muted-foreground truncate" 
+                    title={book.author || 'Unknown Author'}
+                  >
+                    {book.author || 'Unknown Author'}
+                  </p>
+                  <div className="flex gap-1 mt-0.5 flex-wrap">
+                    {book.isbn && <Badge variant="outline" className="text-[9px] px-1 py-0">ISBN</Badge>}
+                    {book.cover_url && <Badge variant="outline" className="text-[9px] px-1 py-0 border-emerald-500/30 text-emerald-400">Cover</Badge>}
+                    {book.apple_link && <Badge variant="outline" className="text-[9px] px-1 py-0 border-blue-500/30 text-blue-400">Apple</Badge>}
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(book)}>
-                    <Edit2 className="w-4 h-4" />
+                <div className="flex gap-0.5 flex-shrink-0">
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(book)}>
+                    <Edit2 className="w-3.5 h-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400 hover:text-red-300" onClick={() => handleDelete(book.id)}>
-                    <Trash2 className="w-4 h-4" />
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-300" onClick={() => handleDelete(book.id)}>
+                    <Trash2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               </div>
@@ -255,6 +265,11 @@ export const AdminBooksPanel: React.FC = () => {
             {filteredBooks.length === 0 && (
               <p className="text-center text-sm text-muted-foreground py-4">
                 No books found matching your search.
+              </p>
+            )}
+            {filteredBooks.length > 100 && (
+              <p className="text-xs text-muted-foreground text-center py-2">
+                Showing 100 of {filteredBooks.length} books. Use search to filter.
               </p>
             )}
           </div>

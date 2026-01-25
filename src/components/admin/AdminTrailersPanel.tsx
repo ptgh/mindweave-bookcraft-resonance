@@ -161,46 +161,46 @@ export const AdminTrailersPanel: React.FC = () => {
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {filteredFilms.map((film) => {
+          <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-track-muted/20 scrollbar-thumb-muted-foreground/30 pr-1">
+            {filteredFilms.slice(0, 100).map((film) => {
               const hasValidTrailer = isValidTrailer(film.trailer_url);
               return (
                 <div
                   key={film.id}
-                  className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg border border-border/30 hover:border-red-400/30 transition-colors"
+                  className="flex items-center gap-2 p-2.5 bg-muted/20 rounded-lg border border-border/30 hover:border-red-400/30 transition-colors"
                 >
                   {/* Poster Preview */}
-                  <div className="w-10 h-14 bg-muted/50 rounded overflow-hidden flex-shrink-0">
+                  <div className="w-8 h-12 bg-muted/50 rounded overflow-hidden flex-shrink-0">
                     {film.poster_url ? (
                       <img src={film.poster_url} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Play className="w-4 h-4 text-muted-foreground" />
+                        <Play className="w-3 h-3 text-muted-foreground" />
                       </div>
                     )}
                   </div>
                   
-                  {/* Info */}
+                  {/* Info - with truncated title */}
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-foreground truncate">{film.film_title}</p>
-                    <p className="text-sm text-muted-foreground truncate">
+                    <p className="font-medium text-sm text-foreground truncate" title={film.film_title}>
+                      {film.film_title}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate" title={`${film.director || ''} · ${film.film_year || ''}`}>
                       {film.director && `${film.director} · `}{film.film_year}
                     </p>
-                    <div className="flex items-center gap-1 mt-1">
+                    <div className="mt-0.5">
                       {film.trailer_url ? (
                         hasValidTrailer ? (
-                          <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-400">
-                            <CheckCircle className="w-3 h-3 mr-1" />
+                          <Badge variant="outline" className="text-[9px] px-1 py-0 border-emerald-500/30 text-emerald-400">
                             Valid Trailer
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-400">
-                            <XCircle className="w-3 h-3 mr-1" />
+                          <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-500/30 text-amber-400">
                             Invalid URL
                           </Badge>
                         )
                       ) : (
-                        <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-400">
+                        <Badge variant="outline" className="text-[9px] px-1 py-0 border-red-500/30 text-red-400">
                           No Trailer
                         </Badge>
                       )}
@@ -208,23 +208,28 @@ export const AdminTrailersPanel: React.FC = () => {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-1">
+                  <div className="flex gap-0.5 flex-shrink-0">
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-8 w-8"
+                      className="h-7 w-7"
                       onClick={() => handleAutoSearch(film.film_title)}
                       title="Search YouTube"
                     >
-                      <ExternalLink className="w-4 h-4" />
+                      <ExternalLink className="w-3.5 h-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(film)}>
-                      <Edit2 className="w-4 h-4" />
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(film)}>
+                      <Edit2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 </div>
               );
             })}
+            {filteredFilms.length > 100 && (
+              <p className="text-xs text-muted-foreground text-center py-2">
+                Showing 100 of {filteredFilms.length} films. Use search to filter.
+              </p>
+            )}
           </div>
         )}
 
