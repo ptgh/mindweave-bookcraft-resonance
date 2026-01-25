@@ -1383,6 +1383,69 @@ export type Database = {
         }
         Relationships: []
       }
+      scifi_events: {
+        Row: {
+          city: string
+          country: string
+          created_at: string
+          description: string | null
+          end_date: string | null
+          event_type: string
+          featured_authors: string[] | null
+          id: string
+          is_active: boolean | null
+          is_recurring: boolean | null
+          name: string
+          recurrence_pattern: string | null
+          start_date: string
+          ticket_url: string | null
+          time: string | null
+          updated_at: string
+          venue: string | null
+          website_url: string | null
+        }
+        Insert: {
+          city: string
+          country?: string
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          event_type?: string
+          featured_authors?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          is_recurring?: boolean | null
+          name: string
+          recurrence_pattern?: string | null
+          start_date: string
+          ticket_url?: string | null
+          time?: string | null
+          updated_at?: string
+          venue?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          city?: string
+          country?: string
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          event_type?: string
+          featured_authors?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          is_recurring?: boolean | null
+          name?: string
+          recurrence_pattern?: string | null
+          start_date?: string
+          ticket_url?: string | null
+          time?: string | null
+          updated_at?: string
+          venue?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       search_queries: {
         Row: {
           clicked_book_identifier: string | null
