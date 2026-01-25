@@ -286,28 +286,36 @@ Deno.serve(async (req) => {
 
     console.log('Starting film book cover enrichment with Supabase caching...');
 
-    // Get film adaptations without book covers OR with external URLs (not cached yet)
-    // Limit per run to avoid timeouts, but process more than before
+    // Get films that need covers: either no cover_url or have external URLs that need caching
+    // Fix: Use proper SQL conditions - empty string check and null check separately
     const { data: filmsWithoutCovers, error: fetchError } = await supabase
       .from('sf_film_adaptations')
       .select('id, book_title, book_author, book_isbn, book_cover_url')
-      .or('book_cover_url.is.null,book_cover_url.eq.')
-      .not('adaptation_type', 'eq', 'original') // Skip original screenplays
+      .is('book_cover_url', null)
+      .neq('adaptation_type', 'original') // Skip original screenplays
       .limit(50);
 
     if (fetchError) {
-      console.error('Error fetching films:', fetchError);
+      console.error('Error fetching films without covers:', fetchError);
       throw fetchError;
     }
 
-    // Also get films with external URLs that need caching
-    const { data: filmsNeedingCache } = await supabase
+    console.log(`Films with null cover_url: ${filmsWithoutCovers?.length || 0}`);
+
+    // Get films with external URLs that need caching (not yet in Supabase storage)
+    const { data: filmsNeedingCache, error: cacheError } = await supabase
       .from('sf_film_adaptations')
       .select('id, book_title, book_author, book_cover_url')
       .not('book_cover_url', 'is', null)
       .not('book_cover_url', 'ilike', '%supabase.co/storage%') // Not already cached
-      .not('adaptation_type', 'eq', 'original')
+      .neq('adaptation_type', 'original')
       .limit(50);
+
+    if (cacheError) {
+      console.error('Error fetching films needing cache:', cacheError);
+    }
+
+    console.log(`Films with external URLs needing cache: ${filmsNeedingCache?.length || 0}`);
 
     const allFilms = [
       ...(filmsWithoutCovers || []),
@@ -318,6 +326,8 @@ Deno.serve(async (req) => {
     const uniqueFilms = Array.from(
       new Map(allFilms.map(f => [f.id, f])).values()
     );
+
+    console.log(`Total unique films to process: ${uniqueFilms.length}`);
 
     if (uniqueFilms.length === 0) {
       console.log('No films need book cover enrichment or caching');
