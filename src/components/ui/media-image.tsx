@@ -13,6 +13,8 @@ interface MediaImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src
   aspectRatio?: 'poster' | 'square' | 'auto';
   showSkeleton?: boolean;
   enableCaching?: boolean;
+  /** Called when all image loading attempts fail */
+  onAllAttemptsFailed?: () => void;
 }
 
 /**
@@ -30,6 +32,7 @@ export function MediaImage({
   aspectRatio = 'poster',
   showSkeleton = true,
   enableCaching = true,
+  onAllAttemptsFailed,
   className,
   ...props
 }: MediaImageProps) {
@@ -110,12 +113,14 @@ export function MediaImage({
           tryLoadImage(attempt + 1);
         } else {
           setImageState('error');
+          // Notify parent that all attempts failed
+          onAllAttemptsFailed?.();
         }
       }
     };
 
     tryLoadImage(attemptRef.current);
-  }, [src, quality, type, enableCaching]);
+  }, [src, quality, type, enableCaching, onAllAttemptsFailed]);
 
   const aspectClasses = {
     poster: 'aspect-[2/3]',

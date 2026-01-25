@@ -16,6 +16,7 @@ import { AuthorPopup } from '@/components/AuthorPopup';
 import { DirectorPopup } from '@/components/DirectorPopup';
 import { ScifiAuthor } from '@/services/scifiAuthorsService';
 import { MediaImage } from '@/components/ui/media-image';
+import { FilmBookCover } from '@/components/FilmBookCover';
 import { preloadImages, getHighQualityDisplayUrl } from '@/utils/performance';
 import { cleanPersonName, truncateWithBreak } from '@/utils/textCleaners';
 import { 
@@ -778,15 +779,11 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                             <FileText className="w-8 h-8 text-cyan-400/60" />
                           </div>
                         ) : (
-                          <MediaImage
-                            src={film.book_cover_url}
-                            alt={film.book_title}
-                            type="book"
-                            quality="optimized"
-                            fallbackIcon={<Book className="w-5 h-5 text-slate-400" />}
-                            fallbackTitle={film.book_title}
-                            aspectRatio="auto"
-                            className="w-full h-full object-cover"
+                          <FilmBookCover
+                            bookTitle={film.book_title}
+                            bookAuthor={film.book_author}
+                            storedCoverUrl={film.book_cover_url}
+                            className="w-full h-full"
                           />
                         )}
                       </div>
