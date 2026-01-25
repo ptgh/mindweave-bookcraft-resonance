@@ -21,13 +21,35 @@ interface OpenLibraryDoc {
   isbn?: string[];
 }
 
-// Search Google Books with author validation
+// Calculate string similarity (Dice coefficient)
+function calculateSimilarity(s1: string, s2: string): number {
+  const str1 = s1.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const str2 = s2.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (str1 === str2) return 100;
+  if (str1.length < 2 || str2.length < 2) return 0;
+  
+  const bigrams1 = new Set<string>();
+  for (let i = 0; i < str1.length - 1; i++) bigrams1.add(str1.slice(i, i + 2));
+  
+  let matches = 0;
+  for (let i = 0; i < str2.length - 1; i++) {
+    if (bigrams1.has(str2.slice(i, i + 2))) matches++;
+  }
+  
+  return (2 * matches * 100) / (str1.length + str2.length - 2);
+}
+
+function getLastName(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return parts[parts.length - 1]?.toLowerCase() || '';
+}
+
+// Search Google Books with strict validation (80% title similarity + author last name)
 async function searchGoogleBooks(title: string, author: string): Promise<string | null> {
   try {
     const GOOGLE_BOOKS_API_KEY = Deno.env.get('GOOGLE_BOOKS_API_KEY');
     const apiKeyParam = GOOGLE_BOOKS_API_KEY ? `&key=${GOOGLE_BOOKS_API_KEY}` : '';
     
-    // Search with both title and author for better matching
     const query = `intitle:${encodeURIComponent(title)}+inauthor:${encodeURIComponent(author)}`;
     const response = await fetch(
       `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=5${apiKeyParam}`
@@ -40,23 +62,30 @@ async function searchGoogleBooks(title: string, author: string): Promise<string 
     
     if (!items || items.length === 0) return null;
     
-    // Validate results - author must match
-    const authorLastName = author.split(' ').pop()?.toLowerCase() || '';
+    const authorLastName = getLastName(author);
     
     for (const item of items) {
+      const bookTitle = item.volumeInfo?.title || '';
       const bookAuthors = item.volumeInfo?.authors || [];
-      const authorMatch = bookAuthors.some(a => 
-        a.toLowerCase().includes(authorLastName) || 
-        authorLastName.includes(a.toLowerCase().split(' ').pop() || '')
-      );
       
-      if (authorMatch) {
-        const imageLinks = item.volumeInfo?.imageLinks;
-        // Prefer larger images
-        const coverUrl = imageLinks?.large || imageLinks?.medium || imageLinks?.thumbnail || imageLinks?.smallThumbnail;
-        if (coverUrl) {
-          return coverUrl.replace('http:', 'https:');
+      // Strict title matching (80% similarity)
+      const titleSimilarity = calculateSimilarity(title, bookTitle);
+      if (titleSimilarity < 80) continue;
+      
+      // Author last name must match
+      const authorMatch = bookAuthors.some(a => getLastName(a) === authorLastName);
+      if (!authorMatch) continue;
+      
+      const imageLinks = item.volumeInfo?.imageLinks;
+      // Prefer larger images, keep zoom=1 for reliability
+      let coverUrl = imageLinks?.large || imageLinks?.medium || imageLinks?.thumbnail || imageLinks?.smallThumbnail;
+      if (coverUrl) {
+        coverUrl = coverUrl.replace('http:', 'https:');
+        // Ensure zoom=1 for content endpoint
+        if (coverUrl.includes('books/content') && !coverUrl.includes('zoom=')) {
+          coverUrl += '&zoom=1';
         }
+        return coverUrl;
       }
     }
     
@@ -67,7 +96,7 @@ async function searchGoogleBooks(title: string, author: string): Promise<string 
   }
 }
 
-// Search Open Library with author validation
+// Search Open Library with strict validation (80% title similarity + author last name)
 async function searchOpenLibrary(title: string, author: string): Promise<string | null> {
   try {
     const query = encodeURIComponent(`${title} ${author}`);
@@ -82,16 +111,21 @@ async function searchOpenLibrary(title: string, author: string): Promise<string 
     
     if (!docs || docs.length === 0) return null;
     
-    const authorLastName = author.split(' ').pop()?.toLowerCase() || '';
+    const authorLastName = getLastName(author);
     
     for (const doc of docs) {
+      const docTitle = doc.title || '';
       const bookAuthors = doc.author_name || [];
-      const authorMatch = bookAuthors.some(a => 
-        a.toLowerCase().includes(authorLastName)
-      );
       
-      if (authorMatch && doc.cover_i) {
-        // Use -L for large cover
+      // Strict title matching (80% similarity)
+      const titleSimilarity = calculateSimilarity(title, docTitle);
+      if (titleSimilarity < 80) continue;
+      
+      // Author last name must match
+      const authorMatch = bookAuthors.some(a => getLastName(a) === authorLastName);
+      if (!authorMatch) continue;
+      
+      if (doc.cover_i) {
         return `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
       }
     }

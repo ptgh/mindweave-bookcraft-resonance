@@ -9,7 +9,7 @@ interface MediaImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src
   type?: 'book' | 'film' | 'generic';
   quality?: 'optimized' | 'high' | 'social';
   fallbackIcon?: React.ReactNode;
-  fallbackTitle?: string; // Show title text in fallback
+  fallbackTitle?: string;
   aspectRatio?: 'poster' | 'square' | 'auto';
   showSkeleton?: boolean;
   enableCaching?: boolean;
@@ -18,6 +18,7 @@ interface MediaImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src
 /**
  * Unified media image component for books and films
  * Handles loading states, quality optimization, caching, and fallbacks consistently
+ * Uses a fallback chain: cached → optimized → original src
  */
 export function MediaImage({
   src,
@@ -35,7 +36,7 @@ export function MediaImage({
   const [imageState, setImageState] = useState<'loading' | 'loaded' | 'error'>('loading');
   const [displaySrc, setDisplaySrc] = useState<string | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
-  const cacheRequested = useRef(false);
+  const attemptRef = useRef(0);
   const prevSrcRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -44,59 +45,76 @@ export function MediaImage({
       return;
     }
 
-    // Only reset to loading if src actually changed, not on re-renders
+    // Only reset to loading if src actually changed
     if (prevSrcRef.current !== src) {
-      // If we already have a displayed image, keep showing it while loading new one
-      if (displaySrc && imageState === 'loaded') {
-        // Don't reset to loading - keep showing current image
-      } else {
+      if (!(displaySrc && imageState === 'loaded')) {
         setImageState('loading');
       }
-      cacheRequested.current = false;
+      attemptRef.current = 0;
       prevSrcRef.current = src;
     }
 
-    const loadImage = async () => {
-      // Try to get cached URL first
-      let finalSrc = src;
-      
-      if (enableCaching && (type === 'book' || type === 'film')) {
+    const tryLoadImage = async (attempt: number) => {
+      let urlToTry = src;
+
+      // Build URL candidates based on attempt number
+      // Attempt 0: Try cached URL if available
+      // Attempt 1: Try optimized URL
+      // Attempt 2: Try original URL as-is
+      if (attempt === 0 && enableCaching && (type === 'book' || type === 'film')) {
         try {
           const cachedUrl = await getCachedImageUrl(src, type);
           if (cachedUrl && cachedUrl !== src) {
-            finalSrc = cachedUrl;
+            urlToTry = cachedUrl;
+          } else {
+            // No cache, skip to optimized
+            attempt = 1;
           }
-        } catch (e) {
-          // Fallback to original
+        } catch {
+          attempt = 1;
         }
       }
 
-      // Apply quality optimization
-      if (quality === 'high') {
-        finalSrc = getHighQualityDisplayUrl(finalSrc);
-      } else if (quality === 'optimized') {
-        finalSrc = getOptimizedImageUrl(finalSrc);
+      if (attempt === 1) {
+        // Apply quality optimization
+        if (quality === 'high') {
+          urlToTry = getHighQualityDisplayUrl(src);
+        } else if (quality === 'optimized') {
+          urlToTry = getOptimizedImageUrl(src);
+        }
       }
 
-      // Only update displaySrc if it actually changed
-      if (finalSrc !== displaySrc) {
-        setDisplaySrc(finalSrc);
+      if (attempt === 2) {
+        // Use original URL exactly as-is (no optimization)
+        urlToTry = src;
       }
 
-      // Preload image to prevent layout shift
-      preloadImage(finalSrc)
-        .then(() => {
-          setImageState('loaded');
-          // Request background caching after successful load
-          if (enableCaching && !cacheRequested.current && (type === 'book' || type === 'film')) {
-            cacheRequested.current = true;
-            requestImageCache(src, type);
-          }
-        })
-        .catch(() => setImageState('error'));
+      if (!urlToTry) {
+        setImageState('error');
+        return;
+      }
+
+      setDisplaySrc(urlToTry);
+
+      try {
+        await preloadImage(urlToTry);
+        setImageState('loaded');
+        // Request background caching on success
+        if (enableCaching && (type === 'book' || type === 'film')) {
+          requestImageCache(src, type);
+        }
+      } catch {
+        // Try next fallback
+        if (attempt < 2) {
+          attemptRef.current = attempt + 1;
+          tryLoadImage(attempt + 1);
+        } else {
+          setImageState('error');
+        }
+      }
     };
 
-    loadImage();
+    tryLoadImage(attemptRef.current);
   }, [src, quality, type, enableCaching]);
 
   const aspectClasses = {
@@ -156,7 +174,15 @@ export function MediaImage({
         imageState === 'loaded' ? 'opacity-100' : 'opacity-0',
         className
       )}
-      onError={() => setImageState('error')}
+      onError={() => {
+        // If img tag errors after preload succeeded, try next fallback
+        if (attemptRef.current < 2) {
+          attemptRef.current += 1;
+          setImageState('loading');
+        } else {
+          setImageState('error');
+        }
+      }}
       {...props}
     />
   );
