@@ -174,3 +174,6 @@ verify_jwt = false
 
 [functions.enrich-transmission-tags]
 verify_jwt = false
+
+[functions.enrich-film-book-covers]
+verify_jwt = false
