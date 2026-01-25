@@ -211,19 +211,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
     fetchAdaptations();
   }, [isAdmin]);
 
-  // Helper: Check if film is in Criterion Collection (DB fields as source-of-truth)
-  const isCriterionFilm = (film: FilmAdaptation): boolean => {
-    return film.is_criterion_collection === true || film.criterion_url !== null;
-  };
-
-  // Helper: Get Criterion link (DB fields first, then fallback)
-  const getCriterionLink = (film: FilmAdaptation): string | null => {
-    if (film.criterion_url) return film.criterion_url;
-    if (film.is_criterion_collection) {
-      return "https://www.criterion.com/shop/browse/list?genre=science-fiction";
-    }
-    return null;
-  };
+  // Criterion helpers removed - deprecated feature
 
   // Filter adaptations based on search query and filter mode
   const filteredAdaptations = React.useMemo(() => {
@@ -1226,26 +1214,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                   </a>
                 </div>
 
-                {/* Buy Physical Section - only Criterion if applicable */}
-                {isCriterionFilm(selectedFilm) && (
-                  <div className="space-y-2">
-                    <p className="text-slate-500 text-xs font-medium uppercase tracking-wider">Buy Physical</p>
-                    <div className="flex gap-2 flex-wrap">
-                      <a
-                        href={getCriterionLink(selectedFilm) || "https://www.criterion.com/shop/browse?genre=science-fiction"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-600/50 bg-slate-700/30 hover:bg-slate-700/50 hover:border-slate-500 transition-all group"
-                      >
-                        <img src="/images/criterion-logo.jpg" alt="" className="h-5 w-auto rounded-sm" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                        <span className="text-sm text-slate-200">
-                          Criterion{selectedFilm.criterion_spine ? ` #${selectedFilm.criterion_spine}` : ''}
-                        </span>
-                        <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-200" />
-                      </a>
-                    </div>
-                  </div>
-                )}
+                {/* Buy Physical section removed - Criterion feature deprecated */}
               </div>
             </div>
 
