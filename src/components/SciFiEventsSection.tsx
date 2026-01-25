@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Clock, ExternalLink, ChevronDown, ChevronUp, Ticket } from 'lucide-react';
+import { Calendar, MapPin, Clock, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -142,105 +142,85 @@ const SciFiEventsSection = () => {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {displayedEvents.map((event) => (
-          <Card 
-            key={event.id} 
-            className="bg-slate-800/50 border-slate-700/50 hover:border-primary/30 transition-all duration-300 group"
+          <a
+            key={event.id}
+            href={event.website_url || event.ticket_url || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block"
+            onClick={(e) => {
+              if (!event.website_url && !event.ticket_url) {
+                e.preventDefault();
+              }
+            }}
           >
-            <CardContent className="p-4">
-              <div className="space-y-3">
-                <div>
-                  <Badge 
-                    variant="outline" 
-                    className={`mb-2 text-xs ${eventTypeColors[event.event_type] || 'border-primary/30 text-primary'}`}
-                  >
-                    {eventTypeLabels[event.event_type] || event.event_type}
-                  </Badge>
-                  {event.is_recurring && (
-                    <Badge variant="outline" className="ml-2 text-xs border-slate-600 text-slate-400">
-                      Annual
+            <Card 
+              className="bg-slate-800/50 border-slate-700/50 hover:border-primary/30 transition-all duration-300 group cursor-pointer h-full"
+            >
+              <CardContent className="p-4">
+                <div className="space-y-3">
+                  <div>
+                    <Badge 
+                      variant="outline" 
+                      className={`mb-2 text-xs ${eventTypeColors[event.event_type] || 'border-primary/30 text-primary'}`}
+                    >
+                      {eventTypeLabels[event.event_type] || event.event_type}
                     </Badge>
-                  )}
-                  <h3 className="font-medium text-slate-200 line-clamp-2 mt-1">
-                    {event.name}
-                  </h3>
-                </div>
-
-                <div className="space-y-2 text-sm text-slate-400">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                    <span>{formatEventDate(event.start_date, event.end_date)}</span>
+                    {event.is_recurring && (
+                      <Badge variant="outline" className="ml-2 text-xs border-slate-600 text-slate-400">
+                        Annual
+                      </Badge>
+                    )}
+                    <h3 className="font-medium text-slate-200 line-clamp-2 mt-1 group-hover:text-primary transition-colors">
+                      {event.name}
+                    </h3>
                   </div>
 
-                  {event.time && (
+                  <div className="space-y-2 text-sm text-slate-400">
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                      <span>{event.time}</span>
+                      <Calendar className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                      <span>{formatEventDate(event.start_date, event.end_date)}</span>
+                    </div>
+
+                    {event.time && (
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                        <span>{event.time}</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                      <span className="truncate">
+                        {event.venue ? `${event.venue}, ` : ''}{event.city}, {event.country}
+                      </span>
+                    </div>
+                  </div>
+
+                  {event.description && (
+                    <p className="text-xs text-slate-500 line-clamp-2">
+                      {event.description}
+                    </p>
+                  )}
+
+                  {event.featured_authors && event.featured_authors.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {event.featured_authors.slice(0, 2).map((author, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs border-slate-700 text-slate-400">
+                          {author}
+                        </Badge>
+                      ))}
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                    <span className="truncate">
-                      {event.venue ? `${event.venue}, ` : ''}{event.city}, {event.country}
-                    </span>
+                  <div className="flex items-center gap-2 pt-2 text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ExternalLink className="w-3 h-3" />
+                    <span>Visit website</span>
                   </div>
                 </div>
-
-                {event.description && (
-                  <p className="text-xs text-slate-500 line-clamp-2">
-                    {event.description}
-                  </p>
-                )}
-
-                {event.featured_authors && event.featured_authors.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {event.featured_authors.slice(0, 2).map((author, idx) => (
-                      <Badge key={idx} variant="outline" className="text-xs border-slate-700 text-slate-400">
-                        {author}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex gap-2 pt-2">
-                  {event.website_url && (
-                    <a
-                      href={event.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1"
-                    >
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full text-xs border-slate-700 hover:border-primary/50"
-                      >
-                        <ExternalLink className="w-3 h-3 mr-1" />
-                        Website
-                      </Button>
-                    </a>
-                  )}
-                  {event.ticket_url && (
-                    <a
-                      href={event.ticket_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1"
-                    >
-                      <Button 
-                        variant="default" 
-                        size="sm" 
-                        className="w-full text-xs"
-                      >
-                        <Ticket className="w-3 h-3 mr-1" />
-                        Tickets
-                      </Button>
-                    </a>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </a>
         ))}
       </div>
 
