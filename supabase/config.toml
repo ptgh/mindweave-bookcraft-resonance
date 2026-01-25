@@ -112,25 +112,13 @@ verify_jwt = true
 [functions.populate-film-adaptations]
 verify_jwt = false
 
-[functions.populate-criterion-films]
-verify_jwt = false
-
 [functions.populate-sf-directors]
-verify_jwt = false
-
-[functions.enrich-criterion-links]
-verify_jwt = false
-
-[functions.enrich-apple-tv-links]
 verify_jwt = false
 
 [functions.enrich-director-data]
 verify_jwt = false
 
 [functions.ai-film-recommendations]
-verify_jwt = false
-
-[functions.populate-criterion-sf-films]
 verify_jwt = false
 
 [functions.enrich-film-artwork]
@@ -176,4 +164,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.enrich-film-book-covers]
+verify_jwt = false
+
+[functions.get-streaming-links]
 verify_jwt = false

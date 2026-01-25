@@ -11,7 +11,7 @@ import { invokeAdminFunction } from "@/utils/adminFunctions";
 import { useEnhancedToast } from "@/hooks/use-enhanced-toast";
 import { 
   Film, Plus, Pencil, Trash2, RefreshCw, Image, 
-  Loader2, Search, Sparkles, Play, Award, FileText
+  Loader2, Search, Sparkles, Play, FileText
 } from "lucide-react";
 
 interface StreamingAvailability {
@@ -67,11 +67,8 @@ export const AdminFilmAdaptationsPanel = () => {
   const [films, setFilms] = useState<FilmAdaptation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPopulating, setIsPopulating] = useState(false);
-  const [isPopulatingCriterion, setIsPopulatingCriterion] = useState(false);
   const [isEnrichingArtwork, setIsEnrichingArtwork] = useState(false);
   const [isEnrichingTrailers, setIsEnrichingTrailers] = useState(false);
-  const [isEnrichingCriterion, setIsEnrichingCriterion] = useState(false);
-  const [isEnrichingAppleTV, setIsEnrichingAppleTV] = useState(false);
   const [isRunningAll, setIsRunningAll] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingFilm, setEditingFilm] = useState<Partial<FilmAdaptation> | null>(null);
@@ -132,31 +129,7 @@ export const AdminFilmAdaptationsPanel = () => {
     }
   };
 
-  const handlePopulateCriterion = async () => {
-    setIsPopulatingCriterion(true);
-    try {
-      toast({ title: "Starting", description: "Populating Criterion SF films..." });
-      
-      const { data, error } = await invokeAdminFunction('populate-criterion-sf-films');
-      if (error) throw error;
-      
-      toast({
-        title: "Criterion Population Complete",
-        description: (data as any).message || `Processed Criterion films`,
-        variant: "success"
-      });
-      fetchFilms();
-    } catch (error: any) {
-      console.error('Error populating Criterion:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to populate Criterion films",
-        variant: "destructive"
-      });
-    } finally {
-      setIsPopulatingCriterion(false);
-    }
-  };
+  // handlePopulateCriterion removed - deprecated feature
 
   const handleEnrichArtwork = async () => {
     setIsEnrichingArtwork(true);
@@ -210,57 +183,7 @@ export const AdminFilmAdaptationsPanel = () => {
     }
   };
 
-  const handleEnrichCriterion = async () => {
-    setIsEnrichingCriterion(true);
-    try {
-      toast({ title: "Starting", description: "Enriching Criterion links..." });
-      
-      const { data, error } = await invokeAdminFunction('enrich-criterion-links');
-      if (error) throw error;
-      
-      toast({
-        title: "Criterion Enrichment Complete",
-        description: (data as any).message || `Updated streaming links`,
-        variant: "success"
-      });
-      fetchFilms();
-    } catch (error: any) {
-      console.error('Error enriching Criterion:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to enrich Criterion links",
-        variant: "destructive"
-      });
-    } finally {
-      setIsEnrichingCriterion(false);
-    }
-  };
-
-  const handleEnrichAppleTV = async () => {
-    setIsEnrichingAppleTV(true);
-    try {
-      toast({ title: "Starting", description: "Enriching Apple TV links..." });
-      
-      const { data, error } = await invokeAdminFunction('enrich-apple-tv-links');
-      if (error) throw error;
-      
-      toast({
-        title: "Apple TV Enrichment Complete",
-        description: (data as any).message || `Updated streaming links`,
-        variant: "success"
-      });
-      fetchFilms();
-    } catch (error: any) {
-      console.error('Error enriching Apple TV:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to enrich Apple TV links",
-        variant: "destructive"
-      });
-    } finally {
-      setIsEnrichingAppleTV(false);
-    }
-  };
+  // handleEnrichCriterion and handleEnrichAppleTV removed - deprecated features
 
   const handleRunAllEnrichment = async () => {
     setIsRunningAll(true);
@@ -268,19 +191,10 @@ export const AdminFilmAdaptationsPanel = () => {
     
     try {
       // Run in sequence to avoid overwhelming APIs
-      await handlePopulateCriterion();
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
       await handleEnrichArtwork();
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       await handleEnrichTrailers();
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      await handleEnrichCriterion();
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      await handleEnrichAppleTV();
       
       toast({
         title: "All Enrichment Complete",
@@ -395,9 +309,7 @@ export const AdminFilmAdaptationsPanel = () => {
     withPosters: films.filter(f => f.poster_url).length,
     withBookCovers: films.filter(f => f.book_cover_url).length,
     withTrailers: films.filter(f => f.trailer_url).length,
-    criterion: films.filter(f => f.is_criterion_collection).length,
-    withCriterionLinks: films.filter(f => f.streaming_availability?.criterion).length,
-    withAppleTVLinks: films.filter(f => f.streaming_availability?.apple).length,
+    withScripts: films.filter(f => f.script_url).length,
   };
 
   return (
@@ -562,7 +474,7 @@ export const AdminFilmAdaptationsPanel = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Stats Grid */}
-        <div className="grid grid-cols-7 gap-2 text-center text-xs">
+        <div className="grid grid-cols-5 gap-2 text-center text-xs">
           <div className="bg-slate-800/50 p-2 rounded">
             <div className="text-lg font-bold text-amber-400">{stats.total}</div>
             <div className="text-slate-400">Total</div>
@@ -580,16 +492,8 @@ export const AdminFilmAdaptationsPanel = () => {
             <div className="text-slate-400">Trailers</div>
           </div>
           <div className="bg-slate-800/50 p-2 rounded">
-            <div className="text-lg font-bold text-yellow-400">{stats.criterion}</div>
-            <div className="text-slate-400">Criterion</div>
-          </div>
-          <div className="bg-slate-800/50 p-2 rounded">
-            <div className="text-lg font-bold text-orange-400">{stats.withCriterionLinks}</div>
-            <div className="text-slate-400">CC Links</div>
-          </div>
-          <div className="bg-slate-800/50 p-2 rounded">
-            <div className="text-lg font-bold text-pink-400">{stats.withAppleTVLinks}</div>
-            <div className="text-slate-400">Apple TV</div>
+            <div className="text-lg font-bold text-cyan-400">{stats.withScripts}</div>
+            <div className="text-slate-400">Scripts</div>
           </div>
         </div>
 
@@ -598,10 +502,6 @@ export const AdminFilmAdaptationsPanel = () => {
           <Button size="sm" variant="outline" onClick={handlePopulate} disabled={isPopulating}>
             {isPopulating ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
             Populate Films
-          </Button>
-          <Button size="sm" variant="outline" onClick={handlePopulateCriterion} disabled={isPopulatingCriterion}>
-            {isPopulatingCriterion ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Award className="w-4 h-4 mr-1" />}
-            Criterion SF
           </Button>
           <Button size="sm" variant="outline" onClick={handleEnrichArtwork} disabled={isEnrichingArtwork}>
             {isEnrichingArtwork ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Image className="w-4 h-4 mr-1" />}

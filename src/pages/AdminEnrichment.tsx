@@ -3,7 +3,7 @@ import { AdminPopulateBooks } from "@/components/AdminPopulateBooks";
 import { AdminFilmAdaptationsPanel } from "@/components/AdminFilmAdaptationsPanel";
 import { AdminDirectorsPanel } from "@/components/AdminDirectorsPanel";
 import { AdminImageUrlValidator } from "@/components/AdminImageUrlValidator";
-import { AdminBooksPanel, AdminTrailersPanel, AdminExternalLinksPanel, AdminCachePanel } from "@/components/admin";
+import { AdminBooksPanel, AdminTrailersPanel, AdminCachePanel } from "@/components/admin";
 import Header from "@/components/Header";
 import { ProtectedAdminRoute } from "@/components/ProtectedAdminRoute";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import { generateTransmissionEmbeddings } from "@/services/semanticSearchService
 import { invokeAdminFunction } from "@/utils/adminFunctions";
 import { 
   RefreshCw, Clock, Sparkles, ShieldCheck, Book, Film, Users, HardDrive, 
-  Tags, Database, Image, Play, Link2, FileText, Activity, CheckCircle,
+  Tags, Database, Image, Play, Link2, FileText, Activity,
   BookOpen, Tv, AlertTriangle, Loader2
 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -125,11 +125,10 @@ const AdminEnrichment = () => {
       { name: 'Trailers', func: 'enrich-trailer-urls' },
       { name: 'Book Matching', func: 'match-film-books' },
       { name: 'Book Covers', func: 'enrich-film-book-covers' },
-      { name: 'Criterion Links', func: 'enrich-criterion-links' },
       { name: 'Scripts', func: 'enrich-imsdb-scripts' },
     ];
 
-    toast.info('Starting Master Enrichment (6 jobs)...');
+    toast.info('Starting Master Enrichment (5 jobs)...');
 
     let successCount = 0;
     for (let i = 0; i < steps.length; i++) {
@@ -186,7 +185,7 @@ const AdminEnrichment = () => {
                     <h2 className="text-lg font-semibold text-emerald-100">Master Enrichment</h2>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Run all enrichment jobs sequentially: artwork, trailers, book matching, covers, Criterion links, and scripts.
+                    Run all enrichment jobs sequentially: artwork, trailers, book matching, covers, and scripts.
                   </p>
                   {enrichmentProgress && (
                     <div className="mt-2 flex items-center gap-2 text-sm text-emerald-300">
@@ -355,7 +354,6 @@ const AdminEnrichment = () => {
                     <EnrichButton label="Trailers" icon={<Play className="h-4 w-4" />} func="enrich-trailer-urls" />
                     <EnrichButton label="Match Books" icon={<Link2 className="h-4 w-4" />} func="match-film-books" />
                     <EnrichButton label="Book Covers" icon={<BookOpen className="h-4 w-4" />} func="enrich-film-book-covers" />
-                    <EnrichButton label="Criterion" icon={<CheckCircle className="h-4 w-4" />} func="enrich-criterion-links" />
                     <EnrichButton label="Scripts" icon={<FileText className="h-4 w-4" />} func="enrich-imsdb-scripts" />
                     <EnrichButton label="Watch Providers" icon={<Tv className="h-4 w-4" />} func="cache-watch-providers" />
                   </div>
@@ -379,10 +377,7 @@ const AdminEnrichment = () => {
             {/* FILMS TAB */}
             <TabsContent value="films" className="space-y-4">
               <AdminFilmAdaptationsPanel />
-              <div className="grid md:grid-cols-2 gap-4">
-                <AdminTrailersPanel />
-                <AdminExternalLinksPanel />
-              </div>
+              <AdminTrailersPanel />
             </TabsContent>
 
             {/* BOOKS TAB */}
