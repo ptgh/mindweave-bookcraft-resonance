@@ -22,10 +22,11 @@ function json(status: number, body: Record<string, unknown>): Response {
 
 // Trigger enrichment functions internally (fire-and-forget)
 async function triggerEnrichment(filmIds: string[], supabaseUrl: string, internalSecret: string): Promise<void> {
+  // Removed legacy 'enrich-criterion-links' - Criterion feature deprecated
   const enrichFunctions = [
     'enrich-film-artwork',
-    'enrich-trailer-urls', 
-    'enrich-criterion-links'
+    'enrich-trailer-urls',
+    'enrich-film-book-covers'
   ];
 
   for (const funcName of enrichFunctions) {
@@ -279,7 +280,6 @@ Use only English/Latin characters for all names.`;
           film_year: rec.year,
           director: rec.director,
           source: 'ai_suggested',
-          is_criterion_collection: false,
         })
         .select('id')
         .single();

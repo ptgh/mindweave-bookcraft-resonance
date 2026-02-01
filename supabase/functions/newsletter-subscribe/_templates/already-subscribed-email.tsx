@@ -92,8 +92,8 @@ export const AlreadySubscribedEmail = ({
           <Text style={ctaText}>
             Explore new features and discover patterns in your reading journey
           </Text>
-          <Link href="https://leafnode.co.uk/thread-map" style={button}>
-            View Your Thread Map
+          <Link href="https://leafnode.co.uk/book-browser" style={button}>
+            View Your Library
           </Link>
         </Section>
 
