@@ -14,11 +14,27 @@ const memoryCache = new Map<string, string>();
  * Get cached image URL from Supabase storage
  * Falls back to original URL if caching fails
  */
+/**
+ * Validate URL is absolute (starts with http/https)
+ */
+function isAbsoluteUrl(url: string): boolean {
+  return url.startsWith('http://') || url.startsWith('https://');
+}
+
+/**
+ * Get cached image URL from Supabase storage
+ * Falls back to original URL if caching fails
+ */
 export async function getCachedImageUrl(
   originalUrl: string,
   type: 'book' | 'film' = 'book'
 ): Promise<string> {
   if (!originalUrl) return '';
+
+  // Reject relative URLs - they can't be cached externally
+  if (!isAbsoluteUrl(originalUrl)) {
+    return originalUrl;
+  }
 
   // Check memory cache first
   if (memoryCache.has(originalUrl)) {
@@ -54,6 +70,11 @@ export async function requestImageCache(
   type: 'book' | 'film' = 'book'
 ): Promise<void> {
   if (!originalUrl) return;
+
+  // Reject relative URLs - only absolute URLs can be cached
+  if (!originalUrl.startsWith('http://') && !originalUrl.startsWith('https://')) {
+    return;
+  }
 
   // Don't cache if already in memory cache
   if (memoryCache.has(originalUrl)) return;

@@ -17,7 +17,7 @@ const Footer = () => {
           {/* Branding & Social */}
           <div className="flex items-center justify-between md:justify-end gap-4">
             <div className="text-xs text-slate-500 order-1 md:order-2">
-              © 2025 Leafnode. Exploring the future-literate.
+              © 2026 Leafnode. Exploring the future-literate.
             </div>
             <a
               href="https://instagram.com/leafnode.scifi"

@@ -26,6 +26,19 @@ serve(async (req) => {
       );
     }
 
+    // Validate URL is absolute (starts with http/https)
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      console.warn(`Rejected relative URL: ${url}`);
+      return new Response(
+        JSON.stringify({ 
+          cached: false, 
+          url: url, 
+          error: 'Only absolute URLs (http/https) can be cached' 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Create Supabase client with service role for storage access
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
