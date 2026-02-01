@@ -170,25 +170,45 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   useEffect(() => {
     const fetchAdaptations = async () => {
       try {
+        // Fetch adaptations with linked publisher_books for canonical covers
         const { data, error } = await supabase
           .from('sf_film_adaptations')
-          .select('*')
+          .select(`
+            *,
+            publisher_books (
+              id,
+              cover_url,
+              title,
+              author
+            )
+          `)
           .order('created_at', { ascending: false }); // New films at top
 
         if (error) throw error;
         
-        const mapped: FilmAdaptation[] = (data || []).map(item => ({
-          ...item,
-          book_author: cleanPersonName(item.book_author), // Clean on fetch
-          streaming_availability: typeof item.streaming_availability === 'object' && item.streaming_availability !== null
-            ? item.streaming_availability as Record<string, string>
-            : null,
-          awards: Array.isArray(item.awards) ? item.awards as Array<{ name: string; year: number }> : null,
-          // Handle both old DB format and new edge function format
-          watch_providers: typeof item.watch_providers === 'object' && item.watch_providers !== null
-            ? item.watch_providers as WatchProviders
-            : null,
-        }));
+        const mapped: FilmAdaptation[] = (data || []).map(item => {
+          // Compute effective book cover URL:
+          // 1. Prefer publisher_books.cover_url if linked
+          // 2. Fall back to sf_film_adaptations.book_cover_url
+          const linkedBook = item.publisher_books as { cover_url?: string | null } | null;
+          const effectiveBookCoverUrl = (item.book_id && linkedBook?.cover_url) 
+            ? linkedBook.cover_url 
+            : item.book_cover_url;
+          
+          return {
+            ...item,
+            book_author: cleanPersonName(item.book_author), // Clean on fetch
+            book_cover_url: effectiveBookCoverUrl, // Use computed effective URL
+            streaming_availability: typeof item.streaming_availability === 'object' && item.streaming_availability !== null
+              ? item.streaming_availability as Record<string, string>
+              : null,
+            awards: Array.isArray(item.awards) ? item.awards as Array<{ name: string; year: number }> : null,
+            // Handle both old DB format and new edge function format
+            watch_providers: typeof item.watch_providers === 'object' && item.watch_providers !== null
+              ? item.watch_providers as WatchProviders
+              : null,
+          };
+        });
         setAdaptations(mapped);
         
         // Admin debug: Log data health stats
@@ -196,6 +216,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
           const stats = {
             total: mapped.length,
             withBookId: mapped.filter(f => f.book_id).length,
+            withPublisherCover: mapped.filter(f => f.book_id && f.book_cover_url?.includes('supabase.co')).length,
             withPoster: mapped.filter(f => f.poster_url).length,
             withTrailer: mapped.filter(f => f.trailer_url).length,
             criterion: mapped.filter(f => f.is_criterion_collection).length,
@@ -783,6 +804,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                             bookTitle={film.book_title}
                             bookAuthor={film.book_author}
                             storedCoverUrl={film.book_cover_url}
+                            adaptationId={film.id}
                             className="w-full h-full"
                           />
                         )}

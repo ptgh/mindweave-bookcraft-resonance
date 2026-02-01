@@ -154,9 +154,29 @@ const EnhancedBookCover = ({
     return Array.from(variants);
   };
 
+  // Normalize http:// to https:// for known safe providers to prevent mixed-content blocks
+  const normalizeProtocol = (url: string | undefined): string | undefined => {
+    if (!url) return url;
+    if (url.startsWith('http://')) {
+      // Only upgrade known safe providers
+      if (
+        url.includes('books.google.com') ||
+        url.includes('googleusercontent.com') ||
+        url.includes('openlibrary.org') ||
+        url.includes('covers.openlibrary.org') ||
+        url.includes('image.tmdb.org') ||
+        url.includes('archive.org')
+      ) {
+        return url.replace(/^http:\/\//, 'https://');
+      }
+    }
+    return url;
+  };
+
   useEffect(() => {
     // IMMEDIATE RENDER: If we have any cover URL, display it right away
-    const firstAvailableUrl = coverUrl || thumbnailUrl || smallThumbnailUrl;
+    // Normalize protocol to prevent mixed-content blocks
+    const firstAvailableUrl = normalizeProtocol(coverUrl) || normalizeProtocol(thumbnailUrl) || normalizeProtocol(smallThumbnailUrl);
     
     if (firstAvailableUrl) {
       setCurrentSrc(firstAvailableUrl);
