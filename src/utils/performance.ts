@@ -119,59 +119,88 @@ export const preloadCriticalResources = () => {
 // Forcing higher zoom causes 404s for many books
 export const getOptimizedImageUrl = (url: string, width?: number) => {
   if (!url) return '';
+
+  // Avoid mixed-content blocking (HTTPS app + HTTP images) for known providers.
+  // Keep this narrow to avoid breaking providers that don't support HTTPS.
+  const normalizedUrl = (() => {
+    if (!url.startsWith('http://')) return url;
+    if (
+      url.includes('books.google.') ||
+      url.includes('googleusercontent.com') ||
+      url.includes('covers.openlibrary.org') ||
+      url.includes('image.tmdb.org')
+    ) {
+      return `https://${url.slice('http://'.length)}`;
+    }
+    return url;
+  })();
   
   const settings = getOptimizedSettings();
   
   // For Google Books content endpoint - DO NOT modify zoom level
   // These URLs only work at their original zoom level (usually 1)
-  if (url.includes('books.google.com/books/content') || 
-      url.includes('books.googleusercontent.com/books/content')) {
+  if (normalizedUrl.includes('books.google.com/books/content') || 
+      normalizedUrl.includes('books.googleusercontent.com/books/content')) {
     // Keep the URL exactly as-is - changing zoom breaks it
-    return url;
+    return normalizedUrl;
   }
   
   // For other Google Books URLs (not content endpoint)
-  if (url.includes('books.google') || url.includes('googleusercontent.com')) {
+  if (normalizedUrl.includes('books.google') || normalizedUrl.includes('googleusercontent.com')) {
     // Only set zoom if not already present
-    if (!url.includes('zoom=')) {
+    if (!normalizedUrl.includes('zoom=')) {
       const zoomLevel = settings.reduceAnimations ? 1 : 1; // Always use zoom=1 for reliability
-      return `${url}${url.includes('?') ? '&' : '?'}zoom=${zoomLevel}`;
+      return `${normalizedUrl}${normalizedUrl.includes('?') ? '&' : '?'}zoom=${zoomLevel}`;
     }
-    return url;
+    return normalizedUrl;
   }
   
   // For TMDB poster URLs - use higher quality on desktop
-  if (url.includes('image.tmdb.org')) {
+  if (normalizedUrl.includes('image.tmdb.org')) {
     if (settings.reduceAnimations) {
-      return url.replace(/\/w\d+\//, '/w342/');
+      return normalizedUrl.replace(/\/w\d+\//, '/w342/');
     } else {
-      return url.replace(/\/w\d+\//, '/w780/');
+      return normalizedUrl.replace(/\/w\d+\//, '/w780/');
     }
   }
   
   // For Open Library covers - ensure -L (large) size
-  if (url.includes('covers.openlibrary.org')) {
-    return url.replace(/-[SM]\.jpg/, '-L.jpg');
+  if (normalizedUrl.includes('covers.openlibrary.org')) {
+    return normalizedUrl.replace(/-[SM]\.jpg/, '-L.jpg');
   }
   
   // Use smaller images on mobile devices
   if (settings.reduceAnimations && width) {
     const mobileWidth = Math.min(width, 400);
-    if (url.includes('googleusercontent.com') && !url.includes('books/content')) {
-      return url.replace(/=s\d+/, `=s${mobileWidth}`);
+    if (normalizedUrl.includes('googleusercontent.com') && !normalizedUrl.includes('books/content')) {
+      return normalizedUrl.replace(/=s\d+/, `=s${mobileWidth}`);
     }
   }
   
-  return url;
+  return normalizedUrl;
 };
 
 // Get high quality image URL for social sharing (minimum 1200px width)
 export const getSocialShareImageUrl = (url: string): string => {
   if (!url) return '';
+
+  // Normalize to HTTPS for known providers to avoid mixed-content blocks.
+  const normalizedUrl = (() => {
+    if (!url.startsWith('http://')) return url;
+    if (
+      url.includes('books.google.') ||
+      url.includes('googleusercontent.com') ||
+      url.includes('covers.openlibrary.org') ||
+      url.includes('image.tmdb.org')
+    ) {
+      return `https://${url.slice('http://'.length)}`;
+    }
+    return url;
+  })();
   
   // For Google Books URLs, get highest quality
-  if (url.includes('books.google') || url.includes('googleusercontent.com')) {
-    let optimized = url.replace(/zoom=\d+/, 'zoom=3');
+  if (normalizedUrl.includes('books.google') || normalizedUrl.includes('googleusercontent.com')) {
+    let optimized = normalizedUrl.replace(/zoom=\d+/, 'zoom=3');
     if (!optimized.includes('zoom=')) {
       optimized = `${optimized}${optimized.includes('?') ? '&' : '?'}zoom=3`;
     }
@@ -179,25 +208,39 @@ export const getSocialShareImageUrl = (url: string): string => {
   }
   
   // For TMDB URLs, use original quality
-  if (url.includes('image.tmdb.org')) {
-    return url.replace(/\/w\d+\//, '/original/');
+  if (normalizedUrl.includes('image.tmdb.org')) {
+    return normalizedUrl.replace(/\/w\d+\//, '/original/');
   }
   
   // For Open Library, use L size
-  if (url.includes('covers.openlibrary.org')) {
-    return url.replace(/-[SML]\.jpg/, '-L.jpg');
+  if (normalizedUrl.includes('covers.openlibrary.org')) {
+    return normalizedUrl.replace(/-[SML]\.jpg/, '-L.jpg');
   }
   
-  return url;
+  return normalizedUrl;
 };
 
 // Get high quality display URL (for modals, previews)
 export const getHighQualityDisplayUrl = (url: string): string => {
   if (!url) return '';
+
+  // Normalize to HTTPS for known providers to avoid mixed-content blocks.
+  const normalizedUrl = (() => {
+    if (!url.startsWith('http://')) return url;
+    if (
+      url.includes('books.google.') ||
+      url.includes('googleusercontent.com') ||
+      url.includes('covers.openlibrary.org') ||
+      url.includes('image.tmdb.org')
+    ) {
+      return `https://${url.slice('http://'.length)}`;
+    }
+    return url;
+  })();
   
   // For Google Books URLs
-  if (url.includes('books.google') || url.includes('googleusercontent.com')) {
-    let optimized = url.replace(/zoom=\d+/, 'zoom=2');
+  if (normalizedUrl.includes('books.google') || normalizedUrl.includes('googleusercontent.com')) {
+    let optimized = normalizedUrl.replace(/zoom=\d+/, 'zoom=2');
     if (!optimized.includes('zoom=')) {
       optimized = `${optimized}${optimized.includes('?') ? '&' : '?'}zoom=2`;
     }
@@ -205,16 +248,16 @@ export const getHighQualityDisplayUrl = (url: string): string => {
   }
   
   // For TMDB URLs, use w780 (good balance of quality and size)
-  if (url.includes('image.tmdb.org')) {
-    return url.replace(/\/w\d+\//, '/w780/');
+  if (normalizedUrl.includes('image.tmdb.org')) {
+    return normalizedUrl.replace(/\/w\d+\//, '/w780/');
   }
   
   // For Open Library, use L size
-  if (url.includes('covers.openlibrary.org')) {
-    return url.replace(/-[SM]\.jpg/, '-L.jpg');
+  if (normalizedUrl.includes('covers.openlibrary.org')) {
+    return normalizedUrl.replace(/-[SM]\.jpg/, '-L.jpg');
   }
   
-  return url;
+  return normalizedUrl;
 };
 
 // Preload an image and return a promise
