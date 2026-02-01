@@ -831,45 +831,6 @@ export type Database = {
         }
         Relationships: []
       }
-      criterion_films: {
-        Row: {
-          cover_url: string | null
-          created_at: string
-          criterion_url: string | null
-          description: string | null
-          director: string
-          id: string
-          spine_number: number | null
-          title: string
-          trailer_url: string | null
-          year: number | null
-        }
-        Insert: {
-          cover_url?: string | null
-          created_at?: string
-          criterion_url?: string | null
-          description?: string | null
-          director: string
-          id?: string
-          spine_number?: number | null
-          title: string
-          trailer_url?: string | null
-          year?: number | null
-        }
-        Update: {
-          cover_url?: string | null
-          created_at?: string
-          criterion_url?: string | null
-          description?: string | null
-          director?: string
-          id?: string
-          spine_number?: number | null
-          title?: string
-          trailer_url?: string | null
-          year?: number | null
-        }
-        Relationships: []
-      }
       ebook_search_cache: {
         Row: {
           annas_archive_results: Json | null
@@ -1541,16 +1502,12 @@ export type Database = {
           book_publication_year: number | null
           book_title: string
           created_at: string | null
-          criterion_spine: number | null
-          criterion_spine_number: number | null
-          criterion_url: string | null
           director: string | null
           film_title: string
           film_year: number | null
           id: string
           imdb_id: string | null
           imdb_rating: number | null
-          is_criterion_collection: boolean | null
           match_confidence: number | null
           notable_differences: string | null
           poster_url: string | null
@@ -1578,16 +1535,12 @@ export type Database = {
           book_publication_year?: number | null
           book_title: string
           created_at?: string | null
-          criterion_spine?: number | null
-          criterion_spine_number?: number | null
-          criterion_url?: string | null
           director?: string | null
           film_title: string
           film_year?: number | null
           id?: string
           imdb_id?: string | null
           imdb_rating?: number | null
-          is_criterion_collection?: boolean | null
           match_confidence?: number | null
           notable_differences?: string | null
           poster_url?: string | null
@@ -1615,16 +1568,12 @@ export type Database = {
           book_publication_year?: number | null
           book_title?: string
           created_at?: string | null
-          criterion_spine?: number | null
-          criterion_spine_number?: number | null
-          criterion_url?: string | null
           director?: string | null
           film_title?: string
           film_year?: number | null
           id?: string
           imdb_id?: string | null
           imdb_rating?: number | null
-          is_criterion_collection?: boolean | null
           match_confidence?: number | null
           notable_differences?: string | null
           poster_url?: string | null

@@ -27,7 +27,6 @@ interface DataHealthStats {
   total_films: number;
   missing_poster: number;
   missing_trailer: number;
-  missing_criterion_url: number;
   missing_tmdb_id: number;
   missing_book_id: number;
   missing_book_cover: number;
@@ -64,7 +63,7 @@ export function AdminDataHealthPanel() {
       // Get total films and missing data counts
       const { data: films, error } = await supabase
         .from('sf_film_adaptations')
-        .select('id, poster_url, trailer_url, criterion_url, imdb_id, book_id, book_cover_url, watch_providers, watch_providers_updated_at, script_url, is_criterion_collection, adaptation_type');
+        .select('id, poster_url, trailer_url, imdb_id, book_id, book_cover_url, watch_providers, watch_providers_updated_at, script_url, adaptation_type');
 
       if (error) throw error;
 
@@ -75,7 +74,6 @@ export function AdminDataHealthPanel() {
         total_films: films?.length || 0,
         missing_poster: films?.filter(f => !f.poster_url).length || 0,
         missing_trailer: films?.filter(f => !f.trailer_url).length || 0,
-        missing_criterion_url: films?.filter(f => f.is_criterion_collection && !f.criterion_url).length || 0,
         missing_tmdb_id: films?.filter(f => !f.imdb_id).length || 0,
         missing_book_id: films?.filter(f => !f.book_id).length || 0,
         // Only count missing book covers for non-original screenplays (books that should have covers)
@@ -309,16 +307,6 @@ export function AdminDataHealthPanel() {
                 {stats?.missing_script_url || 0}
               </p>
             </div>
-
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Missing Criterion URLs</span>
-              </div>
-              <p className={`text-2xl font-bold ${getHealthColor(stats?.missing_criterion_url || 0, stats?.total_films || 1)}`}>
-                {stats?.missing_criterion_url || 0}
-              </p>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -420,18 +408,6 @@ export function AdminDataHealthPanel() {
               Update Watch Providers
             </Button>
 
-            <Button
-              variant="outline"
-              onClick={() => runEnrichmentJob('Enrich Criterion Links', 'enrich-criterion-links')}
-              disabled={runningJobs.has('Enrich Criterion Links')}
-            >
-              {runningJobs.has('Enrich Criterion Links') ? (
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <CheckCircle className="h-4 w-4 mr-2" />
-              )}
-              Enrich Criterion
-            </Button>
 
             <Button
               variant="outline"
