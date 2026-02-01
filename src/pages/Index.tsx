@@ -303,10 +303,16 @@ const Index = () => {
         description="Your personal sci-fi book collection with transmissions, patterns, and neural connections"
         keywords={['sci-fi library', 'book tracker', 'reading list', 'science fiction books']}
       />
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-x-hidden">
         <Header />
         
-        <main ref={mainContainerRef} className="container mx-auto px-4 sm:px-6 py-8">
+        <main 
+          id="main-content"
+          ref={mainContainerRef} 
+          className="container mx-auto section-padding"
+          role="main"
+          aria-label="Your book transmissions"
+        >
           <div ref={addFeatureBlockRef} className="feature-block">
             <SignalInFocus 
               book={currentSignal} 
@@ -330,7 +336,8 @@ const Index = () => {
             <StandardButton
               onClick={() => setIsAddModalOpen(true)}
               variant="standard"
-              className="touch-manipulation active:scale-95 whitespace-nowrap"
+              className="touch-manipulation active:scale-95 whitespace-nowrap touch-target"
+              aria-label="Log a new book to your library"
             >
               + Log Signal
             </StandardButton>

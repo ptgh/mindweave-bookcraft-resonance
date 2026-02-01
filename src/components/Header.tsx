@@ -53,7 +53,7 @@ const Header = () => {
   ];
   
   return (
-    <header className="bg-slate-900">
+    <header className="bg-slate-900" role="banner" aria-label="Site header">
       <div className="container mx-auto px-4 py-2 md:px-6 md:py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
