@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
     // Additional diagnostics: check specific data health
     const { data: filmHealth } = await serviceClient
       .from("sf_film_adaptations")
-      .select("id, book_id, poster_url, trailer_url, criterion_url")
+      .select("id, book_id, poster_url, trailer_url, book_cover_url")
       .limit(1000);
 
     results.dataHealth = {
@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
       withBookId: filmHealth?.filter((f) => f.book_id).length || 0,
       withPoster: filmHealth?.filter((f) => f.poster_url).length || 0,
       withTrailer: filmHealth?.filter((f) => f.trailer_url).length || 0,
-      withCriterion: filmHealth?.filter((f) => f.criterion_url).length || 0,
+      withBookCover: filmHealth?.filter((f) => f.book_cover_url).length || 0,
     };
 
     console.log("✅ [AdminCountFilms] Diagnostic complete:", JSON.stringify(results, null, 2));

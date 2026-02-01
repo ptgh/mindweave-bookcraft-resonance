@@ -35,8 +35,6 @@ interface FilmAdaptation {
   imdb_rating: number | null;
   poster_url: string | null;
   trailer_url: string | null;
-  criterion_spine: number | null;
-  is_criterion_collection: boolean | null;
   streaming_availability: StreamingAvailability | null;
   // Screenplay fields
   adaptation_type: string | null;
@@ -55,7 +53,6 @@ const emptyFilm: Partial<FilmAdaptation> = {
   imdb_rating: null,
   poster_url: '',
   trailer_url: '',
-  criterion_spine: null,
   streaming_availability: {},
   // Screenplay fields
   adaptation_type: null,
@@ -236,7 +233,6 @@ export const AdminFilmAdaptationsPanel = () => {
         imdb_rating: editingFilm.imdb_rating,
         poster_url: editingFilm.poster_url || null,
         trailer_url: editingFilm.trailer_url || null,
-        criterion_spine: editingFilm.criterion_spine,
         streaming_availability: cleanedStreaming && Object.keys(cleanedStreaming).length > 0 ? cleanedStreaming : null,
         // Screenplay fields
         adaptation_type: editingFilm.adaptation_type || null,
@@ -575,7 +571,7 @@ export const AdminFilmAdaptationsPanel = () => {
                     <div className="flex gap-1 flex-wrap">
                       {film.poster_url && <Badge variant="outline" className="text-[10px] px-1">Poster</Badge>}
                       {film.trailer_url && <Badge variant="outline" className="text-[10px] px-1">Trailer</Badge>}
-                      {film.is_criterion_collection && <Badge className="text-[10px] px-1 bg-yellow-600">CC</Badge>}
+                      {film.script_url && <Badge variant="outline" className="text-[10px] px-1">Script</Badge>}
                     </div>
                   </TableCell>
                   <TableCell className="py-2">
