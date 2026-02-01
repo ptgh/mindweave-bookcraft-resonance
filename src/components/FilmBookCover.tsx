@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { searchGoogleBooks } from '@/services/googleBooks';
 import { requestImageCache, getCachedImageUrl } from '@/services/imageCacheService';
 import { getOptimizedImageUrl, preloadImage } from '@/utils/performance';
+import { writeBackFilmCover } from '@/services/filmCoverWritebackService';
 
 interface FilmBookCoverProps {
   bookTitle: string;
@@ -89,6 +90,8 @@ export const FilmBookCover: React.FC<FilmBookCoverProps> = ({
           setImageState('loaded');
           // Queue for caching so next time it loads faster
           requestImageCache(bestMatch.coverUrl, 'book');
+          // Write back to database so enrichment picks it up
+          writeBackFilmCover(bookTitle, bookAuthor, bestMatch.coverUrl);
           return;
         }
       } catch (error) {

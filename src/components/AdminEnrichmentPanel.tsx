@@ -21,6 +21,7 @@ import {
   Calendar, Database, Users, FileText, Clapperboard, ChevronDown, ChevronRight 
 } from "lucide-react";
 import { invokeAdminFunction } from "@/utils/adminFunctions";
+import { AdminCoverHealthPanel } from "@/components/admin/AdminCoverHealthPanel";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 export const AdminEnrichmentPanel = () => {
@@ -359,8 +360,8 @@ export const AdminEnrichmentPanel = () => {
               
               {/* Populate Verified Films */}
               <div className="space-y-2 pt-2 border-t border-border/20">
-                <p className="text-xs text-muted-foreground">
-                  Add Criterion + Arrow verified SF films (51 + 8 films)
+              <p className="text-xs text-muted-foreground">
+                  Add verified SF films to the database
                 </p>
                 <Button
                   onClick={() => populateVerifiedFilmsMutation.mutate()}
@@ -379,7 +380,10 @@ export const AdminEnrichmentPanel = () => {
         </Card>
       </Collapsible>
 
-      {/* Section 4: Scripts */}
+      {/* Section 5: Cover Health Dashboard */}
+      <AdminCoverHealthPanel />
+
+      {/* Section 6: Scripts */}
       <Collapsible open={expandedSections.scripts} onOpenChange={() => toggleSection('scripts')}>
         <Card className="bg-background/40 backdrop-blur-md border-cyan-400/30 overflow-hidden">
           <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/20 transition-colors">
