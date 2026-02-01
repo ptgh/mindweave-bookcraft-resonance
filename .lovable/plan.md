@@ -52,15 +52,28 @@ This audit covers Frontend, Backend, UX/UI, Legacy Code, Cover Art, Supabase, an
 
 ---
 
+## ✅ COMPLETED (Phase 4 - Backend Optimization)
+
+### 1. Cover Health Dashboard - DONE
+- Created `AdminCoverHealthPanel.tsx` showing cache status:
+  - Total films, Cached (Supabase), External URLs, Missing covers
+  - Cache rate percentage with color-coded health indicator
+  - One-click "Cache External" button triggering `enrich-film-book-covers`
+- Added to AdminEnrichmentPanel after Film Data section
+
+### 2. FilmBookCover Database Write-back - DONE
+- Created `filmCoverWritebackService.ts` with `writeBackFilmCover()` function
+- Integrated into `FilmBookCover.tsx` - when live Google Books fetch succeeds,
+  the cover URL is written back to `sf_film_adaptations.book_cover_url`
+- This ensures the enrichment function picks up successful live fetches
+
+---
+
 ## 🔄 STILL PENDING
 
 ### 1. Book Cover Art (94 films with external URLs)
 The `enrich-film-book-covers` function already processes external URLs - no code changes needed.
 **Action Required**: Run the enrichment function from Admin panel to cache all external URLs.
-
-### 4. FilmBookCover Database Write-back (Phase 4)
-Currently, successful live fetches are cached but not written back to `sf_film_adaptations.book_cover_url`.
-This optimization would reduce API calls on subsequent loads.
 
 ---
 
