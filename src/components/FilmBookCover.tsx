@@ -1,15 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Book } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { searchGoogleBooks } from '@/services/googleBooks';
+import { searchAppleBooks } from '@/services/appleBooks';
 import { requestImageCache, getCachedImageUrl } from '@/services/imageCacheService';
 import { getOptimizedImageUrl, preloadImage } from '@/utils/performance';
-import { writeBackFilmCover } from '@/services/filmCoverWritebackService';
+import { writeBackFilmCover, writeBackFilmCoverById } from '@/services/filmCoverWritebackService';
 
 interface FilmBookCoverProps {
   bookTitle: string;
   bookAuthor: string;
   storedCoverUrl?: string | null;
+  adaptationId?: string; // Optional: enables precise write-back by ID
   className?: string;
 }
 
@@ -19,26 +21,50 @@ interface FilmBookCoverProps {
  * 1. Try cached Supabase URL if stored URL is external
  * 2. Try the stored URL directly
  * 3. Make a live Google Books API call
- * 4. Show fallback icon
+ * 4. Make a live Apple Books API call (last resort)
+ * 5. Show fallback icon
  */
 export const FilmBookCover: React.FC<FilmBookCoverProps> = ({
   bookTitle,
   bookAuthor,
   storedCoverUrl,
+  adaptationId,
   className,
 }) => {
   const [imageState, setImageState] = useState<'loading' | 'loaded' | 'error'>('loading');
   const [displayUrl, setDisplayUrl] = useState<string | null>(null);
   const [attemptStage, setAttemptStage] = useState(0);
+  
+  // Track if we've already tried Apple Books to prevent repeated calls
+  const triedAppleBooksRef = useRef(false);
+
+  // Normalize http:// to https:// for known safe providers
+  const normalizeProtocol = (url: string): string => {
+    if (url.startsWith('http://')) {
+      if (
+        url.includes('books.google.com') ||
+        url.includes('googleusercontent.com') ||
+        url.includes('openlibrary.org') ||
+        url.includes('covers.openlibrary.org') ||
+        url.includes('image.tmdb.org') ||
+        url.includes('archive.org')
+      ) {
+        return url.replace(/^http:\/\//, 'https://');
+      }
+    }
+    return url;
+  };
 
   const tryLoadCover = useCallback(async (stage: number) => {
     // Stage 0: Try stored URL directly (might be Supabase or external)
     if (stage === 0 && storedCoverUrl) {
+      const normalizedUrl = normalizeProtocol(storedCoverUrl);
+      
       // Check if it's already a Supabase URL
-      if (storedCoverUrl.includes('supabase.co/storage')) {
-        setDisplayUrl(storedCoverUrl);
+      if (normalizedUrl.includes('supabase.co/storage')) {
+        setDisplayUrl(normalizedUrl);
         try {
-          await preloadImage(storedCoverUrl);
+          await preloadImage(normalizedUrl);
           setImageState('loaded');
           return;
         } catch {
@@ -61,7 +87,7 @@ export const FilmBookCover: React.FC<FilmBookCoverProps> = ({
 
       // Try original external URL with optimization
       try {
-        const optimizedUrl = getOptimizedImageUrl(storedCoverUrl);
+        const optimizedUrl = getOptimizedImageUrl(normalizedUrl);
         setDisplayUrl(optimizedUrl);
         await preloadImage(optimizedUrl);
         setImageState('loaded');
@@ -73,7 +99,7 @@ export const FilmBookCover: React.FC<FilmBookCoverProps> = ({
       }
     }
 
-    // Stage 1: Live Google Books search (same as preview modal)
+    // Stage 1: Live Google Books search
     if (stage <= 1) {
       try {
         const results = await searchGoogleBooks(`${bookTitle} ${bookAuthor}`, 3);
@@ -85,27 +111,60 @@ export const FilmBookCover: React.FC<FilmBookCoverProps> = ({
         ) || results[0];
 
         if (bestMatch?.coverUrl) {
-          setDisplayUrl(bestMatch.coverUrl);
-          await preloadImage(bestMatch.coverUrl);
+          const normalizedCover = normalizeProtocol(bestMatch.coverUrl);
+          setDisplayUrl(normalizedCover);
+          await preloadImage(normalizedCover);
           setImageState('loaded');
           // Queue for caching so next time it loads faster
           requestImageCache(bestMatch.coverUrl, 'book');
-          // Write back to database so enrichment picks it up
-          writeBackFilmCover(bookTitle, bookAuthor, bestMatch.coverUrl);
+          // Write back to database - use ID if available for precision
+          if (adaptationId) {
+            writeBackFilmCoverById(adaptationId, bestMatch.coverUrl);
+          } else {
+            writeBackFilmCover(bookTitle, bookAuthor, bestMatch.coverUrl);
+          }
           return;
         }
       } catch (error) {
-        console.warn(`Live cover fetch failed for ${bookTitle}:`, error);
+        console.warn(`Google Books cover fetch failed for ${bookTitle}:`, error);
+      }
+    }
+
+    // Stage 2: Apple Books fallback (only for truly missing covers)
+    if (stage <= 2 && !triedAppleBooksRef.current) {
+      triedAppleBooksRef.current = true;
+      try {
+        const appleResult = await searchAppleBooks(bookTitle, bookAuthor);
+        
+        if (appleResult?.coverUrl) {
+          // Apple artwork is typically 100x100, request larger version
+          const largeArtwork = appleResult.coverUrl.replace('100x100', '600x600');
+          setDisplayUrl(largeArtwork);
+          await preloadImage(largeArtwork);
+          setImageState('loaded');
+          // Queue for caching
+          requestImageCache(largeArtwork, 'book');
+          // Write back to database - use ID if available
+          if (adaptationId) {
+            writeBackFilmCoverById(adaptationId, largeArtwork);
+          } else {
+            writeBackFilmCover(bookTitle, bookAuthor, largeArtwork);
+          }
+          return;
+        }
+      } catch (error) {
+        console.warn(`Apple Books cover fetch failed for ${bookTitle}:`, error);
       }
     }
 
     // All stages failed
     setImageState('error');
-  }, [storedCoverUrl, bookTitle, bookAuthor]);
+  }, [storedCoverUrl, bookTitle, bookAuthor, adaptationId]);
 
   useEffect(() => {
     setImageState('loading');
     setAttemptStage(0);
+    triedAppleBooksRef.current = false;
     tryLoadCover(0);
   }, [storedCoverUrl, bookTitle, bookAuthor, tryLoadCover]);
 
@@ -146,10 +205,10 @@ export const FilmBookCover: React.FC<FilmBookCoverProps> = ({
       className={cn('w-full h-full object-cover', className)}
       onError={() => {
         // If img tag errors after preload succeeded, move to next stage
-        if (attemptStage === 0) {
-          setAttemptStage(1);
+        if (attemptStage < 2) {
+          setAttemptStage(prev => prev + 1);
           setImageState('loading');
-          tryLoadCover(1);
+          tryLoadCover(attemptStage + 1);
         } else {
           setImageState('error');
         }

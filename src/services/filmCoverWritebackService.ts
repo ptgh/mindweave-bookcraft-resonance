@@ -66,3 +66,65 @@ export async function writeBackFilmCover(
     return false;
   }
 }
+
+/**
+ * Updates the book_cover_url in sf_film_adaptations by adaptation ID.
+ * This is more precise than title/author matching and should be preferred
+ * when the adaptation ID is available.
+ */
+export async function writeBackFilmCoverById(
+  adaptationId: string,
+  coverUrl: string
+): Promise<boolean> {
+  try {
+    // Don't write back if URL is already a Supabase URL (already cached)
+    if (coverUrl.includes('supabase.co/storage')) {
+      return false;
+    }
+
+    // Check current cover to avoid unnecessary updates
+    const { data: film, error: findError } = await supabase
+      .from('sf_film_adaptations')
+      .select('book_cover_url, book_title')
+      .eq('id', adaptationId)
+      .maybeSingle();
+
+    if (findError || !film) {
+      console.debug(`[WriteBack] Film not found by ID: ${adaptationId}`);
+      return false;
+    }
+
+    // Only update if current cover is null/empty or is an external URL that differs
+    const currentCover = film.book_cover_url;
+    const shouldUpdate = 
+      !currentCover || 
+      currentCover.trim() === '' ||
+      (
+        !currentCover.includes('supabase.co/storage') && 
+        currentCover !== coverUrl
+      );
+
+    if (!shouldUpdate) {
+      console.debug(`[WriteBack] No update needed for ID: ${adaptationId}`);
+      return false;
+    }
+
+    // Update the database with the new cover URL
+    const { error: updateError } = await supabase
+      .from('sf_film_adaptations')
+      .update({ book_cover_url: coverUrl })
+      .eq('id', adaptationId);
+
+    if (updateError) {
+      console.warn(`[WriteBack] Update failed for ID ${adaptationId}:`, updateError);
+      return false;
+    }
+
+    console.log(`[WriteBack] ✓ Updated cover by ID for: ${film.book_title}`);
+    return true;
+  } catch (error) {
+    // Silently fail - this is a background optimization
+    console.debug(`[WriteBack] Error:`, error);
+    return false;
+  }
+}
