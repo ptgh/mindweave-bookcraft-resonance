@@ -258,14 +258,20 @@
 
 /* Prevent iOS zoom on input focus */
 input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
 textarea {
   font-size: 16px !important;
 }
 
 @media (min-width: 768px) {
   input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
   textarea {
-    font-size: 0.75rem !important;
+    font-size: inherit !important;
   }
 }
 
@@ -278,5 +284,78 @@ textarea {
   
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/* ===== PHASE 5: ACCESSIBILITY ENHANCEMENTS ===== */
+
+/* Enhanced focus states for keyboard navigation */
+@layer utilities {
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900;
+  }
+  
+  .focus-ring-inset {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-inset;
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .animate-pulse,
+  .animate-spin {
+    animation: none !important;
+  }
+}
+
+/* ===== PHASE 5: MOBILE TOUCH TARGETS ===== */
+
+/* Ensure minimum touch target size (44x44 per WCAG) */
+@layer utilities {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .touch-target-sm {
+    min-height: 36px;
+    min-width: 36px;
+  }
+}
+
+/* ===== PHASE 5: VISUAL CONSISTENCY ===== */
+
+/* Semantic color utilities using design tokens */
+@layer utilities {
+  .text-primary-accent {
+    color: hsl(var(--primary));
+  }
+  
+  .bg-surface {
+    background-color: hsl(var(--card));
+  }
+  
+  .border-subtle {
+    border-color: hsl(var(--border));
+  }
+}
+
+/* Consistent spacing scale */
+@layer utilities {
+  .section-padding {
+    @apply px-3 sm:px-6 py-4 sm:py-8;
+  }
+  
+  .card-padding {
+    @apply p-3 sm:p-4;
   }
 }

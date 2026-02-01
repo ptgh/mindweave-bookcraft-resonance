@@ -384,12 +384,18 @@ const BookBrowser = () => {
   const combinedBooks = displayBooks();
   const hasBooks = combinedBooks.length > 0 || books.length > 0;
 
-  return (
+    return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-x-hidden">
         <Header />
         
-        <main ref={mainContainerRef} className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+        <main 
+          id="main-content"
+          ref={mainContainerRef} 
+          className="container mx-auto section-padding"
+          role="main"
+          aria-label="Browse science fiction books"
+        >
           <div ref={addFeatureBlockRef} className="feature-block">
             <BookBrowserHeader 
               loading={loading}

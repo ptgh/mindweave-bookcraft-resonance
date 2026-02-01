@@ -46,7 +46,13 @@ const AuthorMatrix = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-x-hidden">
         <Header />
         
-        <main ref={mainContainerRef} className="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+        <main 
+          id="main-content"
+          ref={mainContainerRef} 
+          className="container mx-auto section-padding"
+          role="main"
+          aria-label="Science fiction author directory"
+        >
           <div ref={addFeatureBlockRef}>
             <AuthorMatrixHeader
               searchResults={searchResults}
