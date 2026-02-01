@@ -34,23 +34,29 @@ This audit covers Frontend, Backend, UX/UI, Legacy Code, Cover Art, Supabase, an
 
 ---
 
+## ✅ COMPLETED (Phase 3 - Security Hardening)
+
+### 1. RLS Policy Review - DONE
+- Tightened `scifi_authors` INSERT policy to require `auth.uid() IS NOT NULL`
+- Tightened `sf_directors` INSERT policy to require `auth.uid() IS NOT NULL`
+- Added documentation comments to 5 intentionally permissive policies:
+  - `book_interactions` - anonymous analytics (acceptable)
+  - `performance_metrics` - Core Web Vitals (acceptable)
+  - `search_queries` - search analytics (acceptable)
+  - `contacts` - contact form (acceptable)
+  - `newsletter_subscribers` - signup (acceptable)
+
+### 2. Database Migration (Phase 2) - DONE
+- Dropped `criterion_films` table
+- Removed Criterion columns from `sf_film_adaptations`
+
+---
+
 ## 🔄 STILL PENDING
 
 ### 1. Book Cover Art (94 films with external URLs)
 The `enrich-film-book-covers` function already processes external URLs - no code changes needed.
 **Action Required**: Run the enrichment function from Admin panel to cache all external URLs.
-
-### 2. Database Migration (Phase 3)
-These require Supabase migrations (user approval):
-- Drop `criterion_films` table
-- Remove columns from `sf_film_adaptations`:
-  - `criterion_spine`
-  - `criterion_spine_number` 
-  - `criterion_url`
-  - `is_criterion_collection`
-
-### 3. Security RLS Policies (Phase 3)
-Run the database linter and tighten overly permissive policies.
 
 ### 4. FilmBookCover Database Write-back (Phase 4)
 Currently, successful live fetches are cached but not written back to `sf_film_adaptations.book_cover_url`.
