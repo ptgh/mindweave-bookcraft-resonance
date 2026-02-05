@@ -19,6 +19,7 @@ import { MediaImage } from '@/components/ui/media-image';
 import { FilmBookCover } from '@/components/FilmBookCover';
 import { preloadImages, getHighQualityDisplayUrl } from '@/utils/performance';
 import { cleanPersonName, truncateWithBreak } from '@/utils/textCleaners';
+import { AwardIndicator } from '@/components/AwardBadge';
 import { 
   getYouTubeSearchUrl, 
   extractYouTubeId
@@ -823,11 +824,20 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                             </>
                           )}
                         </div>
-                        <h4 className={`text-[11px] sm:text-xs font-medium line-clamp-3 transition-colors leading-snug mb-auto text-foreground ${
-                          film.adaptation_type === 'original' ? 'group-hover:text-cyan-400' : 'group-hover:text-primary'
-                        }`}>
-                          {film.adaptation_type === 'original' ? film.film_title : film.book_title}
-                        </h4>
+                        <div className="flex items-start gap-1">
+                          <h4 className={`text-[11px] sm:text-xs font-medium line-clamp-3 transition-colors leading-snug mb-auto text-foreground flex-1 ${
+                            film.adaptation_type === 'original' ? 'group-hover:text-cyan-400' : 'group-hover:text-primary'
+                          }`}>
+                            {film.adaptation_type === 'original' ? film.film_title : film.book_title}
+                          </h4>
+                          {film.adaptation_type !== 'original' && (
+                            <AwardIndicator 
+                              title={film.book_title} 
+                              author={film.book_author} 
+                              className="flex-shrink-0 text-[10px]" 
+                            />
+                          )}
+                        </div>
                         {/* Author/Writer + Year - fixed height row */}
                         <div className="mt-2 space-y-0.5">
                           <button

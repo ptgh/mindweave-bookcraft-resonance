@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BookPostCard, BookPostForm, FeaturedSection, CommunityStats, NetworkSection, WhoToFollow } from '@/components/community';
 import { useBookPosts } from '@/hooks/useBookPosts';
 import { useAuth } from '@/hooks/useAuth';
+import SciFiEventsSection from '@/components/SciFiEventsSection';
 import gsap from 'gsap';
 
 const Community: React.FC = () => {
@@ -191,6 +192,9 @@ const Community: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Sci-Fi Events Section */}
+            <SciFiEventsSection />
           </div>
         </main>
 
