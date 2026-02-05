@@ -16,6 +16,7 @@ import ScreenplayReaderModal from "@/components/ScreenplayReaderModal";
 import { supabase } from "@/integrations/supabase/client";
 import { ScifiAuthor } from "@/services/scifiAuthorsService";
 import { AuthorPopup } from "@/components/AuthorPopup";
+import { AwardBadge } from "@/components/AwardBadge";
 
 // Script/comic data interface for original screenplays and comics
 interface ScriptData {
@@ -661,6 +662,15 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
                     <h2 className="text-slate-200 font-bold text-xl leading-tight">
                       {displayData.title}
                     </h2>
+                    {!isScriptMode && (
+                      <AwardBadge 
+                        title={displayData.title} 
+                        author={displayData.author} 
+                        size="md" 
+                        showAll 
+                        className="mt-2"
+                      />
+                    )}
                     {isScriptMode ? (
                       <>
                         <Badge variant="outline" className="mt-1 text-cyan-400 border-cyan-400/30 bg-cyan-400/10 text-xs">

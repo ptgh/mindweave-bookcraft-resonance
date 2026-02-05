@@ -3,6 +3,7 @@ import { Plus, Share2 } from 'lucide-react';
 import { EnrichedPublisherBook } from '@/services/publisherService';
 import ShareBookModal from '@/components/ShareBookModal';
 import EnhancedBookCover from '@/components/EnhancedBookCover';
+import { AwardIndicator } from '@/components/AwardBadge';
 
 interface PublisherBookCardProps {
   book: EnrichedPublisherBook;
@@ -27,9 +28,12 @@ const PublisherBookCard = ({ book, onLogSignal, onPreview }: PublisherBookCardPr
           />
           
           <div className="flex-1 min-w-0">
-            <h3 className="text-slate-200 font-medium text-sm leading-tight mb-1 line-clamp-2">
-              {book.title}
-            </h3>
+            <div className="flex items-start gap-1">
+              <h3 className="text-slate-200 font-medium text-sm leading-tight mb-1 line-clamp-2 flex-1">
+                {book.title}
+              </h3>
+              <AwardIndicator title={book.title} author={book.author} className="flex-shrink-0 text-sm" />
+            </div>
             <p className="text-slate-400 text-xs mb-2 line-clamp-1">
               {book.author}
             </p>
