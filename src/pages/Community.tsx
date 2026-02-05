@@ -4,7 +4,7 @@ import Header from '@/components/Header';
 import { SEOHead } from '@/components/SEOHead';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookPostCard, BookPostForm, FeaturedSection, CommunityStats, NetworkSection, WhoToFollow } from '@/components/community';
+import { BookPostCard, BookPostForm, FeaturedSection, CommunityStats, NetworkSection, WhoToFollow, AwardWinnersShowcase } from '@/components/community';
 import { useBookPosts } from '@/hooks/useBookPosts';
 import { useAuth } from '@/hooks/useAuth';
 import SciFiEventsSection from '@/components/SciFiEventsSection';
@@ -85,6 +85,9 @@ const Community: React.FC = () => {
           <CommunityStats className="mb-8" />
 
           <div ref={contentRef} className="space-y-8">
+            {/* Award Winners Showcase */}
+            <AwardWinnersShowcase />
+
             {/* Featured Section */}
             <FeaturedSection />
 

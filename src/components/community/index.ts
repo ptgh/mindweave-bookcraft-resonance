@@ -6,3 +6,4 @@ export { NetworkSection } from './NetworkSection';
 export { BookSearchAutocomplete } from './BookSearchAutocomplete';
 export { UserTransmissionsPanel } from './UserTransmissionsPanel';
 export { WhoToFollow } from './WhoToFollow';
+export { default as AwardWinnersShowcase } from './AwardWinnersShowcase';
