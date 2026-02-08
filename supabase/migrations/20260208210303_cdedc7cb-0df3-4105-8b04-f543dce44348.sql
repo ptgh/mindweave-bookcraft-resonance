@@ -1,0 +1,1 @@
+ALTER TABLE public.transmissions ADD COLUMN IF NOT EXISTS protagonist text;

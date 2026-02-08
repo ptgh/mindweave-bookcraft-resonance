@@ -10,8 +10,9 @@ interface BookSearchInputProps {
   onValueChange: (value: string) => void;
   onBookSelect: (book: EnhancedBookSuggestion) => void;
   disabled?: boolean;
-  authorFilter?: string; // Filter results by author
-  isEditMode?: boolean; // Disable suggestions when editing existing book
+  authorFilter?: string;
+  isEditMode?: boolean;
+  authorBooks?: EnhancedBookSuggestion[]; // Pre-populated author catalog
 }
 
 const BookSearchInput = ({ 
@@ -21,7 +22,8 @@ const BookSearchInput = ({
   onBookSelect,
   disabled,
   authorFilter,
-  isEditMode = false
+  isEditMode = false,
+  authorBooks = []
 }: BookSearchInputProps) => {
   const [suggestions, setSuggestions] = useState<EnhancedBookSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -93,15 +95,29 @@ const BookSearchInput = ({
   };
 
   const handleInputFocus = () => {
-    if (suggestions.length > 0 && value.length >= 2 && !justSelected) {
+    if (justSelected) return;
+    // Show author books catalog if available and title is short/empty
+    if (authorBooks.length > 0 && value.length < 2) {
+      setSuggestions(authorBooks);
+      setShowSuggestions(true);
+      return;
+    }
+    if (suggestions.length > 0 && value.length >= 2) {
       setShowSuggestions(true);
     }
   };
 
   const handleInputBlur = () => {
-    // Delay hiding suggestions to allow click events
     setTimeout(() => setShowSuggestions(false), 200);
   };
+
+  // Show author catalog when authorBooks change and field is empty
+  useEffect(() => {
+    if (authorBooks.length > 0 && value.length < 2 && !justSelected && !isEditMode) {
+      setSuggestions(authorBooks);
+      setShowSuggestions(true);
+    }
+  }, [authorBooks]);
 
   const handleInputChange = (newValue: string) => {
     // Reset justSelected flag when user starts typing again

@@ -1643,6 +1643,7 @@ export type Database = {
           notes: string | null
           open_count: number | null
           profile_id: string | null
+          protagonist: string | null
           publication_year: number | null
           publisher_series_id: string | null
           reading_velocity_score: number | null
@@ -1667,6 +1668,7 @@ export type Database = {
           notes?: string | null
           open_count?: number | null
           profile_id?: string | null
+          protagonist?: string | null
           publication_year?: number | null
           publisher_series_id?: string | null
           reading_velocity_score?: number | null
@@ -1691,6 +1693,7 @@ export type Database = {
           notes?: string | null
           open_count?: number | null
           profile_id?: string | null
+          protagonist?: string | null
           publication_year?: number | null
           publisher_series_id?: string | null
           reading_velocity_score?: number | null

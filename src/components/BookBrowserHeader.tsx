@@ -110,20 +110,83 @@ const BookBrowserHeader = ({
             .limit(5);
           
           if (pubBooks) {
+            const seenTitles = new Set(results.filter(r => r.type === 'book').map(r => `${r.data.title}-${r.data.author}`.toLowerCase()));
             pubBooks.forEach(book => {
-              results.push({
-                type: 'book',
-                data: {
-                  id: book.id,
-                  title: book.title,
-                  author: book.author,
-                  coverUrl: book.cover_url
-                }
-              });
+              const key = `${book.title}-${book.author}`.toLowerCase();
+              if (!seenTitles.has(key)) {
+                seenTitles.add(key);
+                results.push({
+                  type: 'book',
+                  data: {
+                    id: book.id,
+                    title: book.title,
+                    author: book.author,
+                    coverUrl: book.cover_url
+                  }
+                });
+              }
             });
           }
         } catch (e) {
           console.error('Publisher books search error:', e);
+        }
+
+        // Search author_books table (Author Matrix catalog)
+        try {
+          const { data: authorBooks } = await supabase
+            .from('author_books')
+            .select('id, title, cover_url, author_id, scifi_authors(name)')
+            .or(`title.ilike.%${query}%`)
+            .limit(10);
+          
+          if (authorBooks) {
+            const seenTitles = new Set(results.filter(r => r.type === 'book').map(r => `${r.data.title}-${r.data.author}`.toLowerCase()));
+            authorBooks.forEach((book: any) => {
+              const authorName = book.scifi_authors?.name || '';
+              const key = `${book.title}-${authorName}`.toLowerCase();
+              if (!seenTitles.has(key)) {
+                seenTitles.add(key);
+                results.push({
+                  type: 'book',
+                  data: {
+                    id: book.id,
+                    title: book.title,
+                    author: authorName,
+                    coverUrl: book.cover_url
+                  }
+                });
+              }
+            });
+          }
+
+          // Also search by author name in author_books
+          const { data: authorNameBooks } = await supabase
+            .from('author_books')
+            .select('id, title, cover_url, author_id, scifi_authors!inner(name)')
+            .filter('scifi_authors.name', 'ilike', `%${query}%`)
+            .limit(10);
+
+          if (authorNameBooks) {
+            const seenTitles2 = new Set(results.filter(r => r.type === 'book').map(r => `${r.data.title}-${r.data.author}`.toLowerCase()));
+            authorNameBooks.forEach((book: any) => {
+              const authorName = book.scifi_authors?.name || '';
+              const key = `${book.title}-${authorName}`.toLowerCase();
+              if (!seenTitles2.has(key)) {
+                seenTitles2.add(key);
+                results.push({
+                  type: 'book',
+                  data: {
+                    id: book.id,
+                    title: book.title,
+                    author: authorName,
+                    coverUrl: book.cover_url
+                  }
+                });
+              }
+            });
+          }
+        } catch (e) {
+          console.error('Author books search error:', e);
         }
         
         return results;

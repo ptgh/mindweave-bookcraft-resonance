@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { Edit, Archive, X, Share2 } from "lucide-react";
+import { Edit, Archive, X, Share2, Eye, MessageCircle } from "lucide-react";
 import ShareBookModal from "./ShareBookModal";
+import EnhancedBookPreviewModal from "./EnhancedBookPreviewModal";
+import ProtagonistChatModal from "./ProtagonistChatModal";
 import { gsap } from "gsap";
 import PublisherResonanceBadge from "./PublisherResonanceBadge";
 import PenguinPublisherBadge from "./PenguinPublisherBadge";
@@ -47,6 +49,7 @@ interface BookCardProps {
   onAuthorClick?: (authorName: string) => void;
   bridges?: ConceptualBridge[];
   publicationYear?: number;
+  protagonist?: string;
 }
 
 const BookCard = ({ 
@@ -68,13 +71,16 @@ const BookCard = ({
   onDiscard,
   onAuthorClick,
   bridges = [],
-  publicationYear
+  publicationYear,
+  protagonist
 }: BookCardProps) => {
   const [showActions, setShowActions] = useState(false);
   const [hasFreeEbook, setHasFreeEbook] = useState(false);
   const [appleUrl, setAppleUrl] = useState<string | null>(null);
   const [googleUrl, setGoogleUrl] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const authorUnderlineRef = useRef<HTMLSpanElement>(null);
   const [isInView, setIsInView] = useState(false);
@@ -303,6 +309,13 @@ const BookCard = ({
                 <p className="text-slate-400 text-xs mb-1">{author}</p>
               )}
               
+              {/* Protagonist name */}
+              {protagonist && (
+                <p className="text-cyan-400/70 text-[10px] italic mb-1">
+                  ✦ {protagonist}
+                </p>
+              )}
+              
               {/* AI recommendation badge - inline with author */}
               {aiRecommendation && (
                 <div className="group relative z-[1] mt-1">
@@ -420,7 +433,27 @@ const BookCard = ({
           )}
         </div>
         
-        {/* Share button - subtle icon only */}
+        {/* Preview button */}
+        <button
+          onClick={() => setShowPreviewModal(true)}
+          className="flex items-center justify-center p-1.5 bg-transparent border border-slate-700/40 text-slate-400 rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300"
+          title="Preview"
+        >
+          <Eye className="w-3 h-3" />
+        </button>
+        
+        {/* Chat with protagonist */}
+        {protagonist && (
+          <button
+            onClick={() => setShowChatModal(true)}
+            className="flex items-center justify-center p-1.5 bg-transparent border border-cyan-500/30 text-cyan-400/70 rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300 hover:bg-cyan-400/10"
+            title={`Chat with ${protagonist}`}
+          >
+            <MessageCircle className="w-3 h-3" />
+          </button>
+        )}
+        
+        {/* Share button */}
         <button
           onClick={() => setShowShareModal(true)}
           className="flex items-center justify-center p-1.5 bg-transparent border border-slate-700/40 text-slate-400 rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300"
@@ -440,6 +473,35 @@ const BookCard = ({
             author,
             cover_url: coverUrl || ''
           }}
+        />
+      )}
+
+      {/* Preview Modal */}
+      {showPreviewModal && (
+        <EnhancedBookPreviewModal
+          book={{
+            id: String(id),
+            title,
+            author,
+            cover_url: coverUrl || '',
+            isbn: isbn || '',
+            editorial_note: null,
+            penguin_url: null,
+            series_id: '',
+            created_at: '',
+          }}
+          onClose={() => setShowPreviewModal(false)}
+          onAddBook={() => {}}
+        />
+      )}
+
+      {/* Protagonist Chat Modal */}
+      {showChatModal && protagonist && (
+        <ProtagonistChatModal
+          bookTitle={title}
+          bookAuthor={author}
+          protagonistName={protagonist}
+          onClose={() => setShowChatModal(false)}
         />
       )}
     </div>

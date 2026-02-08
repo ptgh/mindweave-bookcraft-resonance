@@ -1,9 +1,10 @@
 
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import BookSearchInput from "../BookSearchInput";
 import AuthorSearchInput from "../AuthorSearchInput";
 import { EnhancedBookSuggestion } from "@/services/googleBooksApi";
-import { ScifiAuthor } from "@/services/scifiAuthorsService";
+import { ScifiAuthor, AuthorBook, getAuthorBooks } from "@/services/scifiAuthorsService";
 
 interface BookSearchSectionProps {
   titleSearch: string;
@@ -14,8 +15,8 @@ interface BookSearchSectionProps {
   onAuthorSearchChange: (value: string) => void;
   onBookSelect: (book: EnhancedBookSuggestion) => void;
   onAuthorSelect?: (author: ScifiAuthor) => void;
-  selectedAuthorName?: string; // Track selected author for filtering
-  isEditMode?: boolean; // Disable suggestions when editing existing book
+  selectedAuthorName?: string;
+  isEditMode?: boolean;
 }
 
 const BookSearchSection = ({
@@ -30,6 +31,36 @@ const BookSearchSection = ({
   selectedAuthorName,
   isEditMode = false
 }: BookSearchSectionProps) => {
+  const [authorBooks, setAuthorBooks] = useState<EnhancedBookSuggestion[]>([]);
+  const [selectedAuthorId, setSelectedAuthorId] = useState<string | null>(null);
+
+  // Fetch author's book catalog when author is selected
+  useEffect(() => {
+    if (!selectedAuthorId || isEditMode) {
+      setAuthorBooks([]);
+      return;
+    }
+    const fetchAuthorBooks = async () => {
+      try {
+        const books = await getAuthorBooks(selectedAuthorId);
+        const mapped: EnhancedBookSuggestion[] = books.map(b => ({
+          id: b.id,
+          title: b.title,
+          author: selectedAuthorName || '',
+          coverUrl: b.cover_url || '',
+          thumbnailUrl: b.cover_url || '',
+          smallThumbnailUrl: b.cover_url || '',
+          description: b.description || '',
+          categories: b.categories || [],
+        }));
+        setAuthorBooks(mapped);
+      } catch (e) {
+        console.error('Error fetching author books:', e);
+      }
+    };
+    fetchAuthorBooks();
+  }, [selectedAuthorId, selectedAuthorName, isEditMode]);
+
   const handleBookSelection = (book: EnhancedBookSuggestion) => {
     console.log('Book selected in BookSearchSection:', book);
     onBookSelect(book);
@@ -38,6 +69,7 @@ const BookSearchSection = ({
   const handleAuthorSelect = (author: ScifiAuthor) => {
     console.log('Author selected in BookSearchSection:', author);
     onAuthorSearchChange(author.name);
+    setSelectedAuthorId(author.id);
     if (onAuthorSelect) {
       onAuthorSelect(author);
     }
@@ -55,6 +87,7 @@ const BookSearchSection = ({
             onBookSelect={handleBookSelection}
             authorFilter={selectedAuthorName}
             isEditMode={isEditMode}
+            authorBooks={authorBooks}
           />
         </div>
         <div>
