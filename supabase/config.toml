@@ -172,3 +172,6 @@ verify_jwt = true
 
 [functions.infer-protagonist]
 verify_jwt = true
+
+[functions.backfill-protagonists]
+verify_jwt = false
