@@ -1,0 +1,1 @@
+UPDATE public.transmissions SET protagonist = 'Joe Fernwright' WHERE title ILIKE '%Galactic Pot-Healer%';
