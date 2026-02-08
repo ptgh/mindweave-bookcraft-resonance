@@ -932,13 +932,13 @@ const TestBrain = () => {
       
       // Create flowing gradient with multiple color stops
       const stops = [
-        { offset: '0%', color: `${style.colors[0]}20`, opacity: '0.2' },
-        { offset: '15%', color: `${style.colors[1]}40`, opacity: `${style.intensity * 0.25}` },
-        { offset: '35%', color: `${style.colors[0]}`, opacity: `${style.intensity * 0.5}` },
-        { offset: '50%', color: `${style.colors[2]}`, opacity: `${style.intensity * 0.6}` },
-        { offset: '65%', color: `${style.colors[0]}`, opacity: `${style.intensity * 0.5}` },
-        { offset: '85%', color: `${style.colors[1]}40`, opacity: `${style.intensity * 0.25}` },
-        { offset: '100%', color: `${style.colors[0]}20`, opacity: '0.2' }
+        { offset: '0%', color: `${style.colors[0]}20`, opacity: '0.15' },
+        { offset: '15%', color: `${style.colors[1]}40`, opacity: `${style.intensity * 0.2}` },
+        { offset: '35%', color: `${style.colors[0]}`, opacity: `${style.intensity * 0.3}` },
+        { offset: '50%', color: `${style.colors[2]}`, opacity: `${style.intensity * 0.4}` },
+        { offset: '65%', color: `${style.colors[0]}`, opacity: `${style.intensity * 0.3}` },
+        { offset: '85%', color: `${style.colors[1]}40`, opacity: `${style.intensity * 0.2}` },
+        { offset: '100%', color: `${style.colors[0]}20`, opacity: '0.15' }
       ];
 
       stops.forEach(stop => {
@@ -972,7 +972,7 @@ const TestBrain = () => {
 
       // Enhanced appearance with organic timing
       gsap.to(path, {
-        opacity: style.intensity * (style.score > 30 ? 0.6 : 0.45),
+        opacity: style.intensity * (style.score > 30 ? 0.4 : 0.3),
         duration: 2.5 + Math.random() * 1.5,
         delay: index * 0.08 + Math.random() * 0.5,
         ease: "power2.out"
@@ -980,8 +980,8 @@ const TestBrain = () => {
 
       // Living pulsing animation with natural variation
       gsap.to(path, {
-        opacity: style.intensity * 0.7,
-        strokeWidth: baseWidth * (1.1 + scoreNormalized * 0.3),
+        opacity: style.intensity * 0.5,
+        strokeWidth: baseWidth * (1.0 + scoreNormalized * 0.2),
         duration: 3 + Math.random() * 2.5,
         ease: "sine.inOut",
         yoyo: true,
@@ -1009,7 +1009,7 @@ const TestBrain = () => {
                 box-shadow: 0 0 4px ${style.colors[stream % style.colors.length]};
                 z-index: 12;
                 pointer-events: none;
-                opacity: ${style.intensity * 0.5};
+                opacity: ${style.intensity * 0.35};
                 will-change: transform;
               `;
               canvasRef.current?.appendChild(energyParticle);
