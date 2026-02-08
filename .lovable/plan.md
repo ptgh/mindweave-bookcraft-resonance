@@ -1,133 +1,90 @@
 
-## What’s happening (root cause, based on the code + the specific “Do Androids…” case)
 
-### 1) The “main page” card is not using the same cover source as the preview modal
-- In the **grid/card view** (your screenshot with BOOK + FILM cards), the book cover is rendered by **`BookToScreenSection` → `FilmBookCover`**, passing only:
-  - `storedCoverUrl={film.book_cover_url}`
-- In the **preview modal**, cover art can come from **Apple Books / Google Books / Free ebook sources** (runtime lookups), so it often has “two cover options” even when the grid does not.
+# Neural Map Functional Enhancements
 
-Result: the modal can “find” a cover that the grid never attempts (or never persists).
-
-### 2) “Do Androids Dream of Electric Sheep?” specifically has a canonical cover available via `publisher_books`, but the grid doesn’t use it
-In your DB, this title is *linked* (`sf_film_adaptations.book_id` is present). The linked `publisher_books` rows have a valid, reliable publisher cover URL (Gollancz).
-But the card/grid code does not prioritize `publisher_books.cover_url` for linked records; it only uses `sf_film_adaptations.book_cover_url`.
-
-So even when the canonical cover exists, the grid may still show:
-- a missing URL,
-- a stale URL,
-- or a “valid image” that is actually a provider “image not available” placeholder.
-
-### 3) There is also an outlier class caused by HTTP cover URLs (mixed content) in some parts of the app
-`EnhancedBookCover` does an “immediate render” with the first URL it gets and **does not normalize `http://` → `https://`** before using it.
-If any “missing cover” books are coming from `transmissions.cover_url` (which can be `http://books.google.com/...`), Safari/Chrome can block those images on an HTTPS site.
-
-This produces “random” missing covers (outliers) even when the cover exists, because the URL is simply blocked.
+Inspired by the Future Concern reference, these are targeted functional improvements to the Neural Map. No visual changes -- same cyan/teal aesthetic, same translucent overlays, same node rendering.
 
 ---
 
-## Goals (your constraints)
-- Fix the **missing-cover outliers** without big refactors.
-- Focus on cases like “Do Androids…” where there is clearly a good cover available but the grid shows none (or shows a placeholder).
-- Make the grid consistently use the best existing cover source and only fall back to live lookups when needed.
+## 1. Tabbed Bottom Sheet: Details | Graph | Ask
+
+**Current state:** The bottom sheet shows book info, connection breakdown, top related books, tags, and two action buttons (Focus Network, View Book) in a single scrollable view.
+
+**Enhancement:** Add three subtle tab buttons below the header. Content switches based on active tab.
+
+- **Details tab** (default): Current content -- book info, connection reasons, tags. Add a "Connections" list showing typed relationships: same author links show "Same author as [Book]", shared theme links show "Shares [Theme] with [Book]", etc. This gives the directional, labelled connections visible in the reference.
+
+- **Graph tab**: A compact mini-visualization of the node's immediate neighborhood (1-degree connections). Rendered as a simple radial layout using SVG within the sheet -- the focused node in the center, connected nodes around it with lines. Tapping a neighbor in this mini-graph switches the sheet to that node. This mirrors the reference's "Graph" tab without needing a separate page.
+
+- **Ask tab**: The existing BrainChatInterface, but pre-scoped to the selected node. When opening this tab, the chat automatically sets context to "Ask me about [Book Title]" with suggested questions like "What connects this to other books?", "What themes does this explore?", "What should I read next after this?". This reuses the existing `brain-chat` edge function with a node-specific context prompt.
+
+**Technical approach:**
+- Add `activeTab` state to `NeuralMapBottomSheet`
+- Details tab: current content + a new "Connections List" section showing each neighbor with its relationship label
+- Graph tab: small SVG radial layout component (new `BottomSheetMiniGraph.tsx`, ~80 lines)
+- Ask tab: embed a slimmed-down version of BrainChatInterface (reuse existing component with a `scopedNode` prop that pre-populates context)
 
 ---
 
-## Implementation plan (minimal, targeted)
+## 2. Spatial Era/Region Labels on Canvas
 
-### A) Fix the linked-book canonical cover path (this should fix “Do Androids…”)
-1. **Change the `sf_film_adaptations` fetch in `BookToScreenSection`** to include the linked `publisher_books.cover_url` in the same query (single request), using Supabase relational select.
-   - We already fetch `book_id`; we should fetch `publisher_books(cover_url,isbn,title,author)` via the relationship.
-2. **When mapping rows → `FilmAdaptation` objects**, compute an `effective_book_cover_url`:
-   - Prefer `publisher_books.cover_url` when `book_id` exists.
-   - Else fall back to `sf_film_adaptations.book_cover_url`.
-3. **Pass that effective URL into `FilmBookCover`** instead of the raw `film.book_cover_url`.
+**Current state:** The canvas has nodes and edges but no spatial context. Users see a web of connections but can't easily identify clusters or regions.
 
-Why this is minimal:
-- No UI rewrite.
-- No new components.
-- One query tweak + one mapping tweak + one prop tweak.
+**Enhancement:** Detect spatial clusters of nodes that share the same conceptual tag or context tag, and render subtle floating labels on the canvas at the centroid of each cluster.
 
-Expected impact:
-- Any adaptation that’s already linked (`book_id`) will immediately display the canonical publisher cover, even if `book_cover_url` is missing/bad.
+For example, if 5 books tagged "Cyberpunk" are clustered in the upper-left area of the canvas, a label reading "CYBERPUNK" appears near their center, rendered in a very subtle way (matching the existing `text-slate-500/30` aesthetic, small caps, no background).
+
+**Technical approach:**
+- After nodes are placed, compute centroids for each tag that has 3+ nodes
+- Pick the top 4-5 most populated tag clusters to avoid clutter
+- Render as absolutely-positioned `div` elements with `pointer-events: none`, `text-xs`, `text-slate-400/25`, `uppercase`, `tracking-widest`
+- Labels recompute when filters change (only show labels relevant to visible nodes)
+- New small component: `NeuralMapRegionLabels.tsx` (~60 lines)
+- Labels fade in with GSAP after nodes appear
 
 ---
 
-### B) Fix mixed-content outliers for books rendered via `EnhancedBookCover`
-1. In `EnhancedBookCover`, before the “IMMEDIATE RENDER” early return, normalize the first URL:
-   - If it’s `http://` and from known-safe providers (Google Books, googleusercontent, OpenLibrary, TMDB), upgrade to `https://`.
-2. Apply the same normalization when building fallbacks (it already adds https variants, but the immediate-return path bypasses validation).
+## 3. "Find Similar" Discovery Action
 
-Why this matters:
-- This addresses the “some books are missing covers but most are fine” pattern that is typical of mixed-content URL storage.
+**Current state:** "Focus Network" highlights existing connections. There is no way to discover books outside the current connections that might be similar.
 
-Expected impact:
-- Any transmissions/books that still store old `http://books.google.com/...` URLs will start rendering reliably.
+**Enhancement:** Add a "Find Similar" button in the bottom sheet that triggers semantic search (reusing the existing `semantic-search` edge function) to find books from `publisher_books` or `sf_film_adaptations` that are thematically similar but not yet in the user's collection.
 
----
+Results appear in a "Discovery" strip at the bottom of the sheet, showing 3-4 book suggestions with cover art and a reason ("Similar themes: Cyberpunk, Neural Interface"). Each suggestion can be tapped to open the `EnhancedBookPreviewModal` with the usual "Add to Transmission" flow.
 
-### C) Add a “last-mile” fallback for the few remaining outliers (only when needed)
-This is for books that:
-- are **not linked** (`book_id` missing), and
-- have missing/invalid `book_cover_url`, and
-- Google Books search sometimes yields no usable art (or yields “image not available”).
-
-Minimal enhancement (kept strictly to outliers):
-1. Extend `FilmBookCover` to accept an optional `filmId` prop (or `adaptationId`) from `BookToScreenSection`.
-2. If stages fail (stored URL fails + Google Books fails), optionally try **Apple Books search** (re-using existing `searchAppleBooks`) **only in this failure path**.
-3. When Apple Books yields a cover:
-   - render it,
-   - `requestImageCache(coverUrl, 'book')`,
-   - write back to `sf_film_adaptations` using the **film adaptation ID** (more precise than title/author matching).
-     - This requires a very small update to `filmCoverWritebackService` to support “update by adaptation id” (or a tiny new function just for this).
-
-Why this is still “not major”:
-- Apple Books calls only occur for items already failing everything else.
-- The write-back is narrowly scoped and improves the dataset so the fix becomes permanent.
+**Technical approach:**
+- Add a "Find Similar" button alongside "Focus Network" in the bottom sheet actions
+- On click, call the existing `semantic-search` edge function with the node's title + tags as query
+- Filter out books already in the user's transmissions
+- Display results in a horizontal scroll strip (same style as the existing "Most Connected" strip)
+- New helper: `useNeuralMapDiscovery.ts` hook (~50 lines) wrapping the search call
+- Falls back gracefully if no embeddings exist ("No similar books found yet")
 
 ---
 
-## Data-side verification (important because Test vs Live DB can differ)
-To ensure we’re fixing the real thing you’re seeing on the published site:
-1. Check the **Live** database row for the specific adaptation(s) showing missing cover:
-   - Is `sf_film_adaptations.book_id` present?
-   - Is `publisher_books.cover_url` present?
-   - What is `sf_film_adaptations.book_cover_url` currently set to?
-2. If `book_id` exists and `publisher_books.cover_url` is good, plan A alone fixes the UI without needing more enrichment.
-3. If `book_id` is missing, the “Cache External” / enrichment pipeline is the right long-term fix; plan C handles the remaining outliers at runtime and persists the improvement.
+## 4. Typed Connection Labels in Tooltip
+
+**Current state:** Hover tooltip shows title, author, and connection count. No detail about what the connections are.
+
+**Enhancement:** When hovering a node, show the top 2 connection reasons below the connection count. For example: "3 connections -- Same author as Neuromancer -- Shares Cyberpunk with Snow Crash".
+
+**Technical approach:**
+- In the tooltip rendering (lines 1307-1343 of TestBrain.tsx), look up the node's top 2 edges by score using `getTopRelated` and `getEdgeData`
+- Render 1-2 lines of connection reasons below the existing count
+- Minimal code change (~15 lines added to tooltip section)
 
 ---
 
-## Testing checklist (focused on your screenshots)
-1. On the published site, open the BOOK+FILM grid and confirm:
-   - “Do Androids Dream of Electric Sheep?” shows the publisher cover (not “image not available”).
-2. Confirm the preview modal still works and does not regress.
-3. Spot-check a handful of other previously missing covers:
-   - one that’s linked (`book_id` present),
-   - one that’s unlinked (`book_id` null),
-   - one known to have `http://books.google.com/...` in `transmissions.cover_url` (should now render).
-4. Confirm no noticeable performance regression on mobile:
-   - Apple Books fallback should only trigger for truly missing items.
+## Summary of Changes
 
----
+| File | Change |
+|------|--------|
+| `src/components/NeuralMapBottomSheet.tsx` | Add 3 tabs (Details/Graph/Ask), connections list, Find Similar strip |
+| `src/components/BottomSheetMiniGraph.tsx` | New: compact SVG radial graph for Graph tab |
+| `src/hooks/useNeuralMapDiscovery.ts` | New: hook for semantic similarity search from neural map |
+| `src/components/NeuralMapRegionLabels.tsx` | New: spatial cluster labels on canvas |
+| `src/pages/TestBrain.tsx` | Integrate region labels, pass additional props to bottom sheet, enhance tooltip with connection reasons |
+| `src/components/BrainChatInterface.tsx` | Add optional `scopedNode` prop for node-specific Ask context |
 
-## Deliverables (what I will change once you approve)
-- `src/components/BookToScreenSection.tsx`
-  - relational select for `publisher_books.cover_url`
-  - compute & use an “effective” cover URL for the grid
-  - pass optional `filmId` to `FilmBookCover` (if we do plan C)
-- `src/components/FilmBookCover.tsx`
-  - optionally accept `filmId`
-  - only-if-needed Apple Books fallback (optional, for outliers)
-  - precise writeback using adaptation id (via service)
-- `src/components/EnhancedBookCover.tsx`
-  - normalize HTTP → HTTPS for known providers in the immediate-render path
+No visual changes to node rendering, edge styling, colors, or animations. All enhancements are functional: better information density, better discovery, and contextual AI within the existing aesthetic.
 
-No schema changes. No storing images in DB. Only URLs and caching to storage.
-
----
-
-## One critical clarification (affects where we validate)
-Because Lovable has separate **Test** and **Live** environments, the most common reason we “keep looking at this” is:
-- the dataset looks fixed in Test, but the published site is reading Live where those rows still have old URLs.
-
-When implementing, we’ll verify the fix against the same environment you’re observing (published URL / Live DB).
