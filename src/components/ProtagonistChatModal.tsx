@@ -123,15 +123,36 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, onClose 
     if (isSpeaking) return;
     setIsSpeaking(true);
     try {
-      const { data, error } = await supabase.functions.invoke('elevenlabs-tts', {
-        body: { text, voiceName: 'roger' }
-      });
-      if (error) throw error;
+      const response = await fetch(
+        `https://mmnfjeukxandnhdaovzx.supabase.co/functions/v1/elevenlabs-tts`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tbmZqZXVreGFuZG5oZGFvdnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1OTE3NTgsImV4cCI6MjA2NjE2Nzc1OH0.p8NPVC-MHX_pn9_2BHEQODSG6JVPOORXPTVkmtVxc1E',
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tbmZqZXVreGFuZG5oZGFvdnp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1OTE3NTgsImV4cCI6MjA2NjE2Nzc1OH0.p8NPVC-MHX_pn9_2BHEQODSG6JVPOORXPTVkmtVxc1E`,
+          },
+          body: JSON.stringify({ text, voiceName: 'roger' }),
+        }
+      );
+      
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error('TTS HTTP error:', response.status, errText);
+        throw new Error(`TTS failed: ${response.status}`);
+      }
+      
+      const data = await response.json();
       if (data?.audioContent) {
         const audio = new Audio(`data:audio/mpeg;base64,${data.audioContent}`);
         audio.onended = () => setIsSpeaking(false);
+        audio.onerror = (e) => {
+          console.error('Audio playback error:', e);
+          setIsSpeaking(false);
+        };
         await audio.play();
       } else {
+        console.error('TTS: No audioContent in response', data);
         setIsSpeaking(false);
       }
     } catch (err) {
