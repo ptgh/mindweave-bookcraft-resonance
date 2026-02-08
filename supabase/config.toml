@@ -169,3 +169,6 @@ verify_jwt = false
 
 [functions.protagonist-chat]
 verify_jwt = true
+
+[functions.infer-protagonist]
+verify_jwt = true
