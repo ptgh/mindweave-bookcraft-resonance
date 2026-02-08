@@ -77,7 +77,7 @@ const NeuralMapBottomSheet = ({
         
         <div className="absolute -inset-1 bg-cyan-400/5 rounded-t-2xl sm:rounded-2xl blur-lg" />
         
-        <div className="relative bg-slate-900/60 backdrop-blur-xl border border-cyan-400/20 rounded-t-2xl sm:rounded-xl overflow-hidden shadow-[0_0_30px_rgba(34,211,238,0.1)] max-h-[85vh] overflow-y-auto">
+        <div className="relative bg-slate-900/60 backdrop-blur-xl border border-cyan-400/20 rounded-t-2xl sm:rounded-xl overflow-hidden shadow-[0_0_30px_rgba(34,211,238,0.1)] max-h-[85vh] overflow-y-auto scrollbar-hide">
           {/* Header */}
           <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-cyan-400/10 bg-slate-900/40 backdrop-blur-md">
             <div className="flex items-center space-x-2">
@@ -178,15 +178,7 @@ const NeuralMapBottomSheet = ({
                 </div>
               </div>
             )}
-            {discoveryError && discoveryResults.length === 0 && !discoveryLoading && (
-              <p className="text-xs text-slate-500/60 text-center mb-2">{discoveryError}</p>
-            )}
-
             <div className="flex gap-2">
-              <Button size="sm" onClick={onFocusNetwork} className="flex-1 bg-slate-800/50 hover:bg-slate-700/60 text-slate-200 border border-cyan-400/20">
-                <Network className="w-3.5 h-3.5 mr-1.5" />
-                Focus
-              </Button>
               <Button
                 size="sm"
                 onClick={() => findSimilar(node)}

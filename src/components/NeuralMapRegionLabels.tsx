@@ -56,16 +56,17 @@ const NeuralMapRegionLabels = ({ nodes }: NeuralMapRegionLabelsProps) => {
   if (labels.length === 0) return null;
 
   return (
-    <div ref={containerRef} className="absolute inset-0 pointer-events-none" style={{ zIndex: 3 }}>
+    <div ref={containerRef} className="absolute inset-0 pointer-events-none" style={{ zIndex: 5 }}>
       {labels.map(label => (
         <div
           key={label.tag}
-          className="region-label absolute text-slate-400/35 text-[11px] uppercase tracking-[0.25em] font-medium select-none opacity-0"
+          className="region-label absolute text-slate-400/35 text-[11px] uppercase tracking-[0.3em] font-medium select-none opacity-0"
           style={{
             left: label.x,
             top: label.y,
             transform: 'translate(-50%, -50%)',
-            textShadow: '0 0 8px rgba(0,0,0,0.6)'
+            textShadow: '0 0 8px rgba(0,0,0,0.6)',
+            fontWeight: 500
           }}
         >
           {label.tag}

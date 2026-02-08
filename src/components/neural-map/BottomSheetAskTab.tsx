@@ -75,7 +75,7 @@ const BottomSheetAskTab = ({ node, allNodes }: BottomSheetAskTabProps) => {
   return (
     <div className="flex flex-col h-[300px]">
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-hide p-3 space-y-2">
         {messages.length === 0 && (
           <div className="space-y-2">
             <p className="text-xs text-slate-400/70 text-center mb-3">
