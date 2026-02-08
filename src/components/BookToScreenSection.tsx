@@ -1276,10 +1276,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                     className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     <Book className="w-4 h-4" />
-                    {selectedFilm.book_id ? 'View Library Book' : 'View Book'}
-                    {!selectedFilm.book_id && (
-                      <span className="text-[10px] text-muted-foreground ml-1">(unlinked)</span>
-                    )}
+                    View Book
                   </button>
                 )}
               </div>
