@@ -90,6 +90,25 @@ export const saveTransmission = async (transmission: Omit<Transmission, 'id' | '
   
   console.log('Transmission saved successfully:', data);
   
+  // Fire-and-forget: infer protagonist name via AI
+  try {
+    supabase.functions.invoke('infer-protagonist', {
+      body: { bookTitle: transmission.title, bookAuthor: transmission.author }
+    }).then(({ data: inferData }) => {
+      if (inferData?.protagonist) {
+        supabase.from('transmissions')
+          .update({ protagonist: inferData.protagonist })
+          .eq('id', data.id)
+          .then(({ error: updateErr }) => {
+            if (updateErr) console.error('Error updating protagonist:', updateErr);
+            else console.log('Protagonist set to:', inferData.protagonist);
+          });
+      }
+    }).catch(err => console.error('Protagonist inference failed:', err));
+  } catch (e) {
+    console.error('Protagonist inference setup error:', e);
+  }
+
   // Notify followers about the new transmission
   try {
     const { data: followers } = await supabase
