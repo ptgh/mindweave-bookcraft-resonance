@@ -9,9 +9,9 @@ interface BottomSheetMiniGraphProps {
 }
 
 const BottomSheetMiniGraph = ({ node, allNodes, neighbors, onSelectNode }: BottomSheetMiniGraphProps) => {
-  const SIZE = 280;
+  const SIZE = 320;
   const CENTER = SIZE / 2;
-  const RADIUS = 100;
+  const RADIUS = 110;
   const NODE_R = 18;
 
   const getNode = (id: string) => allNodes.find(n => n.id === id);
@@ -110,15 +110,19 @@ const BottomSheetMiniGraph = ({ node, allNodes, neighbors, onSelectNode }: Botto
                 strokeOpacity={0.3} strokeWidth={1}
                 className="hover:stroke-opacity-60 transition-all"
               />
-              {/* Score label */}
-              <text
-                x={n.x} y={n.y + NODE_R + 10}
-                textAnchor="middle" fontSize="8"
-                fill="#94a3b8" fillOpacity={0.6}
-                className="select-none"
+              {/* Title label with word-wrap */}
+              <foreignObject
+                x={n.x - 40} y={n.y + NODE_R + 4}
+                width={80} height={30}
+                className="pointer-events-none"
               >
-                {neighborNode.title.length > 12 ? neighborNode.title.slice(0, 12) + '…' : neighborNode.title}
-              </text>
+                <div
+                  style={{ fontSize: '8px', color: '#94a3b8', opacity: 0.7, textAlign: 'center', lineHeight: '1.2' }}
+                  className="line-clamp-2 select-none"
+                >
+                  {neighborNode.title}
+                </div>
+              </foreignObject>
             </g>
           );
         })}
