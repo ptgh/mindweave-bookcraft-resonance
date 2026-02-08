@@ -1,72 +1,104 @@
 
 
-# Neural Map Refinements: Balance, Polish, and Focus Mode
+# Signal Archive, Transmissions, and Protagonist Voice Chat
 
-## Issues from Screenshots
+## Issues and Features
 
-1. **"Similar" returns empty with error text** -- "No similar books found yet" message clutters the sheet. Should be hidden entirely when empty.
-2. **Scrollbar visible** on the Ask tab response area and discovery strip -- native scrollbar breaks the aesthetic.
-3. **Ask tab text not smooth** -- AI responses rendered as plain text without markdown formatting or smooth scroll.
-4. **Focus button unclear** -- Closes the sheet and dims non-connected nodes, but the effect is too subtle and there's no context for the user about what it does.
-5. **Edge saturation still too dense** -- Despite previous reduction, the mesh still obscures text/labels on dense networks. Further reduction needed.
-6. **Region labels overlapping edges** -- Need better separation.
+### 1. Signal Archive search missing `author_books` results
 
----
+**Root cause**: `BookBrowserHeader.tsx` searches `sf_film_adaptations` and `publisher_books` but never queries the `author_books` table. "Galactic Pot-Healer" exists in `author_books` (linked via Author Matrix) but not in the other two tables, so it never appears in Signal Archive search.
 
-## Fixes
-
-### A) Hide empty "Similar" results and error text
-
-In `NeuralMapBottomSheet.tsx`:
-- Remove the `discoveryError` paragraph entirely (lines 181-183). No message when results are empty -- the "Similar" button already exists for users to try.
-- Keep the discovery results strip only when `discoveryResults.length > 0` (already conditional).
-- Add `scrollbar-hide` class to the discovery strip's scrolling container (line 163).
-
-### B) Hide all scrollbars in bottom sheet
-
-In `NeuralMapBottomSheet.tsx`:
-- Add `scrollbar-hide` class to the main sheet `overflow-y-auto` container (line 80).
-
-In `BottomSheetAskTab.tsx`:
-- Add `scrollbar-hide` class to the messages scroll container (line 78).
-
-### C) Replace Focus button with contextual action
-
-The Focus button sets `focusedBookId` which dims unrelated nodes and highlights the neighborhood. The problem: users don't understand what it does and it just looks like the sheet closed.
-
-**Solution**: Replace the "Focus" button with a "Connections" count badge that's informational, and move the focus behavior to a long-press or make it automatic when viewing the Graph tab. Specifically:
-- Remove the "Focus" button from the action bar.
-- Consolidate to two buttons: "Similar" and "View".
-- When the user taps the **Graph tab**, automatically set a subtle highlight on the selected node's neighbors on the main canvas (without closing the sheet). This gives focus behavior context.
-- Keep the "Exit Focus" button in the header (already exists) for when users close the sheet while focus is active.
-
-### D) Further reduce edge saturation
-
-In `TestBrain.tsx`, the edge rendering:
-- **Lower initial fade-in opacity**: Change from `style.intensity * 0.6` to `style.intensity * 0.4` for score > 30, and `0.3` for weaker edges.
-- **Lower pulse ceiling**: Change from `style.intensity * 0.7` to `style.intensity * 0.5`.
-- **Reduce stroke-width multiplier**: Change from `1.1 + scoreNormalized * 0.3` to `1.0 + scoreNormalized * 0.2`.
-- **Reduce particle opacity**: From `0.5` to `0.35`.
-- **Reduce gradient mid-stop opacities**: Scale `intensity * 0.5` and `0.6` down to `intensity * 0.3` and `0.4`.
-- Net effect: edges are still visible and animated but much softer, allowing text and labels to be clearly readable.
-
-### E) Improve region label visibility
-
-In `NeuralMapRegionLabels.tsx`:
-- Increase `z-index` from 3 to 5 (above edges, below nodes).
-- Add `font-weight: 500` for slightly bolder text.
-- Increase letter-spacing from `0.25em` to `0.3em`.
+**Fix**: Add a third search query in `BookBrowserHeader.tsx` that searches `author_books` joined with `scifi_authors` for the author name. Merge results into the suggestions dropdown, deduplicating by title.
 
 ---
 
-## Technical Summary
+### 2. Author search in Log Signal should show title dropdown
+
+**Current behavior**: When you select an author (e.g. "Philip K. Dick") in the Log Signal modal, the Title field still requires manual typing or Google Books search. There's no way to quickly pick from the author's known catalogue.
+
+**Fix**: In `BookSearchSection.tsx`, when an author is selected via `onAuthorSelect`, fetch that author's books from `author_books` table and pass them as pre-populated suggestions to `BookSearchInput`. Update `BookSearchInput` to accept an optional `authorBooks` prop -- when present and the title field is empty or short, show the author's book list as suggestions instead of requiring a Google Books search.
+
+**Files changed**:
+- `src/components/BookForm/BookSearchSection.tsx` -- fetch author books on selection, pass to BookSearchInput
+- `src/components/BookSearchInput.tsx` -- accept `authorBooks` prop, show as default suggestions when author is selected
+
+---
+
+### 3. Add Preview button to Transmission cards
+
+**Current behavior**: Transmission cards (BookCard) show Edit, Keep, Discard, and Share buttons. No way to preview book details without editing.
+
+**Fix**: Add a "Preview" button to `BookCard.tsx` that opens `EnhancedBookPreviewModal` for that transmission. The button goes in the action row alongside the existing buttons. Transform the transmission data into the `EnrichedPublisherBook` shape the modal expects.
+
+**Files changed**:
+- `src/components/BookCard.tsx` -- add Preview button and modal state
+
+---
+
+### 4. Protagonist name on Transmission cards
+
+**Approach**: Add a `protagonist` column to the `transmissions` table. On save/edit, use the existing `brain-chat` edge function to infer the protagonist name from the book title and author. Display it subtly on the BookCard below the author name.
+
+**Files changed**:
+- New migration: add `protagonist` text column to `transmissions`
+- `src/services/transmissionsService.ts` -- include `protagonist` in the Transmission interface and mapping
+- `src/components/BookCard.tsx` -- display protagonist if available
+- `src/components/BookForm/BookFormModal.tsx` -- add optional protagonist field, auto-populate via AI on save
+
+---
+
+### 5. Protagonist Voice Chat (ElevenLabs)
+
+This is the most ambitious feature. The user wants to "talk to" a book's protagonist (e.g., Joe Fernwright from Galactic Pot-Healer) via text or voice, with responses guarded to stay within the book's narrative.
+
+**Architecture**:
+
+```text
+User (text/voice) --> Frontend component
+  --> brain-chat edge function (with protagonist system prompt)
+  --> AI response (text)
+  --> ElevenLabs TTS edge function (voice reply)
+```
+
+**Implementation**:
+
+a) **New edge function** `protagonist-chat/index.ts`: A specialized chat endpoint that receives the book title, author, protagonist name, and conversation history. The system prompt instructs the AI to roleplay as the protagonist, staying strictly within the book's narrative, events, and world. It refuses to discuss anything outside the book.
+
+b) **New component** `ProtagonistChatModal.tsx`: A modal triggered from the BookCard "Preview" or a dedicated button. Shows a chat interface where users can type messages. Includes a microphone button that uses the existing `elevenlabs-stt` edge function for speech-to-text input, and a speaker button that uses `elevenlabs-tts` for reading the protagonist's responses aloud.
+
+c) **Voice selection**: Use the "Roger" voice (contemplative, intellectual) as default for male protagonists. The voice ID is already configured in the existing `elevenlabs-tts` function.
+
+d) **Guard rails**: The system prompt explicitly instructs the AI:
+   - Only respond as the named protagonist
+   - Only reference events, characters, and world from the specific book
+   - Refuse to break character or discuss real-world topics
+   - If asked about something outside the book, respond in-character ("I don't know what you mean by that...")
+
+**Files changed**:
+- `supabase/functions/protagonist-chat/index.ts` -- new edge function
+- `src/components/ProtagonistChatModal.tsx` -- new chat modal component
+- `src/components/BookCard.tsx` -- add "Chat" button to trigger the modal
+
+---
+
+## Summary of All Changes
 
 | File | Change |
 |------|--------|
-| `src/components/NeuralMapBottomSheet.tsx` | Remove error text, add scrollbar-hide, remove Focus button, auto-focus on Graph tab |
-| `src/components/neural-map/BottomSheetAskTab.tsx` | Add scrollbar-hide to messages area |
-| `src/pages/TestBrain.tsx` | Further reduce edge opacity/width/particles for readability |
-| `src/components/NeuralMapRegionLabels.tsx` | Increase z-index and letter-spacing for label clarity |
+| `src/components/BookBrowserHeader.tsx` | Add `author_books` search query |
+| `src/components/BookForm/BookSearchSection.tsx` | Fetch author books on selection |
+| `src/components/BookSearchInput.tsx` | Accept `authorBooks` prop for quick title selection |
+| `src/components/BookCard.tsx` | Add Preview button, protagonist display, Chat button |
+| `src/services/transmissionsService.ts` | Add `protagonist` field |
+| `supabase/migrations/...` | Add `protagonist` column to transmissions |
+| `supabase/functions/protagonist-chat/index.ts` | New protagonist roleplay chat endpoint |
+| `src/components/ProtagonistChatModal.tsx` | New voice/text chat modal |
 
-No UI/UX design changes. Same cyan aesthetic, same layout, same tabs -- just better balanced and cleaner.
+## Implementation Order
+
+1. Signal Archive search fix (quick data fix)
+2. Author title dropdown in Log Signal
+3. Preview button on transmissions
+4. Protagonist name column and display
+5. Protagonist voice chat modal and edge function
 
