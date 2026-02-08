@@ -166,3 +166,6 @@ verify_jwt = false
 
 [functions.get-streaming-links]
 verify_jwt = false
+
+[functions.protagonist-chat]
+verify_jwt = true
