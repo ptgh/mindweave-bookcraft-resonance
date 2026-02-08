@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -66,7 +65,7 @@ serve(async (req) => {
     });
 
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${resolvedVoiceId}`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${resolvedVoiceId}?output_format=mp3_44100_128`,
       {
         method: 'POST',
         headers: {
@@ -75,8 +74,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           text: trimmedText,
-          model_id: 'eleven_turbo_v2_5', // Fast, high quality
-          output_format: 'mp3_44100_128',
+          model_id: 'eleven_turbo_v2_5',
           voice_settings: {
             stability: 0.5,
             similarity_boost: 0.75,
@@ -99,19 +97,11 @@ serve(async (req) => {
       });
     }
 
-    // Convert audio buffer to base64
     const audioBuffer = await response.arrayBuffer();
-    const base64Audio = base64Encode(audioBuffer);
-
     console.log('TTS generated successfully, audio size:', audioBuffer.byteLength);
 
-    return new Response(JSON.stringify({ 
-      success: true,
-      audioContent: base64Audio,
-      format: 'mp3',
-      voiceId: resolvedVoiceId
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    return new Response(audioBuffer, {
+      headers: { ...corsHeaders, 'Content-Type': 'audio/mpeg' },
     });
 
   } catch (error) {
