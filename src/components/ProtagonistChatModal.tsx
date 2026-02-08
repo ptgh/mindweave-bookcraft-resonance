@@ -123,19 +123,10 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, onClose 
     if (isSpeaking) return;
     setIsSpeaking(true);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-          },
-          body: JSON.stringify({ text, voiceName: 'roger' }),
-        }
-      );
-      const data = await response.json();
+      const { data, error } = await supabase.functions.invoke('elevenlabs-tts', {
+        body: { text, voiceName: 'roger' }
+      });
+      if (error) throw error;
       if (data?.audioContent) {
         const audio = new Audio(`data:audio/mpeg;base64,${data.audioContent}`);
         audio.onended = () => setIsSpeaking(false);
