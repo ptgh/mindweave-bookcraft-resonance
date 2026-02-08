@@ -59,7 +59,7 @@ const BottomSheetAskTab = ({ node, allNodes }: BottomSheetAskTabProps) => {
         }
       });
 
-      const responseText = data?.response || data?.error || 'No response received.';
+      const responseText = data?.reply || data?.response || data?.error || 'No response received.';
       setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), text: responseText, isUser: false }]);
     } catch (e) {
       setMessages(prev => [...prev, {
