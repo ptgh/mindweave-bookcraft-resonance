@@ -11,6 +11,7 @@ import NeuralMapHeader from '@/components/NeuralMapHeader';
 import NeuralMapBottomSheet from '@/components/NeuralMapBottomSheet';
 import NeuralMapLegend from '@/components/NeuralMapLegend';
 import NeuralMapEmptyState from '@/components/NeuralMapEmptyState';
+import NeuralMapRegionLabels from '@/components/NeuralMapRegionLabels';
 import { useGSAPAnimations } from '@/hooks/useGSAPAnimations';
 import { usePatternRecognition } from '@/hooks/usePatternRecognition';
 import { useNeuralMapConnections, NeuralMapEdge } from '@/hooks/useNeuralMapConnections';
@@ -106,7 +107,8 @@ const TestBrain = () => {
     getDirectNeighbors,
     getSecondDegreeNeighbors,
     getTopRelated,
-    getConnectionBreakdown
+    getConnectionBreakdown,
+    getEdgeData
   } = useNeuralMapConnections(visibleNodes, activeFilters.length > 0 ? activeFilters[0] : null);
 
   // NEW: Compute visible edges (sync with visibleNodes)
@@ -1259,6 +1261,9 @@ const TestBrain = () => {
         
         <svg ref={svgRef} className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 2 }} />
 
+        {/* Region labels */}
+        <NeuralMapRegionLabels nodes={visibleNodes} />
+
         {remappingActive && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
             {/* Neural network animation background */}
@@ -1336,6 +1341,24 @@ const TestBrain = () => {
                     <div className="w-1.5 h-1.5 bg-cyan-400/80 rounded-full"></div>
                     <span>{links.filter(link => link.fromId === tooltip.node.id || link.toId === tooltip.node.id).length} connections</span>
                   </div>
+                  {/* Top 2 connection reasons */}
+                  {(() => {
+                    const top2 = getTopRelated(tooltip.node.id, 2);
+                    return top2.map(({ nodeId }) => {
+                      const edgeData = getEdgeData(tooltip.node.id, nodeId);
+                      const neighbor = nodes.find(n => n.id === nodeId);
+                      if (!edgeData || !neighbor) return null;
+                      const reason = edgeData.reasons[0];
+                      let label = '';
+                      if (reason === 'same_author') label = `Same author as ${neighbor.title}`;
+                      else if (reason === 'shared_theme') label = `Shares ${edgeData.sharedTags[0] || 'theme'} with ${neighbor.title}`;
+                      else if (reason === 'shared_subgenre') label = `Shares ${edgeData.sharedTags[0] || 'subgenre'} with ${neighbor.title}`;
+                      else label = `Connected to ${neighbor.title}`;
+                      return (
+                        <p key={nodeId} className="text-[10px] text-cyan-400/40 mt-0.5 line-clamp-1">{label}</p>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
             </div>
@@ -1411,6 +1434,22 @@ const TestBrain = () => {
           allNodes={nodes}
           connectionBreakdown={getConnectionBreakdown(selectedNode.id)}
           topRelated={getTopRelated(selectedNode.id, 4)}
+          typedConnections={(() => {
+            const neighbors = getTopRelated(selectedNode.id, 10);
+            return neighbors.map(({ nodeId }) => {
+              const edgeData = getEdgeData(selectedNode.id, nodeId);
+              const neighbor = nodes.find(n => n.id === nodeId);
+              if (!edgeData || !neighbor) return null;
+              const reason = edgeData.reasons[0];
+              let label = '';
+              if (reason === 'same_author') label = 'Same author as';
+              else if (reason === 'shared_theme') label = `Shares ${edgeData.sharedTags[0] || 'theme'} with`;
+              else if (reason === 'shared_subgenre') label = `Shares ${edgeData.sharedTags[0] || 'subgenre'} with`;
+              else if (reason === 'shared_era') label = `Same era as`;
+              else label = 'Connected to';
+              return { nodeId, label, nodeTitle: neighbor.title };
+            }).filter(Boolean) as Array<{ nodeId: string; label: string; nodeTitle: string }>;
+          })()}
           onClose={() => setSelectedNode(null)}
           onFocusNetwork={() => {
             setFocusedBookId(selectedNode.id);
