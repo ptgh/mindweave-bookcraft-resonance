@@ -37,7 +37,12 @@ const Protagonists: React.FC = () => {
     fetchBooks();
   }, []);
 
-  const filtered = books.filter(b => {
+  // Deduplicate by title (case-insensitive), keeping first occurrence
+  const dedupedBooks = books.filter((b, i, arr) =>
+    arr.findIndex(x => x.title.toLowerCase() === b.title.toLowerCase()) === i
+  );
+
+  const filtered = dedupedBooks.filter(b => {
     const q = search.toLowerCase();
     return !q || b.title.toLowerCase().includes(q) || b.protagonist.toLowerCase().includes(q) || b.author.toLowerCase().includes(q);
   });
@@ -97,8 +102,15 @@ const Protagonists: React.FC = () => {
                   key={book.id}
                   className="group bg-slate-800/30 border border-slate-700/50 rounded-xl overflow-hidden hover:border-violet-500/40 transition-all duration-300 flex flex-col"
                 >
-                  {/* Cover */}
-                  <div className="aspect-[2/3] bg-slate-700/30 relative overflow-hidden">
+                {/* Protagonist name — hero element */}
+                  <div className="px-3 pt-3 pb-1">
+                    <p className="text-base font-semibold text-violet-300 line-clamp-1">
+                      ✦ {book.protagonist}
+                    </p>
+                  </div>
+
+                  {/* Cover — compact */}
+                  <div className="aspect-[3/2] mx-3 bg-slate-700/30 rounded-lg relative overflow-hidden">
                     {book.cover_url ? (
                       <img
                         src={book.cover_url}
@@ -114,12 +126,9 @@ const Protagonists: React.FC = () => {
                   </div>
 
                   {/* Info */}
-                  <div className="p-3 flex-1 flex flex-col">
-                    <h3 className="text-sm font-medium text-slate-200 line-clamp-2 mb-1">{book.title}</h3>
-                    <p className="text-xs text-slate-400 mb-1">{book.author}</p>
-                    <p className="text-xs text-violet-400 mb-3">
-                      ✦ {book.protagonist}
-                    </p>
+                  <div className="px-3 pt-2 pb-3 flex-1 flex flex-col">
+                    <h3 className="text-xs font-medium text-slate-300 line-clamp-2 mb-0.5">{book.title}</h3>
+                    <p className="text-[10px] text-slate-500 mb-2">{book.author}</p>
                     <button
                       onClick={() => setChatTarget(book)}
                       className="mt-auto w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs hover:bg-violet-500/30 transition-colors"
