@@ -118,50 +118,51 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
           />
 
           <div className="flex-1 min-w-0">
-            {/* Title */}
-            <button
-              onClick={() => setShowPreview(true)}
-              className="text-left group relative"
-              onMouseEnter={() => {
-                if (titleUnderlineRef.current) gsap.to(titleUnderlineRef.current, { scaleX: 1, duration: 0.3, ease: 'power2.out' });
-              }}
-              onMouseLeave={() => {
-                if (titleUnderlineRef.current) gsap.to(titleUnderlineRef.current, { scaleX: 0, duration: 0.3, ease: 'power2.in' });
-              }}
-            >
-              <span className="relative text-slate-200 font-medium text-sm leading-tight line-clamp-2">
-                {book.title}
-                <span
-                  ref={titleUnderlineRef}
-                  className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-400"
-                  style={{ transformOrigin: 'left', transform: 'scaleX(0)' }}
-                />
-              </span>
-            </button>
-
-            {/* Author — tight below title */}
-            <button
-              onClick={handleAuthorClick}
-              className="text-left relative block"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = '#60a5fa';
-                if (authorUnderlineRef.current) gsap.to(authorUnderlineRef.current, { scaleX: 1, duration: 0.3, ease: 'power2.out' });
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'rgb(148, 163, 184)';
-                if (authorUnderlineRef.current) gsap.to(authorUnderlineRef.current, { scaleX: 0, duration: 0.3, ease: 'power2.in' });
-              }}
-              style={{ color: 'rgb(148, 163, 184)', transition: 'color 0.3s ease' }}
-            >
-              <span className="relative text-xs">
-                {book.author}
-                <span
-                  ref={authorUnderlineRef}
-                  className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-400"
-                  style={{ transformOrigin: 'left', transform: 'scaleX(0)' }}
-                />
-              </span>
-            </button>
+            {/* Title + Author on same line */}
+            <div className="flex items-baseline gap-1.5 flex-wrap">
+              <button
+                onClick={() => setShowPreview(true)}
+                className="text-left group relative"
+                onMouseEnter={() => {
+                  if (titleUnderlineRef.current) gsap.to(titleUnderlineRef.current, { scaleX: 1, duration: 0.3, ease: 'power2.out' });
+                }}
+                onMouseLeave={() => {
+                  if (titleUnderlineRef.current) gsap.to(titleUnderlineRef.current, { scaleX: 0, duration: 0.3, ease: 'power2.in' });
+                }}
+              >
+                <span className="relative text-slate-200 font-medium text-sm leading-tight">
+                  {book.title}
+                  <span
+                    ref={titleUnderlineRef}
+                    className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-400"
+                    style={{ transformOrigin: 'left', transform: 'scaleX(0)' }}
+                  />
+                </span>
+              </button>
+              <span className="text-slate-600 text-xs">·</span>
+              <button
+                onClick={handleAuthorClick}
+                className="text-left relative"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = '#60a5fa';
+                  if (authorUnderlineRef.current) gsap.to(authorUnderlineRef.current, { scaleX: 1, duration: 0.3, ease: 'power2.out' });
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'rgb(148, 163, 184)';
+                  if (authorUnderlineRef.current) gsap.to(authorUnderlineRef.current, { scaleX: 0, duration: 0.3, ease: 'power2.in' });
+                }}
+                style={{ color: 'rgb(148, 163, 184)', transition: 'color 0.3s ease' }}
+              >
+                <span className="relative text-xs">
+                  {book.author}
+                  <span
+                    ref={authorUnderlineRef}
+                    className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-400"
+                    style={{ transformOrigin: 'left', transform: 'scaleX(0)' }}
+                  />
+                </span>
+              </button>
+            </div>
 
             {/* "Have a conversation with..." label */}
             <p className="mt-2 text-slate-500 text-[10px]">Have a conversation with…</p>
