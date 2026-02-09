@@ -1644,6 +1644,7 @@ export type Database = {
           open_count: number | null
           profile_id: string | null
           protagonist: string | null
+          protagonist_intro: string | null
           publication_year: number | null
           publisher_series_id: string | null
           reading_velocity_score: number | null
@@ -1669,6 +1670,7 @@ export type Database = {
           open_count?: number | null
           profile_id?: string | null
           protagonist?: string | null
+          protagonist_intro?: string | null
           publication_year?: number | null
           publisher_series_id?: string | null
           reading_velocity_score?: number | null
@@ -1694,6 +1696,7 @@ export type Database = {
           open_count?: number | null
           profile_id?: string | null
           protagonist?: string | null
+          protagonist_intro?: string | null
           publication_year?: number | null
           publisher_series_id?: string | null
           reading_velocity_score?: number | null
