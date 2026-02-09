@@ -240,9 +240,13 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
   const filteredAdaptations = React.useMemo(() => {
     let result = adaptations;
     
-    // Filter by "has_script" mode
+    // Filter by "has_script" mode — only show original screenplays and comics, not book adaptations with script links
     if (filterMode === 'has_script') {
-      result = result.filter(film => !!film.script_url);
+      result = result.filter(film => 
+        film.adaptation_type === 'original' || 
+        film.adaptation_type === 'comic' || 
+        film.adaptation_type === 'original_screenplay'
+      );
     }
     
     // Filter by search query
