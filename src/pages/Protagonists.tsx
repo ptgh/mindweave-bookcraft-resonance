@@ -124,7 +124,7 @@ const ProtagonistCard: React.FC<{
             {/* Author — actionable with GSAP underline */}
             <button
               onClick={handleAuthorClick}
-              className="text-left relative mt-0.5"
+              className="text-left relative mt-1.5"
               onMouseEnter={(e) => {
                 e.currentTarget.style.color = '#60a5fa';
                 if (authorUnderlineRef.current) gsap.to(authorUnderlineRef.current, { scaleX: 1, duration: 0.3, ease: 'power2.out' });
@@ -145,26 +145,20 @@ const ProtagonistCard: React.FC<{
               </span>
             </button>
 
-        {/* Protagonist — hero element */}
-            <div className="mt-1.5 flex items-center gap-2">
-              <div className="px-2 py-1 rounded bg-violet-500/10 border border-violet-500/20 inline-flex items-center gap-1.5">
-                <MessageCircle className="w-3 h-3 text-violet-400 flex-shrink-0" />
-                <span className="text-violet-300 text-xs font-semibold line-clamp-1">
-                  {book.protagonist}
-                </span>
-              </div>
-              <button
-                onClick={() => onChat(book)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded bg-violet-500/20 border border-violet-500/30 text-violet-300 text-[11px] font-medium hover:bg-violet-500/30 hover:border-violet-400/50 transition-all duration-300 touch-manipulation active:scale-95 flex-shrink-0"
-              >
-                <MessageCircle className="w-3 h-3" />
-                Speak
-              </button>
-            </div>
+            {/* Protagonist — clickable hero element */}
+            <button
+              onClick={() => onChat(book)}
+              className="mt-2 px-2.5 py-1.5 rounded bg-violet-500/10 border border-violet-500/20 inline-flex items-center gap-1.5 hover:bg-violet-500/20 hover:border-violet-400/40 transition-all duration-300 touch-manipulation active:scale-95"
+            >
+              <MessageCircle className="w-3 h-3 text-violet-400 flex-shrink-0" />
+              <span className="text-violet-300 text-xs font-semibold">
+                {book.protagonist}
+              </span>
+            </button>
 
             {/* Evocative description */}
-            <p className="mt-1.5 text-slate-500 text-[11px] leading-relaxed line-clamp-2 italic">
-              Enter {book.author.split(' ').pop()}'s world — speak to {book.protagonist.split(' ')[0]} about life inside <span className="text-slate-400">{book.title}</span>
+            <p className="mt-2 text-slate-500 text-[11px] leading-relaxed line-clamp-3 italic">
+              Enter {book.author.split(' ').pop()}'s world — speak to {book.protagonist} about life inside <span className="text-slate-400">{book.title}</span>. Who are they? What drives them? Step into the narrative and find out.
             </p>
           </div>
         </div>
