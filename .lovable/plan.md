@@ -1,61 +1,63 @@
 
 
-# Speak to Protagonist -- New Feature
+# Protagonist Card Refinements
 
-## Overview
-Add a dedicated "Speak to Protagonist" page listing all books with identified protagonists, plus promote it via a cycling tile on the Community page, a link on the Home page, and a header navigation item.
+## Issues to Fix
 
-## What Gets Built
+1. **Title and author touching** -- need visible spacing between them
+2. **Protagonist display** -- remove the bordered rectangle badge; show protagonist name as plain text on its own line with a subtle MessageCircle icon and GSAP underline (matching title/author treatment)
+3. **World-specific descriptions** -- use Lovable AI (via a new edge function) to generate a one-line evocative description of each protagonist's world, stored in the database for reuse
+4. **Bad protagonist data** -- "Aldous Huxley" is the author, not a protagonist; "Brave New World Revisited" is non-fiction, so protagonist should be cleared
 
-### 1. New Page: `/protagonists` (ProtagonistDirectory)
-- Fetches all transmissions where `protagonist IS NOT NULL`
-- Displays a grid of book cards, each showing: book cover, title, author, protagonist name (with the existing checkmark style), and a "Chat" button
-- Clicking "Chat" opens the existing `ProtagonistChatModal`
-- Searchable/filterable by book title or protagonist name
-- Styled consistently with existing pages (dark slate gradient, Header, SEOHead)
-- Currently 47 books have protagonists available
+## Changes
 
-### 2. Community Page: Cycling Protagonist Tile
-- New component `ProtagonistShowcase` placed alongside the existing `AwardWinnersShowcase`
-- Shows 3-4 rotating tiles (similar fade-in/out pattern as the award tiles) featuring random protagonists
-- Each tile shows: protagonist name, book title, author, and a "Speak to them" prompt
-- Clicking a tile opens `ProtagonistChatModal` directly
-- Accent color: violet/purple to distinguish from the emerald/amber community palette
+### 1. Fix protagonist data (database)
+- Clear the `protagonist` field for "Brave New World Revisited" (id: 91) since it's non-fiction and has the author name stored as protagonist
 
-### 3. Home Page (Discovery) Menu Link
-- New navigation card added to the feature blocks grid on the Discovery page
-- Icon: `MessageCircle` (violet accent)
-- Label: "Speak to Protagonist"
-- Description: "Chat with characters from your library"
-- Links to `/protagonists`
+### 2. Protagonist card layout (`src/pages/Protagonists.tsx`)
 
-### 4. Header Navigation
-- **Desktop**: New link "Protagonists" added between "Community" and "Book to Screen" (violet accent, matching the feature's identity)
-- **Mobile dropdown**: New menu item with `MessageCircle` icon in the same position
+**Spacing**: Add `mt-2` gap between title and author buttons (currently `mt-1.5`, increase to `mt-2`)
 
-### 5. Routing
-- Add `/protagonists` lazy-loaded route in `App.tsx`
+**Protagonist display**: Replace the bordered violet badge/button with a plain-text clickable element on its own line below the author:
+- Show a small `MessageCircle` icon (w-3 h-3, violet-400) inline with the protagonist name
+- Text styled as `text-violet-300 text-xs font-medium` -- no background, no border, no rectangle
+- Add a GSAP underline ref (violet, matching the blue underlines on title/author) that animates on scroll-in and on hover
+- Clicking triggers `onChat(book)`
+- Consistent placement: always below the author line with `mt-2` spacing
+
+**World description**: Replace the generic template text with AI-generated descriptions. Until the AI description is available, use a shorter fallback: "Step into the world of [Title] and speak to [Protagonist]."
+
+### 3. New edge function: `generate-protagonist-intro` 
+Creates a one-sentence evocative introduction for each protagonist, describing their world (not just the book title). Example output for "Do Androids Dream of Electric Sheep?": *"In a dying Earth choked by radioactive dust, Rick Deckard hunts rogue androids to fund his dream of owning a real animal."*
+
+- Uses Lovable AI (gemini-2.5-flash-lite) with a focused prompt
+- Takes bookTitle, bookAuthor, protagonistName
+- Returns a short (1-2 sentence) world-specific intro
+
+### 4. Store and cache intros
+- Add a `protagonist_intro` column to the `transmissions` table
+- On page load, for any book missing a `protagonist_intro`, fire off the edge function to generate and store it (fire-and-forget, similar to how `infer-protagonist` works)
+- Display the stored intro immediately for books that already have one
 
 ## Technical Details
 
 ### Files Created
-- `src/pages/Protagonists.tsx` -- the dedicated page component
-- `src/components/community/ProtagonistShowcase.tsx` -- cycling tile for Community page
+- `supabase/functions/generate-protagonist-intro/index.ts` -- AI edge function
 
-### Files Modified
-- `src/App.tsx` -- add lazy import and route for `/protagonists`
-- `src/components/Header.tsx` -- add nav link (desktop + mobile)
-- `src/pages/Discovery.tsx` -- add feature block link
-- `src/pages/Community.tsx` -- include `ProtagonistShowcase` component
+### Files Modified  
+- `src/pages/Protagonists.tsx` -- card layout, GSAP underline on protagonist, AI intro fetch
+  
+### Database Changes
+- Add `protagonist_intro` TEXT column to `transmissions` table (via migration)
+- Clear protagonist for "Brave New World Revisited" (id: 91)
 
-### Data Query
-The page fetches from Supabase:
+### Protagonist Line Layout (all cards, consistent)
 ```text
-SELECT id, title, author, protagonist, cover_url
-FROM transmissions
-WHERE protagonist IS NOT NULL AND protagonist != ''
-ORDER BY title ASC
+[Book Title]          <- clickable, GSAP underline, blue
+                      <- mt-2 gap
+[Author Name]         <- clickable, GSAP underline, blue  
+                      <- mt-2 gap
+[icon] [Protagonist]  <- clickable, GSAP underline, violet, no border/bg
+                      <- mt-2 gap
+[AI world intro text] <- italic, slate-500, 11px
 ```
-
-No new database tables or edge functions required -- this reuses the existing `transmissions` table and `ProtagonistChatModal` component.
-
