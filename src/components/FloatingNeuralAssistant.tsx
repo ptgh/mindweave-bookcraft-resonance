@@ -507,7 +507,7 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
 
   return (
     <TooltipProvider>
-      <div className={cn("fixed bottom-6 right-6 z-50", className)}>
+      <div className={cn("fixed z-50", isOpen ? "inset-0 md:inset-auto md:bottom-6 md:right-6" : "bottom-6 right-6", className)}>
         {/* Floating Button (when closed) - smaller, subtle like BrainChatInterface */}
         {!isOpen && (
           <button
@@ -524,11 +524,11 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
           </button>
         )}
 
-        {/* Chat Panel */}
+        {/* Chat Panel - full-screen on mobile, floating on desktop */}
         {isOpen && (
           <div 
             ref={panelRef}
-            className="chat-panel-glow bg-slate-900/85 backdrop-blur-xl border border-cyan-400/30 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden transition-all duration-300 w-96 h-[520px] flex flex-col"
+            className="chat-panel-glow bg-slate-900/85 backdrop-blur-xl border border-cyan-400/30 shadow-2xl shadow-black/50 overflow-hidden transition-all duration-300 flex flex-col w-full h-full md:w-96 md:h-[520px] md:rounded-2xl"
           >
             {/* Header - styled like BrainChatInterface */}
             <div 
