@@ -11,16 +11,11 @@ import { cn } from '@/lib/utils';
 import { useLocation } from 'react-router-dom';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { gsap } from 'gsap';
+import { useVoiceChat } from '@/hooks/useVoiceChat';
+import { useChatPersistence, PersistedMessage } from '@/hooks/useChatPersistence';
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-  isTyping?: boolean;
-  usedMemory?: boolean; // Indicates if AI used long-term memory for this response
-  learnedInsight?: string; // New insight learned from this message
-}
+// Message type re-exported from persistence hook
+type Message = PersistedMessage;
 
 interface FloatingNeuralAssistantProps {
   className?: string;
@@ -28,30 +23,38 @@ interface FloatingNeuralAssistantProps {
 
 export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = ({ className }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const [showQuickActions, setShowQuickActions] = useState(true);
   const [userTransmissions, setUserTransmissions] = useState<any[]>([]);
   const [userName, setUserName] = useState<string | null>(null);
-  const [conversationId, setConversationId] = useState<string | null>(null);
   const [userInsights, setUserInsights] = useState<string | null>(null);
-  const [isLoadingConversation, setIsLoadingConversation] = useState(false);
   const [hasActiveMemory, setHasActiveMemory] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   
   const { user } = useAuth();
   const { toast } = useToast();
   const pageContext = usePageContext();
   const location = useLocation();
+
+  // Extracted hooks for persistence and voice
+  const {
+    messages, setMessages,
+    conversationId,
+    isLoadingConversation,
+    showQuickActions, setShowQuickActions,
+    saveMessage: saveMessageToDb,
+    clearConversation: handleClearConversation,
+  } = useChatPersistence({ userId: user?.id, isOpen });
+
+  const sendMessageRef = useRef<((text: string) => void) | null>(null);
+  const {
+    isRecording, isSpeaking, voiceEnabled,
+    startRecording, stopRecording, speakText, toggleVoice,
+  } = useVoiceChat({
+    onTranscription: (text) => sendMessageRef.current?.(text),
+  });
 
   // Fetch user's transmissions, profile, and insights for AI context
   useEffect(() => {
@@ -92,68 +95,7 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
     fetchUserData();
   }, [user?.id]);
 
-  // Initialize or retrieve existing conversation when chat opens (persistence)
-  useEffect(() => {
-    const initConversation = async () => {
-      if (isOpen && !conversationId && user?.id) {
-        setIsLoadingConversation(true);
-        try {
-          // Find recent conversation (last 24 hours)
-          const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-          const { data: existingConversation } = await supabase
-            .from('chat_conversations')
-            .select('id, title, updated_at')
-            .eq('user_id', user.id)
-            .gte('updated_at', twentyFourHoursAgo)
-            .order('updated_at', { ascending: false })
-            .limit(1)
-            .single();
-          
-          if (existingConversation) {
-            setConversationId(existingConversation.id);
-            
-            // Load previous messages
-            const { data: existingMessages } = await supabase
-              .from('chat_messages')
-              .select('*')
-              .eq('conversation_id', existingConversation.id)
-              .order('created_at', { ascending: true });
-            
-            if (existingMessages && existingMessages.length > 0) {
-              const loadedMessages: Message[] = existingMessages.map(msg => ({
-                id: msg.id,
-                role: msg.role as 'user' | 'assistant',
-                content: msg.content,
-                timestamp: new Date(msg.created_at || Date.now()),
-              }));
-              setMessages(loadedMessages);
-              setShowQuickActions(false);
-            }
-          } else {
-            // Create new conversation
-            const { data, error } = await supabase
-              .from('chat_conversations')
-              .insert({
-                user_id: user.id,
-                title: 'Floating Assistant'
-              })
-              .select()
-              .single();
-
-            if (!error && data) {
-              setConversationId(data.id);
-            }
-          }
-        } catch (error) {
-          console.error('Failed to initialize conversation:', error);
-        } finally {
-          setIsLoadingConversation(false);
-        }
-      }
-    };
-
-    initConversation();
-  }, [isOpen, conversationId, user?.id]);
+  // (Conversation persistence now handled by useChatPersistence hook)
   
   // Hide on Neural Map page (it has its own BrainChatInterface)
   const isNeuralMapPage = location.pathname === '/test-brain';
@@ -234,28 +176,7 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
     tick();
   }, []);
 
-  // Save message to database
-  const saveMessageToDb = useCallback(async (role: 'user' | 'assistant', content: string) => {
-    if (!conversationId) return;
-    
-    try {
-      await supabase
-        .from('chat_messages')
-        .insert({
-          conversation_id: conversationId,
-          role,
-          content,
-        });
-      
-      // Update conversation timestamp
-      await supabase
-        .from('chat_conversations')
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', conversationId);
-    } catch (error) {
-      console.error('Error saving message:', error);
-    }
-  }, [conversationId]);
+  // (Message saving now handled by useChatPersistence hook)
 
   // Send message to AI
   const sendMessage = useCallback(async (text: string) => {
@@ -351,108 +272,11 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
     }
   }, [isLoading, messages, user?.id, userName, userInsights, userTransmissions, conversationId, pageContext, typewriterEffect, voiceEnabled, toast, saveMessageToDb]);
 
-  // Voice input
-  const startRecording = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
+  // Wire sendMessage ref for voice transcription callback
+  sendMessageRef.current = sendMessage;
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        stream.getTracks().forEach(track => track.stop());
-        
-        // Convert to base64 and send to STT
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          const base64Audio = (reader.result as string).split(',')[1];
-          
-          try {
-            const response = await supabase.functions.invoke('elevenlabs-stt', {
-              body: { audio: base64Audio, format: 'webm' },
-            });
-
-            if (response.data?.success && response.data.text) {
-              setInputValue(response.data.text);
-              // Auto-send after transcription
-              sendMessage(response.data.text);
-            } else {
-              toast({
-                title: 'Transcription Failed',
-                description: 'Could not transcribe audio. Please try again.',
-                variant: 'destructive',
-              });
-            }
-          } catch (error) {
-            console.error('STT error:', error);
-            toast({
-              title: 'Voice Input Error',
-              description: 'Speech-to-text service unavailable.',
-              variant: 'destructive',
-            });
-          }
-        };
-        reader.readAsDataURL(audioBlob);
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Recording error:', error);
-      toast({
-        title: 'Microphone Access Denied',
-        description: 'Please allow microphone access for voice input.',
-        variant: 'destructive',
-      });
-    }
-  }, [sendMessage, toast]);
-
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  }, [isRecording]);
-
-  // Text-to-speech
-  const speakText = useCallback(async (text: string) => {
-    if (isSpeaking) {
-      audioRef.current?.pause();
-      setIsSpeaking(false);
-      return;
-    }
-
-    try {
-      setIsSpeaking(true);
-      
-      const response = await supabase.functions.invoke('elevenlabs-tts', {
-        body: { text, voiceName: 'roger' },
-      });
-
-      if (response.data?.success && response.data.audioContent) {
-        const audioUrl = `data:audio/mpeg;base64,${response.data.audioContent}`;
-        const audio = new Audio(audioUrl);
-        audioRef.current = audio;
-        
-        audio.onended = () => setIsSpeaking(false);
-        audio.onerror = () => setIsSpeaking(false);
-        
-        await audio.play();
-      } else {
-        setIsSpeaking(false);
-      }
-    } catch (error) {
-      console.error('TTS error:', error);
-      setIsSpeaking(false);
-    }
-  }, [isSpeaking]);
+  // (Voice input/output now handled by useVoiceChat hook)
+  // (Conversation clearing now handled by useChatPersistence hook)
 
   // Handle quick action click
   const handleQuickAction = (prompt: string) => {
@@ -469,41 +293,6 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
 
   // Don't render on Neural Map page (has its own BrainChatInterface)
   if (!user || isNeuralMapPage) return null;
-
-  // Clear conversation handler - clears UI but AI retains memory
-  const handleClearConversation = async () => {
-    try {
-      // Delete messages from DB if conversation exists
-      if (conversationId) {
-        await supabase
-          .from('chat_messages')
-          .delete()
-          .eq('conversation_id', conversationId);
-        
-        // Delete the conversation record itself
-        await supabase
-          .from('chat_conversations')
-          .delete()
-          .eq('id', conversationId);
-      }
-      
-      // Clear local state
-      setMessages([]);
-      setShowQuickActions(true);
-      setConversationId(null);
-      
-      toast({
-        title: "Conversation cleared",
-        description: "Ready for a fresh start (memory retained)",
-      });
-    } catch (error) {
-      console.error('Error clearing conversation:', error);
-      // Still clear local state even if DB fails
-      setMessages([]);
-      setShowQuickActions(true);
-      setConversationId(null);
-    }
-  };
 
   return (
     <TooltipProvider>
@@ -569,7 +358,7 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-slate-400 hover:text-slate-100"
-                  onClick={(e) => { e.stopPropagation(); setVoiceEnabled(!voiceEnabled); }}
+                  onClick={(e) => { e.stopPropagation(); toggleVoice(); }}
                   title={voiceEnabled ? 'Disable voice' : 'Enable voice'}
                 >
                   {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
