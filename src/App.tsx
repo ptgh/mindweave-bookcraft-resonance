@@ -113,8 +113,10 @@ const AppRoutes = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
-      {/* Global floating AI assistant for all authenticated pages */}
-      <FloatingNeuralAssistant />
+      {/* Global floating AI assistant - wrapped in ErrorBoundary for graceful degradation */}
+      <ErrorBoundary fallback={null}>
+        <FloatingNeuralAssistant />
+      </ErrorBoundary>
     </>
   );
 };

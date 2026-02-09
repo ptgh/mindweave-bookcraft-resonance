@@ -143,14 +143,54 @@ const TestBrain = () => {
           return;
         }
 
+        // Group books by their primary tag for spatial clustering
+        const tagGroups = new Map<string, number[]>();
+        fetchedTransmissions.forEach((t, idx) => {
+          const tags = filterConceptualTags(Array.isArray(t.tags) ? t.tags : []);
+          const primaryTag = tags[0] || 'uncategorized';
+          if (!tagGroups.has(primaryTag)) tagGroups.set(primaryTag, []);
+          tagGroups.get(primaryTag)!.push(idx);
+        });
+
+        // Arrange cluster centers in a circle around the viewport center
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const centerX = vw / 2;
+        const centerY = vh / 2;
+        const clusterRadius = Math.min(vw, vh) * 0.3;
+        const tagList = Array.from(tagGroups.keys());
+        const clusterCenters = new Map<string, { cx: number; cy: number }>();
+        tagList.forEach((tag, i) => {
+          const angle = (2 * Math.PI * i) / tagList.length - Math.PI / 2;
+          clusterCenters.set(tag, {
+            cx: centerX + Math.cos(angle) * clusterRadius,
+            cy: centerY + Math.sin(angle) * clusterRadius,
+          });
+        });
+
+        // Place nodes near their cluster center with jitter
+        const nodePositions: { x: number; y: number }[] = new Array(fetchedTransmissions.length);
+        tagGroups.forEach((indices, tag) => {
+          const center = clusterCenters.get(tag)!;
+          const spread = 40 + indices.length * 12; // bigger cluster = wider spread
+          indices.forEach((idx, j) => {
+            const jitterAngle = (2 * Math.PI * j) / indices.length + Math.random() * 0.5;
+            const jitterR = 20 + Math.random() * spread;
+            nodePositions[idx] = {
+              x: Math.max(80, Math.min(vw - 80, center.cx + Math.cos(jitterAngle) * jitterR)),
+              y: Math.max(120, Math.min(vh - 120, center.cy + Math.sin(jitterAngle) * jitterR)),
+            };
+          });
+        });
+
         const userNodes: BrainNode[] = fetchedTransmissions.map((transmission, index) => ({
           id: `transmission-${transmission.id}`,
           title: transmission.title || 'Unknown Title',
           author: transmission.author || 'Unknown Author',
           tags: filterConceptualTags(Array.isArray(transmission.tags) ? transmission.tags : []),
           contextTags: Array.isArray(transmission.historical_context_tags) ? transmission.historical_context_tags : [],
-          x: Math.random() * (window.innerWidth - 300) + 150,
-          y: Math.random() * (window.innerHeight - 300) + 150,
+          x: nodePositions[index].x,
+          y: nodePositions[index].y,
           coverUrl: transmission.cover_url,
           description: transmission.notes,
           transmissionId: transmission.id
@@ -795,8 +835,8 @@ const TestBrain = () => {
           }
         }, 12000 + Math.random() * 15000);
         
-        // Clean up interval when component unmounts
-        setTimeout(() => clearInterval(burstInterval), 300000);
+        // Store interval for cleanup (instead of setTimeout which leaks)
+        (nodeElement as any)._burstInterval = burstInterval;
       }
     });
 
@@ -808,6 +848,11 @@ const TestBrain = () => {
     
     return () => {
       clearInterval(ambientFlowInterval);
+      // Clean up burst intervals on all nodes
+      canvas.querySelectorAll('.thought-node').forEach(el => {
+        const interval = (el as any)._burstInterval;
+        if (interval) clearInterval(interval);
+      });
       // Reset particle counter on cleanup
       activeParticlesRef.current = 0;
     };
