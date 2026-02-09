@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Brain, BookOpen, Search, Eye, Building, Mail, Users, Film } from "lucide-react";
+import { Brain, BookOpen, Search, Eye, Building, Mail, Users, Film, MessageCircle } from "lucide-react";
 import Header from "@/components/Header";
 import { StandardButton } from "@/components/ui/standard-button";
 import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
@@ -303,6 +303,23 @@ const Discovery: React.FC = () => {
                   <h2 className="text-xl font-medium text-slate-200 mb-2">Community</h2>
                   <p className="text-slate-400 leading-relaxed text-sm">
                     Connect with other readers
+                  </p>
+                </div>
+              </Link>
+            </div>
+
+            <div ref={addFeatureBlockRef} className="feature-block">
+              <Link 
+                to="/protagonists"
+                className="group bg-slate-800/30 border border-slate-700/50 rounded-lg p-8 hover:bg-slate-800/50 hover:border-violet-500/30 transition-all duration-500 hover:shadow-lg hover:shadow-violet-500/10 flex items-center space-x-6 w-full text-left"
+              >
+                <div className="w-12 h-12 bg-violet-500/20 rounded-lg flex items-center justify-center group-hover:bg-violet-500/30 transition-colors">
+                  <MessageCircle className="w-6 h-6 text-violet-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-medium text-slate-200 mb-2">Speak to Protagonist</h2>
+                  <p className="text-slate-400 leading-relaxed text-sm">
+                    Chat with characters from your library
                   </p>
                 </div>
               </Link>

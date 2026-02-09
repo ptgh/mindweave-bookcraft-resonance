@@ -1,4 +1,4 @@
-import { BookOpen, LogOut, Instagram, Menu, Shield, ChevronDown, Database, Sparkles, User, Film, Users } from "lucide-react";
+import { BookOpen, LogOut, Instagram, Menu, Shield, ChevronDown, Database, Sparkles, User, Film, Users, MessageCircle } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { StandardButton } from "./ui/standard-button";
@@ -177,6 +177,17 @@ const Header = () => {
                 }`}
               >
                 Community
+              </Link>
+              <Link
+                to="/protagonists"
+                className={`transition-colors text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap flex items-center gap-1 ${
+                  location.pathname === '/protagonists' 
+                    ? 'text-violet-400' 
+                    : 'text-slate-300 hover:text-violet-400'
+                }`}
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                Protagonists
               </Link>
               <Link
                 to="/book-to-screen"
@@ -405,6 +416,21 @@ const Header = () => {
                   >
                     <Film className="w-4 h-4 text-amber-400/70" />
                     Book to Screen
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/protagonists"
+                    onClick={handleMenuItemTap}
+                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                      location.pathname === '/protagonists'
+                        ? 'text-violet-400'
+                        : 'text-slate-200'
+                    }`}
+                  >
+                    <MessageCircle className="w-4 h-4 text-violet-400/70" />
+                    Protagonists
                   </Link>
                 </DropdownMenuItem>
 
