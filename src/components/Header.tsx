@@ -56,7 +56,7 @@ const Header = () => {
     <header className="bg-slate-900" role="banner" aria-label="Site header">
       <div className="container mx-auto px-4 py-2 md:px-6 md:py-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 md:space-x-3">
+          <div className="flex items-center gap-1 md:gap-3">
             <Link 
               to="/" 
               className="flex items-center space-x-2 md:space-x-3 hover:opacity-80 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded-lg p-1"
@@ -73,12 +73,12 @@ const Header = () => {
               </div>
             </Link>
             
-            {/* Instagram icon - inline next to dot/logo */}
+            {/* Instagram icon - vertically centered with dot */}
             <a
               href="https://instagram.com/leafnode.scifi"
               target="_blank"
               rel="noopener noreferrer"
-              className="lg:hidden text-slate-400 hover:text-blue-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded p-1"
+              className="lg:hidden flex items-center justify-center w-6 h-6 text-slate-400 hover:text-blue-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded"
               aria-label="Follow us on Instagram"
             >
               <Instagram className="w-4 h-4" />
