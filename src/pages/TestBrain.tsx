@@ -72,9 +72,9 @@ const TestBrain = () => {
   // Pattern recognition
   const { clusters, bridges, getBookClusters } = usePatternRecognition(transmissions);
   
-  // Performance optimization: track active particles
+  // Performance optimization: track active particles (reduced cap for clarity)
   const activeParticlesRef = useRef<number>(0);
-  const MAX_PARTICLES = 80;
+  const MAX_PARTICLES = 40;
   const lastHoverTimeRef = useRef<Map<string, number>>(new Map());
   
   // Chat highlighting state
@@ -195,7 +195,7 @@ const TestBrain = () => {
   // Track which cards have been shown to avoid repetition
   const [shownCardIds, setShownCardIds] = useState<Set<string>>(new Set());
 
-  // Occasional floating mini-card - show random book cards subtly every 15-25 seconds
+  // Occasional floating mini-card - show random book cards subtly every 30-50 seconds (reduced frequency)
   useEffect(() => {
     if (nodes.length === 0 || loading) return;
     
@@ -227,15 +227,15 @@ const TestBrain = () => {
       
       setFloatingCard({ node: randomNode, x, y });
       
-      // Auto-hide after 4 seconds
-      setTimeout(() => setFloatingCard(null), 4000);
+      // Auto-hide after 3.5 seconds
+      setTimeout(() => setFloatingCard(null), 3500);
     };
     
-    // Show first card after 8 seconds, then every 15-25 seconds
-    const initialDelay = setTimeout(showRandomCard, 8000);
+    // Show first card after 15 seconds, then every 30-50 seconds (much less frequent)
+    const initialDelay = setTimeout(showRandomCard, 15000);
     const interval = setInterval(() => {
-      if (Math.random() < 0.6) showRandomCard(); // 60% chance to show
-    }, 18000 + Math.random() * 7000);
+      if (Math.random() < 0.35) showRandomCard(); // 35% chance to show (reduced from 60%)
+    }, 35000 + Math.random() * 15000);
     
     return () => {
       clearTimeout(initialDelay);
@@ -356,8 +356,8 @@ const TestBrain = () => {
       
       if (!fromNode || !toNode) return;
 
-      // Reduced waves and particles
-      for (let wave = 0; wave < 2; wave++) {
+      // Single wave only for cleaner visuals
+      for (let wave = 0; wave < 1; wave++) {
         setTimeout(() => {
           // Check again before creating wave
           if (activeParticlesRef.current >= MAX_PARTICLES) return;
@@ -773,10 +773,10 @@ const TestBrain = () => {
         delay: Math.random() * 3
       });
 
-      // Reduced spontaneous activity bursts
+      // Minimal spontaneous activity bursts (greatly reduced for readability)
       if (isHighActivity) {
         const burstInterval = setInterval(() => {
-          if (Math.random() < 0.2 && activeParticlesRef.current < MAX_PARTICLES) {
+          if (Math.random() < 0.08 && activeParticlesRef.current < MAX_PARTICLES) {
             gsap.to(nodeElement, {
               boxShadow: `
                 0 0 ${baseSize * 8}px #00ffff,
@@ -793,7 +793,7 @@ const TestBrain = () => {
               triggerSynapticFiring(node);
             }
           }
-        }, 5000 + Math.random() * 10000);
+        }, 12000 + Math.random() * 15000);
         
         // Clean up interval when component unmounts
         setTimeout(() => clearInterval(burstInterval), 300000);
@@ -803,8 +803,8 @@ const TestBrain = () => {
     // Draw enhanced neural pathways
     drawLivingConnections(svg, nodes, links);
 
-    // Reduced ambient energy flow frequency
-    const ambientFlowInterval = setInterval(createAmbientEnergyFlow, 4000 + Math.random() * 4000);
+    // Greatly reduced ambient energy flow for clarity
+    const ambientFlowInterval = setInterval(createAmbientEnergyFlow, 10000 + Math.random() * 8000);
     
     return () => {
       clearInterval(ambientFlowInterval);
@@ -931,8 +931,8 @@ const TestBrain = () => {
       const style = getConnectionStyle(connection);
       
       // Create flowing gradient with multiple color stops
-      const stops = [
-        { offset: '0%', color: `${style.colors[0]}20`, opacity: '0.15' },
+        const stops = [
+        { offset: '0%', color: `${style.colors[0]}15`, opacity: '0.10' },
         { offset: '15%', color: `${style.colors[1]}40`, opacity: `${style.intensity * 0.2}` },
         { offset: '35%', color: `${style.colors[0]}`, opacity: `${style.intensity * 0.3}` },
         { offset: '50%', color: `${style.colors[2]}`, opacity: `${style.intensity * 0.4}` },
@@ -1034,7 +1034,7 @@ const TestBrain = () => {
           createEnergyStream();
           
           // Less frequent repeat streams
-          setInterval(createEnergyStream, 12000 + Math.random() * 6000);
+          setInterval(createEnergyStream, 25000 + Math.random() * 15000);
         }, Math.random() * 5000);
       }
     });
