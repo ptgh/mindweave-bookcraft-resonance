@@ -24,6 +24,7 @@ const BookToScreen = lazy(() => import("./pages/BookToScreen"));
 const Protagonists = lazy(() => import("./pages/Protagonists"));
 const AdminEnrichment = lazy(() => import("./pages/AdminEnrichment"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
+const ProtagonistApp = lazy(() => import("./pages/ProtagonistApp"));
 
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ShareBook = lazy(() => import("./pages/ShareBook"));
@@ -77,6 +78,7 @@ const AppRoutes = () => {
           <Route path="/auth" element={<Auth />} />
           <Route path="/test-brain" element={<TestBrain />} />
           <Route path="/unsubscribe/:token" element={<Unsubscribe />} />
+          <Route path="/protagonist-app" element={<ProtagonistApp />} />
           <Route path="/share/book/:id" element={<ShareBook />} />
           <Route path="*" element={<Navigate to="/auth" replace />} />
         </Routes>
@@ -105,6 +107,7 @@ const AppRoutes = () => {
           <Route path="/admin/enrichment" element={<AdminEnrichment />} />
           <Route path="/admin/populate" element={<Navigate to="/admin/enrichment" replace />} />
           <Route path="/unsubscribe/:token" element={<Unsubscribe />} />
+          <Route path="/protagonist-app" element={<ProtagonistApp />} />
           <Route path="/share/book/:id" element={<ShareBook />} />
           <Route path="/auth" element={<Navigate to="/" replace />} />
           <Route path="*" element={<NotFound />} />

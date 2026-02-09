@@ -300,11 +300,17 @@ const Header = () => {
                   </Link>
                 </DropdownMenuItem>
 
+                {/* Library Group */}
+                <DropdownMenuSeparator className="bg-blue-500/10" />
+                <div className="px-3 py-1">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">Library</span>
+                </div>
+
                 <DropdownMenuItem asChild>
                   <Link
                     to="/library"
                     onClick={handleMenuItemTap}
-                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer active:scale-[0.98] ${
                       location.pathname === '/library'
                         ? 'text-blue-400'
                         : 'text-slate-200'
@@ -319,36 +325,14 @@ const Header = () => {
                   <Link
                     to="/book-browser"
                     onClick={handleMenuItemTap}
-                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer active:scale-[0.98] ${
                       location.pathname === '/book-browser'
                         ? 'text-blue-400'
                         : 'text-slate-200'
                     }`}
                   >
-                    <div className="w-4 h-4 rounded-full border-2 border-dashed border-blue-400/50 flex items-center justify-center">
-                      <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                    </div>
+                    <Database className="w-4 h-4 text-blue-400/70" />
                     Signal Archive
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/author-matrix"
-                    onClick={handleMenuItemTap}
-                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
-                      location.pathname === '/author-matrix'
-                        ? 'text-blue-400'
-                        : 'text-slate-200'
-                    }`}
-                  >
-                    <div className="w-4 h-4 grid grid-cols-2 gap-0.5">
-                      <div className="w-1.5 h-1.5 rounded-sm bg-blue-400/50" />
-                      <div className="w-1.5 h-1.5 rounded-sm bg-blue-400/70" />
-                      <div className="w-1.5 h-1.5 rounded-sm bg-blue-400/70" />
-                      <div className="w-1.5 h-1.5 rounded-sm bg-blue-400/50" />
-                    </div>
-                    Author Matrix
                   </Link>
                 </DropdownMenuItem>
 
@@ -356,41 +340,43 @@ const Header = () => {
                   <Link
                     to="/insights"
                     onClick={handleMenuItemTap}
-                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer active:scale-[0.98] ${
                       location.pathname === '/insights'
                         ? 'text-blue-400'
                         : 'text-slate-200'
                     }`}
                   >
-                    <div className="w-4 h-4 flex items-center justify-center">
-                      <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
-                    </div>
+                    <Sparkles className="w-4 h-4 text-blue-400/70" />
                     Reading Insights
                   </Link>
                 </DropdownMenuItem>
 
+                {/* Explore Group */}
+                <DropdownMenuSeparator className="bg-blue-500/10" />
+                <div className="px-3 py-1">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">Explore</span>
+                </div>
+
                 <DropdownMenuItem asChild>
                   <Link
-                    to="/publisher-resonance"
+                    to="/author-matrix"
                     onClick={handleMenuItemTap}
-                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
-                      location.pathname === '/publisher-resonance'
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer active:scale-[0.98] ${
+                      location.pathname === '/author-matrix'
                         ? 'text-blue-400'
                         : 'text-slate-200'
                     }`}
                   >
-                    <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-400/30 to-purple-400/30 border border-blue-400/50" />
-                    Publisher Resonance
+                    <Users className="w-4 h-4 text-blue-400/70" />
+                    Author Matrix
                   </Link>
                 </DropdownMenuItem>
-
-                <DropdownMenuSeparator className="bg-blue-500/20" />
 
                 <DropdownMenuItem asChild>
                   <Link
                     to="/test-brain"
                     onClick={handleMenuItemTap}
-                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer active:scale-[0.98] ${
                       location.pathname === '/test-brain'
                         ? 'text-blue-400'
                         : 'text-slate-200'
@@ -406,9 +392,24 @@ const Header = () => {
 
                 <DropdownMenuItem asChild>
                   <Link
+                    to="/publisher-resonance"
+                    onClick={handleMenuItemTap}
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer active:scale-[0.98] ${
+                      location.pathname === '/publisher-resonance'
+                        ? 'text-blue-400'
+                        : 'text-slate-200'
+                    }`}
+                  >
+                    <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-400/30 to-purple-400/30 border border-blue-400/50" />
+                    Publisher Resonance
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                  <Link
                     to="/book-to-screen"
                     onClick={handleMenuItemTap}
-                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer active:scale-[0.98] ${
                       location.pathname === '/book-to-screen'
                         ? 'text-amber-400'
                         : 'text-slate-200'
@@ -419,11 +420,17 @@ const Header = () => {
                   </Link>
                 </DropdownMenuItem>
 
+                {/* Social Group */}
+                <DropdownMenuSeparator className="bg-blue-500/10" />
+                <div className="px-3 py-1">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">Social</span>
+                </div>
+
                 <DropdownMenuItem asChild>
                   <Link
                     to="/protagonists"
                     onClick={handleMenuItemTap}
-                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer active:scale-[0.98] ${
                       location.pathname === '/protagonists'
                         ? 'text-violet-400'
                         : 'text-slate-200'
@@ -438,7 +445,7 @@ const Header = () => {
                   <Link
                     to="/community"
                     onClick={handleMenuItemTap}
-                    className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer active:scale-[0.98] ${
                       location.pathname === '/community'
                         ? 'text-emerald-400'
                         : 'text-slate-200'
