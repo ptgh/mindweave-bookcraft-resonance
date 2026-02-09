@@ -305,7 +305,7 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
       }
 
       const data = response.data;
-      const aiContent = data.response || data.message || 'I apologize, but I encountered an issue processing your request.';
+      const aiContent = data.reply || data.response || data.message || 'I apologize, but I encountered an issue processing your request.';
       
       // Check if AI used memory or learned new insights
       const usedMemory = data.usedMemory || false;
