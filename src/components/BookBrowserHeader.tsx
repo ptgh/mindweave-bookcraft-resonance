@@ -288,7 +288,7 @@ const BookBrowserHeader = ({
       </p>
       
       {/* Search Bar */}
-      <div className="max-w-md mx-auto mb-6 relative">
+      <div className="max-w-md mx-auto mb-6 relative z-50">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input

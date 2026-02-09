@@ -406,7 +406,7 @@ const BookBrowser = () => {
             />
           </div>
 
-          {loading ? (
+          {(loading && !spotlightBook && !fetchedTransmission) ? (
             <div ref={addFeatureBlockRef} className="feature-block text-center py-12">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center">
                 <div className="w-6 h-6 rounded-full border-2 border-blue-400 animate-spin border-t-transparent" />
