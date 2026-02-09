@@ -142,7 +142,7 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
             {/* Author — tight below title */}
             <button
               onClick={handleAuthorClick}
-              className="text-left relative mt-0.5 block"
+              className="text-left relative block"
               onMouseEnter={(e) => {
                 e.currentTarget.style.color = '#60a5fa';
                 if (authorUnderlineRef.current) gsap.to(authorUnderlineRef.current, { scaleX: 1, duration: 0.3, ease: 'power2.out' });
