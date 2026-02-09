@@ -1,63 +1,42 @@
 
 
-# Protagonist Card Refinements
+## Plan: Fix Thematic Search Spotlight + Signal Archive Search Dropdown Overlay
 
-## Issues to Fix
+### Issue 1: Search dropdown not overlaying correctly on Signal Archive
 
-1. **Title and author touching** -- need visible spacing between them
-2. **Protagonist display** -- remove the bordered rectangle badge; show protagonist name as plain text on its own line with a subtle MessageCircle icon and GSAP underline (matching title/author treatment)
-3. **World-specific descriptions** -- use Lovable AI (via a new edge function) to generate a one-line evocative description of each protagonist's world, stored in the database for reuse
-4. **Bad protagonist data** -- "Aldous Huxley" is the author, not a protagonist; "Brave New World Revisited" is non-fiction, so protagonist should be cleared
+**Problem**: The search suggestions dropdown in `BookBrowserHeader.tsx` uses `position: absolute; z-index: 50` but the book cards rendered below in the DOM naturally paint over it. The parent container (`max-w-md mx-auto mb-6 relative`) constrains the stacking context.
 
-## Changes
+**Fix** (in `src/components/BookBrowserHeader.tsx`):
+- Add a higher `z-index` to the parent `relative` container of the search bar so the dropdown sits above all subsequent content.
+- Specifically, change the search wrapper div from `max-w-md mx-auto mb-6 relative` to `max-w-md mx-auto mb-6 relative z-50` -- this ensures the entire search area (including its absolutely-positioned dropdown) renders above the book grid below.
 
-### 1. Fix protagonist data (database)
-- Clear the `protagonist` field for "Brave New World Revisited" (id: 91) since it's non-fiction and has the author name stored as protagonist
+### Issue 2: Selecting a thematic search result doesn't show the book in Signal Archive
 
-### 2. Protagonist card layout (`src/pages/Protagonists.tsx`)
+**Problem**: When clicking a result in the Discovery page semantic search, it stores a SpotlightBook in sessionStorage and navigates to `/book-browser?spotlight=key`. The BookBrowser component reads this on mount and should display it first. However, the `useBookBrowser` hook also auto-loads books on first visit. If the auto-load triggers and sets `loading=true`, the loading spinner replaces the grid -- and by the time loading finishes, `displayBooks()` should include the spotlight. The likely issue is that the spotlight book renders but there is no visual differentiation or "Discovered" banner visible because the auto-load's `loading=true` state masks it, or the spotlight book blends in with the other 18 books.
 
-**Spacing**: Add `mt-2` gap between title and author buttons (currently `mt-1.5`, increase to `mt-2`)
+**Fix** (in `src/pages/BookBrowser.tsx`):
+- When a spotlight book is present, skip the loading state display -- show the spotlight book immediately even while the rest of the collection loads in the background. This means adjusting the conditional rendering so that when `spotlightBook` exists, the book grid renders (with at least the spotlight) rather than showing only the loading spinner.
+- The conditional at line ~409 currently shows: `loading ? <spinner> : hasBooks ? <grid> : ...`. Change this so that when `spotlightBook || fetchedTransmission` is present, it always renders the grid section (even during loading), ensuring the discovered book is immediately visible.
 
-**Protagonist display**: Replace the bordered violet badge/button with a plain-text clickable element on its own line below the author:
-- Show a small `MessageCircle` icon (w-3 h-3, violet-400) inline with the protagonist name
-- Text styled as `text-violet-300 text-xs font-medium` -- no background, no border, no rectangle
-- Add a GSAP underline ref (violet, matching the blue underlines on title/author) that animates on scroll-in and on hover
-- Clicking triggers `onChat(book)`
-- Consistent placement: always below the author line with `mt-2` spacing
+### Technical Details
 
-**World description**: Replace the generic template text with AI-generated descriptions. Until the AI description is available, use a shorter fallback: "Step into the world of [Title] and speak to [Protagonist]."
+**File: `src/components/BookBrowserHeader.tsx`**
+- Line ~230 area: Add `z-50` to the `relative` parent div wrapping the search input and dropdown
 
-### 3. New edge function: `generate-protagonist-intro` 
-Creates a one-sentence evocative introduction for each protagonist, describing their world (not just the book title). Example output for "Do Androids Dream of Electric Sheep?": *"In a dying Earth choked by radioactive dust, Rick Deckard hunts rogue androids to fund his dream of owning a real animal."*
+**File: `src/pages/BookBrowser.tsx`**
+- Line ~409 area: Adjust the ternary rendering logic from:
+  ```
+  loading ? <spinner> : hasBooks ? <grid> : ...
+  ```
+  to:
+  ```
+  (loading && !spotlightBook && !fetchedTransmission) ? <spinner> : hasBooks ? <grid> : ...
+  ```
+  This ensures the spotlight/highlighted book shows immediately upon arrival from thematic search, while the rest of the collection loads behind it.
 
-- Uses Lovable AI (gemini-2.5-flash-lite) with a focused prompt
-- Takes bookTitle, bookAuthor, protagonistName
-- Returns a short (1-2 sentence) world-specific intro
+### What stays the same
+- No changes to styling of book cards, grid layout, or any other UI
+- No changes to the semantic search flow on Discovery page
+- No changes to the spotlight sessionStorage mechanism (it's correct)
+- No changes to the dropdown design -- same look, just properly layered
 
-### 4. Store and cache intros
-- Add a `protagonist_intro` column to the `transmissions` table
-- On page load, for any book missing a `protagonist_intro`, fire off the edge function to generate and store it (fire-and-forget, similar to how `infer-protagonist` works)
-- Display the stored intro immediately for books that already have one
-
-## Technical Details
-
-### Files Created
-- `supabase/functions/generate-protagonist-intro/index.ts` -- AI edge function
-
-### Files Modified  
-- `src/pages/Protagonists.tsx` -- card layout, GSAP underline on protagonist, AI intro fetch
-  
-### Database Changes
-- Add `protagonist_intro` TEXT column to `transmissions` table (via migration)
-- Clear protagonist for "Brave New World Revisited" (id: 91)
-
-### Protagonist Line Layout (all cards, consistent)
-```text
-[Book Title]          <- clickable, GSAP underline, blue
-                      <- mt-2 gap
-[Author Name]         <- clickable, GSAP underline, blue  
-                      <- mt-2 gap
-[icon] [Protagonist]  <- clickable, GSAP underline, violet, no border/bg
-                      <- mt-2 gap
-[AI world intro text] <- italic, slate-500, 11px
-```
