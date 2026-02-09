@@ -70,14 +70,14 @@ const NeuralMapBottomSheet = ({
     >
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative w-full sm:max-w-md sm:mx-4 animate-in slide-in-from-bottom-4 sm:fade-in sm:zoom-in-95 duration-300">
+      <div className="relative w-full sm:max-w-md sm:mx-4 mb-3 animate-in slide-in-from-bottom-4 sm:fade-in sm:zoom-in-95 duration-300">
         <div className="sm:hidden flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 bg-slate-600/60 rounded-full" />
         </div>
         
-        <div className="absolute -inset-1 bg-cyan-400/5 rounded-t-2xl sm:rounded-2xl blur-lg" />
+        <div className="absolute -inset-1 bg-cyan-400/5 rounded-2xl blur-lg" />
         
-        <div className="relative bg-slate-900/60 backdrop-blur-xl border border-cyan-400/20 rounded-t-2xl sm:rounded-xl overflow-hidden shadow-[0_0_30px_rgba(34,211,238,0.1)] max-h-[85vh] overflow-y-auto scrollbar-hide">
+        <div className="relative bg-slate-900/60 backdrop-blur-xl border border-cyan-400/20 rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(34,211,238,0.1)] max-h-[85vh] overflow-y-auto scrollbar-hide">
           {/* Header */}
           <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-cyan-400/10 bg-slate-900/40 backdrop-blur-md">
             <div className="flex items-center space-x-2">
