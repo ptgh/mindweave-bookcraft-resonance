@@ -40,11 +40,11 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a literary expert who writes evocative, immersive one-sentence descriptions of science fiction worlds through the eyes of their protagonists. Your descriptions should make readers feel the atmosphere of the world and want to step into it. Focus on the specific world, setting, and stakes — not plot summaries. Keep it to 1-2 sentences max, under 40 words. Do not use quotation marks. Do not mention the book title or author.`,
+            content: `You are a literary expert who writes evocative, immersive descriptions of science fiction worlds in first person, as if the protagonist is speaking. Write 1-2 sentences, under 40 words. The protagonist should reference the author exactly once (e.g. "In the world ${bookAuthor} built for me..."). Do not use quotation marks. Do not mention the book title. Write in first person as the character.`,
           },
           {
             role: "user",
-            content: `Write a one-sentence evocative world description for ${protagonistName}, the protagonist of "${bookTitle}" by ${bookAuthor}. Describe their world and what drives them, making a reader want to step into that world and speak to them.`,
+            content: `Write a first-person world description as ${protagonistName}, the protagonist of "${bookTitle}" by ${bookAuthor}. Speak as the character, referencing ${bookAuthor} once naturally. Describe your world and what drives you.`,
           },
         ],
       }),

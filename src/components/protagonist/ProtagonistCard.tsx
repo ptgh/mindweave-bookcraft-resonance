@@ -139,10 +139,10 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
               </span>
             </button>
 
-            {/* Author — mt-2 gap */}
+            {/* Author — tight below title */}
             <button
               onClick={handleAuthorClick}
-              className="text-left relative mt-2 block"
+              className="text-left relative mt-0.5 block"
               onMouseEnter={(e) => {
                 e.currentTarget.style.color = '#60a5fa';
                 if (authorUnderlineRef.current) gsap.to(authorUnderlineRef.current, { scaleX: 1, duration: 0.3, ease: 'power2.out' });
@@ -163,10 +163,13 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
               </span>
             </button>
 
+            {/* "Have a conversation with..." label */}
+            <p className="mt-2 text-slate-500 text-[10px]">Have a conversation with…</p>
+
             {/* Protagonist — plain text, violet, GSAP underline, no badge */}
             <button
               onClick={() => onChat(book)}
-              className="text-left relative mt-2 block group inline-flex items-center gap-1.5"
+              className="text-left relative mt-0.5 block group inline-flex items-center gap-1.5"
               onMouseEnter={() => {
                 if (protagonistUnderlineRef.current) gsap.to(protagonistUnderlineRef.current, { scaleX: 1, duration: 0.3, ease: 'power2.out' });
               }}
