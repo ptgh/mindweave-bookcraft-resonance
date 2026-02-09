@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { X, Send, Mic, MicOff, Volume2 } from "lucide-react";
+import { X, Send, Mic, MicOff, Volume2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ProtagonistChatModalProps {
@@ -19,11 +19,55 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, onClose 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+
+  // Load conversation history on mount
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setIsLoadingHistory(false);
+          return;
+        }
+
+        // Find existing conversation
+        const { data: conv } = await supabase
+          .from('protagonist_conversations')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('protagonist_name', protagonistName)
+          .eq('book_title', bookTitle)
+          .maybeSingle();
+
+        if (conv) {
+          setConversationId(conv.id);
+
+          // Load messages
+          const { data: msgs } = await supabase
+            .from('protagonist_messages')
+            .select('role, content')
+            .eq('conversation_id', conv.id)
+            .order('created_at', { ascending: true });
+
+          if (msgs && msgs.length > 0) {
+            setMessages(msgs.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })));
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load chat history:', err);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+    loadHistory();
+  }, [protagonistName, bookTitle]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -44,11 +88,15 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, onClose 
           bookTitle,
           bookAuthor,
           protagonistName,
-          messages: messages.map(m => ({ role: m.role, content: m.content }))
+          conversationId,
         }
       });
 
       if (error) throw error;
+
+      if (data?.conversationId && !conversationId) {
+        setConversationId(data.conversationId);
+      }
 
       const assistantMessage: ChatMessage = { 
         role: 'assistant', 
@@ -161,6 +209,8 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, onClose 
     }
   };
 
+  const hasHistory = messages.length > 0 && !isLoadingHistory;
+
   return createPortal(
     <div 
       className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center"
@@ -184,7 +234,12 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, onClose 
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto scrollbar-hide p-4 space-y-3 min-h-[200px]">
-          {messages.length === 0 && (
+          {isLoadingHistory ? (
+            <div className="text-center py-8">
+              <Loader2 className="w-5 h-5 text-cyan-400/60 animate-spin mx-auto mb-2" />
+              <p className="text-slate-500 text-xs">Loading conversation...</p>
+            </div>
+          ) : messages.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-cyan-400/60 text-sm italic">
                 "{protagonistName} is here. Ask me anything about my story..."
@@ -193,28 +248,36 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, onClose 
                 Conversations stay within the world of "{bookTitle}"
               </p>
             </div>
+          ) : (
+            <>
+              {hasHistory && messages.length > 0 && (
+                <p className="text-center text-slate-600 text-[10px] mb-2">
+                  {protagonistName} remembers you
+                </p>
+              )}
+              {messages.map((msg, i) => (
+                <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[80%] px-3 py-2 rounded-xl text-sm ${
+                    msg.role === 'user' 
+                      ? 'bg-cyan-500/20 border border-cyan-500/30 text-slate-200' 
+                      : 'bg-slate-800 border border-slate-700/50 text-slate-300'
+                  }`}>
+                    {msg.content}
+                    {msg.role === 'assistant' && (
+                      <button 
+                        onClick={() => speakMessage(msg.content)}
+                        className="ml-2 inline-flex text-slate-500 hover:text-cyan-400 transition-colors"
+                        title="Listen"
+                        disabled={isSpeaking}
+                      >
+                        <Volume2 className={`w-3 h-3 ${isSpeaking ? 'animate-pulse text-cyan-400' : ''}`} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </>
           )}
-          {messages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] px-3 py-2 rounded-xl text-sm ${
-                msg.role === 'user' 
-                  ? 'bg-cyan-500/20 border border-cyan-500/30 text-slate-200' 
-                  : 'bg-slate-800 border border-slate-700/50 text-slate-300'
-              }`}>
-                {msg.content}
-                {msg.role === 'assistant' && (
-                  <button 
-                    onClick={() => speakMessage(msg.content)}
-                    className="ml-2 inline-flex text-slate-500 hover:text-cyan-400 transition-colors"
-                    title="Listen"
-                    disabled={isSpeaking}
-                  >
-                    <Volume2 className={`w-3 h-3 ${isSpeaking ? 'animate-pulse text-cyan-400' : ''}`} />
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
           {isLoading && (
             <div className="flex justify-start">
               <div className="bg-slate-800 border border-slate-700/50 px-3 py-2 rounded-xl">

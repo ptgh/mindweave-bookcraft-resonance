@@ -1079,6 +1079,71 @@ export type Database = {
         }
         Relationships: []
       }
+      protagonist_conversations: {
+        Row: {
+          book_author: string
+          book_title: string
+          created_at: string
+          id: string
+          protagonist_name: string
+          updated_at: string
+          user_id: string
+          user_persona: string | null
+        }
+        Insert: {
+          book_author: string
+          book_title: string
+          created_at?: string
+          id?: string
+          protagonist_name: string
+          updated_at?: string
+          user_id: string
+          user_persona?: string | null
+        }
+        Update: {
+          book_author?: string
+          book_title?: string
+          created_at?: string
+          id?: string
+          protagonist_name?: string
+          updated_at?: string
+          user_id?: string
+          user_persona?: string | null
+        }
+        Relationships: []
+      }
+      protagonist_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "protagonist_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "protagonist_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       publisher_books: {
         Row: {
           author: string
