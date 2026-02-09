@@ -39,7 +39,7 @@ serve(async (req) => {
       return json(400, { error: 'Missing required fields' });
     }
 
-    const userId = auth.id;
+    const userId = auth.userId;
     console.log(`Protagonist chat: ${protagonistName} from "${bookTitle}" by ${bookAuthor}, user: ${userId}`);
 
     // Find or create conversation
