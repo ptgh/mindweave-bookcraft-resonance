@@ -175,3 +175,6 @@ verify_jwt = true
 
 [functions.backfill-protagonists]
 verify_jwt = false
+
+[functions.generate-protagonist-intro]
+verify_jwt = false
