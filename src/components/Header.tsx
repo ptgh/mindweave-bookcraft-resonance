@@ -9,7 +9,7 @@ import { NotificationsDropdown } from "./NotificationsDropdown";
 import { ProfileEditModal } from "./ProfileEditModal";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +21,50 @@ import {
   DropdownMenuSubContent,
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
+
+/** Tap-friendly PWA install button with popover instructions */
+function PWAInstallButton({ isIOS, canPrompt, promptInstall, haptic }: {
+  isIOS: boolean;
+  canPrompt: boolean;
+  promptInstall: () => Promise<boolean>;
+  haptic: ReturnType<typeof useHapticFeedback>;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const handleClick = async () => {
+    haptic.impact.medium();
+    if (canPrompt) {
+      await promptInstall();
+      return;
+    }
+    setOpen(true);
+  };
+
+  const message = isIOS
+    ? <>Tap the <span className="text-blue-400 font-medium">Share</span> button in Safari, then tap <span className="text-blue-400 font-medium">"Add to Home Screen"</span></>
+    : <>Open in Chrome, tap the <span className="text-blue-400 font-medium">⋮ menu</span>, then tap <span className="text-blue-400 font-medium">"Add to Home Screen"</span></>;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          onClick={handleClick}
+          className="lg:hidden flex items-center justify-center w-6 h-6 text-slate-400 hover:text-blue-400 transition-colors rounded"
+          aria-label="Install Leafnode app"
+        >
+          <Download className="w-4 h-4 flex-shrink-0" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        side="bottom"
+        align="start"
+        className="max-w-[240px] p-3 bg-slate-800 border-slate-700 text-slate-200 z-[9999]"
+      >
+        <p className="text-xs leading-relaxed">{message}</p>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 const Header = () => {
   const location = useLocation();
@@ -91,52 +135,12 @@ const Header = () => {
 
             {/* PWA Install button - mobile only, when not yet installed */}
             {isMobile && !isInstalled && (
-              isIOS ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => {
-                        haptic.impact.light();
-                      }}
-                      className="lg:hidden flex items-center justify-center w-6 h-6 text-slate-400 hover:text-blue-400 transition-colors rounded"
-                      aria-label="Install Leafnode app"
-                    >
-                      <Download className="w-4 h-4 flex-shrink-0" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[220px] text-center bg-slate-800 border-slate-700 text-slate-200 z-[9999]">
-                    <p className="text-xs">Tap the <span className="text-blue-400">Share</span> button in Safari, then scroll down and tap <span className="text-blue-400">"Add to Home Screen"</span></p>
-                  </TooltipContent>
-                </Tooltip>
-              ) : canPrompt ? (
-                <button
-                  onClick={() => {
-                    haptic.impact.medium();
-                    promptInstall();
-                  }}
-                  className="lg:hidden flex items-center justify-center w-6 h-6 text-slate-400 hover:text-blue-400 transition-colors rounded"
-                  aria-label="Install Leafnode app"
-                >
-                  <Download className="w-4 h-4 flex-shrink-0" />
-                </button>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => {
-                        haptic.impact.light();
-                      }}
-                      className="lg:hidden flex items-center justify-center w-6 h-6 text-slate-400 hover:text-blue-400 transition-colors rounded"
-                      aria-label="Install Leafnode app"
-                    >
-                      <Download className="w-4 h-4 flex-shrink-0" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[220px] text-center bg-slate-800 border-slate-700 text-slate-200 z-[9999]">
-                    <p className="text-xs">Open in your browser and use "Add to Home Screen" to install as an app</p>
-                  </TooltipContent>
-                </Tooltip>
-              )
+              <PWAInstallButton
+                isIOS={isIOS}
+                canPrompt={canPrompt}
+                promptInstall={promptInstall}
+                haptic={haptic}
+              />
             )}
           </div>
           
