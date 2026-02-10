@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Edit, Archive, X, Share2, Eye, MessageCircle } from "lucide-react";
 import ShareBookModal from "./ShareBookModal";
 import EnhancedBookPreviewModal from "./EnhancedBookPreviewModal";
@@ -16,6 +16,7 @@ import { searchFreeEbooks } from "@/services/freeEbookService";
 import { updateTransmission } from "@/services/transmissionsService";
 import { ConceptualBridge } from "@/services/patternRecognition";
 import { filterConceptualTags } from "@/constants/conceptualTags";
+import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 
 interface BookCardProps {
   id: number;
@@ -85,6 +86,7 @@ const BookCard = ({
   const authorUnderlineRef = useRef<HTMLSpanElement>(null);
   const [isInView, setIsInView] = useState(false);
   const [hasAnimated, setHasAnimated] = useState(false);
+  const haptic = useHapticFeedback();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -397,7 +399,7 @@ const BookCard = ({
         <div className="grid grid-cols-3 gap-2 flex-1">
           {onEdit && (
             <button
-              onClick={onEdit}
+              onClick={() => { haptic.selection(); onEdit(); }}
               className="flex items-center justify-center px-3 py-1.5 bg-transparent border border-slate-700/40 text-slate-300 text-[10px] rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300"
               title="Edit"
             >
@@ -407,7 +409,7 @@ const BookCard = ({
           )}
           {onKeep && (
             <button
-              onClick={onKeep}
+              onClick={() => { haptic.impact.medium(); onKeep(); }}
               className={`flex items-center justify-center px-3 py-1.5 bg-transparent border text-[10px] rounded-lg transition-all duration-300 ease-in-out ${
                 is_favorite 
                   ? 'border-cyan-400/80 bg-cyan-400/20 text-cyan-300' 
@@ -423,7 +425,7 @@ const BookCard = ({
           )}
           {onDiscard && (
             <button
-              onClick={onDiscard}
+              onClick={() => { haptic.notification.warning(); onDiscard(); }}
               className="flex items-center justify-center px-3 py-1.5 bg-transparent border border-slate-700/40 text-slate-300 text-[10px] rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300"
               title="Discard"
             >
@@ -435,7 +437,7 @@ const BookCard = ({
         
         {/* Preview button */}
         <button
-          onClick={() => setShowPreviewModal(true)}
+          onClick={() => { haptic.selection(); setShowPreviewModal(true); }}
           className="flex items-center justify-center w-8 h-8 bg-transparent border border-slate-700/40 text-slate-400 rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300"
           title="Preview"
         >
@@ -445,7 +447,7 @@ const BookCard = ({
         {/* Chat with protagonist */}
         {protagonist && (
           <button
-            onClick={() => setShowChatModal(true)}
+            onClick={() => { haptic.selection(); setShowChatModal(true); }}
             className="flex items-center justify-center w-8 h-8 bg-transparent border border-cyan-500/30 text-cyan-400/70 rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300 hover:bg-cyan-400/10"
             title={`Chat with ${protagonist}`}
           >
@@ -455,7 +457,7 @@ const BookCard = ({
         
         {/* Share button */}
         <button
-          onClick={() => setShowShareModal(true)}
+          onClick={() => { haptic.selection(); setShowShareModal(true); }}
           className="flex items-center justify-center w-8 h-8 bg-transparent border border-slate-700/40 text-slate-400 rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300"
           title="Share"
         >
