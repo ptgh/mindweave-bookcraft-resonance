@@ -182,9 +182,18 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
           <div className="w-10 h-1 rounded-full bg-slate-600" />
         </div>
 
-        {/* Header with proper X placement */}
-        <div className="relative px-6 py-4 border-b border-slate-700 flex-shrink-0">
-          <div className="flex items-center space-x-3 mb-3 pr-10">
+        {/* Close button - fixed top-right corner above header */}
+        <button
+          onClick={animateClose}
+          className="absolute right-2 top-2 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-slate-700/80 hover:bg-slate-600 text-slate-400 hover:text-slate-200 transition-colors"
+          aria-label="Close"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        {/* Header */}
+        <div className="px-6 pt-4 pb-3 border-b border-slate-700 flex-shrink-0">
+          <div className="flex items-center space-x-3 mb-2 pr-10">
             <Sparkles className="w-5 h-5 text-blue-400 flex-shrink-0" />
             <h2 className="text-xl font-light text-slate-200">
               Reading Narrative
@@ -208,15 +217,6 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
               Regenerate
             </StandardButton>
           </div>
-
-          {/* Close button - standard top-right position */}
-          <button
-            onClick={animateClose}
-            className="absolute right-3 top-3 w-8 h-8 flex items-center justify-center rounded-full bg-slate-700/60 hover:bg-slate-600 text-slate-400 hover:text-slate-200 transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-4 h-4" />
-          </button>
         </div>
 
         {/* Content - scrollable */}
