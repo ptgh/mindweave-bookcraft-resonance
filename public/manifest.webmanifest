@@ -3,9 +3,12 @@
   "short_name": "Leafnode",
   "description": "Track, discover, and explore science fiction literature with AI-powered insights",
   "start_url": "/",
+  "id": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0D1B2A",
   "theme_color": "#5BB5C4",
+  "categories": ["books", "entertainment"],
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
