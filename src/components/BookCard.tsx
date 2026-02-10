@@ -436,30 +436,30 @@ const BookCard = ({
         {/* Preview button */}
         <button
           onClick={() => setShowPreviewModal(true)}
-          className="flex items-center justify-center p-1.5 bg-transparent border border-slate-700/40 text-slate-400 rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300"
+          className="flex items-center justify-center w-8 h-8 bg-transparent border border-slate-700/40 text-slate-400 rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300"
           title="Preview"
         >
-          <Eye className="w-3 h-3" />
+          <Eye className="w-3 h-3 flex-shrink-0" />
         </button>
         
         {/* Chat with protagonist */}
         {protagonist && (
           <button
             onClick={() => setShowChatModal(true)}
-            className="flex items-center justify-center p-1.5 bg-transparent border border-cyan-500/30 text-cyan-400/70 rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300 hover:bg-cyan-400/10"
+            className="flex items-center justify-center w-8 h-8 bg-transparent border border-cyan-500/30 text-cyan-400/70 rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300 hover:bg-cyan-400/10"
             title={`Chat with ${protagonist}`}
           >
-            <MessageCircle className="w-3 h-3" />
+            <MessageCircle className="w-3 h-3 flex-shrink-0" />
           </button>
         )}
         
         {/* Share button */}
         <button
           onClick={() => setShowShareModal(true)}
-          className="flex items-center justify-center p-1.5 bg-transparent border border-slate-700/40 text-slate-400 rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300"
+          className="flex items-center justify-center w-8 h-8 bg-transparent border border-slate-700/40 text-slate-400 rounded-lg transition-all duration-300 ease-in-out hover:border-cyan-400/60 hover:text-cyan-300"
           title="Share"
         >
-          <Share2 className="w-3 h-3" />
+          <Share2 className="w-3 h-3 flex-shrink-0" />
         </button>
       </div>
 

@@ -78,10 +78,10 @@ const Header = () => {
               href="https://instagram.com/leafnode.scifi"
               target="_blank"
               rel="noopener noreferrer"
-              className="lg:hidden flex items-center justify-center w-6 h-6 text-slate-400 hover:text-blue-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded"
+              className="lg:hidden flex items-center justify-center w-6 h-6 -ml-1 text-slate-400 hover:text-blue-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded"
               aria-label="Follow us on Instagram"
             >
-              <Instagram className="w-4 h-4" />
+              <Instagram className="w-4 h-4 flex-shrink-0" />
             </a>
           </div>
           

@@ -343,11 +343,11 @@ const ShareBookModal = ({ book, onClose }: ShareBookModalProps) => {
     >
       <div className="bg-slate-800/95 border border-slate-700 rounded-xl w-full max-w-sm shadow-2xl max-h-[calc(100dvh-1.5rem)] flex flex-col">
         {/* Header */}
-        <div className="p-3 border-b border-slate-700 flex items-center justify-between flex-shrink-0">
+        <div className="relative p-3 border-b border-slate-700 flex items-center justify-center flex-shrink-0">
           <h2 className="text-slate-200 font-medium text-sm">Share Book</h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-700/50 active:scale-95"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-700/50 active:scale-95"
           >
             <X className="w-5 h-5" />
           </button>
