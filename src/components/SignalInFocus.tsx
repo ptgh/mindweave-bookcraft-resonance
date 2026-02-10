@@ -3,6 +3,7 @@ import { Circle, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { CommunityModal } from "./CommunityModal";
+import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 
 interface SignalInFocusProps {
   book: {
@@ -18,6 +19,7 @@ const SignalInFocus = ({ book, onClick, showCommunity = true }: SignalInFocusPro
   const buttonRef = useRef<HTMLButtonElement>(null);
   const leftButtonRef = useRef<HTMLButtonElement>(null);
   const [showCommunityModal, setShowCommunityModal] = useState(false);
+  const haptic = useHapticFeedback();
 
   useEffect(() => {
     if (!onClick) return;
@@ -62,7 +64,7 @@ const SignalInFocus = ({ book, onClick, showCommunity = true }: SignalInFocusPro
         <div className="flex items-center space-x-2">
           {showCommunity && (
             <button
-              onClick={() => setShowCommunityModal(true)}
+              onClick={() => { haptic.selection(); setShowCommunityModal(true); }}
               className="relative z-10 cursor-pointer hover:scale-110 transition-transform duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded-full p-1 -m-1"
               aria-label="Community"
               title="Explore Community"

@@ -95,25 +95,48 @@ const Header = () => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
+                      onClick={() => {
+                        haptic.impact.light();
+                      }}
                       className="lg:hidden flex items-center justify-center w-6 h-6 text-slate-400 hover:text-blue-400 transition-colors rounded"
                       aria-label="Install Leafnode app"
                     >
                       <Download className="w-4 h-4 flex-shrink-0" />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[200px] text-center bg-slate-800 border-slate-700 text-slate-200">
-                    <p className="text-xs">Tap <span className="text-blue-400">Share</span> → "Add to Home Screen" to install</p>
+                  <TooltipContent side="bottom" className="max-w-[220px] text-center bg-slate-800 border-slate-700 text-slate-200 z-[9999]">
+                    <p className="text-xs">Tap the <span className="text-blue-400">Share</span> button in Safari, then scroll down and tap <span className="text-blue-400">"Add to Home Screen"</span></p>
                   </TooltipContent>
                 </Tooltip>
               ) : canPrompt ? (
                 <button
-                  onClick={() => promptInstall()}
+                  onClick={() => {
+                    haptic.impact.medium();
+                    promptInstall();
+                  }}
                   className="lg:hidden flex items-center justify-center w-6 h-6 text-slate-400 hover:text-blue-400 transition-colors rounded"
                   aria-label="Install Leafnode app"
                 >
                   <Download className="w-4 h-4 flex-shrink-0" />
                 </button>
-              ) : null
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => {
+                        haptic.impact.light();
+                      }}
+                      className="lg:hidden flex items-center justify-center w-6 h-6 text-slate-400 hover:text-blue-400 transition-colors rounded"
+                      aria-label="Install Leafnode app"
+                    >
+                      <Download className="w-4 h-4 flex-shrink-0" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[220px] text-center bg-slate-800 border-slate-700 text-slate-200 z-[9999]">
+                    <p className="text-xs">Open in your browser and use "Add to Home Screen" to install as an app</p>
+                  </TooltipContent>
+                </Tooltip>
+              )
             )}
           </div>
           
