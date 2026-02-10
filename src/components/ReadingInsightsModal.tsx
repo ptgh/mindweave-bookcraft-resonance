@@ -185,10 +185,10 @@ export const ReadingInsightsModal = ({ isOpen, onClose, transmissions }: Reading
         {/* Close button - fixed top-right corner above header */}
         <button
           onClick={animateClose}
-          className="absolute right-2 top-2 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-slate-700/80 hover:bg-slate-600 text-slate-400 hover:text-slate-200 transition-colors"
+          className="absolute right-3 top-3 z-10 p-1 text-slate-400 hover:text-slate-200 transition-colors"
           aria-label="Close"
         >
-          <X className="w-4 h-4" />
+          <X className="w-5 h-5" />
         </button>
 
         {/* Header */}
