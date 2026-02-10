@@ -9,7 +9,7 @@ import { NotificationsDropdown } from "./NotificationsDropdown";
 import { ProfileEditModal } from "./ProfileEditModal";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,14 +22,14 @@ import {
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 
-/** Tap-friendly PWA install button with popover instructions */
+/** Tap-friendly PWA install button */
 function PWAInstallButton({ isIOS, canPrompt, promptInstall, haptic }: {
   isIOS: boolean;
   canPrompt: boolean;
   promptInstall: () => Promise<boolean>;
   haptic: ReturnType<typeof useHapticFeedback>;
 }) {
-  const [open, setOpen] = useState(false);
+  const [showTip, setShowTip] = useState(false);
 
   const handleClick = async () => {
     haptic.impact.medium();
@@ -37,32 +37,38 @@ function PWAInstallButton({ isIOS, canPrompt, promptInstall, haptic }: {
       await promptInstall();
       return;
     }
-    setOpen(true);
+    // Toggle manual instructions
+    setShowTip(prev => !prev);
   };
 
   const message = isIOS
-    ? <>Tap the <span className="text-blue-400 font-medium">Share</span> button in Safari, then tap <span className="text-blue-400 font-medium">"Add to Home Screen"</span></>
-    : <>Open in Chrome, tap the <span className="text-blue-400 font-medium">⋮ menu</span>, then tap <span className="text-blue-400 font-medium">"Add to Home Screen"</span></>;
+    ? 'Tap the Share button in Safari → "Add to Home Screen"'
+    : 'Tap ⋮ menu in Chrome → "Add to Home Screen"';
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          onClick={handleClick}
-          className="lg:hidden flex items-center justify-center w-6 h-6 text-slate-400 hover:text-blue-400 transition-colors rounded"
-          aria-label="Install Leafnode app"
-        >
-          <Download className="w-4 h-4 flex-shrink-0" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        side="bottom"
-        align="start"
-        className="max-w-[240px] p-3 bg-slate-800 border-slate-700 text-slate-200 z-[9999]"
+    <div className="relative">
+      <button
+        onClick={handleClick}
+        className="lg:hidden flex items-center justify-center w-8 h-8 text-slate-400 hover:text-blue-400 active:scale-95 transition-all rounded-lg"
+        aria-label="Install Leafnode app"
       >
-        <p className="text-xs leading-relaxed">{message}</p>
-      </PopoverContent>
-    </Popover>
+        <Download className="w-4 h-4 flex-shrink-0" />
+      </button>
+      {showTip && (
+        <>
+          <div className="fixed inset-0 z-[9998]" onClick={() => setShowTip(false)} />
+          <div className="absolute top-full left-0 mt-2 w-56 p-3 rounded-lg bg-slate-800 border border-slate-600 shadow-xl z-[9999]">
+            <p className="text-xs text-slate-200 leading-relaxed">{message}</p>
+            <button
+              onClick={() => setShowTip(false)}
+              className="mt-2 text-[10px] text-slate-400 hover:text-slate-200"
+            >
+              Dismiss
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -102,7 +108,7 @@ const Header = () => {
   ];
   
   return (
-    <header className="bg-slate-900" role="banner" aria-label="Site header">
+    <header className="bg-slate-900 pt-[env(safe-area-inset-top)]" role="banner" aria-label="Site header">
       <div className="container mx-auto px-4 py-2 md:px-6 md:py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1 md:gap-3">

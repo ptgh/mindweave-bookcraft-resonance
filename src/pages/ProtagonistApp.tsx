@@ -27,7 +27,7 @@ const ProtagonistApp = () => {
       />
       <Header />
 
-      <main className="container mx-auto px-4 py-12 max-w-lg">
+      <main className="container mx-auto px-4 pt-6 pb-12 pb-safe max-w-lg">
         {/* Hero */}
         <div className="text-center mb-10">
           <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-600/20 border border-violet-500/30 flex items-center justify-center">
