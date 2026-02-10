@@ -1,4 +1,4 @@
-import { BookOpen, LogOut, Instagram, Menu, Shield, ChevronDown, Database, Sparkles, User, Film, Users, MessageCircle } from "lucide-react";
+import { BookOpen, LogOut, Instagram, Menu, Shield, ChevronDown, Database, Sparkles, User, Film, Users, MessageCircle, Download } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { StandardButton } from "./ui/standard-button";
@@ -7,6 +7,9 @@ import { useProfile } from "@/hooks/useProfile";
 import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 import { NotificationsDropdown } from "./NotificationsDropdown";
 import { ProfileEditModal } from "./ProfileEditModal";
+import { useInstallPrompt } from "@/hooks/useInstallPrompt";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +29,8 @@ const Header = () => {
   const haptic = useHapticFeedback();
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const { canPrompt, isInstalled, isIOS, promptInstall } = useInstallPrompt();
+  const isMobile = useIsMobile();
 
   const userLabel =
     profile?.display_name?.trim() ||
@@ -83,6 +88,33 @@ const Header = () => {
             >
               <Instagram className="w-4 h-4 flex-shrink-0" />
             </a>
+
+            {/* PWA Install button - mobile only, when not yet installed */}
+            {isMobile && !isInstalled && (
+              isIOS ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      className="lg:hidden flex items-center justify-center w-6 h-6 text-slate-400 hover:text-blue-400 transition-colors rounded"
+                      aria-label="Install Leafnode app"
+                    >
+                      <Download className="w-4 h-4 flex-shrink-0" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[200px] text-center bg-slate-800 border-slate-700 text-slate-200">
+                    <p className="text-xs">Tap <span className="text-blue-400">Share</span> → "Add to Home Screen" to install</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : canPrompt ? (
+                <button
+                  onClick={() => promptInstall()}
+                  className="lg:hidden flex items-center justify-center w-6 h-6 text-slate-400 hover:text-blue-400 transition-colors rounded"
+                  aria-label="Install Leafnode app"
+                >
+                  <Download className="w-4 h-4 flex-shrink-0" />
+                </button>
+              ) : null
+            )}
           </div>
           
           <div className="flex items-center gap-2 md:gap-6 min-w-0">

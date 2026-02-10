@@ -1,44 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { MessageCircle, Download, Share2, Smartphone } from 'lucide-react';
 import Header from '@/components/Header';
 import { Card } from '@/components/ui/card';
 import { StandardButton } from '@/components/ui/standard-button';
 import { SEOHead } from '@/components/SEOHead';
+import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 
 const ProtagonistApp = () => {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-
-  useEffect(() => {
-    // Detect iOS
-    const ua = navigator.userAgent;
-    setIsIOS(/iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream);
-
-    // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
-    }
-
-    // Listen for install prompt (Chrome/Edge/Samsung)
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
-
-  const handleInstall = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setIsInstalled(true);
-    }
-    setDeferredPrompt(null);
-  };
+  const { canPrompt, isInstalled, isIOS, promptInstall } = useInstallPrompt();
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -94,14 +63,14 @@ const ProtagonistApp = () => {
                 <p>3. Tap <span className="text-blue-400 font-medium">Add</span></p>
               </div>
             </div>
-          ) : deferredPrompt ? (
+          ) : canPrompt ? (
             <div className="text-center">
               <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-violet-500/20 border border-violet-500/30 flex items-center justify-center">
                 <Download className="w-6 h-6 text-violet-400" />
               </div>
               <h2 className="text-lg text-slate-200 font-medium mb-3">Install as App</h2>
               <p className="text-sm text-slate-400 mb-4">Add to your home screen for instant access — no app store needed.</p>
-              <StandardButton onClick={handleInstall} className="bg-violet-500/20 border-violet-500/30 text-violet-300 hover:bg-violet-500/30">
+              <StandardButton onClick={() => promptInstall()} className="bg-violet-500/20 border-violet-500/30 text-violet-300 hover:bg-violet-500/30">
                 <Download className="w-4 h-4 mr-2" />
                 Install Protagonist Chat
               </StandardButton>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offline – Leafnode</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0D1B2A, #1B2838, #0D1B2A);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #94a3b8;
+    }
+    .container {
+      text-align: center;
+      padding: 2rem;
+      max-width: 400px;
+    }
+    .icon {
+      width: 64px; height: 64px;
+      margin: 0 auto 1.5rem;
+      border-radius: 50%;
+      border: 2px dashed #475569;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon .dot {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      border: 2px solid #5BB5C4;
+      opacity: 0.6;
+    }
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 300;
+      color: #e2e8f0;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    p { font-size: 0.875rem; line-height: 1.6; }
+    .retry {
+      display: inline-block;
+      margin-top: 1.5rem;
+      padding: 0.5rem 1.5rem;
+      font-size: 0.8rem;
+      color: #5BB5C4;
+      border: 1px solid #5BB5C4;
+      border-radius: 6px;
+      background: transparent;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .retry:hover { background: rgba(91,181,196,0.1); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon"><div class="dot"></div></div>
+    <h1>LEAFNODE</h1>
+    <p>You're offline. Check your connection and try again.</p>
+    <a href="/" class="retry">Retry</a>
+  </div>
+</body>
+</html>
