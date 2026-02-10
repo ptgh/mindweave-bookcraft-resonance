@@ -1,42 +1,86 @@
 
 
-## Plan: Fix Thematic Search Spotlight + Signal Archive Search Dropdown Overlay
+# PWA Strategy: Full-Site + Standalone Protagonist Chat
 
-### Issue 1: Search dropdown not overlaying correctly on Signal Archive
+## Overview
 
-**Problem**: The search suggestions dropdown in `BookBrowserHeader.tsx` uses `position: absolute; z-index: 50` but the book cards rendered below in the DOM naturally paint over it. The parent container (`max-w-md mx-auto mb-6 relative`) constrains the stacking context.
+You currently have a basic web manifest and mobile meta tags, but no service worker (the engine that makes a PWA actually work offline and installable). This plan adds proper PWA support in two layers:
 
-**Fix** (in `src/components/BookBrowserHeader.tsx`):
-- Add a higher `z-index` to the parent `relative` container of the search bar so the dropdown sits above all subsequent content.
-- Specifically, change the search wrapper div from `max-w-md mx-auto mb-6 relative` to `max-w-md mx-auto mb-6 relative z-50` -- this ensures the entire search area (including its absolutely-positioned dropdown) renders above the book grid below.
+1. **Leafnode (full site)** -- installable from any page, caches the app shell for fast loads
+2. **Protagonist Chat (standalone)** -- a focused install experience at `/protagonist-app` that opens directly to the chat page
 
-### Issue 2: Selecting a thematic search result doesn't show the book in Signal Archive
+Both will use the same Leafnode icon you already have.
 
-**Problem**: When clicking a result in the Discovery page semantic search, it stores a SpotlightBook in sessionStorage and navigates to `/book-browser?spotlight=key`. The BookBrowser component reads this on mount and should display it first. However, the `useBookBrowser` hook also auto-loads books on first visit. If the auto-load triggers and sets `loading=true`, the loading spinner replaces the grid -- and by the time loading finishes, `displayBooks()` should include the spotlight. The likely issue is that the spotlight book renders but there is no visual differentiation or "Discovered" banner visible because the auto-load's `loading=true` state masks it, or the spotlight book blends in with the other 18 books.
+---
 
-**Fix** (in `src/pages/BookBrowser.tsx`):
-- When a spotlight book is present, skip the loading state display -- show the spotlight book immediately even while the rest of the collection loads in the background. This means adjusting the conditional rendering so that when `spotlightBook` exists, the book grid renders (with at least the spotlight) rather than showing only the loading spinner.
-- The conditional at line ~409 currently shows: `loading ? <spinner> : hasBooks ? <grid> : ...`. Change this so that when `spotlightBook || fetchedTransmission` is present, it always renders the grid section (even during loading), ensuring the discovered book is immediately visible.
+## What You'll Get
 
-### Technical Details
+- An "Install App" option accessible from the site header (small download icon) on mobile
+- The existing `/protagonist-app` page enhanced with a working service worker so it genuinely works offline
+- Offline fallback page when there's no network
+- Faster repeat visits thanks to asset caching
 
-**File: `src/components/BookBrowserHeader.tsx`**
-- Line ~230 area: Add `z-50` to the `relative` parent div wrapping the search input and dropdown
+---
 
-**File: `src/pages/BookBrowser.tsx`**
-- Line ~409 area: Adjust the ternary rendering logic from:
-  ```
-  loading ? <spinner> : hasBooks ? <grid> : ...
-  ```
-  to:
-  ```
-  (loading && !spotlightBook && !fetchedTransmission) ? <spinner> : hasBooks ? <grid> : ...
-  ```
-  This ensures the spotlight/highlighted book shows immediately upon arrival from thematic search, while the rest of the collection loads behind it.
+## Technical Plan
 
-### What stays the same
-- No changes to styling of book cards, grid layout, or any other UI
-- No changes to the semantic search flow on Discovery page
-- No changes to the spotlight sessionStorage mechanism (it's correct)
-- No changes to the dropdown design -- same look, just properly layered
+### 1. Add a Service Worker (`public/sw.js`)
+
+A lightweight, hand-written service worker (no heavy library needed) that:
+- Pre-caches the app shell (index.html, key JS/CSS bundles)
+- Uses a cache-first strategy for static assets (images, fonts, icons)
+- Uses a network-first strategy for API calls (Supabase, AI gateway)
+- Serves an offline fallback when the network is down
+
+### 2. Register the Service Worker (`src/main.tsx`)
+
+Add service worker registration after the app renders. Only registers in production to avoid dev confusion.
+
+### 3. Create an Install Prompt Hook (`src/hooks/useInstallPrompt.ts`)
+
+A reusable hook that:
+- Captures the `beforeinstallprompt` event
+- Detects iOS (for manual "Add to Home Screen" instructions)
+- Detects if already installed (standalone display mode)
+- Exposes `promptInstall()` and state flags
+
+### 4. Add Install Button to Header (`src/components/Header.tsx`)
+
+A subtle download icon in the mobile header bar (next to the Instagram icon) that:
+- Shows only on mobile when the app is not yet installed
+- Triggers the native install prompt on Android/Chrome
+- Shows a small tooltip with iOS instructions on iPhone
+- Disappears once installed
+
+### 5. Upgrade the Protagonist App Page (`src/pages/ProtagonistApp.tsx`)
+
+- Replace the inline install logic with the shared `useInstallPrompt` hook
+- Keep the dedicated experience but wire it to the same service worker
+
+### 6. Offline Fallback Page (`public/offline.html`)
+
+A minimal branded page shown when the user is offline and the requested page isn't cached. Dark theme, Leafnode branding, "You're offline" message.
+
+### 7. Update Manifest (`public/manifest.webmanifest`)
+
+- Add `"id": "/"` for stable PWA identity
+- Add `"scope": "/"` 
+- Add `"categories": ["books", "entertainment"]`
+- Add screenshot entries (optional, improves the install UI on Android)
+
+---
+
+## Files Changed
+
+| File | Action |
+|------|--------|
+| `public/sw.js` | Create -- service worker |
+| `public/offline.html` | Create -- offline fallback |
+| `src/hooks/useInstallPrompt.ts` | Create -- shared install hook |
+| `src/main.tsx` | Edit -- register service worker |
+| `src/components/Header.tsx` | Edit -- add install button |
+| `src/pages/ProtagonistApp.tsx` | Edit -- use shared hook |
+| `public/manifest.webmanifest` | Edit -- add scope, id, categories |
+
+No new dependencies required.
 
