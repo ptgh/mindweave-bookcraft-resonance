@@ -509,10 +509,23 @@ const TestBrain = () => {
     
     return () => {
       if (ambientInterval) clearInterval(ambientInterval);
+      // Kill all GSAP tweens targeting elements inside the canvas to prevent
+      // "Cannot read properties of null" errors when navigating away.
       canvas.querySelectorAll('.thought-node').forEach(el => {
+        gsap.killTweensOf(el);
         const interval = (el as any)._burstInterval;
         if (interval) clearInterval(interval);
+        el.remove();
       });
+      // Kill tweens on any remaining particles
+      canvas.querySelectorAll('div[style*="pointer-events: none"]').forEach(el => {
+        gsap.killTweensOf(el);
+        el.remove();
+      });
+      // Kill SVG path tweens
+      if (svgRef.current) {
+        svgRef.current.querySelectorAll('path').forEach(el => gsap.killTweensOf(el));
+      }
       activeParticlesRef.current = 0;
     };
   }, [nodes, links, chatHighlights, selectedNode, isMobile]);
