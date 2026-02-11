@@ -58,11 +58,24 @@ self.addEventListener('fetch', (event) => {
       caches.match(request).then((cached) => {
         if (cached) return cached;
         return fetch(request).then((response) => {
-          if (response.ok) {
+          // Cache both ok responses and opaque (cross-origin) responses for book covers etc.
+          if (response.ok || response.type === 'opaque') {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           }
           return response;
+        }).catch(() => {
+          // Fallback: try no-cors fetch for cross-origin images
+          if (url.origin !== self.location.origin) {
+            return fetch(new Request(request.url, { mode: 'no-cors' })).then((response) => {
+              if (response.type === 'opaque') {
+                const clone = response.clone();
+                caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+              }
+              return response;
+            });
+          }
+          return new Response('', { status: 408 });
         });
       })
     );

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { X, BookOpen, ExternalLink, Network, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrainNode } from "@/pages/TestBrain";
@@ -54,6 +54,7 @@ const NeuralMapBottomSheet = ({
 }: NeuralMapBottomSheetProps) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabId>('details');
+  const [coverError, setCoverError] = useState(false);
   
   const existingTitles = useMemo(() => allNodes.map(n => n.title), [allNodes]);
   const { results: discoveryResults, loading: discoveryLoading, error: discoveryError, findSimilar } = useNeuralMapDiscovery(existingTitles);
@@ -110,8 +111,8 @@ const NeuralMapBottomSheet = ({
           <div className="p-4 border-b border-cyan-400/10">
             <div className="flex gap-4">
               <div className="flex-shrink-0 w-16 h-22 rounded-lg border border-cyan-400/25 overflow-hidden relative">
-                {node.coverUrl ? (
-                  <img src={node.coverUrl} alt={node.title} className="w-full h-full object-cover" />
+                {node.coverUrl && !coverError ? (
+                  <img src={node.coverUrl} alt={node.title} className="w-full h-full object-cover" onError={() => setCoverError(true)} />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-slate-500 bg-slate-800/30">
                     <BookOpen className="w-6 h-6" />

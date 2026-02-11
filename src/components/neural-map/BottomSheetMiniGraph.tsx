@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { BookOpen } from "lucide-react";
 import { BrainNode } from "@/pages/TestBrain";
 
@@ -13,9 +14,23 @@ const BottomSheetMiniGraph = ({ node, allNodes, neighbors, onSelectNode }: Botto
   const CENTER = SIZE / 2;
   const RADIUS = 110;
   const NODE_R = 18;
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   const getNode = (id: string) => allNodes.find(n => n.id === id);
   const maxScore = Math.max(...neighbors.map(n => n.score), 1);
+
+  const handleImageError = (id: string) => {
+    setFailedImages(prev => new Set([...prev, id]));
+  };
+
+  const renderFallbackCircle = (cx: number, cy: number, r: number, title: string) => (
+    <g>
+      <circle cx={cx} cy={cy} r={r} fill="#1e293b" stroke="#22d3ee" strokeOpacity={0.3} strokeWidth={1} />
+      <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="central" fill="#94a3b8" fontSize="10" fontWeight="500">
+        {title.charAt(0).toUpperCase()}
+      </text>
+    </g>
+  );
 
   // Position neighbors radially
   const positioned = neighbors.map((n, i) => {
@@ -58,7 +73,7 @@ const BottomSheetMiniGraph = ({ node, allNodes, neighbors, onSelectNode }: Botto
         {/* Center node */}
         <g>
           <circle cx={CENTER} cy={CENTER} r={NODE_R + 2} fill="none" stroke="#22d3ee" strokeOpacity={0.3} strokeWidth={1} />
-          {node.coverUrl ? (
+          {node.coverUrl && !failedImages.has(node.id) ? (
             <>
               <clipPath id="center-clip">
                 <circle cx={CENTER} cy={CENTER} r={NODE_R} />
@@ -69,10 +84,11 @@ const BottomSheetMiniGraph = ({ node, allNodes, neighbors, onSelectNode }: Botto
                 width={NODE_R * 2} height={NODE_R * 2}
                 clipPath="url(#center-clip)"
                 preserveAspectRatio="xMidYMid slice"
+                onError={() => handleImageError(node.id)}
               />
             </>
           ) : (
-            <circle cx={CENTER} cy={CENTER} r={NODE_R} fill="#1e293b" stroke="#22d3ee" strokeOpacity={0.4} strokeWidth={1} />
+            renderFallbackCircle(CENTER, CENTER, NODE_R, node.title)
           )}
           <circle cx={CENTER} cy={CENTER} r={NODE_R} fill="none" stroke="#22d3ee" strokeOpacity={0.5} strokeWidth={1.5} />
         </g>
@@ -81,6 +97,7 @@ const BottomSheetMiniGraph = ({ node, allNodes, neighbors, onSelectNode }: Botto
         {positioned.map((n, i) => {
           const neighborNode = n.node!;
           const clipId = `neighbor-clip-${i}`;
+          const hasCover = neighborNode.coverUrl && !failedImages.has(n.nodeId);
           return (
             <g
               key={n.nodeId}
@@ -88,7 +105,7 @@ const BottomSheetMiniGraph = ({ node, allNodes, neighbors, onSelectNode }: Botto
               onClick={() => onSelectNode(n.nodeId)}
               style={{ pointerEvents: 'all' }}
             >
-              {neighborNode.coverUrl ? (
+              {hasCover ? (
                 <>
                   <clipPath id={clipId}>
                     <circle cx={n.x} cy={n.y} r={NODE_R - 2} />
@@ -99,10 +116,11 @@ const BottomSheetMiniGraph = ({ node, allNodes, neighbors, onSelectNode }: Botto
                     width={(NODE_R - 2) * 2} height={(NODE_R - 2) * 2}
                     clipPath={`url(#${clipId})`}
                     preserveAspectRatio="xMidYMid slice"
+                    onError={() => handleImageError(n.nodeId)}
                   />
                 </>
               ) : (
-                <circle cx={n.x} cy={n.y} r={NODE_R - 2} fill="#1e293b" />
+                renderFallbackCircle(n.x, n.y, NODE_R - 2, neighborNode.title)
               )}
               <circle
                 cx={n.x} cy={n.y} r={NODE_R - 2}
