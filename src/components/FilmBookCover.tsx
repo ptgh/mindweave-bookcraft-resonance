@@ -157,6 +157,38 @@ export const FilmBookCover: React.FC<FilmBookCoverProps> = ({
       }
     }
 
+    // Stage 3: Open Library fallback for outlier books
+    if (stage <= 3) {
+      try {
+        // Try by title+author search
+        const query = encodeURIComponent(`${bookTitle} ${bookAuthor}`);
+        const response = await fetch(`https://openlibrary.org/search.json?q=${query}&limit=1&fields=cover_i,isbn`);
+        if (response.ok) {
+          const data = await response.json();
+          let olCoverUrl: string | null = null;
+          if (data.docs?.[0]?.cover_i) {
+            olCoverUrl = `https://covers.openlibrary.org/b/id/${data.docs[0].cover_i}-L.jpg`;
+          } else if (data.docs?.[0]?.isbn?.[0]) {
+            olCoverUrl = `https://covers.openlibrary.org/b/isbn/${data.docs[0].isbn[0]}-L.jpg?default=false`;
+          }
+          if (olCoverUrl) {
+            setDisplayUrl(olCoverUrl);
+            await preloadImage(olCoverUrl);
+            setImageState('loaded');
+            requestImageCache(olCoverUrl, 'book');
+            if (adaptationId) {
+              writeBackFilmCoverById(adaptationId, olCoverUrl);
+            } else {
+              writeBackFilmCover(bookTitle, bookAuthor, olCoverUrl);
+            }
+            return;
+          }
+        }
+      } catch (error) {
+        console.warn(`Open Library cover fetch failed for ${bookTitle}:`, error);
+      }
+    }
+
     // All stages failed
     setImageState('error');
   }, [storedCoverUrl, bookTitle, bookAuthor, adaptationId]);
@@ -205,7 +237,7 @@ export const FilmBookCover: React.FC<FilmBookCoverProps> = ({
       className={cn('w-full h-full object-cover', className)}
       onError={() => {
         // If img tag errors after preload succeeded, move to next stage
-        if (attemptStage < 2) {
+        if (attemptStage < 3) {
           setAttemptStage(prev => prev + 1);
           setImageState('loading');
           tryLoadCover(attemptStage + 1);

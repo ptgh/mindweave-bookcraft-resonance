@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X, ExternalLink, Smartphone, Globe, Plus, Share2, FileText, User, BookOpen } from "lucide-react";
+import EnhancedBookCover from "@/components/EnhancedBookCover";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EnrichedPublisherBook } from "@/services/publisherService";
@@ -632,28 +633,19 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
               <div className="flex space-x-4">
                 {/* Cover */}
                 <div className="flex-shrink-0 w-24 h-36 bg-slate-700/50 border border-slate-600 rounded-lg overflow-hidden relative shadow-lg">
-                  {coverUrl ? (
-                    <img 
-                      src={coverUrl} 
-                      alt={displayData.title} 
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        const fallback = target.nextElementSibling as HTMLElement;
-                        if (fallback) fallback.classList.remove('hidden');
-                      }}
-                    />
-                  ) : null}
-                  <div className={`absolute inset-0 flex items-center justify-center text-slate-400 ${coverUrl ? 'hidden' : ''}`}>
-                    {isScriptMode && !isComicMode ? (
+                  {isScriptMode && !isComicMode ? (
+                    <div className="absolute inset-0 flex items-center justify-center text-slate-400">
                       <FileText className="w-8 h-8 text-cyan-400/50" />
-                    ) : (
-                      <div className="w-12 h-16 border-2 border-slate-600 rounded flex items-center justify-center">
-                        <div className="w-6 h-8 border border-slate-600 rounded" />
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <EnhancedBookCover
+                      title={displayData.title}
+                      author={displayData.author}
+                      isbn={book.isbn}
+                      coverUrl={coverUrl}
+                      className="w-24 h-36"
+                    />
+                  )}
                 </div>
                 
                 {/* Info */}
