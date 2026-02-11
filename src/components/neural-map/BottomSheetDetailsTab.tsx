@@ -121,7 +121,7 @@ const BottomSheetDetailsTab = ({
           <h4 className="text-xs font-medium text-slate-400/80 uppercase tracking-wider mb-3">
             Most Connected
           </h4>
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+          <div className="flex items-start gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
             {topRelated.map(({ nodeId, score }) => {
               const relatedNode = getRelatedNode(nodeId);
               if (!relatedNode) return null;
