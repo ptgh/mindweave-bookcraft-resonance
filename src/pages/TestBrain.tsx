@@ -172,21 +172,51 @@ const TestBrain = () => {
           });
         });
 
-        // Place nodes near cluster center with jitter (wider spread for cover nodes)
+        // Place nodes near cluster center with collision avoidance
         const nodePositions: { x: number; y: number }[] = new Array(fetchedTransmissions.length);
         const mobile = window.innerWidth < 768;
-        const nodeSpread = mobile ? 50 : 70; // More spread for larger nodes
+        const nodeSize = mobile ? 36 : 50;
+        const minDist = nodeSize + (mobile ? 30 : 45); // Minimum distance between node centers
+        const padding = mobile ? 60 : 100;
+        const topPad = mobile ? 160 : 140;
+        
+        const placedPositions: { x: number; y: number }[] = [];
         
         tagGroups.forEach((indices, tag) => {
           const center = clusterCenters.get(tag)!;
-          const spread = nodeSpread + indices.length * 15;
+          const spread = 40 + indices.length * 18;
           indices.forEach((idx, j) => {
-            const jitterAngle = (2 * Math.PI * j) / indices.length + Math.random() * 0.5;
-            const jitterR = 30 + Math.random() * spread;
-            nodePositions[idx] = {
-              x: Math.max(100, Math.min(vw - 100, center.cx + Math.cos(jitterAngle) * jitterR)),
-              y: Math.max(140, Math.min(vh - 140, center.cy + Math.sin(jitterAngle) * jitterR)),
-            };
+            let bestX = 0, bestY = 0, placed = false;
+            
+            // Try placing with increasing radius until no collision
+            for (let attempt = 0; attempt < 20; attempt++) {
+              const jitterAngle = (2 * Math.PI * j) / indices.length + Math.random() * 0.8;
+              const jitterR = 25 + attempt * 12 + Math.random() * spread;
+              const candidateX = Math.max(padding, Math.min(vw - padding, center.cx + Math.cos(jitterAngle) * jitterR));
+              const candidateY = Math.max(topPad, Math.min(vh - 160, center.cy + Math.sin(jitterAngle) * jitterR));
+              
+              // Check collision with already-placed nodes
+              const hasCollision = placedPositions.some(p => {
+                const dx = p.x - candidateX;
+                const dy = p.y - candidateY;
+                return Math.sqrt(dx * dx + dy * dy) < minDist;
+              });
+              
+              if (!hasCollision || attempt === 19) {
+                bestX = candidateX;
+                bestY = candidateY;
+                placed = true;
+                break;
+              }
+            }
+            
+            if (!placed) {
+              bestX = Math.max(padding, Math.min(vw - padding, center.cx + (Math.random() - 0.5) * 200));
+              bestY = Math.max(topPad, Math.min(vh - 160, center.cy + (Math.random() - 0.5) * 200));
+            }
+            
+            nodePositions[idx] = { x: bestX, y: bestY };
+            placedPositions.push({ x: bestX, y: bestY });
           });
         });
 

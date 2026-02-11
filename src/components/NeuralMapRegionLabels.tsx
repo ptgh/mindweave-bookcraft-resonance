@@ -19,7 +19,6 @@ const NeuralMapRegionLabels = ({ nodes }: NeuralMapRegionLabelsProps) => {
   const labels = useMemo<ClusterLabel[]>(() => {
     if (nodes.length < 3) return [];
 
-    // Count tags and collect positions
     const tagData = new Map<string, { xs: number[]; ys: number[] }>();
     
     nodes.forEach(node => {
@@ -40,16 +39,26 @@ const NeuralMapRegionLabels = ({ nodes }: NeuralMapRegionLabelsProps) => {
       candidates.push({ tag, x, y, count: data.xs.length });
     });
 
-    // Sort by count, take top 5
     candidates.sort((a, b) => b.count - a.count);
-    return candidates.slice(0, 5);
+    
+    // Deduplicate positions - avoid overlapping labels
+    const filtered: ClusterLabel[] = [];
+    candidates.forEach(candidate => {
+      const tooClose = filtered.some(existing => {
+        const dx = existing.x - candidate.x;
+        const dy = existing.y - candidate.y;
+        return Math.sqrt(dx * dx + dy * dy) < 120;
+      });
+      if (!tooClose) filtered.push(candidate);
+    });
+    
+    return filtered.slice(0, 4);
   }, [nodes]);
 
-  // Fade in labels
   useEffect(() => {
     if (containerRef.current && labels.length > 0) {
       const els = containerRef.current.querySelectorAll('.region-label');
-      gsap.fromTo(els, { opacity: 0 }, { opacity: 1, duration: 1.5, stagger: 0.2, delay: 0.5 });
+      gsap.fromTo(els, { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 1, stagger: 0.15, delay: 0.8 });
     }
   }, [labels]);
 
@@ -60,16 +69,25 @@ const NeuralMapRegionLabels = ({ nodes }: NeuralMapRegionLabelsProps) => {
       {labels.map(label => (
         <div
           key={label.tag}
-          className="region-label absolute text-slate-400/35 text-[11px] uppercase tracking-[0.3em] font-medium select-none opacity-0"
+          className="region-label absolute opacity-0"
           style={{
             left: label.x,
-            top: label.y,
-            transform: 'translate(-50%, -50%)',
-            textShadow: '0 0 8px rgba(0,0,0,0.6)',
-            fontWeight: 500
+            top: label.y - 50, // Position above the cluster, not in it
+            transform: 'translateX(-50%)',
           }}
         >
-          {label.tag}
+          <div className="flex items-center gap-1.5 bg-slate-900/50 backdrop-blur-sm border border-slate-700/40 rounded-full px-3 py-1 shadow-lg">
+            <div 
+              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+              style={{ background: '#22d3ee', boxShadow: '0 0 6px #22d3ee60' }}
+            />
+            <span className="text-[10px] text-slate-300 uppercase tracking-widest font-medium whitespace-nowrap">
+              {label.tag}
+            </span>
+            <span className="text-[9px] text-cyan-400/60 ml-0.5">
+              {label.count}
+            </span>
+          </div>
         </div>
       ))}
     </div>
