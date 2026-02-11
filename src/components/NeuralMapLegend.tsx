@@ -138,7 +138,7 @@ const NeuralMapLegend = ({ nodeCount, edgeCount }: NeuralMapLegendProps) => {
       {/* Help button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 sm:bottom-24 right-3 sm:right-4 z-30 w-10 h-10 bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-full flex items-center justify-center text-slate-400 hover:text-cyan-400 hover:border-cyan-400/50 transition-all shadow-lg active:scale-95"
+        className="fixed bottom-20 sm:bottom-24 left-3 sm:left-4 z-30 w-10 h-10 bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-full flex items-center justify-center text-slate-400 hover:text-cyan-400 hover:border-cyan-400/50 transition-all shadow-lg active:scale-95"
         aria-label="Help"
       >
         <HelpCircle className="w-5 h-5" />
