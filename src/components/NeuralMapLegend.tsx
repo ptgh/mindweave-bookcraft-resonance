@@ -43,29 +43,37 @@ const NeuralMapLegend = ({ nodeCount, edgeCount }: NeuralMapLegendProps) => {
             <div className="space-y-2">
               <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider">Nodes</h4>
               <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
-                <span className="text-sm text-slate-300">Each node represents a book in your collection</span>
+                <div className="w-5 h-5 rounded-full bg-slate-700 border border-cyan-400/40 flex items-center justify-center text-[8px] text-slate-400 font-medium">A</div>
+                <span className="text-sm text-slate-300">Each node is a book (cover or initial)</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-4 h-4 rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.8),0_0_0_2px_rgba(34,211,238,0.3)]" />
-                <span className="text-sm text-slate-300">Larger nodes = more connections</span>
+                <div className="w-6 h-6 rounded-full bg-slate-700 border-2 border-cyan-400/50 shadow-[0_0_8px_rgba(34,211,238,0.3)]" />
+                <span className="text-sm text-slate-300">Larger glow = more connections</span>
               </div>
             </div>
             
             {/* Lines */}
             <div className="space-y-2">
-              <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider">Connections</h4>
+              <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider">Connection Lines</h4>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-0.5 bg-gradient-to-r from-cyan-400 to-cyan-400/40" />
-                <span className="text-sm text-slate-300">Lines show meaningful relationships</span>
+                <div className="w-8 h-[2px] bg-cyan-400" />
+                <span className="text-sm text-slate-300"><strong className="text-cyan-300">Solid cyan</strong> — Same author</span>
               </div>
               <div className="flex items-center gap-3">
+                <div className="w-8 h-[1.5px] bg-teal-400" />
+                <span className="text-sm text-slate-300"><strong className="text-cyan-300">Solid teal</strong> — Shared theme</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-0.5 border-t-2 border-dotted border-cyan-400/70" />
+                <span className="text-sm text-slate-300"><strong className="text-cyan-300">Dotted</strong> — Shared subgenre</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-0.5 border-t-2 border-dashed border-slate-400/60" />
+                <span className="text-sm text-slate-300"><strong className="text-cyan-300">Dashed</strong> — Same era</span>
+              </div>
+              <div className="flex items-center gap-3 mt-1">
                 <div className="w-8 h-1 bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.8)]" />
-                <span className="text-sm text-slate-300">Brighter/thicker = stronger connection</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-0.5 border-t-2 border-dashed border-cyan-400/60" />
-                <span className="text-sm text-slate-300">Dashed = same literary era</span>
+                <span className="text-sm text-slate-300">Brighter = stronger connection</span>
               </div>
             </div>
             
