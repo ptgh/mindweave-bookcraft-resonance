@@ -34,6 +34,40 @@ const EnhancedBookCover = ({
   const [hasError, setHasError] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
+  // Try Open Library covers API as a fallback source
+  const getOpenLibraryCover = async (title: string, author?: string, isbn?: string): Promise<string | null> => {
+    try {
+      // Try by ISBN first if available
+      if (isbn) {
+        const url = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false`;
+        try {
+          await imageService.loadImage({ src: url, timeout: 5000 });
+          console.log('Found Open Library cover by ISBN:', url);
+          return url;
+        } catch { /* continue */ }
+      }
+
+      // Search by title+author
+      const query = encodeURIComponent(`${title} ${author || ''}`);
+      const response = await fetch(`https://openlibrary.org/search.json?q=${query}&limit=1&fields=cover_i,isbn`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.docs?.[0]?.cover_i) {
+          const coverId = data.docs[0].cover_i;
+          return `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
+        }
+        // Try first ISBN from results
+        if (data.docs?.[0]?.isbn?.[0]) {
+          return `https://covers.openlibrary.org/b/isbn/${data.docs[0].isbn[0]}-L.jpg?default=false`;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.warn('Open Library cover lookup failed:', error);
+      return null;
+    }
+  };
+
   // Get Archive.org cover from free_ebook_links
   const getArchiveCover = async (title: string, author?: string) => {
     try {
@@ -202,6 +236,20 @@ const EnhancedBookCover = ({
         }
       }
       
+      // Try Open Library covers by title/author search
+      const olCoverUrl = await getOpenLibraryCover(title, author, isbn);
+      if (olCoverUrl) {
+        try {
+          await imageService.loadImage({ src: olCoverUrl, timeout: 5000 });
+          setCurrentSrc(olCoverUrl);
+          await cacheImageUrl(olCoverUrl, title);
+          setIsLoading(false);
+          return;
+        } catch (error) {
+          console.log('Open Library cover failed');
+        }
+      }
+
       // Try Archive.org
       const archiveCoverUrl = await getArchiveCover(title, author);
       if (archiveCoverUrl) {
@@ -284,6 +332,20 @@ const EnhancedBookCover = ({
                 return;
               } catch (error) {
                 console.log('Cached URL failed');
+              }
+            }
+
+            // Try Open Library covers
+            const olCoverUrl = await getOpenLibraryCover(title, author, isbn);
+            if (olCoverUrl) {
+              try {
+                await imageService.loadImage({ src: olCoverUrl, timeout: 5000 });
+                setCurrentSrc(olCoverUrl);
+                await cacheImageUrl(olCoverUrl, title);
+                setIsLoading(false);
+                return;
+              } catch (error) {
+                console.log('Open Library recovery failed');
               }
             }
 

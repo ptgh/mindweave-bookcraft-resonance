@@ -1,0 +1,1 @@
+UPDATE sf_film_adaptations SET book_cover_url = '/images/covers/population-bomb.png' WHERE book_title = 'The Population Bomb';

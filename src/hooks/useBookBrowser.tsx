@@ -285,9 +285,12 @@ export const useBookBrowser = () => {
           
           console.log(`Filtered ${allBooks.length - filteredBooks.length} books already in transmissions`);
           
+          // On mobile show up to 30, on desktop show all
+          const isMobile = window.innerWidth < 768;
+          const maxBooks = isMobile ? 30 : filteredBooks.length;
           const shuffled = filteredBooks
             .sort(() => Math.random() - 0.5)
-            .slice(0, 18);
+            .slice(0, maxBooks);
             
           setBooks(shuffled);
           persistBooks(shuffled); // Persist to sessionStorage
