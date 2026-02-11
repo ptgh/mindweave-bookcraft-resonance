@@ -85,8 +85,8 @@ const NeuralMapBottomSheet = ({
               <div className="w-2 h-2 bg-cyan-400/80 rounded-full animate-pulse" />
               <span className="text-slate-200 text-sm font-medium">Signal Details</span>
             </div>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-700/30 active:bg-slate-700/50">
-              <X className="w-5 h-5" />
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-200 transition-colors w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-700/30 active:bg-slate-700/50">
+              <X className="w-4 h-4" />
             </button>
           </div>
 
