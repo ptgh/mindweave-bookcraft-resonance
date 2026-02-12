@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { X, ExternalLink, Smartphone, Globe, Plus, Share2, FileText, User, BookOpen } from "lucide-react";
 import EnhancedBookCover from "@/components/EnhancedBookCover";
@@ -594,9 +594,68 @@ const EnhancedBookPreviewModal = ({ book, onClose, onAddBook, scriptData }: Enha
   const digitalCopyInfo = getDigitalCopyInfo();
   const hasDigitalCopy = !!(validAppleBook || freeEbooks?.archive?.url || freeEbooks?.gutenberg?.url);
 
+  // Swipe-to-dismiss state
+  const modalContentRef = useRef<HTMLDivElement>(null);
+  const swipeStartY = useRef<number | null>(null);
+  const swipeCurrentY = useRef<number>(0);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const scrollableEl = modalContentRef.current?.querySelector('.flex-1.overflow-y-auto');
+    // Only start swipe if scrolled to top
+    if (scrollableEl && scrollableEl.scrollTop > 0) return;
+    swipeStartY.current = e.touches[0].clientY;
+    swipeCurrentY.current = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (swipeStartY.current === null) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - swipeStartY.current;
+    if (diff > 0) {
+      setSwipeOffset(diff);
+      swipeCurrentY.current = currentY;
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (swipeOffset > 120) {
+      // Dismiss
+      gsap.to(modalContentRef.current, {
+        y: window.innerHeight,
+        opacity: 0,
+        duration: 0.3,
+        ease: 'power2.in',
+        onComplete: onClose,
+      });
+    } else if (swipeOffset > 0) {
+      // Spring back
+      setSwipeOffset(0);
+      if (modalContentRef.current) {
+        gsap.fromTo(modalContentRef.current, { y: swipeOffset }, {
+          y: 0,
+          duration: 0.4,
+          ease: 'elastic.out(1, 0.5)',
+        });
+      }
+    }
+    swipeStartY.current = null;
+  }, [swipeOffset, onClose]);
+
   const modal = (
-    <div className="fixed inset-0 z-[2000] flex h-[100dvh] w-screen items-center justify-center bg-background/50 backdrop-blur-sm p-4">
-      <div className="modal-content bg-slate-800/50 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-[2000] flex h-[100dvh] w-screen items-center justify-center bg-background/50 backdrop-blur-sm p-4" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div
+        ref={modalContentRef}
+        className="modal-content bg-slate-800/50 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[90vh] flex flex-col"
+        style={{ transform: swipeOffset > 0 ? `translateY(${swipeOffset}px)` : undefined, opacity: swipeOffset > 0 ? Math.max(0.3, 1 - swipeOffset / 300) : 1 }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Swipe indicator */}
+        <div className="flex justify-center pt-2 pb-0 flex-shrink-0">
+          <div className="w-10 h-1 bg-slate-500/50 rounded-full" />
+        </div>
         {/* Header */}
         <div className="p-3 border-b border-slate-700 flex-shrink-0">
           <div className="flex items-center justify-between">
