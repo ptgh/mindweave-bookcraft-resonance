@@ -1,135 +1,73 @@
 
-
-# Neural Map Relationship Visualization Upgrade
+# AI-Generated Protagonist Portraits
 
 ## Overview
+Generate a unique AI portrait for each of the ~52 protagonists using the Gemini image generation model (`google/gemini-2.5-flash-image`), store them in Supabase Storage, and display them on protagonist cards and the chat modal. Portraits will be based purely on literary descriptions, not film depictions.
 
-This plan transforms the Neural Map from abstract dots-and-lines into a readable, explorable relationship graph where connections between books are immediately understood. It also fixes broken book cover images in the PWA. Two distinct experiences: a clean mobile view and a rich expanded desktop view.
+## Architecture
 
----
+1. **New Supabase Storage bucket**: `protagonist-portraits` (public)
+2. **New database column**: `transmissions.protagonist_portrait_url` (text, nullable)
+3. **New edge function**: `generate-protagonist-portrait` -- takes book/protagonist info, generates an image via Lovable AI image model, uploads to storage, writes URL back to DB
+4. **Frontend updates**: Show the portrait on `ProtagonistCard` and `ProtagonistChatModal`
 
-## Problem Summary
+## Detailed Steps
 
-1. **Broken images in PWA**: Book covers are external URLs (Google Books, etc.). The service worker tries to cache them but cross-origin opaque responses have `response.ok = false`, so they silently fail. Additionally, the SVG `<image>` elements in the mini-graph have no fallback.
-2. **Relationships are unclear**: Nodes are tiny glowing dots (6-10px). Connection lines are thin, unlabeled curves. Users cannot tell *why* two books are connected without opening the bottom sheet.
-3. **No distinction between mobile and desktop**: Both get the same abstract dot visualization.
+### Step 1: Database Migration
+- Add `protagonist_portrait_url TEXT` column to `transmissions` table
+- Create `protagonist-portraits` storage bucket (public)
 
----
+### Step 2: Edge Function -- `generate-protagonist-portrait`
+- Accepts `{ bookTitle, bookAuthor, protagonistName, transmissionId }`
+- Requires auth (uses `requireUser` pattern)
+- Checks if portrait already exists in DB -- if so, returns it immediately
+- Builds a detailed prompt emphasizing literary description:
+  - "Based ONLY on the novel [title] by [author], create a portrait of [protagonist]. Do NOT reference any film or TV adaptation. Style: painterly, moody, dark sci-fi palette with violet and slate tones, consistent with a literary reading app."
+- Calls `https://ai.gateway.lovable.dev/v1/chat/completions` with model `google/gemini-2.5-flash-image` and `modalities: ["image", "text"]`
+- Extracts the base64 image from `data.choices[0].message.images[0].image_url.url`
+- Decodes base64 and uploads to Supabase Storage at `protagonist-portraits/{transmissionId}.png`
+- Updates `transmissions.protagonist_portrait_url` with the public URL
+- Returns `{ portraitUrl }`
 
-## What Changes
+### Step 3: Frontend -- ProtagonistCard Updates
+- Add `protagonist_portrait_url` to the `ProtagonistBook` interface and the Supabase query
+- Display a small circular portrait next to the protagonist name (or as an avatar on the card)
+- If no portrait exists yet, trigger generation on first view (fire-and-forget, similar to how `protagonist_intro` works)
+- Show a subtle loading shimmer while generating
 
-### 1. Fix Broken PWA Images
+### Step 4: Frontend -- ProtagonistChatModal Updates
+- Show the protagonist portrait in the chat header beside "Speaking with [Name]"
+- Use a circular avatar style (~32px) with a violet ring border
+- Fall back to a `MessageCircle` icon if no portrait available
 
-**File: `public/sw.js`**
-- For image requests, also cache opaque responses (cross-origin). Change the condition from `response.ok` to `response.ok || response.type === 'opaque'` so Google Books covers get cached.
-- Add `{ mode: 'no-cors' }` fallback for cross-origin image fetches that fail with CORS.
+### Step 5: Protagonists Page Query Update
+- Add `protagonist_portrait_url` to the select query in `Protagonists.tsx`
 
-**File: `src/components/neural-map/BottomSheetMiniGraph.tsx`**
-- Add `onError` fallback for `<image>` SVG elements -- render a `<circle>` with a book icon placeholder when the cover fails to load.
+## Design Consistency
+- Portraits use a **painterly, moody sci-fi art style** with the site's slate/violet palette
+- Circular crop with a `border-2 border-violet-500/30` ring
+- 48x48px on cards, 32x32px in chat header
+- Subtle glow effect (`shadow-violet-500/20`) to tie into the neural/sci-fi aesthetic
 
-**File: `src/components/NeuralMapBottomSheet.tsx`**  
-- Add `onError` fallback for the book info `<img>` tag.
+## Technical Details
 
----
+```text
+Flow:
+  User visits /protagonists
+    -> Page loads books with protagonist_portrait_url
+    -> If portrait is null, ProtagonistCard fires generate-protagonist-portrait
+    -> Edge function generates image, uploads to storage, updates DB
+    -> Card re-renders with portrait
 
-### 2. Mobile Neural Map -- Labeled Node Graph
+Storage path: protagonist-portraits/{transmissionId}.png
+Image size: 512x512 (generated), displayed at 48px circular crop
+```
 
-**File: `src/pages/TestBrain.tsx`** (mobile path)
+## Config Updates
+- Add `[functions.generate-protagonist-portrait]` with `verify_jwt = true` to `supabase/config.toml`
 
-On screens under 768px, replace the abstract particle/dot rendering with a cleaner graph:
-
-- **Larger nodes (28-36px circles)** showing book cover thumbnails clipped into circles (matching the mini-graph style from the bottom sheet). If no cover, show a styled placeholder with first letter of title.
-- **Visible title labels** beneath each node (10px, 2-line clamp, slate-400 color) -- similar to how the reference images show "Star Maker", "Sci-Fi Designs" etc.
-- **Connection lines with typed styling**:
-  - Same author: solid cyan, thicker (1.5px)
-  - Shared theme: solid teal, medium (1px)
-  - Shared subgenre: dotted cyan (0.8px)
-  - Shared era: dashed, muted (0.5px)
-- **Tap a node**: opens the bottom sheet (existing behavior, unchanged).
-- **Tap a connection line**: shows a small inline label ("Shares Dystopian Systems") that fades after 3 seconds.
-- **Remove particle animations on mobile** -- no floating particles, no ambient energy flow. Keeps it readable and performant.
-- **Keep region labels** (the existing NeuralMapRegionLabels component) as they already provide thematic context.
-
----
-
-### 3. Desktop Neural Map -- Expanded Relationship Experience
-
-**File: `src/pages/TestBrain.tsx`** (desktop path, 768px+)
-
-On larger screens, the visualization becomes richer:
-
-- **Book cover nodes (40-50px)** with circular clipping and a subtle glow ring based on connection count.
-- **Always-visible title labels** beside each node (not below, to save vertical space), with author name in smaller cyan text.
-- **Labeled connection edges**: midpoint of each connection line shows a small pill badge with the connection reason ("Same Author", "Shares Cyberpunk", "Dystopian Era"). Only shown for the top 30 strongest connections to avoid clutter.
-- **Hover a node**: highlights all its connections (dims unrelated nodes to 15% opacity), and connection labels for that node's edges all become visible. The existing particle effects remain but are limited.
-- **Hover a connection line**: shows a detailed tooltip with both book titles and all shared tags/reasons.
-- **Click a node**: opens the bottom sheet (unchanged).
-- **Focus mode** (existing): continues to work, now with visible labels making the focused neighborhood much clearer.
-- **Connection legend**: update the existing NeuralMapLegend to show line-type meanings (solid = author, dotted = theme, dashed = era).
-
----
-
-### 4. Shared Node Rendering Component
-
-**New file: `src/components/neural-map/NeuralMapNode.tsx`**
-
-A reusable component for rendering a single book node with:
-- Circular cover image with fallback
-- Title label (position configurable: below for mobile, beside for desktop)
-- Connection count indicator (small dot with number)
-- Glow intensity based on connection tier
-
-This component is used by the main canvas renderer (via DOM manipulation as currently done, but with standardized styling).
-
----
-
-### 5. Connection Edge Label Component
-
-**New file: `src/components/neural-map/EdgeLabel.tsx`**
-
-A small pill/badge rendered at the midpoint of a connection line:
-- Shows the primary connection reason (e.g., "Shared Theme: AI Consciousness")
-- Styled as translucent pill matching the app aesthetic (bg-slate-900/40, backdrop-blur, cyan border)
-- Only rendered for top N connections (configurable; 0 on mobile by default, 30 on desktop)
-- Fade in/out on hover/tap
-
----
-
-## Files Changed Summary
-
-| File | Action | Purpose |
-|------|--------|---------|
-| `public/sw.js` | Edit | Cache opaque cross-origin image responses |
-| `src/pages/TestBrain.tsx` | Edit | Responsive mobile/desktop node rendering, labeled edges, remove mobile particles |
-| `src/components/neural-map/NeuralMapNode.tsx` | Create | Reusable book node with cover, title, fallback |
-| `src/components/neural-map/EdgeLabel.tsx` | Create | Connection reason pill badge |
-| `src/components/neural-map/BottomSheetMiniGraph.tsx` | Edit | Image fallback handling |
-| `src/components/NeuralMapBottomSheet.tsx` | Edit | Image fallback handling |
-| `src/components/NeuralMapLegend.tsx` | Edit | Add connection type legend (line styles) |
-
-No new dependencies required. All rendering uses existing GSAP, SVG, and DOM APIs.
-
----
-
-## Technical Approach
-
-### Node Rendering Strategy
-
-The current approach creates DOM elements imperatively via `document.createElement`. This will continue for performance (avoids React re-renders on 50+ animated nodes), but the node creation code will be refactored into a helper function that:
-
-1. Detects `isMobile` from viewport width
-2. Creates appropriately sized nodes with cover images
-3. Adds title labels as positioned `<div>` children
-4. On desktop, positions labels to the right; on mobile, positions below
-
-### Edge Label Rendering
-
-Edge labels will be React-rendered `<div>` elements positioned absolutely based on the midpoint of each connection's SVG path. They are overlaid on top of the SVG layer (z-index 3) and are pointer-events-none by default (pointer-events-auto on desktop for hover interaction).
-
-### Image Fallback Chain
-
-For both the main graph and mini-graph:
-1. Try the `coverUrl` directly
-2. On error, try a proxy/cached version if available
-3. Final fallback: styled circle with first letter of book title and a book icon
-
+## Cost Considerations
+- ~52 protagonists, each generating one image
+- Uses `google/gemini-2.5-flash-image` (cost-effective image model)
+- One-time generation per protagonist; subsequent visits use cached URL
+- Generation is lazy (only when a user views the card and no portrait exists)
