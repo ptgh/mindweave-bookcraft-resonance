@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { X, Send, Mic, MicOff, Volume2, Loader2 } from "lucide-react";
+import { X, Send, Mic, MicOff, Volume2, Loader2, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface ProtagonistChatModalProps {
   bookTitle: string;
   bookAuthor: string;
   protagonistName: string;
+  portraitUrl?: string | null;
   onClose: () => void;
 }
 
@@ -15,7 +17,7 @@ interface ChatMessage {
   content: string;
 }
 
-const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, onClose }: ProtagonistChatModalProps) => {
+const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portraitUrl, onClose }: ProtagonistChatModalProps) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -219,13 +221,23 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, onClose 
       <div className="w-full max-w-lg bg-slate-900 border border-slate-700/50 rounded-t-2xl sm:rounded-2xl max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
-          <div>
-            <h3 className="text-slate-200 text-sm font-medium">
-              Speaking with {protagonistName}
-            </h3>
-            <p className="text-slate-500 text-[10px]">
-              from "{bookTitle}" by {bookAuthor}
-            </p>
+          <div className="flex items-center gap-3">
+            <Avatar className="h-8 w-8 border-2 border-violet-500/30 shadow-lg shadow-violet-500/20">
+              {portraitUrl ? (
+                <AvatarImage src={portraitUrl} alt={protagonistName} />
+              ) : null}
+              <AvatarFallback className="bg-slate-800 text-violet-400">
+                <MessageCircle className="w-3.5 h-3.5" />
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="text-slate-200 text-sm font-medium">
+                Speaking with {protagonistName}
+              </h3>
+              <p className="text-slate-500 text-[10px]">
+                from "{bookTitle}" by {bookAuthor}
+              </p>
+            </div>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-200 p-1">
             <X className="w-4 h-4" />
