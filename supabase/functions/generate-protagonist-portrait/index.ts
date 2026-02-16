@@ -59,44 +59,52 @@ Style requirements:
 - The character should feel like they belong in a literary reading app with a neural/cerebral aesthetic
 - Square 1:1 aspect ratio portrait`;
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
-        messages: [{ role: "user", content: prompt }],
-        modalities: ["image", "text"],
-      }),
-    });
+    // Retry up to 2 times if AI doesn't return an image
+    let imageDataUrl: string | null = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image",
+          messages: [{ role: "user", content: prompt }],
+          modalities: ["image", "text"],
+        }),
+      });
 
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error("AI gateway error:", aiResponse.status, errText);
-      
-      if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limited, try again later" }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (!aiResponse.ok) {
+        const errText = await aiResponse.text();
+        console.error("AI gateway error:", aiResponse.status, errText);
+        
+        if (aiResponse.status === 429) {
+          return new Response(JSON.stringify({ error: "Rate limited, try again later" }), {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (aiResponse.status === 402) {
+          return new Response(JSON.stringify({ error: "AI credits exhausted" }), {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        throw new Error(`AI generation failed: ${aiResponse.status}`);
       }
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted" }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      throw new Error(`AI generation failed: ${aiResponse.status}`);
+
+      const aiData = await aiResponse.json();
+      imageDataUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url ?? null;
+
+      if (imageDataUrl) break;
+      console.warn(`Attempt ${attempt + 1}: No image in AI response, retrying...`, JSON.stringify(aiData).slice(0, 300));
+      // Brief pause before retry
+      await new Promise(r => setTimeout(r, 1000));
     }
 
-    const aiData = await aiResponse.json();
-    const imageDataUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
     if (!imageDataUrl) {
-      console.error("No image in AI response:", JSON.stringify(aiData).slice(0, 500));
-      throw new Error("No image generated");
+      throw new Error("No image generated after retries");
     }
 
     // Extract base64 data from data URL

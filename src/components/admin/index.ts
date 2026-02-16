@@ -4,3 +4,4 @@ export { AdminCachePanel } from './AdminCachePanel';
 export { AdminCoverHealthPanel } from './AdminCoverHealthPanel';
 export { AdminDataHealthPanel } from './AdminDataHealthPanel';
 export { AdminEventsPanel } from './AdminEventsPanel';
+export { AdminPortraitsPanel } from './AdminPortraitsPanel';
