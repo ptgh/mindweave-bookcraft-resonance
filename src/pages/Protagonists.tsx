@@ -19,6 +19,7 @@ export interface ProtagonistBook {
   cover_url: string | null;
   isbn: string | null;
   protagonist_intro: string | null;
+  protagonist_portrait_url: string | null;
 }
 
 const Protagonists: React.FC = () => {
@@ -35,7 +36,7 @@ const Protagonists: React.FC = () => {
     const fetchBooks = async () => {
       const { data, error } = await supabase
         .from('transmissions')
-        .select('id, title, author, protagonist, cover_url, isbn, protagonist_intro')
+        .select('id, title, author, protagonist, cover_url, isbn, protagonist_intro, protagonist_portrait_url')
         .not('protagonist', 'is', null)
         .neq('protagonist', '')
         .order('title');
@@ -126,6 +127,7 @@ const Protagonists: React.FC = () => {
           bookTitle={chatTarget.title}
           bookAuthor={chatTarget.author}
           protagonistName={chatTarget.protagonist}
+          portraitUrl={chatTarget.protagonist_portrait_url}
           onClose={() => setChatTarget(null)}
         />
       )}

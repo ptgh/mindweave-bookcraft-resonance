@@ -178,3 +178,6 @@ verify_jwt = false
 
 [functions.generate-protagonist-intro]
 verify_jwt = false
+
+[functions.generate-protagonist-portrait]
+verify_jwt = false

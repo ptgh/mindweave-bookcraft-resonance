@@ -5,6 +5,8 @@ import EnhancedBookCover from '@/components/EnhancedBookCover';
 import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
 import { AuthorPopup } from '@/components/AuthorPopup';
 import { ScifiAuthor } from '@/services/scifiAuthorsService';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { gsap } from 'gsap';
 import type { ProtagonistBook } from '@/pages/Protagonists';
 
@@ -23,6 +25,8 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
   const [showPreview, setShowPreview] = useState(false);
   const [showAuthorPopup, setShowAuthorPopup] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
+  const [portraitUrl, setPortraitUrl] = useState<string | null>(book.protagonist_portrait_url || null);
+  const [isGeneratingPortrait, setIsGeneratingPortrait] = useState(false);
 
   // Scroll-in GSAP animation for protagonist underline
   useEffect(() => {
@@ -74,6 +78,32 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
     };
     generate();
   }, [book.id, book.protagonist_intro, book.title, book.author, book.protagonist, onIntroGenerated]);
+
+  // Fire-and-forget: generate portrait if missing
+  useEffect(() => {
+    if (portraitUrl || isGeneratingPortrait) return;
+    setIsGeneratingPortrait(true);
+    const generate = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('generate-protagonist-portrait', {
+          body: {
+            bookTitle: book.title,
+            bookAuthor: book.author,
+            protagonistName: book.protagonist,
+            transmissionId: book.id,
+          },
+        });
+        if (!error && data?.portraitUrl) {
+          setPortraitUrl(data.portraitUrl);
+        }
+      } catch (e) {
+        console.error('Failed to generate protagonist portrait:', e);
+      } finally {
+        setIsGeneratingPortrait(false);
+      }
+    };
+    generate();
+  }, [book.id, portraitUrl, isGeneratingPortrait, book.title, book.author, book.protagonist]);
 
   const handleAuthorClick = async () => {
     try {
@@ -167,7 +197,7 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
             {/* "Have a conversation with..." label */}
             <p className="mt-2 text-slate-500 text-[10px]">Have a conversation with…</p>
 
-            {/* Protagonist — plain text, violet, GSAP underline, no badge */}
+            {/* Protagonist — with portrait avatar */}
             <button
               onClick={() => onChat(book)}
               className="text-left relative mt-0.5 block group inline-flex items-center gap-1.5"
@@ -178,7 +208,18 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
                 if (protagonistUnderlineRef.current) gsap.to(protagonistUnderlineRef.current, { scaleX: 0, duration: 0.3, ease: 'power2.in' });
               }}
             >
-              <MessageCircle className="w-3 h-3 text-violet-400 flex-shrink-0" />
+              {isGeneratingPortrait ? (
+                <Skeleton className="w-6 h-6 rounded-full flex-shrink-0" />
+              ) : (
+                <Avatar className="h-6 w-6 border border-violet-500/30 shadow-md shadow-violet-500/20 flex-shrink-0">
+                  {portraitUrl ? (
+                    <AvatarImage src={portraitUrl} alt={book.protagonist} />
+                  ) : null}
+                  <AvatarFallback className="bg-slate-800 text-violet-400">
+                    <MessageCircle className="w-3 h-3" />
+                  </AvatarFallback>
+                </Avatar>
+              )}
               <span className="relative text-violet-300 text-xs font-medium">
                 {book.protagonist}
                 <span
