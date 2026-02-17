@@ -7,6 +7,7 @@ import { AuthorPopup } from '@/components/AuthorPopup';
 import { ScifiAuthor } from '@/services/scifiAuthorsService';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { gsap } from 'gsap';
 import type { ProtagonistBook } from '@/pages/Protagonists';
 
@@ -27,6 +28,7 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
   const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
   const [portraitUrl, setPortraitUrl] = useState<string | null>(book.protagonist_portrait_url || null);
   const [isGeneratingPortrait, setIsGeneratingPortrait] = useState(false);
+  const [showPortraitLightbox, setShowPortraitLightbox] = useState(false);
 
   // Scroll-in GSAP animation for protagonist underline
   useEffect(() => {
@@ -211,14 +213,19 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
               {isGeneratingPortrait ? (
                 <Skeleton className="w-6 h-6 rounded-full flex-shrink-0" />
               ) : (
-                <Avatar className="h-6 w-6 border border-violet-500/30 shadow-md shadow-violet-500/20 flex-shrink-0">
-                  {portraitUrl ? (
-                    <AvatarImage src={portraitUrl} alt={book.protagonist} />
-                  ) : null}
-                  <AvatarFallback className="bg-slate-800 text-violet-400">
-                    <MessageCircle className="w-3 h-3" />
-                  </AvatarFallback>
-                </Avatar>
+                <span
+                  onClick={(e) => { if (portraitUrl) { e.stopPropagation(); e.preventDefault(); setShowPortraitLightbox(true); } }}
+                  className={portraitUrl ? "cursor-pointer" : ""}
+                >
+                  <Avatar className="h-6 w-6 border border-violet-500/30 shadow-md shadow-violet-500/20 flex-shrink-0 hover:ring-2 hover:ring-violet-400/50 transition-all">
+                    {portraitUrl ? (
+                      <AvatarImage src={portraitUrl} alt={book.protagonist} className="object-cover" />
+                    ) : null}
+                    <AvatarFallback className="bg-slate-800 text-violet-400">
+                      <MessageCircle className="w-3 h-3" />
+                    </AvatarFallback>
+                  </Avatar>
+                </span>
               )}
               <span className="relative text-violet-300 text-xs font-medium">
                 {book.protagonist}
@@ -263,6 +270,23 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
           onClose={() => setShowAuthorPopup(false)}
         />
       )}
+
+      {/* Portrait Lightbox */}
+      <Dialog open={showPortraitLightbox} onOpenChange={setShowPortraitLightbox}>
+        <DialogContent className="sm:max-w-md p-0 bg-slate-900 border-slate-700/50 overflow-hidden">
+          {portraitUrl && (
+            <div className="flex flex-col items-center p-6">
+              <img
+                src={portraitUrl}
+                alt={book.protagonist}
+                className="w-64 h-64 sm:w-80 sm:h-80 rounded-full object-cover border-4 border-violet-500/30 shadow-2xl shadow-violet-500/20"
+              />
+              <h3 className="mt-4 text-lg font-medium text-slate-200">{book.protagonist}</h3>
+              <p className="text-sm text-muted-foreground">{book.title} · {book.author}</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

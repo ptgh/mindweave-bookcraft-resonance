@@ -307,13 +307,13 @@ export const AdminDirectorsPanel = () => {
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
+      <CardHeader className="pb-3">
+        <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <User className="w-5 h-5 text-cyan-400" />
-            <CardTitle>SF Directors Management</CardTitle>
+            <CardTitle className="text-base">SF Directors Management</CardTitle>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -321,16 +321,18 @@ export const AdminDirectorsPanel = () => {
               disabled={isEnrichingAll}
               className="border-purple-500/30 text-purple-300"
             >
-              {isEnrichingAll ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
-              Enrich All
+              {isEnrichingAll ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1" />}
+              <span className="hidden sm:inline">Enrich All</span>
+              <span className="sm:hidden">Enrich</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={handlePopulateDirectors}
             >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Populate Directors
+              <RefreshCw className="w-4 h-4 mr-1" />
+              <span className="hidden sm:inline">Populate Directors</span>
+              <span className="sm:hidden">Populate</span>
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
@@ -488,7 +490,7 @@ export const AdminDirectorsPanel = () => {
 
       <CardContent className="space-y-4">
         {/* Statistics */}
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
           <div className="bg-slate-800/50 rounded-lg p-3 text-center">
             <div className="text-2xl font-bold text-cyan-400">{stats.total}</div>
             <div className="text-xs text-muted-foreground">Total Directors</div>
