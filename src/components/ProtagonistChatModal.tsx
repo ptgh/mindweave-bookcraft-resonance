@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { X, Send, Mic, MicOff, Volume2, Loader2, MessageCircle } from "lucide-react";
+import { Send, Mic, MicOff, Volume2, Loader2, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
@@ -29,6 +29,12 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
+  // Swipe-to-dismiss state
+  const dragRef = useRef<HTMLDivElement>(null);
+  const dragStartY = useRef(0);
+  const dragCurrentY = useRef(0);
+  const isDragging = useRef(false);
+
   // Load conversation history on mount
   useEffect(() => {
     const loadHistory = async () => {
@@ -39,7 +45,6 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
           return;
         }
 
-        // Find existing conversation
         const { data: conv } = await supabase
           .from('protagonist_conversations')
           .select('id')
@@ -51,7 +56,6 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
         if (conv) {
           setConversationId(conv.id);
 
-          // Load messages
           const { data: msgs } = await supabase
             .from('protagonist_messages')
             .select('role, content')
@@ -74,6 +78,33 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Swipe-to-dismiss handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    dragStartY.current = e.touches[0].clientY;
+    isDragging.current = true;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging.current || !dragRef.current) return;
+    dragCurrentY.current = e.touches[0].clientY - dragStartY.current;
+    if (dragCurrentY.current > 0) {
+      dragRef.current.style.transform = `translateY(${dragCurrentY.current}px)`;
+      dragRef.current.style.transition = 'none';
+    }
+  };
+
+  const handleTouchEnd = () => {
+    isDragging.current = false;
+    if (!dragRef.current) return;
+    if (dragCurrentY.current > 100) {
+      onClose();
+    } else {
+      dragRef.current.style.transform = 'translateY(0)';
+      dragRef.current.style.transition = 'transform 0.3s ease';
+    }
+    dragCurrentY.current = 0;
+  };
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
@@ -218,13 +249,24 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
       className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-lg bg-slate-900 border border-slate-700/50 rounded-t-2xl sm:rounded-2xl max-h-[85vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
+      <div
+        ref={dragRef}
+        className="w-full max-w-lg bg-slate-900 border border-slate-700/50 rounded-t-2xl sm:rounded-2xl max-h-[85vh] flex flex-col"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Drag indicator (mobile) */}
+        <div className="flex justify-center pt-2 pb-0 sm:hidden">
+          <div className="w-10 h-1 rounded-full bg-slate-600" />
+        </div>
+
+        {/* Header — no X button */}
+        <div className="flex items-center p-4 border-b border-slate-700/50">
           <div className="flex items-center gap-3">
             <Avatar className="h-8 w-8 border-2 border-violet-500/30 shadow-lg shadow-violet-500/20">
               {portraitUrl ? (
-                <AvatarImage src={portraitUrl} alt={protagonistName} />
+                <AvatarImage src={portraitUrl} alt={protagonistName} className="object-cover" />
               ) : null}
               <AvatarFallback className="bg-slate-800 text-violet-400">
                 <MessageCircle className="w-3.5 h-3.5" />
@@ -239,9 +281,6 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-200 p-1">
-            <X className="w-4 h-4" />
-          </button>
         </div>
 
         {/* Messages */}

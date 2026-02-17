@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+
 import { RefreshCw, ImageIcon, MessageCircle, Loader2, CheckCircle, AlertCircle, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -241,22 +241,23 @@ export const AdminPortraitsPanel = () => {
       </CardContent>
     </Card>
 
-    {/* Portrait Lightbox */}
-    <Dialog open={!!enlargedPortrait} onOpenChange={() => setEnlargedPortrait(null)}>
-      <DialogContent className="sm:max-w-md p-0 bg-slate-900 border-slate-700/50 overflow-hidden">
-        {enlargedPortrait && (
-          <div className="flex flex-col items-center p-6">
-            <img
-              src={enlargedPortrait.protagonist_portrait_url!}
-              alt={enlargedPortrait.protagonist}
-              className="w-64 h-64 sm:w-80 sm:h-80 rounded-full object-cover border-4 border-violet-500/30 shadow-2xl shadow-violet-500/20"
-            />
-            <h3 className="mt-4 text-lg font-medium text-slate-200">{enlargedPortrait.protagonist}</h3>
-            <p className="text-sm text-muted-foreground">{enlargedPortrait.title} · {enlargedPortrait.author}</p>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+    {/* Portrait Lightbox — tap overlay to close, no X */}
+    {enlargedPortrait && (
+      <div
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center"
+        onClick={() => setEnlargedPortrait(null)}
+      >
+        <div className="flex flex-col items-center p-6" onClick={(e) => e.stopPropagation()}>
+          <img
+            src={enlargedPortrait.protagonist_portrait_url!}
+            alt={enlargedPortrait.protagonist}
+            className="w-64 h-64 sm:w-80 sm:h-80 rounded-full object-cover border-4 border-violet-500/30 shadow-2xl shadow-violet-500/20"
+          />
+          <h3 className="mt-4 text-lg font-medium text-slate-200">{enlargedPortrait.protagonist}</h3>
+          <p className="text-sm text-muted-foreground">{enlargedPortrait.title} · {enlargedPortrait.author}</p>
+        </div>
+      </div>
+    )}
     </>
   );
 };
