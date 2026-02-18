@@ -251,7 +251,7 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
     >
       <div
         ref={dragRef}
-        className="w-full max-w-lg bg-slate-900 border border-slate-700/50 rounded-t-2xl sm:rounded-2xl max-h-[85vh] flex flex-col"
+        className="w-full max-w-lg bg-slate-900 border border-slate-700/50 rounded-t-2xl sm:rounded-2xl max-h-[85vh] flex flex-col mb-4 sm:mb-0"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

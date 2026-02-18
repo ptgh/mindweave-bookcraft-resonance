@@ -1,4 +1,4 @@
-import { X, Link, BookOpen, ExternalLink } from "lucide-react";
+import { Link, BookOpen, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrainNode, BookLink } from "@/pages/TestBrain";
 import { createPortal } from "react-dom";
@@ -40,17 +40,11 @@ const NeuralMapPreviewModal = ({
         
         <div className="relative bg-slate-900/60 backdrop-blur-xl border border-cyan-400/20 rounded-xl overflow-hidden shadow-[0_0_30px_rgba(34,211,238,0.1)]">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-cyan-400/10">
+          <div className="flex items-center p-4 border-b border-cyan-400/10">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-cyan-400/80 rounded-full animate-pulse" />
               <span className="text-slate-200 text-sm font-medium">Signal Preview</span>
             </div>
-            <button
-              onClick={onClose}
-              className="text-slate-400 hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-700/30"
-            >
-              <X className="w-4 h-4" />
-            </button>
           </div>
           
           {/* Content */}
