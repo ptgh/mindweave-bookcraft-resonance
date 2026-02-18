@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { supabase } from '@/integrations/supabase/client';
 import EnhancedBookCover from '@/components/EnhancedBookCover';
 import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
@@ -21,9 +22,13 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
   const authorUnderlineRef = useRef<HTMLSpanElement>(null);
   const titleUnderlineRef = useRef<HTMLSpanElement>(null);
   const protagonistUnderlineRef = useRef<HTMLSpanElement>(null);
+  const lightboxRef = useRef<HTMLDivElement>(null);
+  const lightboxDragStart = useRef(0);
+  const lightboxDragY = useRef(0);
   const [hasAnimated, setHasAnimated] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showAuthorPopup, setShowAuthorPopup] = useState(false);
+  const [showPortraitLightbox, setShowPortraitLightbox] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState<ScifiAuthor | null>(null);
   const [portraitUrl, setPortraitUrl] = useState<string | null>(book.protagonist_portrait_url || null);
   const [isGeneratingPortrait, setIsGeneratingPortrait] = useState(false);
@@ -86,7 +91,6 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
     setIsGeneratingPortrait(true);
     const generate = async () => {
       try {
-        // If URL exists but image is broken, clear it first
         if (portraitBroken && portraitUrl) {
           await supabase
             .from('transmissions')
@@ -117,8 +121,31 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
   }, [book.id, portraitUrl, portraitBroken, isGeneratingPortrait, book.title, book.author, book.protagonist]);
 
   const handlePortraitError = () => {
-    // Image URL exists but file is broken/missing - trigger regeneration
     setPortraitBroken(true);
+  };
+
+  // Lightbox swipe-to-dismiss
+  const handleLightboxTouchStart = (e: React.TouchEvent) => {
+    lightboxDragStart.current = e.touches[0].clientY;
+  };
+  const handleLightboxTouchMove = (e: React.TouchEvent) => {
+    if (!lightboxRef.current) return;
+    const delta = e.touches[0].clientY - lightboxDragStart.current;
+    lightboxDragY.current = delta;
+    if (delta > 0) {
+      lightboxRef.current.style.transform = `translateY(${delta}px)`;
+      lightboxRef.current.style.transition = 'none';
+    }
+  };
+  const handleLightboxTouchEnd = () => {
+    if (!lightboxRef.current) return;
+    if (lightboxDragY.current > 80) {
+      setShowPortraitLightbox(false);
+    } else {
+      lightboxRef.current.style.transform = 'translateY(0)';
+      lightboxRef.current.style.transition = 'transform 0.3s ease';
+    }
+    lightboxDragY.current = 0;
   };
 
   const handleAuthorClick = async () => {
@@ -131,15 +158,11 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
       if (data) {
         setSelectedAuthor(data as ScifiAuthor);
       } else {
-        setSelectedAuthor({
-          id: 'temp', name: book.author, created_at: '', updated_at: ''
-        } as ScifiAuthor);
+        setSelectedAuthor({ id: 'temp', name: book.author, created_at: '', updated_at: '' } as ScifiAuthor);
       }
       setShowAuthorPopup(true);
     } catch {
-      setSelectedAuthor({
-        id: 'temp', name: book.author, created_at: '', updated_at: ''
-      } as ScifiAuthor);
+      setSelectedAuthor({ id: 'temp', name: book.author, created_at: '', updated_at: '' } as ScifiAuthor);
       setShowAuthorPopup(true);
     }
   };
@@ -213,43 +236,55 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
             {/* "Have a conversation with..." label */}
             <p className="mt-2 text-slate-500 text-[10px]">Have a conversation with…</p>
 
-            {/* Protagonist — with portrait avatar, tapping goes to chat */}
-            <button
-              onClick={() => onChat(book)}
-              className="text-left relative mt-0.5 block group inline-flex items-center gap-1.5"
-              onMouseEnter={() => {
-                if (protagonistUnderlineRef.current) gsap.to(protagonistUnderlineRef.current, { scaleX: 1, duration: 0.3, ease: 'power2.out' });
-              }}
-              onMouseLeave={() => {
-                if (protagonistUnderlineRef.current) gsap.to(protagonistUnderlineRef.current, { scaleX: 0, duration: 0.3, ease: 'power2.in' });
-              }}
-            >
+            {/* Protagonist — portrait opens lightbox, name text opens chat directly */}
+            <div className="flex items-center gap-1.5 mt-0.5">
               {isGeneratingPortrait ? (
                 <Skeleton className="w-6 h-6 rounded-full flex-shrink-0" />
               ) : (
-                <Avatar className="h-6 w-6 border border-violet-500/30 shadow-md shadow-violet-500/20 flex-shrink-0 hover:ring-2 hover:ring-violet-400/50 transition-all">
-                  {portraitUrl && !portraitBroken ? (
-                    <AvatarImage
-                      src={portraitUrl}
-                      alt={book.protagonist}
-                      className="object-cover"
-                      onError={handlePortraitError}
-                    />
-                  ) : null}
-                  <AvatarFallback className="bg-slate-800 text-violet-400">
-                    <MessageCircle className="w-3 h-3" />
-                  </AvatarFallback>
-                </Avatar>
+                <button
+                  onClick={() =>
+                    portraitUrl && !portraitBroken
+                      ? setShowPortraitLightbox(true)
+                      : onChat(book)
+                  }
+                  className="flex-shrink-0 focus:outline-none"
+                  aria-label={`View ${book.protagonist}`}
+                >
+                  <Avatar className="h-6 w-6 border border-violet-500/30 shadow-md shadow-violet-500/20 hover:ring-2 hover:ring-violet-400/50 transition-all">
+                    {portraitUrl && !portraitBroken ? (
+                      <AvatarImage
+                        src={portraitUrl}
+                        alt={book.protagonist}
+                        className="object-cover"
+                        onError={handlePortraitError}
+                      />
+                    ) : null}
+                    <AvatarFallback className="bg-slate-800 text-violet-400">
+                      <MessageCircle className="w-3 h-3" />
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
               )}
-              <span className="relative text-violet-300 text-xs font-medium">
-                {book.protagonist}
-                <span
-                  ref={protagonistUnderlineRef}
-                  className="absolute bottom-0 left-0 w-full h-0.5 bg-violet-400"
-                  style={{ transformOrigin: 'left', transform: 'scaleX(0)' }}
-                />
-              </span>
-            </button>
+              <button
+                onClick={() => onChat(book)}
+                className="text-left relative group"
+                onMouseEnter={() => {
+                  if (protagonistUnderlineRef.current) gsap.to(protagonistUnderlineRef.current, { scaleX: 1, duration: 0.3, ease: 'power2.out' });
+                }}
+                onMouseLeave={() => {
+                  if (protagonistUnderlineRef.current) gsap.to(protagonistUnderlineRef.current, { scaleX: 0, duration: 0.3, ease: 'power2.in' });
+                }}
+              >
+                <span className="relative text-violet-300 text-xs font-medium">
+                  {book.protagonist}
+                  <span
+                    ref={protagonistUnderlineRef}
+                    className="absolute bottom-0 left-0 w-full h-0.5 bg-violet-400"
+                    style={{ transformOrigin: 'left', transform: 'scaleX(0)' }}
+                  />
+                </span>
+              </button>
+            </div>
 
             {/* World description */}
             <p className="mt-2 text-slate-500 text-[11px] leading-relaxed line-clamp-3 italic">
@@ -258,6 +293,50 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
           </div>
         </div>
       </div>
+
+      {/* Portrait Lightbox — tap portrait to begin chat, swipe down to dismiss */}
+      {showPortraitLightbox && portraitUrl && !portraitBroken && createPortal(
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9998] flex items-center justify-center"
+          onClick={() => setShowPortraitLightbox(false)}
+        >
+          <div
+            ref={lightboxRef}
+            className="flex flex-col items-center px-6"
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={handleLightboxTouchStart}
+            onTouchMove={handleLightboxTouchMove}
+            onTouchEnd={handleLightboxTouchEnd}
+          >
+            {/* Drag pill */}
+            <div className="w-10 h-1 rounded-full bg-slate-600 mb-6" />
+
+            {/* Portrait — tap to start chat */}
+            <button
+              onClick={() => { setShowPortraitLightbox(false); onChat(book); }}
+              className="group relative focus:outline-none"
+              aria-label={`Start conversation with ${book.protagonist}`}
+            >
+              <img
+                src={portraitUrl}
+                alt={book.protagonist}
+                className="w-56 h-56 sm:w-72 sm:h-72 rounded-full object-cover border-2 border-violet-500/40 shadow-2xl shadow-violet-500/30 group-hover:border-violet-400/70 group-active:scale-95 transition-all duration-200"
+              />
+              {/* Hover hint */}
+              <div className="absolute inset-0 rounded-full flex items-end justify-center pb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <span className="text-violet-200 text-xs font-medium bg-slate-900/80 px-3 py-1 rounded-full backdrop-blur-sm">
+                  Begin conversation
+                </span>
+              </div>
+            </button>
+
+            <h3 className="mt-5 text-lg font-medium text-slate-100">{book.protagonist}</h3>
+            <p className="text-sm text-slate-400 mt-1">{book.title} · {book.author}</p>
+            <p className="text-xs text-violet-400/60 mt-3">Tap to speak · Swipe down to close</p>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {showPreview && (
         <EnhancedBookPreviewModal
