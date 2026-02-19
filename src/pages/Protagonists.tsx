@@ -74,10 +74,10 @@ const Protagonists: React.FC = () => {
               <span className="text-sm text-violet-400">Speak to Protagonist</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-light text-slate-200 mb-3">
-              Chat with <span className="text-violet-400">Characters</span>
+              Speak to <span className="text-violet-400">Protagonists</span> from Science Fiction
             </h1>
             <p className="text-slate-400 max-w-xl mx-auto">
-              Select a book and have a conversation with its protagonist. They'll stay in character, within their story's world.
+              Step into the worlds of science fiction and have real conversations with iconic characters. They'll stay in character, drawing from the pages of the books that brought them to life.
             </p>
           </div>
 
