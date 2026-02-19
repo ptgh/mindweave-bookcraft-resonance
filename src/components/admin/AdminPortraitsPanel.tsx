@@ -198,9 +198,9 @@ export const AdminPortraitsPanel = () => {
                       className="focus:outline-none"
                       disabled={!p.protagonist_portrait_url}
                     >
-                      <Avatar className="h-16 w-16 border-2 border-violet-500/30 shadow-lg shadow-violet-500/10 mb-2 cursor-pointer hover:ring-2 hover:ring-violet-400/50 transition-all">
+                      <Avatar className="h-16 w-16 border-2 border-violet-500/30 shadow-lg shadow-violet-500/10 mb-2 cursor-pointer hover:ring-2 hover:ring-violet-400/50 transition-all bg-slate-800">
                         {p.protagonist_portrait_url ? (
-                          <AvatarImage src={p.protagonist_portrait_url} alt={p.protagonist} className="object-cover" />
+                          <AvatarImage src={p.protagonist_portrait_url} alt={p.protagonist} className="object-cover w-full h-full" />
                         ) : null}
                         <AvatarFallback className="bg-slate-800 text-violet-400">
                           <MessageCircle className="w-6 h-6" />
