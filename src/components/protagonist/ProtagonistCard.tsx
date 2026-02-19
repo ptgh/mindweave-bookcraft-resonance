@@ -250,12 +250,12 @@ const ProtagonistCard: React.FC<ProtagonistCardProps> = ({ book, onChat, onIntro
                   className="flex-shrink-0 focus:outline-none"
                   aria-label={`View ${book.protagonist}`}
                 >
-                  <Avatar className="h-6 w-6 border border-violet-500/30 shadow-md shadow-violet-500/20 hover:ring-2 hover:ring-violet-400/50 transition-all">
+                  <Avatar className="h-6 w-6 border border-violet-500/30 shadow-md shadow-violet-500/20 hover:ring-2 hover:ring-violet-400/50 transition-all bg-slate-800">
                     {portraitUrl && !portraitBroken ? (
                       <AvatarImage
                         src={portraitUrl}
                         alt={book.protagonist}
-                        className="object-cover"
+                        className="object-cover w-full h-full"
                         onError={handlePortraitError}
                       />
                     ) : null}
