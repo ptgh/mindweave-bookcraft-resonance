@@ -521,36 +521,27 @@ const Header = () => {
                   </Link>
                 </DropdownMenuItem>
 
-                {/* Mobile Admin Submenu */}
+                {/* Mobile Admin — flat direct link, no sub-panel */}
                 {hasRole('admin') && (
                   <>
                     <DropdownMenuSeparator className="bg-amber-500/20" />
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger className="flex items-center gap-3 px-3 py-2.5 cursor-pointer text-amber-300/70 hover:text-amber-400 data-[state=open]:text-amber-400">
-                        <Shield className="w-4 h-4 text-amber-400/70" />
-                        Admin
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuPortal>
-                        <DropdownMenuSubContent className="bg-slate-900/95 backdrop-blur-xl border border-amber-500/20 shadow-2xl">
-                          {adminMenuItems.map((item) => (
-                            <DropdownMenuItem key={item.to} asChild>
-                              <Link
-                                to={item.to}
-                                onClick={handleMenuItemTap}
-                                className={`flex items-center gap-2 px-3 py-2.5 cursor-pointer ${
-                                  location.pathname === item.to
-                                    ? 'text-amber-400'
-                                    : 'text-slate-200 hover:text-amber-400'
-                                }`}
-                              >
-                                <item.icon className="w-4 h-4 text-amber-400/70" />
-                                {item.label}
-                              </Link>
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuSubContent>
-                      </DropdownMenuPortal>
-                    </DropdownMenuSub>
+                    <div className="px-3 py-1">
+                      <span className="text-[10px] uppercase tracking-wider text-amber-500/60 font-medium">Admin</span>
+                    </div>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/admin/enrichment"
+                        onClick={handleMenuItemTap}
+                        className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer active:scale-[0.98] ${
+                          location.pathname === '/admin/enrichment'
+                            ? 'text-amber-400'
+                            : 'text-amber-300/70 hover:text-amber-400'
+                        }`}
+                      >
+                        <Sparkles className="w-4 h-4 text-amber-400/70" />
+                        Data Enrichment
+                      </Link>
+                    </DropdownMenuItem>
                   </>
                 )}
 
