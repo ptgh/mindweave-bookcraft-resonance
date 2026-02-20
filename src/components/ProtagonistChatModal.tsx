@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Send, Mic, MicOff, Volume2, Loader2, MessageCircle } from "lucide-react";
+import { Send, Mic, MicOff, Volume2, Loader2, MessageCircle, AudioLines } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import ProtagonistVoiceMode from "./ProtagonistVoiceMode";
 
 interface ProtagonistChatModalProps {
   bookTitle: string;
@@ -25,6 +26,8 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [showPortraitLightbox, setShowPortraitLightbox] = useState(false);
+  const [showVoiceMode, setShowVoiceMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -261,17 +264,19 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
           <div className="w-10 h-1 rounded-full bg-slate-600" />
         </div>
 
-        {/* Header — no X button */}
-        <div className="flex items-center p-4 border-b border-slate-700/50">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
           <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8 border-2 border-violet-500/30 shadow-lg shadow-violet-500/20">
-              {portraitUrl ? (
-                <AvatarImage src={portraitUrl} alt={protagonistName} className="object-cover" />
-              ) : null}
-              <AvatarFallback className="bg-slate-800 text-violet-400">
-                <MessageCircle className="w-3.5 h-3.5" />
-              </AvatarFallback>
-            </Avatar>
+            <button onClick={() => portraitUrl && setShowPortraitLightbox(true)} className="focus:outline-none">
+              <Avatar className="h-8 w-8 border-2 border-violet-500/30 shadow-lg shadow-violet-500/20 hover:border-violet-400/60 transition-colors cursor-pointer">
+                {portraitUrl ? (
+                  <AvatarImage src={portraitUrl} alt={protagonistName} className="object-cover" />
+                ) : null}
+                <AvatarFallback className="bg-slate-800 text-violet-400">
+                  <MessageCircle className="w-3.5 h-3.5" />
+                </AvatarFallback>
+              </Avatar>
+            </button>
             <div>
               <h3 className="text-slate-200 text-sm font-medium">
                 Speaking with {protagonistName}
@@ -281,6 +286,13 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
               </p>
             </div>
           </div>
+          <button
+            onClick={() => setShowVoiceMode(true)}
+            className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition-colors"
+            title="Voice mode"
+          >
+            <AudioLines className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Messages */}
@@ -374,6 +386,33 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
           </button>
         </div>
       </div>
+
+      {/* Portrait Lightbox */}
+      {showPortraitLightbox && portraitUrl && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[10000] flex items-center justify-center"
+          onClick={() => setShowPortraitLightbox(false)}
+        >
+          <img
+            src={portraitUrl}
+            alt={protagonistName}
+            className="max-w-[80vw] max-h-[80vh] rounded-2xl border border-violet-500/30 shadow-2xl shadow-violet-500/20 object-contain"
+          />
+        </div>
+      )}
+
+      {/* Voice Mode */}
+      {showVoiceMode && (
+        <ProtagonistVoiceMode
+          bookTitle={bookTitle}
+          bookAuthor={bookAuthor}
+          protagonistName={protagonistName}
+          portraitUrl={portraitUrl}
+          conversationId={conversationId}
+          onConversationId={setConversationId}
+          onClose={() => setShowVoiceMode(false)}
+        />
+      )}
     </div>,
     document.body
   );
