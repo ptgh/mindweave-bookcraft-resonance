@@ -181,3 +181,6 @@ verify_jwt = false
 
 [functions.generate-protagonist-portrait]
 verify_jwt = false
+
+[functions.elevenlabs-conversation-token]
+verify_jwt = true
