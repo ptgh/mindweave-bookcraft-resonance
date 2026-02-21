@@ -288,10 +288,11 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
           </div>
           <button
             onClick={() => setShowVoiceMode(true)}
-            className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition-colors"
             title="Voice mode"
           >
             <AudioLines className="w-4 h-4" />
+            <span className="text-[10px] font-medium">Try voice</span>
           </button>
         </div>
 

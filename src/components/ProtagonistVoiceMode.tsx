@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { PhoneOff, Loader2 } from "lucide-react";
+import { MessageCircle, Loader2 } from "lucide-react";
 import { useConversation } from "@elevenlabs/react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -90,7 +90,10 @@ const ProtagonistVoiceMode = ({
     setLastReply("");
 
     try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Request mic permission
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Stop tracks immediately — the SDK manages its own stream
+      stream.getTracks().forEach(t => t.stop());
 
       const { data, error } = await supabase.functions.invoke(
         "elevenlabs-conversation-token"
@@ -102,9 +105,11 @@ const ProtagonistVoiceMode = ({
         return;
       }
 
+      console.log("Starting ElevenLabs session with signed URL...");
       await conversation.startSession({
         signedUrl: data.signed_url,
       });
+      console.log("Session started successfully");
     } catch (err) {
       console.error("Failed to start conversation:", err);
       setVoiceState("idle");
@@ -129,7 +134,7 @@ const ProtagonistVoiceMode = ({
   const stateLabel = voiceState === "connecting"
     ? "Connecting..."
     : voiceState === "idle"
-    ? `Tap to speak with ${protagonistName}`
+    ? "Starting session..."
     : isSpeaking
     ? `${protagonistName} is speaking...`
     : "Listening...";
@@ -186,13 +191,14 @@ const ProtagonistVoiceMode = ({
         }
       `}</style>
 
-      {/* End call button */}
+      {/* Return to chat button */}
       <button
         onClick={endSession}
-        className="absolute top-6 right-6 p-3 rounded-full bg-destructive/20 border border-destructive/40 text-destructive hover:bg-destructive/30 transition-colors"
-        title="End voice session"
+        className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 rounded-full bg-muted/20 border border-muted-foreground/20 text-muted-foreground hover:bg-muted/30 transition-colors text-sm"
+        title="Return to chat"
       >
-        <PhoneOff className="w-5 h-5" />
+        <MessageCircle className="w-4 h-4" />
+        <span>Return to chat</span>
       </button>
 
       <p className="text-muted-foreground text-xs mb-2 tracking-wider uppercase">
@@ -299,14 +305,15 @@ const ProtagonistVoiceMode = ({
         )}
       </div>
 
-      {/* Single end-call button at bottom */}
+      {/* Return to chat at bottom */}
       <div className="absolute bottom-10">
         <button
           onClick={endSession}
-          className="p-5 rounded-full bg-destructive/20 border border-destructive/40 text-destructive hover:bg-destructive/30 transition-all hover:scale-105"
-          title="End conversation"
+          className="flex items-center gap-2 px-6 py-3 rounded-full bg-muted/20 border border-muted-foreground/20 text-muted-foreground hover:bg-muted/30 transition-all hover:scale-105 text-sm"
+          title="Return to chat"
         >
-          <PhoneOff className="w-6 h-6" />
+          <MessageCircle className="w-5 h-5" />
+          <span>Return to chat</span>
         </button>
       </div>
     </div>,
