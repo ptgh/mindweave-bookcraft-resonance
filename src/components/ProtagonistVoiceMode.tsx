@@ -65,13 +65,15 @@ const ProtagonistVoiceMode = ({
     },
   } as any);
 
-  // Audio visualisation based on agent speaking state
+  // Audio visualisation — animate pulse based on speaking/listening state
   useEffect(() => {
-    if (conversation.isSpeaking) {
+    if (conversation.isSpeaking || voiceState === "connected") {
       let phase = 0;
+      const speed = conversation.isSpeaking ? 0.1 : 0.04;
+      const intensity = conversation.isSpeaking ? 0.2 : 0.08;
       const tick = () => {
-        phase += 0.08;
-        setPulseScale(1 + Math.sin(phase) * 0.15 + Math.random() * 0.05);
+        phase += speed;
+        setPulseScale(1 + Math.sin(phase) * intensity + (conversation.isSpeaking ? Math.sin(phase * 2.7) * 0.06 : 0));
         animFrameRef.current = requestAnimationFrame(tick);
       };
       tick();
@@ -80,7 +82,7 @@ const ProtagonistVoiceMode = ({
       setPulseScale(1);
     }
     return () => cancelAnimationFrame(animFrameRef.current);
-  }, [conversation.isSpeaking]);
+  }, [conversation.isSpeaking, voiceState]);
 
   const startConversation = useCallback(async () => {
     setVoiceState("connecting");
@@ -122,6 +124,7 @@ const ProtagonistVoiceMode = ({
 
   const isListening = voiceState === "connected" && !conversation.isSpeaking;
   const isSpeaking = voiceState === "connected" && conversation.isSpeaking;
+  const isActive = isListening || isSpeaking;
 
   const stateLabel = voiceState === "connecting"
     ? "Connecting..."
@@ -131,8 +134,58 @@ const ProtagonistVoiceMode = ({
     ? `${protagonistName} is speaking...`
     : "Listening...";
 
+  // Ring colors
+  const ringColor = isSpeaking
+    ? "rgba(139,92,246,0.5)"
+    : isListening
+    ? "rgba(34,211,238,0.5)"
+    : "rgba(100,116,139,0.15)";
+
+  const ringColorFaint = isSpeaking
+    ? "rgba(139,92,246,0.2)"
+    : isListening
+    ? "rgba(34,211,238,0.2)"
+    : "transparent";
+
+  const glowColor = isSpeaking
+    ? "rgba(139,92,246,0.25)"
+    : isListening
+    ? "rgba(34,211,238,0.25)"
+    : "none";
+
   return createPortal(
     <div className="fixed inset-0 bg-black z-[9999] flex flex-col items-center justify-center">
+      {/* Inline keyframes for wavelength animation */}
+      <style>{`
+        @keyframes voice-wave-1 {
+          0%, 100% { transform: scale(1); opacity: 0.5; }
+          50% { transform: scale(1.18); opacity: 0.15; }
+        }
+        @keyframes voice-wave-2 {
+          0%, 100% { transform: scale(1); opacity: 0.35; }
+          50% { transform: scale(1.32); opacity: 0.08; }
+        }
+        @keyframes voice-wave-3 {
+          0%, 100% { transform: scale(1); opacity: 0.2; }
+          50% { transform: scale(1.48); opacity: 0.03; }
+        }
+        @keyframes voice-wave-speak-1 {
+          0%, 100% { transform: scale(1); opacity: 0.6; }
+          25% { transform: scale(1.22); opacity: 0.25; }
+          75% { transform: scale(1.12); opacity: 0.35; }
+        }
+        @keyframes voice-wave-speak-2 {
+          0%, 100% { transform: scale(1); opacity: 0.4; }
+          33% { transform: scale(1.38); opacity: 0.12; }
+          66% { transform: scale(1.28); opacity: 0.2; }
+        }
+        @keyframes voice-wave-speak-3 {
+          0%, 100% { transform: scale(1); opacity: 0.25; }
+          40% { transform: scale(1.55); opacity: 0.05; }
+          80% { transform: scale(1.42); opacity: 0.1; }
+        }
+      `}</style>
+
       {/* End call button */}
       <button
         onClick={endSession}
@@ -150,43 +203,67 @@ const ProtagonistVoiceMode = ({
         from "{bookTitle}" by {bookAuthor}
       </p>
 
-      {/* Avatar with pulse ring */}
-      <div className="relative mb-10">
+      {/* Avatar with animated wavelength rings */}
+      <div className="relative mb-10" style={{ width: 200, height: 200 }}>
+        {/* Wavelength ring 1 — closest */}
+        {isActive && (
+          <div
+            className="absolute rounded-full border-2 pointer-events-none"
+            style={{
+              inset: -8,
+              borderColor: ringColor,
+              animation: isSpeaking
+                ? "voice-wave-speak-1 1.4s ease-in-out infinite"
+                : "voice-wave-1 2.2s ease-in-out infinite",
+            }}
+          />
+        )}
+        {/* Wavelength ring 2 — middle */}
+        {isActive && (
+          <div
+            className="absolute rounded-full border pointer-events-none"
+            style={{
+              inset: -18,
+              borderColor: ringColorFaint,
+              animation: isSpeaking
+                ? "voice-wave-speak-2 1.8s ease-in-out infinite 0.2s"
+                : "voice-wave-2 2.8s ease-in-out infinite 0.3s",
+            }}
+          />
+        )}
+        {/* Wavelength ring 3 — outermost */}
+        {isActive && (
+          <div
+            className="absolute rounded-full border pointer-events-none"
+            style={{
+              inset: -30,
+              borderColor: ringColorFaint,
+              animation: isSpeaking
+                ? "voice-wave-speak-3 2.2s ease-in-out infinite 0.4s"
+                : "voice-wave-3 3.5s ease-in-out infinite 0.6s",
+            }}
+          />
+        )}
+
+        {/* Inner pulse ring — tight to avatar */}
         <div
-          className="absolute inset-0 rounded-full border-2 transition-all duration-200"
+          className="absolute inset-0 rounded-full border-2 transition-all duration-200 pointer-events-none"
           style={{
-            transform: `scale(${pulseScale * 1.15})`,
-            borderColor: isListening
-              ? "rgba(34,211,238,0.4)"
-              : isSpeaking
-              ? "rgba(139,92,246,0.4)"
-              : "rgba(100,116,139,0.15)",
-          }}
-        />
-        <div
-          className="absolute inset-0 rounded-full border transition-all duration-300"
-          style={{
-            transform: `scale(${pulseScale * 1.3})`,
-            borderColor: isListening
-              ? "rgba(34,211,238,0.15)"
-              : isSpeaking
-              ? "rgba(139,92,246,0.15)"
-              : "transparent",
+            transform: `scale(${pulseScale})`,
+            borderColor: ringColor,
           }}
         />
 
         <Avatar
-          className="h-40 w-40 border-2 transition-colors duration-300"
+          className="h-[200px] w-[200px] border-2 transition-colors duration-300"
           style={{
             borderColor: isListening
               ? "rgba(34,211,238,0.6)"
               : isSpeaking
               ? "rgba(139,92,246,0.6)"
               : "rgba(100,116,139,0.3)",
-            boxShadow: isListening
-              ? "0 0 40px rgba(34,211,238,0.2)"
-              : isSpeaking
-              ? "0 0 40px rgba(139,92,246,0.2)"
+            boxShadow: isActive
+              ? `0 0 60px ${glowColor}, 0 0 120px ${glowColor}`
               : "none",
           }}
         >
@@ -205,10 +282,12 @@ const ProtagonistVoiceMode = ({
         )}
       </div>
 
-      <p className={`text-muted-foreground text-sm mb-6 ${voiceState === "connected" ? "animate-pulse" : ""}`}>
+      {/* State label */}
+      <p className={`text-muted-foreground text-sm mb-6 ${isActive ? "animate-pulse" : ""}`}>
         {stateLabel}
       </p>
 
+      {/* Transcript / Reply display */}
       <div className="max-w-md w-full px-6 space-y-3 text-center min-h-[80px]">
         {lastTranscript && (
           <p className="text-muted-foreground text-xs">
@@ -220,10 +299,12 @@ const ProtagonistVoiceMode = ({
         )}
       </div>
 
-      <div className="absolute bottom-10 flex items-center gap-6">
+      {/* Single end-call button at bottom */}
+      <div className="absolute bottom-10">
         <button
           onClick={endSession}
           className="p-5 rounded-full bg-destructive/20 border border-destructive/40 text-destructive hover:bg-destructive/30 transition-all hover:scale-105"
+          title="End conversation"
         >
           <PhoneOff className="w-6 h-6" />
         </button>
