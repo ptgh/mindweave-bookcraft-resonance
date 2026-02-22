@@ -154,20 +154,20 @@ export const ProfileSearchInput = ({ type, value, onChange, placeholder, maxLeng
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 top-full mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg shadow-xl overflow-hidden max-h-48 overflow-y-auto">
+        <div className="absolute z-[99999] bottom-full mb-1 w-full bg-slate-800 border border-slate-600 rounded-lg shadow-2xl overflow-hidden max-h-48 overflow-y-auto">
           {loading ? (
-            <div className="px-3 py-2 text-xs text-muted-foreground">Searching...</div>
+            <div className="px-3 py-2 text-xs text-slate-400">Searching...</div>
           ) : (
             results.map((r, i) => (
               <button
                 key={`${r.label}-${i}`}
                 type="button"
                 onClick={() => handleSelect(r)}
-                className="w-full text-left px-3 py-2 hover:bg-slate-700 transition-colors border-b border-slate-700/50 last:border-0"
+                className="w-full text-left px-3 py-2 hover:bg-slate-700/80 transition-colors border-b border-slate-700/50 last:border-0"
               >
-                <span className="text-sm text-slate-100">{r.label}</span>
+                <span className="block text-sm font-medium text-slate-100 truncate">{r.label}</span>
                 {r.subtitle && (
-                  <span className="ml-2 text-xs text-muted-foreground">{r.subtitle}</span>
+                  <span className="block text-xs text-slate-400 truncate">{r.subtitle}</span>
                 )}
               </button>
             ))
