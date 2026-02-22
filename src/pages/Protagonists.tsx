@@ -24,6 +24,7 @@ const Protagonists: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [chatTarget, setChatTarget] = useState<ProtagonistBook | null>(null);
+  const [viewMode, setViewMode] = useState<'books' | 'portraits'>('books');
 
   const updateBookIntro = useCallback((id: number, intro: string) => {
     setBooks(prev => prev.map(b => b.id === id ? { ...b, protagonist_intro: intro } : b));
