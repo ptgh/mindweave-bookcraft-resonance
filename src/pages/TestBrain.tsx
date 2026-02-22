@@ -196,7 +196,7 @@ const TestBrain = () => {
               const jitterAngle = (2 * Math.PI * j) / indices.length + Math.random() * 0.8;
               const jitterR = 25 + attempt * 12 + Math.random() * spread;
               const candidateX = Math.max(padding, Math.min(vw - padding, center.cx + Math.cos(jitterAngle) * jitterR));
-              const candidateY = Math.max(topPad, Math.min(vh - 160, center.cy + Math.sin(jitterAngle) * jitterR));
+              const candidateY = Math.max(topPad, Math.min(vh - 220, center.cy + Math.sin(jitterAngle) * jitterR));
               
               // Check collision with already-placed nodes
               const hasCollision = placedPositions.some(p => {
@@ -215,7 +215,7 @@ const TestBrain = () => {
             
             if (!placed) {
               bestX = Math.max(padding, Math.min(vw - padding, center.cx + (Math.random() - 0.5) * 200));
-              bestY = Math.max(topPad, Math.min(vh - 160, center.cy + (Math.random() - 0.5) * 200));
+              bestY = Math.max(topPad, Math.min(vh - 220, center.cy + (Math.random() - 0.5) * 200));
             }
             
             nodePositions[idx] = { x: bestX, y: bestY };
@@ -848,7 +848,7 @@ const TestBrain = () => {
             className="absolute z-30"
             style={{ 
               left: tooltip.x - 100, 
-              top: tooltip.y,
+              top: tooltip.y > window.innerHeight * 0.65 ? tooltip.y - 220 : tooltip.y,
               transform: 'translateX(-50%)',
               pointerEvents: 'auto',
             }}
@@ -867,7 +867,15 @@ const TestBrain = () => {
               }, 300);
             }}
           >
-            <div className="relative bg-slate-900/80 backdrop-blur-xl border border-cyan-400/25 rounded-xl p-3.5 max-w-[250px] shadow-[0_0_30px_rgba(34,211,238,0.12)] cursor-default">
+            <div 
+              className="relative bg-slate-900/80 backdrop-blur-xl border border-cyan-400/25 rounded-xl p-3.5 max-w-[250px] shadow-[0_0_30px_rgba(34,211,238,0.12)] cursor-pointer hover:border-cyan-400/40 transition-colors"
+              onClick={() => {
+                setSelectedNode(tooltip.node);
+                setTooltip(null);
+                setHoveredNodeId(null);
+                isTooltipHoveredRef.current = false;
+              }}
+            >
               <div className="flex items-start space-x-3">
                 {tooltip.node.coverUrl && (
                   <div className="relative w-14 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-cyan-400/25 shadow-md">
@@ -908,7 +916,7 @@ const TestBrain = () => {
                   })()}
                 </div>
               </div>
-              <p className="text-[9px] text-slate-500 mt-2 text-center">Click to view details</p>
+              <p className="text-[9px] text-cyan-300/50 mt-2 text-center">Click to view details</p>
             </div>
           </div>
         )}
