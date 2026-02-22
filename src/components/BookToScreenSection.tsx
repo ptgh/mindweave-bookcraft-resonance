@@ -1280,7 +1280,7 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                     className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 hover:text-cyan-300 transition-colors flex items-center justify-center gap-2"
                   >
                     <FileText className="w-4 h-4" />
-                    Read Screenplay
+                    Screenplay
                   </a>
                 )}
                 {/* Only show View Book button for adaptations, not original screenplays */}
