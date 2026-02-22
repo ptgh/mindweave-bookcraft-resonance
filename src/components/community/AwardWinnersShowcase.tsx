@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Award, ExternalLink, Rocket, Sparkles, Eye } from 'lucide-react';
+import { Award, ExternalLink, Rocket, Sparkles, Eye, LucideIcon } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AWARD_WINNING_BOOKS, AWARD_CONFIG, AwardType, AwardBook } from '@/constants/sfAwards';
@@ -11,6 +11,12 @@ const AWARD_URLS: Record<AwardType, string> = {
   hugo: 'https://www.thehugoawards.org/',
   nebula: 'https://nebulas.sfwa.org/',
   pkd: 'https://www.philipkdickaward.org/',
+};
+
+const AWARD_ICONS: Record<AwardType, LucideIcon> = {
+  hugo: Rocket,
+  nebula: Sparkles,
+  pkd: Eye,
 };
 
 // Get books that won awards (filter to winners only for showcase)
@@ -35,7 +41,7 @@ const ShowcaseCard: React.FC<ShowcaseCardProps> = ({
 }) => {
   const primaryAward = book.awards.find(a => a.isWinner) || book.awards[0];
   const config = AWARD_CONFIG[primaryAward.type];
-  
+  const IconComponent = AWARD_ICONS[primaryAward.type];
   return (
     <Card 
       onClick={onCardClick}
@@ -51,7 +57,7 @@ const ShowcaseCard: React.FC<ShowcaseCardProps> = ({
       <div className={`absolute top-0 left-0 right-0 py-2 px-3 ${config.bgColor} border-b backdrop-blur-sm z-10`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-lg">{config.emoji}</span>
+            <IconComponent className={`w-4 h-4 ${config.color}`} />
             <span className={`text-xs font-semibold ${config.color}`}>
               {config.name}
             </span>
@@ -91,11 +97,14 @@ const ShowcaseCard: React.FC<ShowcaseCardProps> = ({
             {book.awards
               .filter(a => a.type !== primaryAward.type)
               .slice(0, 2)
-              .map((award, idx) => (
-                <span key={idx} className="text-sm" title={AWARD_CONFIG[award.type].name}>
-                  {AWARD_CONFIG[award.type].emoji}
-                </span>
-              ))}
+              .map((award, idx) => {
+                const AwardIcon = AWARD_ICONS[award.type];
+                return (
+                  <span key={idx} title={AWARD_CONFIG[award.type].name}>
+                    <AwardIcon className={`w-3.5 h-3.5 ${AWARD_CONFIG[award.type].color}`} />
+                  </span>
+                );
+              })}
             {book.awards.length > 2 && (
               <span className="text-xs text-slate-500">+{book.awards.length - 2}</span>
             )}
