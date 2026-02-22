@@ -407,7 +407,8 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
                 {/* Scrollable book covers */}
                 <div 
                   ref={scrollContainerRef}
-                  className="flex gap-3 overflow-x-auto scrollbar-hide px-6 py-2 smooth-scroll overscroll-x-contain"
+                  className="flex gap-3 overflow-x-auto px-6 py-2 overscroll-x-contain [&::-webkit-scrollbar]:hidden"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
                 >
                   {selectedUserTransmissions.map(t => (
                     <button
@@ -495,7 +496,7 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
         </div>
 
         {/* Content */}
-        <div className="p-4 overflow-y-auto max-h-[calc(80vh-60px)]">
+        <div className="p-4 overflow-y-auto max-h-[calc(80vh-60px)] [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <Tabs defaultValue="discover" className="w-full" onValueChange={(v) => {
             if (v === 'discover') loadDiscoverUsers();
           }}>
@@ -649,8 +650,8 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
                       <span className="text-sm font-medium text-slate-200">{name}</span>
                       <span className="text-xs text-slate-500">({userTransmissions.length} books) →</span>
                     </button>
-                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-                      {userTransmissions.slice(0, 5).map(t => (
+                    <div className="flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                      {userTransmissions.slice(0, 10).map(t => (
                         <button
                           key={t.id}
                           onClick={() => setPreviewBook({
@@ -661,13 +662,14 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
                             cover_url: t.cover_url,
                             created_at: new Date().toISOString()
                           })}
-                          className="group cursor-pointer"
+                          className="flex-shrink-0 group cursor-pointer"
+                          title={`${t.title} by ${t.author}`}
                         >
                           {t.cover_url ? (
                             <img
                               src={t.cover_url}
                               alt={t.title || 'Book cover'}
-                              className="w-full aspect-[2/3] object-cover rounded-lg group-hover:scale-105 transition-transform"
+                              className="w-20 h-[120px] object-cover rounded-lg shadow-md group-hover:scale-105 transition-transform"
                               loading="lazy"
                               onError={(e) => { 
                                 (e.target as HTMLImageElement).style.display = 'none';
@@ -676,7 +678,7 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
                               }}
                             />
                           ) : null}
-                          <div className={`w-full aspect-[2/3] bg-slate-700 rounded-lg flex items-center justify-center ${t.cover_url ? 'hidden' : ''}`}>
+                          <div className={`w-20 h-[120px] bg-slate-700 rounded-lg flex items-center justify-center shadow-md ${t.cover_url ? 'hidden' : ''}`}>
                             <BookOpen className="w-5 h-5 text-slate-500" />
                           </div>
                         </button>
