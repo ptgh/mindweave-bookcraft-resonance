@@ -116,16 +116,20 @@ const Protagonists: React.FC = () => {
               <p className="text-slate-500 text-sm">Try a different search term.</p>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filtered.map(book => (
-                <ProtagonistCard
-                  key={book.id}
-                  book={book}
-                  onChat={setChatTarget}
-                  onIntroGenerated={updateBookIntro}
-                />
-              ))}
-            </div>
+            viewMode === 'portraits' ? (
+              <ProtagonistPortraitGrid books={filtered} onChat={setChatTarget} />
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filtered.map(book => (
+                  <ProtagonistCard
+                    key={book.id}
+                    book={book}
+                    onChat={setChatTarget}
+                    onIntroGenerated={updateBookIntro}
+                  />
+                ))}
+              </div>
+            )
           )}
 
           <p className="text-center text-slate-500 text-xs mt-8">
