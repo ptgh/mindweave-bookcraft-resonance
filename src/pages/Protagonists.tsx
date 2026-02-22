@@ -1,15 +1,12 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { MessageCircle, Search } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { MessageCircle, Search, BookOpen, Users } from 'lucide-react';
 import Header from '@/components/Header';
 import { SEOHead } from '@/components/SEOHead';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import ProtagonistChatModal from '@/components/ProtagonistChatModal';
-import EnhancedBookCover from '@/components/EnhancedBookCover';
-import EnhancedBookPreviewModal from '@/components/EnhancedBookPreviewModal';
-import { AuthorPopup } from '@/components/AuthorPopup';
-import { ScifiAuthor } from '@/services/scifiAuthorsService';
 import ProtagonistCard from '@/components/protagonist/ProtagonistCard';
+import ProtagonistPortraitGrid from '@/components/protagonist/ProtagonistPortraitGrid';
 
 export interface ProtagonistBook {
   id: number;
