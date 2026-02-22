@@ -1,0 +1,1 @@
+UPDATE public.transmissions SET cover_url = '/images/covers/population-bomb.jpg' WHERE id = 121;
