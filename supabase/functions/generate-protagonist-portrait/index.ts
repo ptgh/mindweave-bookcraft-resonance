@@ -55,7 +55,8 @@ Style requirements:
 - Dark sci-fi color palette dominated by deep slate blues, violet/purple accents, and subtle cyan highlights
 - Atmospheric lighting with dramatic shadows
 - Portrait composition: head and upper shoulders, slightly off-center
-- Background should be abstract/atmospheric, suggesting the world of the novel
+- Background MUST be dark — deep navy, charcoal, or near-black tones. NEVER use white, light grey, or bright backgrounds.
+- The entire image should have a consistently dark tonality with no white or light-colored borders, edges, or backgrounds
 - The character should feel like they belong in a literary reading app with a neural/cerebral aesthetic
 - Square 1:1 aspect ratio portrait`;
 

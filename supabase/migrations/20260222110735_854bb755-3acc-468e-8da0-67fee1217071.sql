@@ -1,0 +1,1 @@
+UPDATE public.transmissions SET protagonist_portrait_url = NULL WHERE id = 39;
