@@ -5,3 +5,4 @@ export { AdminCoverHealthPanel } from './AdminCoverHealthPanel';
 export { AdminDataHealthPanel } from './AdminDataHealthPanel';
 export { AdminEventsPanel } from './AdminEventsPanel';
 export { AdminPortraitsPanel } from './AdminPortraitsPanel';
+export { AdminAuthorPortraitsPanel } from './AdminAuthorPortraitsPanel';

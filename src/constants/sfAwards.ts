@@ -19,22 +19,25 @@ export interface AwardBook {
 }
 
 // Award display configuration
-export const AWARD_CONFIG: Record<AwardType, { name: string; emoji: string; color: string; bgColor: string }> = {
+export const AWARD_CONFIG: Record<AwardType, { name: string; emoji: string; icon: string; color: string; bgColor: string }> = {
   hugo: { 
     name: 'Hugo Award', 
-    emoji: '🚀', 
+    emoji: '🚀',
+    icon: 'rocket',
     color: 'text-amber-400',
     bgColor: 'bg-amber-500/10 border-amber-500/30'
   },
   nebula: { 
     name: 'Nebula Award', 
-    emoji: '🌌', 
+    emoji: '🌌',
+    icon: 'sparkles',
     color: 'text-purple-400',
     bgColor: 'bg-purple-500/10 border-purple-500/30'
   },
   pkd: { 
     name: 'Philip K. Dick Award', 
-    emoji: '👁️', 
+    emoji: '👁️',
+    icon: 'eye',
     color: 'text-cyan-400',
     bgColor: 'bg-cyan-500/10 border-cyan-500/30'
   }

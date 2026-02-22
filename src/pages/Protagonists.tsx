@@ -99,7 +99,7 @@ const Protagonists: React.FC = () => {
               aria-label="Toggle view"
             >
               {viewMode === 'books' ? <Users className="w-4 h-4" /> : <BookOpen className="w-4 h-4" />}
-              {viewMode === 'books' ? 'Portraits' : 'Books'}
+              {viewMode === 'books' ? 'Protagonist Portraits' : 'Books'}
             </button>
           </div>
 

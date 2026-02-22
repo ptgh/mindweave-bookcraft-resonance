@@ -3,6 +3,7 @@ import { MessageCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import ProtagonistChatModal from '@/components/ProtagonistChatModal';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface ProtagonistEntry {
   id: number;
@@ -10,6 +11,7 @@ interface ProtagonistEntry {
   author: string;
   protagonist: string;
   cover_url: string | null;
+  protagonist_portrait_url: string | null;
 }
 
 const ProtagonistShowcase: React.FC = () => {
@@ -23,7 +25,7 @@ const ProtagonistShowcase: React.FC = () => {
     const fetch = async () => {
       const { data } = await supabase
         .from('transmissions')
-        .select('id, title, author, protagonist, cover_url')
+        .select('id, title, author, protagonist, cover_url, protagonist_portrait_url')
         .not('protagonist', 'is', null)
         .neq('protagonist', '');
 
@@ -101,7 +103,14 @@ const ProtagonistShowcase: React.FC = () => {
             `}
           >
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-violet-400 text-lg">✦</span>
+              <Avatar className="h-8 w-8 border border-violet-500/30 bg-slate-800 flex-shrink-0">
+                {entry.protagonist_portrait_url ? (
+                  <AvatarImage src={entry.protagonist_portrait_url} alt={entry.protagonist} className="object-cover" />
+                ) : null}
+                <AvatarFallback className="bg-slate-800 text-violet-400">
+                  <MessageCircle className="w-3.5 h-3.5" />
+                </AvatarFallback>
+              </Avatar>
               <span className="text-sm font-medium text-violet-300 line-clamp-1">
                 {entry.protagonist}
               </span>

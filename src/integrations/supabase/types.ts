@@ -1367,6 +1367,7 @@ export type Database = {
           nationality: string | null
           needs_enrichment: boolean | null
           notable_works: string[] | null
+          portrait_url: string | null
           updated_at: string
           verification_status: string | null
           wikipedia_url: string | null
@@ -1385,6 +1386,7 @@ export type Database = {
           nationality?: string | null
           needs_enrichment?: boolean | null
           notable_works?: string[] | null
+          portrait_url?: string | null
           updated_at?: string
           verification_status?: string | null
           wikipedia_url?: string | null
@@ -1403,6 +1405,7 @@ export type Database = {
           nationality?: string | null
           needs_enrichment?: boolean | null
           notable_works?: string[] | null
+          portrait_url?: string | null
           updated_at?: string
           verification_status?: string | null
           wikipedia_url?: string | null

@@ -206,6 +206,30 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
     return match ? match[1] : null;
   };
 
+  // Fetch author portrait URL
+  const [authorPortraitUrl, setAuthorPortraitUrl] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (!featuredContent?.featured_author?.name) return;
+    const fetchPortrait = async () => {
+      const { data } = await supabase
+        .from('scifi_authors')
+        .select('portrait_url')
+        .ilike('name', featuredContent.featured_author!.name)
+        .maybeSingle();
+      if (data?.portrait_url) setAuthorPortraitUrl(data.portrait_url);
+    };
+    fetchPortrait();
+  }, [featuredContent?.featured_author?.name]);
+
+  // Generate author initials for avatar fallback
+  const authorInitials = featuredContent?.featured_author?.name
+    ?.split(' ')
+    .map(n => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'AU';
+
   if (loading) {
     return (
       <div className={cn("grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4", className)}>
@@ -215,14 +239,6 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
       </div>
     );
   }
-
-  // Generate author initials for avatar
-  const authorInitials = featuredContent?.featured_author?.name
-    ?.split(' ')
-    .map(n => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase() || 'AU';
 
   const colorClasses = {
     blue: {
@@ -271,8 +287,14 @@ export const FeaturedSection: React.FC<FeaturedSectionProps> = ({ className }) =
             <div className="space-y-3">
               {/* Author Header with Avatar */}
               <div className="flex items-start gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                  {authorInitials}
+                <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2 border-blue-500/30">
+                  {authorPortraitUrl ? (
+                    <img src={authorPortraitUrl} alt={featuredContent.featured_author.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
+                      {authorInitials}
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-lg font-medium text-slate-200 truncate hover:text-blue-300 transition-colors">

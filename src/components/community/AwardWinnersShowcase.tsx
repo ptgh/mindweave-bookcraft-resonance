@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Award, ExternalLink } from 'lucide-react';
+import { Award, ExternalLink, Rocket, Sparkles, Eye } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AWARD_WINNING_BOOKS, AWARD_CONFIG, AwardType, AwardBook } from '@/constants/sfAwards';
@@ -195,10 +195,10 @@ const AwardWinnersShowcase: React.FC = () => {
       <div className="flex items-center gap-3 mb-4">
         <Award className="w-5 h-5 text-amber-400" />
         <h2 className="text-lg font-medium text-slate-200">Award-Winning Sci-Fi</h2>
-        <div className="flex gap-1 ml-2">
-          <span title="Hugo Award">🚀</span>
-          <span title="Nebula Award">🌌</span>
-          <span title="Philip K. Dick Award">👁️</span>
+        <div className="flex items-center gap-1.5 ml-2" aria-label="Award types">
+          <Rocket className="w-4 h-4 text-amber-400" aria-label="Hugo Award" />
+          <Sparkles className="w-4 h-4 text-purple-400" aria-label="Nebula Award" />
+          <Eye className="w-4 h-4 text-cyan-400" aria-label="Philip K. Dick Award" />
         </div>
       </div>
       
