@@ -34,6 +34,7 @@ export interface Transmission {
   temporal_context_tags?: string[];
   is_favorite?: boolean;
   protagonist?: string;
+  protagonist_portrait_url?: string;
 }
 
 export const saveTransmission = async (transmission: Omit<Transmission, 'id' | 'user_id' | 'created_at'>) => {
@@ -231,7 +232,8 @@ export const getTransmissions = async (): Promise<Transmission[]> => {
       narrative_time_period: item.narrative_time_period,
       historical_context_tags: item.historical_context_tags,
       is_favorite: item.is_favorite || false,
-      protagonist: item.protagonist || undefined
+      protagonist: item.protagonist || undefined,
+      protagonist_portrait_url: item.protagonist_portrait_url || undefined
     }));
   } catch (error) {
     console.error('Unexpected error in getTransmissions:', error);
