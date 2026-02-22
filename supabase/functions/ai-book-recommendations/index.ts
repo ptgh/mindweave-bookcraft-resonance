@@ -102,6 +102,10 @@ Return ONLY a JSON array, no markdown:
         return json(429, { error: 'Rate limit exceeded. Please try again in a moment.' });
       }
       
+      if (aiResponse.status === 402) {
+        return json(402, { error: 'AI usage limit reached. Please add credits to your Lovable workspace under Settings → Workspace → Usage.' });
+      }
+      
       throw new Error(`AI API error: ${aiResponse.status}`);
     }
 
