@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ProfileSearchInput } from '@/components/profile/ProfileSearchInput';
 import { useProfile } from '@/hooks/useProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -248,12 +249,12 @@ export const ProfileEditModal = ({ isOpen, onClose }: ProfileEditModalProps) => 
               <Book className="w-3 h-3 text-blue-400" />
               Favorite Book
             </Label>
-            <Input
+            <ProfileSearchInput
               id="favoriteBook"
+              type="book"
               value={favoriteBook}
-              onChange={(e) => setFavoriteBook(e.target.value)}
-              placeholder="Your all-time favorite book"
-              className="bg-slate-800/50 border-slate-600 text-sm"
+              onChange={setFavoriteBook}
+              placeholder="Search science fiction books..."
               maxLength={100}
             />
           </div>
@@ -264,12 +265,12 @@ export const ProfileEditModal = ({ isOpen, onClose }: ProfileEditModalProps) => 
               <Feather className="w-3 h-3 text-emerald-400" />
               Favorite Author
             </Label>
-            <Input
+            <ProfileSearchInput
               id="favoriteAuthor"
+              type="author"
               value={favoriteAuthor}
-              onChange={(e) => setFavoriteAuthor(e.target.value)}
-              placeholder="Your favorite author"
-              className="bg-slate-800/50 border-slate-600 text-sm"
+              onChange={setFavoriteAuthor}
+              placeholder="Search science fiction authors..."
               maxLength={100}
             />
           </div>
