@@ -28,7 +28,19 @@ interface TMDBResult {
   vote_average: number;
 }
 
-// Fetch poster and rating from TMDB
+// Validate that an image URL actually returns a valid image (not a 404 page)
+async function validateImageUrl(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    if (!response.ok) return false;
+    const contentType = response.headers.get('content-type') || '';
+    return contentType.startsWith('image/');
+  } catch {
+    return false;
+  }
+}
+
+// Fetch poster and rating from TMDB (with validation)
 async function fetchTMDBData(filmTitle: string, year: number | null, apiKey: string): Promise<{ posterUrl: string | null; rating: number | null }> {
   try {
     const query = encodeURIComponent(filmTitle);
@@ -47,8 +59,17 @@ async function fetchTMDBData(filmTitle: string, year: number | null, apiKey: str
     
     if (data.results && data.results.length > 0) {
       const movie: TMDBResult = data.results[0];
-      const posterUrl = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null;
+      let posterUrl = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null;
       const rating = movie.vote_average > 0 ? Math.round(movie.vote_average * 10) / 10 : null;
+      
+      // Validate TMDB poster URL actually returns an image
+      if (posterUrl) {
+        const isValid = await validateImageUrl(posterUrl);
+        if (!isValid) {
+          console.warn(`TMDB poster URL invalid (not an image): ${posterUrl}`);
+          posterUrl = null;
+        }
+      }
       
       console.log(`Found TMDB data: poster=${posterUrl ? 'yes' : 'no'}, rating=${rating}`);
       return { posterUrl, rating };
@@ -59,6 +80,28 @@ async function fetchTMDBData(filmTitle: string, year: number | null, apiKey: str
   } catch (error) {
     console.error(`TMDB fetch error for ${filmTitle}:`, error);
     return { posterUrl: null, rating: null };
+  }
+}
+
+// Fallback: fetch poster from OMDB (Amazon/IMDb images - very reliable)
+async function fetchOMDBPoster(filmTitle: string, year: number | null): Promise<string | null> {
+  try {
+    const query = encodeURIComponent(filmTitle);
+    const yearParam = year ? `&y=${year}` : '';
+    const url = `https://www.omdbapi.com/?t=${query}${yearParam}&apikey=trilogy`;
+    
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    if (data.Response === 'True' && data.Poster && data.Poster !== 'N/A') {
+      console.log(`Found OMDB poster: ${data.Poster}`);
+      return data.Poster;
+    }
+    return null;
+  } catch (error) {
+    console.error(`OMDB fetch error for ${filmTitle}:`, error);
+    return null;
   }
 }
 
@@ -242,6 +285,15 @@ serve(async (req) => {
         if (!film.imdb_rating && tmdbData.rating) {
           updates.imdb_rating = tmdbData.rating;
           ratingsAdded++;
+        }
+        
+        // Fallback: try OMDB for poster if TMDB didn't find one
+        if (!film.poster_url && !updates.poster_url) {
+          const omdbPoster = await fetchOMDBPoster(film.film_title, film.film_year);
+          if (omdbPoster) {
+            updates.poster_url = omdbPoster;
+            postersAdded++;
+          }
         }
       }
       
