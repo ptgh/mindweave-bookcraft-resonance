@@ -66,6 +66,8 @@ const TestBrain = () => {
   const [remappingActive, setRemappingActive] = useState(false);
   const [transmissions, setTransmissions] = useState<Transmission[]>([]);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const tooltipHideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isTooltipHoveredRef = useRef(false);
   
   // Focus mode state
   const [focusedBookId, setFocusedBookId] = useState<string | null>(null);
@@ -161,7 +163,8 @@ const TestBrain = () => {
         const vh = window.innerHeight;
         const centerX = vw / 2;
         const centerY = vh / 2;
-        const clusterRadius = Math.min(vw, vh) * 0.3;
+        // Use more of the screen – push clusters further out
+        const clusterRadius = Math.min(vw, vh) * 0.38;
         const tagList = Array.from(tagGroups.keys());
         const clusterCenters = new Map<string, { cx: number; cy: number }>();
         tagList.forEach((tag, i) => {
@@ -176,15 +179,15 @@ const TestBrain = () => {
         const nodePositions: { x: number; y: number }[] = new Array(fetchedTransmissions.length);
         const mobile = window.innerWidth < 768;
         const nodeSize = mobile ? 36 : 50;
-        const minDist = nodeSize + (mobile ? 30 : 45); // Minimum distance between node centers
-        const padding = mobile ? 60 : 100;
-        const topPad = mobile ? 160 : 140;
+        const minDist = nodeSize + (mobile ? 30 : 55); // More spacing between nodes
+        const padding = mobile ? 40 : 60; // Less padding = more usable space
+        const topPad = mobile ? 130 : 110; // Less top padding
         
         const placedPositions: { x: number; y: number }[] = [];
         
         tagGroups.forEach((indices, tag) => {
           const center = clusterCenters.get(tag)!;
-          const spread = 40 + indices.length * 18;
+          const spread = 50 + indices.length * 22;
           indices.forEach((idx, j) => {
             let bestX = 0, bestY = 0, placed = false;
             
@@ -366,7 +369,11 @@ const TestBrain = () => {
       let tooltipTimeout: NodeJS.Timeout | null = null;
       
       const showTooltip = () => {
-        if (isMobile) return; // No hover tooltip on mobile
+        if (isMobile) return;
+        if (tooltipHideTimeoutRef.current) {
+          clearTimeout(tooltipHideTimeoutRef.current);
+          tooltipHideTimeoutRef.current = null;
+        }
         const rect = nodeElement.getBoundingClientRect();
         const canvasRect = canvas.getBoundingClientRect();
         let tooltipX = rect.left - canvasRect.left + rect.width / 2;
@@ -378,8 +385,22 @@ const TestBrain = () => {
         setTooltip({ node, x: tooltipX, y: tooltipY });
       };
 
+      const scheduleHideTooltip = () => {
+        if (tooltipHideTimeoutRef.current) clearTimeout(tooltipHideTimeoutRef.current);
+        tooltipHideTimeoutRef.current = setTimeout(() => {
+          if (!isTooltipHoveredRef.current) {
+            setTooltip(null);
+            setHoveredNodeId(null);
+          }
+        }, 400);
+      };
+
       if (!isMobile) {
         nodeElement.addEventListener('mouseenter', () => {
+          if (tooltipHideTimeoutRef.current) {
+            clearTimeout(tooltipHideTimeoutRef.current);
+            tooltipHideTimeoutRef.current = null;
+          }
           tooltipTimeout = setTimeout(showTooltip, 100);
           setHoveredNodeId(node.id);
           
@@ -390,7 +411,6 @@ const TestBrain = () => {
             ease: "power2.out"
           });
           
-          // Highlight border
           const circle = nodeElement.querySelector('div') as HTMLElement;
           if (circle) {
             circle.style.borderColor = 'rgba(34, 211, 238, 0.8)';
@@ -407,8 +427,7 @@ const TestBrain = () => {
 
         nodeElement.addEventListener('mouseleave', () => {
           if (tooltipTimeout) { clearTimeout(tooltipTimeout); tooltipTimeout = null; }
-          if (selectedNode?.id !== node.id) setTooltip(null);
-          setHoveredNodeId(null);
+          scheduleHideTooltip();
           
           gsap.to(nodeElement, {
             scale: 1,
@@ -421,7 +440,6 @@ const TestBrain = () => {
             circle.style.boxShadow = `0 0 ${8 + nodeConnections * 2}px rgba(34, 211, 238, ${0.15 + Math.min(nodeConnections * 0.05, 0.35)})`;
           }
 
-          // Gentle float (desktop only)
           gsap.to(nodeElement, {
             x: `+=${Math.random() * 6 - 3}`,
             y: `+=${Math.random() * 6 - 3}`,
@@ -827,17 +845,32 @@ const TestBrain = () => {
         {/* Desktop tooltip on hover */}
         {tooltip && !isMobile && (
           <div 
-            className="absolute z-30 pointer-events-none"
+            className="absolute z-30"
             style={{ 
               left: tooltip.x - 100, 
               top: tooltip.y,
-              transform: 'translateX(-50%)'
+              transform: 'translateX(-50%)',
+              pointerEvents: 'auto',
+            }}
+            onMouseEnter={() => {
+              isTooltipHoveredRef.current = true;
+              if (tooltipHideTimeoutRef.current) {
+                clearTimeout(tooltipHideTimeoutRef.current);
+                tooltipHideTimeoutRef.current = null;
+              }
+            }}
+            onMouseLeave={() => {
+              isTooltipHoveredRef.current = false;
+              tooltipHideTimeoutRef.current = setTimeout(() => {
+                setTooltip(null);
+                setHoveredNodeId(null);
+              }, 300);
             }}
           >
-            <div className="relative bg-slate-900/60 backdrop-blur-md border border-cyan-400/20 rounded-xl p-3 max-w-[220px] shadow-[0_0_20px_rgba(34,211,238,0.1)]">
-              <div className="flex items-center space-x-3">
+            <div className="relative bg-slate-900/80 backdrop-blur-xl border border-cyan-400/25 rounded-xl p-3.5 max-w-[250px] shadow-[0_0_30px_rgba(34,211,238,0.12)] cursor-default">
+              <div className="flex items-start space-x-3">
                 {tooltip.node.coverUrl && (
-                  <div className="relative w-12 h-16 flex-shrink-0 rounded-lg overflow-hidden border border-cyan-400/25">
+                  <div className="relative w-14 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-cyan-400/25 shadow-md">
                     <img 
                       src={tooltip.node.coverUrl} 
                       alt={tooltip.node.title}
@@ -852,7 +885,7 @@ const TestBrain = () => {
                   <p className="text-xs text-cyan-400/70 mt-0.5">
                     {tooltip.node.author}
                   </p>
-                  <div className="flex items-center gap-1.5 text-xs text-cyan-300/60 mt-1.5">
+                  <div className="flex items-center gap-1.5 text-xs text-cyan-300/60 mt-2">
                     <div className="w-1.5 h-1.5 bg-cyan-400/80 rounded-full"></div>
                     <span>{links.filter(link => link.fromId === tooltip.node.id || link.toId === tooltip.node.id).length} connections</span>
                   </div>
@@ -869,12 +902,13 @@ const TestBrain = () => {
                       else if (reason === 'shared_subgenre') label = `Shares ${edgeData.sharedTags[0] || 'subgenre'} with ${neighbor.title}`;
                       else label = `Connected to ${neighbor.title}`;
                       return (
-                        <p key={nodeId} className="text-[10px] text-cyan-400/40 mt-0.5 line-clamp-1">{label}</p>
+                        <p key={nodeId} className="text-[10px] text-cyan-400/50 mt-0.5 line-clamp-1">{label}</p>
                       );
                     });
                   })()}
                 </div>
               </div>
+              <p className="text-[9px] text-slate-500 mt-2 text-center">Click to view details</p>
             </div>
           </div>
         )}
