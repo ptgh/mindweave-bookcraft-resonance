@@ -640,7 +640,7 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
                         const user = following.find(f => f.id === userId);
                         if (user) handleViewUserProfile(user);
                       }}
-                      className="flex items-center gap-2 pb-2 border-b border-slate-700 hover:opacity-80 transition-opacity w-full text-left"
+                      className="flex items-center gap-2 pb-2 border-b border-slate-700 hover:opacity-80 transition-opacity w-full text-left group"
                     >
                       <Avatar className="w-6 h-6">
                         <AvatarFallback className="bg-slate-700 text-slate-300 text-xs">
@@ -648,7 +648,10 @@ export const CommunityModal = ({ isOpen, onClose }: CommunityModalProps) => {
                         </AvatarFallback>
                       </Avatar>
                       <span className="text-sm font-medium text-slate-200">{name}</span>
-                      <span className="text-xs text-slate-500">({userTransmissions.length} books) →</span>
+                      <span className="relative text-xs text-primary font-medium cursor-pointer">
+                        ({userTransmissions.length} books) →
+                        <span className="absolute bottom-0 left-0 w-full h-[1px] bg-primary origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+                      </span>
                     </button>
                     <div className="flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                       {userTransmissions.slice(0, 10).map(t => (
