@@ -930,10 +930,21 @@ export const BookToScreenSection: React.FC<BookToScreenSectionProps> = ({
                       <span className="text-[10px] text-violet-400 font-medium">✨ AI Suggested</span>
                     )}
                     {film.script_url && (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-cyan-400 font-medium bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">
-                        <FileText className="w-3 h-3" />
-                        {film.adaptation_type === 'comic' ? 'Comic Book' : 'Script'}
-                      </span>
+                      <div className="group/script relative">
+                        <span className="inline-flex items-center gap-1 text-[10px] text-cyan-400 font-medium bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20 cursor-default">
+                          <FileText className="w-3 h-3" />
+                          {film.adaptation_type === 'comic' ? 'Comic Book' : 'Script'}
+                        </span>
+                        <div className="absolute left-0 bottom-full mb-2 w-52 p-2.5 bg-slate-800/95 backdrop-blur-sm border border-slate-700 rounded-lg text-[10px] text-slate-300 opacity-0 group-hover/script:opacity-100 transition-opacity pointer-events-none z-[9999] shadow-2xl leading-relaxed">
+                          {film.adaptation_type === 'comic' 
+                            ? 'This film is based on a comic book. Tap to view pages in the reader.'
+                            : film.adaptation_type === 'original' || film.adaptation_type === 'original_screenplay'
+                            ? 'An original screenplay — not based on a published book. A readable script is available.'
+                            : `A screenplay link is available for this book adaptation. While every film has a script, only a few are publicly accessible.`
+                          }
+                          <div className="absolute left-4 top-full w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-slate-700" />
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}
