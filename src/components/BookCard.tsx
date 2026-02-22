@@ -260,7 +260,7 @@ const BookCard = ({
   return (
     <div 
       ref={rootRef} 
-      className={`bg-slate-900/60 backdrop-blur-lg border rounded-lg p-4 shadow-2xl shadow-slate-900/20 transition-all h-full flex flex-col ${
+      className={`bg-slate-900/60 backdrop-blur-lg border rounded-lg p-4 shadow-2xl shadow-slate-900/20 transition-all h-full flex flex-col overflow-visible ${
         is_favorite ? 'border-cyan-500/40 ring-1 ring-cyan-500/20' : 'border-slate-700/30'
       }`}
     >
@@ -341,14 +341,16 @@ const BookCard = ({
               
               {/* AI recommendation badge - inline with author */}
               {aiRecommendation && (
-                <div className="group relative z-[1] mt-1">
-                  <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#89b4fa]/10 border border-[#89b4fa]/20 rounded text-[10px] text-[#89b4fa]">
-                    <span>AI</span>
+                <div className="group relative mt-1">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#89b4fa]/10 border border-[#89b4fa]/25 rounded-md text-[11px] text-[#89b4fa] font-medium cursor-default">
+                    <span className="text-[10px] opacity-70">✦</span>
+                    <span>AI Pick</span>
                   </div>
-                  {/* Tooltip on hover */}
-                  <div className="absolute left-0 top-full mt-1 w-48 p-3 bg-slate-800/95 backdrop-blur-sm border border-slate-700 rounded text-xs text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[9999] shadow-xl">
-                    <div className="font-medium text-[#89b4fa] mb-1">{aiRecommendation.cluster_connection}</div>
+                  {/* Tooltip on hover - renders upward to avoid card clipping */}
+                  <div className="absolute left-0 bottom-full mb-2 w-52 p-3 bg-slate-800/95 backdrop-blur-sm border border-slate-700 rounded-lg text-xs text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[9999] shadow-2xl">
+                    <div className="font-medium text-[#89b4fa] mb-1.5 text-[11px]">{aiRecommendation.cluster_connection}</div>
                     <div className="text-slate-400 text-[10px] leading-relaxed">{aiRecommendation.reason}</div>
+                    <div className="absolute left-4 top-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-slate-700" />
                   </div>
                 </div>
               )}
