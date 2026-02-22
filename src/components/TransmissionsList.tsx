@@ -135,6 +135,7 @@ const TransmissionsList = memo(({
                 bridges={bridges}
                 publicationYear={book.publication_year}
                 protagonist={book.protagonist}
+                protagonistPortraitUrl={book.protagonist_portrait_url}
               />
           </div>
         );

@@ -51,6 +51,7 @@ interface BookCardProps {
   bridges?: ConceptualBridge[];
   publicationYear?: number;
   protagonist?: string;
+  protagonistPortraitUrl?: string;
 }
 
 const BookCard = ({ 
@@ -73,7 +74,8 @@ const BookCard = ({
   onAuthorClick,
   bridges = [],
   publicationYear,
-  protagonist
+  protagonist,
+  protagonistPortraitUrl
 }: BookCardProps) => {
   const [showActions, setShowActions] = useState(false);
   const [hasFreeEbook, setHasFreeEbook] = useState(false);
@@ -311,11 +313,30 @@ const BookCard = ({
                 <p className="text-slate-400 text-xs mb-1">{author}</p>
               )}
               
-              {/* Protagonist name */}
+              {/* Protagonist name + avatar */}
               {protagonist && (
-                <p className="text-cyan-400/70 text-[10px] italic mb-1">
-                  ✦ {protagonist}
-                </p>
+                <div className="flex items-center gap-1.5 mb-1">
+                  {protagonistPortraitUrl && (
+                    <button
+                      onClick={() => { haptic.selection(); setShowChatModal(true); }}
+                      className="flex-shrink-0 focus:outline-none"
+                      title={`Chat with ${protagonist}`}
+                    >
+                      <img
+                        src={protagonistPortraitUrl}
+                        alt={protagonist}
+                        className="w-5 h-5 rounded-full object-cover border border-violet-500/40 hover:border-violet-400/70 transition-all hover:scale-110"
+                      />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { haptic.selection(); setShowChatModal(true); }}
+                    className="text-cyan-400/70 text-[10px] italic hover:text-cyan-300 transition-colors"
+                    title={`Chat with ${protagonist}`}
+                  >
+                    ✦ {protagonist}
+                  </button>
+                </div>
               )}
               
               {/* AI recommendation badge - inline with author */}
