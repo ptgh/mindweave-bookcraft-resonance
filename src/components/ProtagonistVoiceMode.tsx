@@ -18,7 +18,7 @@ interface ProtagonistVoiceModeProps {
 type VoiceState = "idle" | "connecting" | "connected" | "error";
 
 const CONNECTION_TIMEOUT_MS = 15_000;
-const KEEPALIVE_INTERVAL_MS = 5_000; // 5s — must be shorter than agent's inactivity timeout
+const KEEPALIVE_INTERVAL_MS = 5_000;
 
 const ProtagonistVoiceMode = ({
   bookTitle,
@@ -42,8 +42,13 @@ const ProtagonistVoiceMode = ({
   const keepaliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const greetingReceivedRef = useRef(false);
   const greetingRetryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Ref to access conversation methods from callbacks defined before useConversation
+  const convRef = useRef<any>(null);
 
   const protagonistContext = `You are ${protagonistName}, the protagonist from "${bookTitle}" by ${bookAuthor}. Stay completely in character at all times. Speak as if you ARE this character — reference your world, your experiences, your relationships. Never break character. Never discuss being an AI. If asked about real-world topics outside your story's scope, deflect naturally as your character would. Keep responses conversational and relatively brief (2-4 sentences) since this is a voice conversation. Be evocative and immersive. Your first words should introduce yourself naturally as ${protagonistName}.`;
+
+  const protagonistContextRef = useRef(protagonistContext);
+  protagonistContextRef.current = protagonistContext;
 
   const clearConnectionTimeout = useCallback(() => {
     if (timeoutRef.current) {
@@ -60,18 +65,6 @@ const ProtagonistVoiceMode = ({
     if (greetingRetryRef.current) {
       clearTimeout(greetingRetryRef.current);
       greetingRetryRef.current = null;
-    }
-  }, []);
-
-  const handleMessage = useCallback((message: any) => {
-    console.log("[VoiceMode] onMessage:", message?.type, message);
-    if (message?.type === "user_transcript") {
-      const transcript = message?.user_transcription_event?.user_transcript;
-      if (transcript) setLastTranscript(transcript);
-    } else if (message?.type === "agent_response") {
-      const response = message?.agent_response_event?.agent_response;
-      if (response) setLastReply(response);
-      greetingReceivedRef.current = true;
     }
   }, []);
 
@@ -103,7 +96,44 @@ const ProtagonistVoiceMode = ({
         }
       }
     },
-    onMessage: handleMessage as any,
+    onMessage: (message: any) => {
+      console.log("[VoiceMode] onMessage:", message?.type ?? message?.source, message);
+      if (message?.type === "user_transcript") {
+        const transcript = message?.user_transcription_event?.user_transcript;
+        if (transcript) setLastTranscript(transcript);
+      } else if (message?.type === "agent_response" || message?.role === "agent") {
+        const response = message?.agent_response_event?.agent_response || message?.message;
+        if (response) setLastReply(response);
+
+        // On first agent message, inject protagonist context and re-prompt
+        if (!greetingReceivedRef.current) {
+          greetingReceivedRef.current = true;
+          console.log("[VoiceMode] First agent message received, will inject protagonist context after delay");
+          // Wait for the agent to finish speaking before injecting context
+          setTimeout(() => {
+            if (!mountedRef.current) return;
+            const conv = convRef.current;
+            if (!conv) return;
+            try {
+              console.log("[VoiceMode] Sending contextual update for", protagonistName);
+              conv.sendContextualUpdate(protagonistContextRef.current);
+            } catch (err) {
+              console.error("[VoiceMode] ❌ sendContextualUpdate FAILED:", err);
+            }
+            // After context, prompt in-character greeting
+            setTimeout(() => {
+              if (!mountedRef.current) return;
+              try {
+                console.log("[VoiceMode] Prompting in-character introduction");
+                conv.sendUserMessage("*Now introduce yourself in character as " + protagonistName + ".*");
+              } catch (err) {
+                console.error("[VoiceMode] ❌ sendUserMessage FAILED:", err);
+              }
+            }, 1500);
+          }, 3000);
+        }
+      }
+    },
     onError: (error: any) => {
       console.error("[VoiceMode] ⚠️ onError:", error);
       if (mountedRef.current) {
@@ -122,13 +152,14 @@ const ProtagonistVoiceMode = ({
     },
   } as any);
 
-  // After connection: inject context, trigger greeting, start keepalive
+  // Keep convRef in sync
+  convRef.current = conversation;
+
+  // After connection: start keepalive. Context injection deferred to after first agent message.
   useEffect(() => {
     if (voiceState === "connected" && !contextSentRef.current) {
       contextSentRef.current = true;
-      greetingReceivedRef.current = false;
 
-      // Start keepalive immediately — 5s interval
       console.log("[VoiceMode] Starting keepalive interval (5s)");
       keepaliveRef.current = setInterval(() => {
         try {
@@ -138,37 +169,26 @@ const ProtagonistVoiceMode = ({
         }
       }, KEEPALIVE_INTERVAL_MS);
 
-      // Send context, then trigger greeting
-      try {
-        console.log("[VoiceMode] Sending contextual update for", protagonistName);
-        conversation.sendContextualUpdate(protagonistContext);
-      } catch (err) {
-        console.error("[VoiceMode] ❌ sendContextualUpdate FAILED:", err);
-      }
-
-      // Trigger agent greeting after brief delay
-      setTimeout(() => {
-        if (!mountedRef.current) return;
+      // Fallback: if no agent greeting in 10s, send context + prompt anyway
+      greetingRetryRef.current = setTimeout(() => {
+        if (!mountedRef.current || greetingReceivedRef.current) return;
+        console.log("[VoiceMode] No agent greeting after 10s, sending context + prompt");
         try {
-          console.log("[VoiceMode] Sending initial user message to trigger greeting");
-          conversation.sendUserMessage("*You sense someone approaching. Introduce yourself.*");
+          conversation.sendContextualUpdate(protagonistContext);
         } catch (err) {
-          console.error("[VoiceMode] ❌ sendUserMessage FAILED:", err);
+          console.error("[VoiceMode] ❌ sendContextualUpdate FAILED:", err);
         }
-
-        // Fallback: retry once if no agent_response within 5s
-        greetingRetryRef.current = setTimeout(() => {
-          if (!mountedRef.current || greetingReceivedRef.current) return;
+        setTimeout(() => {
+          if (!mountedRef.current) return;
           try {
-            console.log("[VoiceMode] No greeting received, retrying sendUserMessage");
             conversation.sendUserMessage("*Introduce yourself in character.*");
           } catch (err) {
-            console.error("[VoiceMode] ❌ Greeting retry FAILED:", err);
+            console.error("[VoiceMode] ❌ sendUserMessage FAILED:", err);
           }
-        }, 5_000);
-      }, 500);
+        }, 1500);
+      }, 10_000);
     }
-  }, [voiceState, protagonistContext, conversation, protagonistName]);
+  }, [voiceState, protagonistContext, conversation]);
 
   // Audio visualisation
   useEffect(() => {
@@ -202,7 +222,6 @@ const ProtagonistVoiceMode = ({
     setErrorMessage("");
 
     try {
-      // Fetch WebRTC token with retries
       let token: string | null = null;
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
@@ -238,7 +257,6 @@ const ProtagonistVoiceMode = ({
 
       if (!mountedRef.current) return;
 
-      // Connection timeout
       timeoutRef.current = setTimeout(() => {
         if (mountedRef.current && !wasConnectedRef.current) {
           console.error("[VoiceMode] Connection timeout after 15s");
@@ -251,7 +269,6 @@ const ProtagonistVoiceMode = ({
 
       console.log("[VoiceMode] Starting session with conversationToken...");
 
-      // Let the SDK handle getUserMedia internally
       await conversation.startSession({
         conversationToken: token,
       });
