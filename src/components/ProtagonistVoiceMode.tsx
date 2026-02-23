@@ -222,6 +222,10 @@ const ProtagonistVoiceMode = ({
     setErrorMessage("");
 
     try {
+      // Request microphone permission first
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log("[VoiceMode] ✅ Microphone access granted");
+
       if (!mountedRef.current) return;
 
       timeoutRef.current = setTimeout(() => {
