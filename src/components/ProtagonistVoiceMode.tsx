@@ -37,6 +37,7 @@ const ProtagonistVoiceMode = ({
   const wasConnectedRef = useRef(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contextSentRef = useRef(false);
+  const userInitiatedEndRef = useRef(false);
 
   // Build the contextual prompt for sendContextualUpdate
   const protagonistContext = `You are ${protagonistName}, the protagonist from "${bookTitle}" by ${bookAuthor}. Stay completely in character at all times. Speak as if you ARE this character — reference your world, your experiences, your relationships. Never break character. Never discuss being an AI. If asked about real-world topics outside your story's scope, deflect naturally as your character would. Keep responses conversational and relatively brief (2-4 sentences) since this is a voice conversation. Be evocative and immersive. Your first words should introduce yourself naturally as ${protagonistName}.`;
@@ -68,16 +69,20 @@ const ProtagonistVoiceMode = ({
       }
     },
     onDisconnect: () => {
-      console.log("[VoiceMode] Disconnected from ElevenLabs agent, wasConnected:", wasConnectedRef.current);
+      console.log("[VoiceMode] Disconnected from ElevenLabs agent, wasConnected:", wasConnectedRef.current, "userInitiated:", userInitiatedEndRef.current);
       if (mountedRef.current) {
         clearConnectionTimeout();
         if (!wasConnectedRef.current) {
-          // Never connected — this is a connection failure, not a clean disconnect
           setVoiceState("error");
           setErrorMessage("Connection failed. The voice service could not be reached. Tap to retry.");
           sessionStartedRef.current = false;
-        } else {
+        } else if (userInitiatedEndRef.current) {
           setVoiceState("idle");
+          sessionStartedRef.current = false;
+        } else {
+          // Server-side disconnect (inactivity timeout, etc.) — show reconnect option
+          setVoiceState("error");
+          setErrorMessage("Connection lost. Tap to reconnect.");
           sessionStartedRef.current = false;
         }
       }
@@ -101,6 +106,17 @@ const ProtagonistVoiceMode = ({
       try {
         console.log("[VoiceMode] Sending contextual update for", protagonistName);
         conversation.sendContextualUpdate(protagonistContext);
+        // After injecting context, send a user message to trigger the agent's first greeting
+        setTimeout(() => {
+          if (mountedRef.current) {
+            try {
+              console.log("[VoiceMode] Sending initial user message to trigger greeting");
+              conversation.sendUserMessage("*You sense someone approaching. Introduce yourself.*");
+            } catch (err) {
+              console.warn("[VoiceMode] sendUserMessage error (non-fatal):", err);
+            }
+          }
+        }, 500);
       } catch (err) {
         console.warn("[VoiceMode] sendContextualUpdate error (non-fatal):", err);
       }
@@ -131,6 +147,7 @@ const ProtagonistVoiceMode = ({
     sessionStartedRef.current = true;
     wasConnectedRef.current = false;
     contextSentRef.current = false;
+    userInitiatedEndRef.current = false;
     setVoiceState("connecting");
     setLastTranscript("");
     setLastReply("");
@@ -215,6 +232,7 @@ const ProtagonistVoiceMode = ({
   }, [conversation, clearConnectionTimeout]);
 
   const endSession = useCallback(async () => {
+    userInitiatedEndRef.current = true;
     clearConnectionTimeout();
     try {
       await conversation.endSession();
@@ -228,6 +246,7 @@ const ProtagonistVoiceMode = ({
     sessionStartedRef.current = false;
     wasConnectedRef.current = false;
     contextSentRef.current = false;
+    userInitiatedEndRef.current = false;
     startConversation();
   }, [startConversation]);
 
