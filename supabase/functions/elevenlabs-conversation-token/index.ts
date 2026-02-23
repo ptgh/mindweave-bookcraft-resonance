@@ -22,10 +22,10 @@ serve(async (req) => {
 
     const AGENT_ID = Deno.env.get('ELEVENLABS_AGENT_ID') || 'agent_8501khxttz5zf9rt0zpn1vtkv1qj';
 
-    console.log('[token] Requesting WebRTC conversation token for agent:', AGENT_ID);
+    console.log('[token] Requesting WebSocket signed URL for agent:', AGENT_ID);
 
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${AGENT_ID}`,
+      `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${AGENT_ID}`,
       {
         headers: {
           'xi-api-key': ELEVENLABS_API_KEY,
@@ -37,8 +37,8 @@ serve(async (req) => {
     console.log('[token] ElevenLabs API status:', response.status, 'body length:', responseText.length);
 
     if (!response.ok) {
-      console.error('[token] ElevenLabs token error:', response.status, responseText);
-      return new Response(JSON.stringify({ error: `Token generation failed: ${response.status}`, details: responseText }), {
+      console.error('[token] ElevenLabs signed URL error:', response.status, responseText);
+      return new Response(JSON.stringify({ error: `Signed URL generation failed: ${response.status}`, details: responseText }), {
         status: response.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -55,17 +55,17 @@ serve(async (req) => {
       });
     }
 
-    if (!data.token) {
-      console.error('[token] No token in response. Keys:', Object.keys(data));
-      return new Response(JSON.stringify({ error: 'No token in voice service response', keys: Object.keys(data) }), {
+    if (!data.signed_url) {
+      console.error('[token] No signed_url in response. Keys:', Object.keys(data));
+      return new Response(JSON.stringify({ error: 'No signed_url in voice service response', keys: Object.keys(data) }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log('[token] WebRTC conversation token generated successfully, token length:', data.token.length);
+    console.log('[token] WebSocket signed URL generated successfully');
 
-    return new Response(JSON.stringify({ token: data.token }), {
+    return new Response(JSON.stringify({ signed_url: data.signed_url }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 

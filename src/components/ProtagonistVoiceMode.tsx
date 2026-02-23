@@ -222,31 +222,31 @@ const ProtagonistVoiceMode = ({
     setErrorMessage("");
 
     try {
-      let token: string | null = null;
+      let signedUrl: string | null = null;
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
           const { data, error } = await supabase.functions.invoke(
             "elevenlabs-conversation-token"
           );
-          if (error || !data?.token) {
-            console.warn(`[VoiceMode] Token attempt ${attempt + 1} failed:`, error, data);
+          if (error || !data?.signed_url) {
+            console.warn(`[VoiceMode] Signed URL attempt ${attempt + 1} failed:`, error, data);
             if (attempt < 2) {
               await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
               continue;
             }
           } else {
-            token = data.token;
+            signedUrl = data.signed_url;
             break;
           }
         } catch (fetchErr) {
-          console.warn(`[VoiceMode] Token fetch attempt ${attempt + 1} error:`, fetchErr);
+          console.warn(`[VoiceMode] Signed URL fetch attempt ${attempt + 1} error:`, fetchErr);
           if (attempt < 2) {
             await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
           }
         }
       }
 
-      if (!token) {
+      if (!signedUrl) {
         if (mountedRef.current) {
           setVoiceState("error");
           setErrorMessage("Could not connect to voice service. Check your connection and try again.");
@@ -267,10 +267,10 @@ const ProtagonistVoiceMode = ({
         }
       }, CONNECTION_TIMEOUT_MS);
 
-      console.log("[VoiceMode] Starting session with conversationToken...");
+      console.log("[VoiceMode] Starting session with WebSocket signedUrl...");
 
       await conversation.startSession({
-        conversationToken: token,
+        signedUrl: signedUrl,
       });
 
       console.log("[VoiceMode] ✅ startSession resolved");
