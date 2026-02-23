@@ -19,18 +19,12 @@ serve(async (req) => {
       });
     }
 
-    const ELEVENLABS_AGENT_ID = Deno.env.get('ELEVENLABS_AGENT_ID');
-    if (!ELEVENLABS_AGENT_ID) {
-      return new Response(JSON.stringify({ error: 'ELEVENLABS_AGENT_ID not configured' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const AGENT_ID = 'agent_8501khxttz5zf9rt0zpn1vtkv1qj';
 
-    console.log('Requesting conversation token for agent:', ELEVENLABS_AGENT_ID);
+    console.log('Requesting WebRTC conversation token for agent:', AGENT_ID);
 
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${ELEVENLABS_AGENT_ID}`,
+      `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${AGENT_ID}`,
       {
         headers: {
           'xi-api-key': ELEVENLABS_API_KEY,
@@ -41,16 +35,16 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('ElevenLabs token error:', response.status, errorText);
-      return new Response(JSON.stringify({ error: `Token generation failed: ${response.status}` }), {
+      return new Response(JSON.stringify({ error: `Token generation failed: ${response.status}`, details: errorText }), {
         status: response.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     const data = await response.json();
-    console.log('Conversation token generated successfully');
+    console.log('WebRTC conversation token generated successfully');
 
-    return new Response(JSON.stringify({ signed_url: data.signed_url }), {
+    return new Response(JSON.stringify({ token: data.token }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 

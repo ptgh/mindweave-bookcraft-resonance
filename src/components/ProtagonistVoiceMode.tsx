@@ -91,25 +91,48 @@ const ProtagonistVoiceMode = ({
 
     try {
       // Request mic permission
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Stop tracks immediately — the SDK manages its own stream
-      stream.getTracks().forEach(t => t.stop());
+      await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      const { data, error } = await supabase.functions.invoke(
-        "elevenlabs-conversation-token"
-      );
+      // Retry up to 3 times for robustness
+      let token: string | null = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const { data, error } = await supabase.functions.invoke(
+            "elevenlabs-conversation-token"
+          );
 
-      if (error || !data?.signed_url) {
-        console.error("Token error:", error, data);
+          if (error || !data?.token) {
+            console.warn(`Token attempt ${attempt + 1} failed:`, error, data);
+            if (attempt < 2) {
+              await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+              continue;
+            }
+            console.error("All token attempts failed");
+            setVoiceState("idle");
+            return;
+          }
+          token = data.token;
+          break;
+        } catch (fetchErr) {
+          console.warn(`Token fetch attempt ${attempt + 1} error:`, fetchErr);
+          if (attempt < 2) {
+            await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+          }
+        }
+      }
+
+      if (!token) {
+        console.error("No token obtained after retries");
         setVoiceState("idle");
         return;
       }
 
-      console.log("Starting ElevenLabs session with signed URL...");
+      console.log("Starting ElevenLabs WebRTC session...");
       await conversation.startSession({
-        signedUrl: data.signed_url,
+        conversationToken: token,
+        connectionType: "webrtc",
       });
-      console.log("Session started successfully");
+      console.log("WebRTC session started successfully");
     } catch (err) {
       console.error("Failed to start conversation:", err);
       setVoiceState("idle");
