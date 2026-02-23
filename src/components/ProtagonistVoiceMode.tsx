@@ -18,8 +18,7 @@ interface ProtagonistVoiceModeProps {
 type VoiceState = "idle" | "connecting" | "connected" | "error";
 
 const CONNECTION_TIMEOUT_MS = 15_000;
-const KEEPALIVE_INTERVAL_MS = 15_000;
-const GREETING_TIMEOUT_MS = 5_000;
+const KEEPALIVE_INTERVAL_MS = 5_000; // 5s — must be shorter than agent's inactivity timeout
 
 const ProtagonistVoiceMode = ({
   bookTitle,
@@ -44,7 +43,6 @@ const ProtagonistVoiceMode = ({
   const greetingReceivedRef = useRef(false);
   const greetingRetryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Build the contextual prompt for sendContextualUpdate
   const protagonistContext = `You are ${protagonistName}, the protagonist from "${bookTitle}" by ${bookAuthor}. Stay completely in character at all times. Speak as if you ARE this character — reference your world, your experiences, your relationships. Never break character. Never discuss being an AI. If asked about real-world topics outside your story's scope, deflect naturally as your character would. Keep responses conversational and relatively brief (2-4 sentences) since this is a voice conversation. Be evocative and immersive. Your first words should introduce yourself naturally as ${protagonistName}.`;
 
   const clearConnectionTimeout = useCallback(() => {
@@ -66,20 +64,20 @@ const ProtagonistVoiceMode = ({
   }, []);
 
   const handleMessage = useCallback((message: any) => {
+    console.log("[VoiceMode] onMessage:", message?.type, message);
     if (message?.type === "user_transcript") {
       const transcript = message?.user_transcription_event?.user_transcript;
       if (transcript) setLastTranscript(transcript);
     } else if (message?.type === "agent_response") {
       const response = message?.agent_response_event?.agent_response;
       if (response) setLastReply(response);
-      // Mark greeting as received to prevent retry
       greetingReceivedRef.current = true;
     }
   }, []);
 
   const conversation = useConversation({
     onConnect: () => {
-      console.log("[VoiceMode] Connected to ElevenLabs agent");
+      console.log("[VoiceMode] ✅ Connected to ElevenLabs agent");
       if (mountedRef.current) {
         wasConnectedRef.current = true;
         clearConnectionTimeout();
@@ -87,7 +85,7 @@ const ProtagonistVoiceMode = ({
       }
     },
     onDisconnect: () => {
-      console.log("[VoiceMode] Disconnected, wasConnected:", wasConnectedRef.current, "userInitiated:", userInitiatedEndRef.current);
+      console.log("[VoiceMode] ❌ Disconnected, wasConnected:", wasConnectedRef.current, "userInitiated:", userInitiatedEndRef.current);
       if (mountedRef.current) {
         clearConnectionTimeout();
         clearKeepalive();
@@ -107,7 +105,7 @@ const ProtagonistVoiceMode = ({
     },
     onMessage: handleMessage as any,
     onError: (error: any) => {
-      console.error("[VoiceMode] Conversation error:", error);
+      console.error("[VoiceMode] ⚠️ onError:", error);
       if (mountedRef.current) {
         clearConnectionTimeout();
         clearKeepalive();
@@ -116,7 +114,13 @@ const ProtagonistVoiceMode = ({
         sessionStartedRef.current = false;
       }
     },
-  });
+    onDebug: (info: any) => {
+      console.log("[VoiceMode] 🔍 debug:", info);
+    },
+    onStatusChange: (status: any) => {
+      console.log("[VoiceMode] 📡 status:", status);
+    },
+  } as any);
 
   // After connection: inject context, trigger greeting, start keepalive
   useEffect(() => {
@@ -124,41 +128,45 @@ const ProtagonistVoiceMode = ({
       contextSentRef.current = true;
       greetingReceivedRef.current = false;
 
-      // Start keepalive immediately
+      // Start keepalive immediately — 5s interval
+      console.log("[VoiceMode] Starting keepalive interval (5s)");
       keepaliveRef.current = setInterval(() => {
         try {
           conversation.sendUserActivity();
-        } catch (_) { /* ignore */ }
+        } catch (e) {
+          console.warn("[VoiceMode] keepalive sendUserActivity error:", e);
+        }
       }, KEEPALIVE_INTERVAL_MS);
 
+      // Send context, then trigger greeting
       try {
         console.log("[VoiceMode] Sending contextual update for", protagonistName);
         conversation.sendContextualUpdate(protagonistContext);
-
-        // Trigger agent greeting after brief delay
-        setTimeout(() => {
-          if (!mountedRef.current) return;
-          try {
-            console.log("[VoiceMode] Sending initial user message to trigger greeting");
-            conversation.sendUserMessage("*You sense someone approaching. Introduce yourself.*");
-          } catch (err) {
-            console.warn("[VoiceMode] sendUserMessage error (non-fatal):", err);
-          }
-
-          // Fallback: retry once if no agent_response within 5s
-          greetingRetryRef.current = setTimeout(() => {
-            if (!mountedRef.current || greetingReceivedRef.current) return;
-            try {
-              console.log("[VoiceMode] No greeting received, retrying sendUserMessage once");
-              conversation.sendUserMessage("*You sense someone approaching. Introduce yourself.*");
-            } catch (err) {
-              console.warn("[VoiceMode] Greeting retry error (non-fatal):", err);
-            }
-          }, GREETING_TIMEOUT_MS);
-        }, 500);
       } catch (err) {
-        console.warn("[VoiceMode] sendContextualUpdate error (non-fatal):", err);
+        console.error("[VoiceMode] ❌ sendContextualUpdate FAILED:", err);
       }
+
+      // Trigger agent greeting after brief delay
+      setTimeout(() => {
+        if (!mountedRef.current) return;
+        try {
+          console.log("[VoiceMode] Sending initial user message to trigger greeting");
+          conversation.sendUserMessage("*You sense someone approaching. Introduce yourself.*");
+        } catch (err) {
+          console.error("[VoiceMode] ❌ sendUserMessage FAILED:", err);
+        }
+
+        // Fallback: retry once if no agent_response within 5s
+        greetingRetryRef.current = setTimeout(() => {
+          if (!mountedRef.current || greetingReceivedRef.current) return;
+          try {
+            console.log("[VoiceMode] No greeting received, retrying sendUserMessage");
+            conversation.sendUserMessage("*Introduce yourself in character.*");
+          } catch (err) {
+            console.error("[VoiceMode] ❌ Greeting retry FAILED:", err);
+          }
+        }, 5_000);
+      }, 500);
     }
   }, [voiceState, protagonistContext, conversation, protagonistName]);
 
@@ -220,7 +228,6 @@ const ProtagonistVoiceMode = ({
       }
 
       if (!token) {
-        console.error("[VoiceMode] No token obtained after retries");
         if (mountedRef.current) {
           setVoiceState("error");
           setErrorMessage("Could not connect to voice service. Check your connection and try again.");
@@ -242,17 +249,16 @@ const ProtagonistVoiceMode = ({
         }
       }, CONNECTION_TIMEOUT_MS);
 
-      console.log("[VoiceMode] Starting WebRTC session...");
+      console.log("[VoiceMode] Starting session with conversationToken...");
 
-      // Let the SDK handle getUserMedia internally (fixes iOS dual-stream issue)
+      // Let the SDK handle getUserMedia internally
       await conversation.startSession({
         conversationToken: token,
-        connectionType: "webrtc",
-      } as any);
+      });
 
-      console.log("[VoiceMode] startSession resolved successfully");
-    } catch (err) {
-      console.error("[VoiceMode] Failed to start conversation:", err);
+      console.log("[VoiceMode] ✅ startSession resolved");
+    } catch (err: any) {
+      console.error("[VoiceMode] ❌ startSession FAILED:", err?.name, err?.message, err);
       if (mountedRef.current) {
         clearConnectionTimeout();
         clearKeepalive();
@@ -260,7 +266,7 @@ const ProtagonistVoiceMode = ({
         setErrorMessage(
           err instanceof DOMException && err.name === "NotAllowedError"
             ? "Microphone access is required for voice mode. Please allow microphone access and try again."
-            : "Failed to start voice session. Tap to retry."
+            : `Failed to start voice session: ${err?.message || 'Unknown error'}. Tap to retry.`
         );
         sessionStartedRef.current = false;
       }
@@ -288,7 +294,6 @@ const ProtagonistVoiceMode = ({
     startConversation();
   }, [startConversation]);
 
-  // Track mounted state & cleanup
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -318,7 +323,6 @@ const ProtagonistVoiceMode = ({
     ? `${protagonistName} is speaking...`
     : "Listening...";
 
-  // Ring colors
   const ringColor = isSpeaking
     ? "rgba(139,92,246,0.5)"
     : isListening
@@ -369,7 +373,6 @@ const ProtagonistVoiceMode = ({
         }
       `}</style>
 
-      {/* Return to chat button */}
       <button
         onClick={endSession}
         className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 rounded-full bg-muted/20 border border-muted-foreground/20 text-muted-foreground hover:bg-muted/30 transition-colors text-sm"
@@ -387,43 +390,40 @@ const ProtagonistVoiceMode = ({
         from "{bookTitle}" by {bookAuthor}
       </p>
 
-      {/* Avatar with animated wavelength rings */}
       <div className="relative mb-10" style={{ width: 200, height: 200 }}>
         {isActive && (
-          <div
-            className="absolute rounded-full border-2 pointer-events-none"
-            style={{
-              inset: -8,
-              borderColor: ringColor,
-              animation: isSpeaking
-                ? "voice-wave-speak-1 1.4s ease-in-out infinite"
-                : "voice-wave-1 2.2s ease-in-out infinite",
-            }}
-          />
-        )}
-        {isActive && (
-          <div
-            className="absolute rounded-full border pointer-events-none"
-            style={{
-              inset: -18,
-              borderColor: ringColorFaint,
-              animation: isSpeaking
-                ? "voice-wave-speak-2 1.8s ease-in-out infinite 0.2s"
-                : "voice-wave-2 2.8s ease-in-out infinite 0.3s",
-            }}
-          />
-        )}
-        {isActive && (
-          <div
-            className="absolute rounded-full border pointer-events-none"
-            style={{
-              inset: -30,
-              borderColor: ringColorFaint,
-              animation: isSpeaking
-                ? "voice-wave-speak-3 2.2s ease-in-out infinite 0.4s"
-                : "voice-wave-3 3.5s ease-in-out infinite 0.6s",
-            }}
-          />
+          <>
+            <div
+              className="absolute rounded-full border-2 pointer-events-none"
+              style={{
+                inset: -8,
+                borderColor: ringColor,
+                animation: isSpeaking
+                  ? "voice-wave-speak-1 1.4s ease-in-out infinite"
+                  : "voice-wave-1 2.2s ease-in-out infinite",
+              }}
+            />
+            <div
+              className="absolute rounded-full border pointer-events-none"
+              style={{
+                inset: -18,
+                borderColor: ringColorFaint,
+                animation: isSpeaking
+                  ? "voice-wave-speak-2 1.8s ease-in-out infinite 0.2s"
+                  : "voice-wave-2 2.8s ease-in-out infinite 0.3s",
+              }}
+            />
+            <div
+              className="absolute rounded-full border pointer-events-none"
+              style={{
+                inset: -30,
+                borderColor: ringColorFaint,
+                animation: isSpeaking
+                  ? "voice-wave-speak-3 2.2s ease-in-out infinite 0.4s"
+                  : "voice-wave-3 3.5s ease-in-out infinite 0.6s",
+              }}
+            />
+          </>
         )}
 
         <div
@@ -468,12 +468,10 @@ const ProtagonistVoiceMode = ({
         )}
       </div>
 
-      {/* State label */}
       <p className={`text-muted-foreground text-sm mb-2 text-center max-w-xs ${isActive ? "animate-pulse" : ""}`}>
         {stateLabel}
       </p>
 
-      {/* Retry button for error state */}
       {voiceState === "error" && (
         <button
           onClick={retryConnection}
@@ -483,7 +481,6 @@ const ProtagonistVoiceMode = ({
         </button>
       )}
 
-      {/* Transcript / Reply display */}
       <div className="max-w-md w-full px-6 space-y-3 text-center min-h-[80px]">
         {lastTranscript && (
           <p className="text-muted-foreground text-xs">
@@ -495,7 +492,6 @@ const ProtagonistVoiceMode = ({
         )}
       </div>
 
-      {/* Return to chat at bottom */}
       <div className="absolute bottom-10">
         <button
           onClick={endSession}
