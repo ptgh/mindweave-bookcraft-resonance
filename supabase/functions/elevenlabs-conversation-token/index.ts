@@ -13,15 +13,16 @@ serve(async (req) => {
   try {
     const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
     if (!ELEVENLABS_API_KEY) {
+      console.error('[token] ELEVENLABS_API_KEY not configured');
       return new Response(JSON.stringify({ error: 'ELEVENLABS_API_KEY not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const AGENT_ID = 'agent_8501khxttz5zf9rt0zpn1vtkv1qj';
+    const AGENT_ID = Deno.env.get('ELEVENLABS_AGENT_ID') || 'agent_8501khxttz5zf9rt0zpn1vtkv1qj';
 
-    console.log('Requesting WebRTC conversation token for agent:', AGENT_ID);
+    console.log('[token] Requesting WebRTC conversation token for agent:', AGENT_ID);
 
     const response = await fetch(
       `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${AGENT_ID}`,
@@ -32,24 +33,44 @@ serve(async (req) => {
       }
     );
 
+    const responseText = await response.text();
+    console.log('[token] ElevenLabs API status:', response.status, 'body length:', responseText.length);
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('ElevenLabs token error:', response.status, errorText);
-      return new Response(JSON.stringify({ error: `Token generation failed: ${response.status}`, details: errorText }), {
+      console.error('[token] ElevenLabs token error:', response.status, responseText);
+      return new Response(JSON.stringify({ error: `Token generation failed: ${response.status}`, details: responseText }), {
         status: response.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const data = await response.json();
-    console.log('WebRTC conversation token generated successfully');
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseErr) {
+      console.error('[token] Failed to parse ElevenLabs response:', parseErr);
+      return new Response(JSON.stringify({ error: 'Invalid response from voice service' }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!data.token) {
+      console.error('[token] No token in response. Keys:', Object.keys(data));
+      return new Response(JSON.stringify({ error: 'No token in voice service response', keys: Object.keys(data) }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('[token] WebRTC conversation token generated successfully, token length:', data.token.length);
 
     return new Response(JSON.stringify({ token: data.token }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Token error:', error);
+    console.error('[token] Unexpected error:', error);
     return new Response(JSON.stringify({ 
       error: error instanceof Error ? error.message : 'Token generation failed' 
     }), {
