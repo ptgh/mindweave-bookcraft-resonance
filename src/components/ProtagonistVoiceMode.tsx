@@ -269,9 +269,8 @@ const ProtagonistVoiceMode = ({
 
       console.log("[VoiceMode] Starting session with WebSocket signedUrl...");
 
-      await conversation.startSession({
+      await (conversation.startSession as any)({
         signedUrl: signedUrl,
-        connectionType: "websocket",
       });
 
       console.log("[VoiceMode] ✅ startSession resolved");
