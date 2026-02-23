@@ -320,6 +320,24 @@ const ProtagonistVoiceMode = ({
     };
   }, [clearConnectionTimeout, clearKeepalive]);
 
+  // Catch the SDK's internal handleErrorEvent crash to prevent it from killing the connection
+  useEffect(() => {
+    const handler = (event: PromiseRejectionEvent) => {
+      const err = event.reason;
+      if (
+        err instanceof TypeError &&
+        typeof err.message === "string" &&
+        err.message.includes("error_event")
+      ) {
+        console.warn("[VoiceMode] Suppressed SDK handleErrorEvent crash:", err.message);
+        event.preventDefault();
+        return;
+      }
+    };
+    window.addEventListener("unhandledrejection", handler);
+    return () => window.removeEventListener("unhandledrejection", handler);
+  }, []);
+
   // Auto-start on mount
   useEffect(() => {
     startConversation();
