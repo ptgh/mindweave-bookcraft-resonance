@@ -1,74 +1,54 @@
 
+# Fix Voice Mode: Switch from WebRTC to WebSocket Transport
 
-# Voice Mode: Definitive Fix
+## Root Cause (definitively proven by logs)
 
-## What is actually going wrong
+The ElevenLabs SDK's `handleErrorEvent` function crashes on a malformed error event from the agent. Critically, the SDK **disconnects the LiveKit room internally before the error propagates to JavaScript**. This is why every client-side error suppression attempt has failed -- by the time our code runs, the WebRTC room is already torn down. The DataChannel errors in the logs ("Unknown DataChannel error on lossy/reliable") confirm the LiveKit transport is the problem.
 
-The edge function logs prove tokens generate successfully every time (status 200, token length 771). The WebRTC connection establishes -- `wasConnectedRef` becomes `true`. Then the session drops within seconds, showing "Connection lost."
+## The Fix: WebSocket Instead of WebRTC
 
-The root cause is a **combination of three issues**:
+The `useConversation` hook supports two connection types:
+- **WebRTC** (via `conversationToken`) -- uses LiveKit rooms, DataChannels, has the bug
+- **WebSocket** (via `signedUrl`) -- direct WebSocket connection, no LiveKit, no DataChannels
 
-### Issue 1: `sendUserMessage` is unreliable (known ElevenLabs bug #183)
+Both provide **real-time full duplex** conversation. Same SDK, same hook, same natural back-and-forth voice experience. The only difference is the transport layer.
 
-The previous fix sent `sendUserMessage("*You sense someone approaching...*")` after connection to trigger a greeting. However, ElevenLabs GitHub Issue #183 documents that `sendUserMessage` "stops working randomly" -- the agent sometimes ignores text messages entirely and only responds to voice. When the agent ignores the text message, the session falls silent, and the inactivity timeout kills it.
+## Changes
 
-### Issue 2: No keepalive mechanism
+### 1. Edge Function: `supabase/functions/elevenlabs-conversation-token/index.ts`
 
-ElevenLabs documentation explicitly states that `sendUserActivity()` is the way to "reset the turn timeout timer" and prevent inactivity disconnects. The current code has zero keepalive logic. Even if the initial greeting works, any pause in conversation triggers the server-side timeout.
+Change the API endpoint from the token endpoint to the signed URL endpoint:
 
-### Issue 3: Double `getUserMedia` call conflicts on iOS
+- **Current**: `GET /v1/convai/conversation/token?agent_id=...` (returns `{ token }`)
+- **New**: `GET /v1/convai/conversation/get-signed-url?agent_id=...` (returns `{ signed_url }`)
 
-The code calls `navigator.mediaDevices.getUserMedia({ audio: true })` on line 158 to check permissions, then the ElevenLabs SDK internally calls it again during `startSession()`. On iOS Safari, having two active media streams can cause the second to fail silently or the first to block the second, resulting in the SDK getting no audio input.
+The function will return `{ signed_url }` instead of `{ token }`.
 
-## Why every previous fix failed
+### 2. Client: `src/components/ProtagonistVoiceMode.tsx`
 
-| Attempt | What it did | Why it failed |
-|---------|------------|---------------|
-| 1 | Switched WebSocket to WebRTC | Connection protocol was never the problem |
-| 2 | Moved overrides from hook to startSession | Overrides are disabled in agent dashboard |
-| 3 | Removed overrides, used sendContextualUpdate | Context doesn't trigger agent to speak, inactivity timeout |
-| 4 | Added sendUserMessage after context | sendUserMessage is unreliable (known bug), no keepalive |
+Change `startSession` call:
 
-## The fix (three changes)
+- **Current**: `conversation.startSession({ conversationToken: token })`
+- **New**: `conversation.startSession({ signedUrl: signedUrl })`
 
-### 1. Add keepalive interval using `sendUserActivity()`
+Update the token-fetching logic to read `data.signed_url` instead of `data.token`.
 
-After connection, start a 15-second interval that calls `conversation.sendUserActivity()`. This resets the ElevenLabs inactivity timer continuously, preventing server-side timeouts. Clear the interval on disconnect or unmount.
+Everything else stays exactly the same:
+- Same `useConversation` hook with same callbacks
+- Same keepalive interval (5s `sendUserActivity`)
+- Same deferred context injection (wait for first agent message)
+- Same `sendContextualUpdate` + `sendUserMessage` flow
+- Same UI, animations, and pulse rings
+- Same error handling and retry logic
+- The `unhandledrejection` handler stays as a safety net
 
-### 2. Make the initial greeting more resilient
+### 3. No Other Changes
 
-Keep the `sendContextualUpdate` + `sendUserMessage` approach (it works most of the time), but add a fallback: if no `agent_response` message is received within 5 seconds of sending the user message, re-send it once. This handles the known unreliability.
+- No new dependencies
+- No new edge functions
+- No UI changes
+- Still real-time, full duplex, natural conversation
 
-### 3. Fix the iOS microphone conflict
+## Why This Will Work
 
-Stop calling `getUserMedia` separately before `startSession`. Instead, wrap the entire flow in a try/catch and handle `NotAllowedError` from `startSession` itself. This lets the SDK manage its own single media stream, avoiding the dual-stream conflict on iOS.
-
-## File changes
-
-### `src/components/ProtagonistVoiceMode.tsx`
-
-- Add a `keepaliveRef` for the `setInterval` handle
-- After `voiceState === "connected"`, start `setInterval(() => conversation.sendUserActivity(), 15_000)`
-- Clear the interval in `onDisconnect`, `endSession`, and unmount cleanup
-- Remove the standalone `getUserMedia` call; let `startSession` handle it and catch `NotAllowedError` from the startSession catch block
-- Add a `greetingReceivedRef` and a 5-second timeout after `sendUserMessage` -- if no `agent_response` arrives, re-send the user message once
-- Track `agent_response` in the existing `handleMessage` callback to set `greetingReceivedRef`
-
-No edge function changes needed -- the token generation is working perfectly.
-
-## Technical detail
-
-```text
-FIXED FLOW:
-Mount -> startSession(token, webrtc)
-  -> SDK internally calls getUserMedia
-  -> onConnect fires
-  -> sendContextualUpdate(protagonist context)
-  -> 500ms delay -> sendUserMessage("introduce yourself")
-  -> Start keepalive: sendUserActivity() every 15s
-  -> If no agent_response in 5s -> retry sendUserMessage once
-  -> Agent speaks, user responds, conversation flows
-  -> Keepalive prevents any silence-based timeout
-  -> User clicks "Return to chat" -> endSession -> cleanup intervals
-```
-
+WebSocket transport bypasses the entire LiveKit stack (rooms, DataChannels, ICE negotiation). The malformed error event that crashes `handleErrorEvent` is specific to the LiveKit/WebRTC message handling path. With WebSocket, messages flow over a simple WebSocket connection -- the same proven transport used by countless ElevenLabs integrations.
