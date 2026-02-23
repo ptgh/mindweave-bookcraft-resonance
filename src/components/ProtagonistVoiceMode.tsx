@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { MessageCircle, Loader2, WifiOff } from "lucide-react";
 import { useConversation } from "@elevenlabs/react";
-import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface ProtagonistVoiceModeProps {
@@ -10,8 +9,8 @@ interface ProtagonistVoiceModeProps {
   bookAuthor: string;
   protagonistName: string;
   portraitUrl?: string | null;
-  conversationId: string | null;
-  onConversationId: (id: string) => void;
+  conversationId?: string | null;
+  onConversationId?: (id: string) => void;
   onClose: () => void;
 }
 
@@ -97,7 +96,6 @@ const ProtagonistVoiceMode = ({
       }
     },
     onMessage: (message: any) => {
-      console.log("[VoiceMode] onMessage:", message?.type ?? message?.source, message);
       if (message?.type === "user_transcript") {
         const transcript = message?.user_transcription_event?.user_transcript;
         if (transcript) setLastTranscript(transcript);
@@ -144,13 +142,8 @@ const ProtagonistVoiceMode = ({
         sessionStartedRef.current = false;
       }
     },
-    onDebug: (info: any) => {
-      console.log("[VoiceMode] 🔍 debug:", info);
-    },
-    onStatusChange: (status: any) => {
-      console.log("[VoiceMode] 📡 status:", status);
-    },
   } as any);
+
 
   // Keep convRef in sync
   convRef.current = conversation;
