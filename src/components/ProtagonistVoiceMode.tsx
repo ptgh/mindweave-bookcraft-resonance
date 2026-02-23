@@ -17,6 +17,8 @@ interface ProtagonistVoiceModeProps {
 
 type VoiceState = "idle" | "connecting" | "connected" | "error";
 
+const CONNECTION_TIMEOUT_MS = 15_000;
+
 const ProtagonistVoiceMode = ({
   bookTitle,
   bookAuthor,
@@ -32,6 +34,19 @@ const ProtagonistVoiceMode = ({
   const animFrameRef = useRef<number>(0);
   const sessionStartedRef = useRef(false);
   const mountedRef = useRef(true);
+  const wasConnectedRef = useRef(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const contextSentRef = useRef(false);
+
+  // Build the contextual prompt for sendContextualUpdate
+  const protagonistContext = `You are ${protagonistName}, the protagonist from "${bookTitle}" by ${bookAuthor}. Stay completely in character at all times. Speak as if you ARE this character — reference your world, your experiences, your relationships. Never break character. Never discuss being an AI. If asked about real-world topics outside your story's scope, deflect naturally as your character would. Keep responses conversational and relatively brief (2-4 sentences) since this is a voice conversation. Be evocative and immersive. Your first words should introduce yourself naturally as ${protagonistName}.`;
+
+  const clearConnectionTimeout = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
 
   const handleMessage = useCallback((message: any) => {
     if (message?.type === "user_transcript") {
@@ -43,29 +58,54 @@ const ProtagonistVoiceMode = ({
     }
   }, []);
 
-  // NOTE: Do NOT pass overrides here — known SDK bug causes session abort.
-  // Overrides are passed in startSession() instead.
   const conversation = useConversation({
     onConnect: () => {
-      console.log("Connected to ElevenLabs agent");
-      if (mountedRef.current) setVoiceState("connected");
+      console.log("[VoiceMode] Connected to ElevenLabs agent");
+      if (mountedRef.current) {
+        wasConnectedRef.current = true;
+        clearConnectionTimeout();
+        setVoiceState("connected");
+      }
     },
     onDisconnect: () => {
-      console.log("Disconnected from ElevenLabs agent");
+      console.log("[VoiceMode] Disconnected from ElevenLabs agent, wasConnected:", wasConnectedRef.current);
       if (mountedRef.current) {
-        // Only set idle if we were connected (not an error disconnect)
-        setVoiceState(prev => prev === "error" ? "error" : "idle");
+        clearConnectionTimeout();
+        if (!wasConnectedRef.current) {
+          // Never connected — this is a connection failure, not a clean disconnect
+          setVoiceState("error");
+          setErrorMessage("Connection failed. The voice service could not be reached. Tap to retry.");
+          sessionStartedRef.current = false;
+        } else {
+          setVoiceState("idle");
+          sessionStartedRef.current = false;
+        }
       }
     },
     onMessage: handleMessage as any,
     onError: (error: any) => {
-      console.error("Conversation error:", error);
+      console.error("[VoiceMode] Conversation error:", error);
       if (mountedRef.current) {
+        clearConnectionTimeout();
         setVoiceState("error");
         setErrorMessage(typeof error === "string" ? error : "Connection lost. Tap to retry.");
+        sessionStartedRef.current = false;
       }
     },
   });
+
+  // After connection, send contextual update with protagonist identity
+  useEffect(() => {
+    if (voiceState === "connected" && !contextSentRef.current) {
+      contextSentRef.current = true;
+      try {
+        console.log("[VoiceMode] Sending contextual update for", protagonistName);
+        conversation.sendContextualUpdate(protagonistContext);
+      } catch (err) {
+        console.warn("[VoiceMode] sendContextualUpdate error (non-fatal):", err);
+      }
+    }
+  }, [voiceState, protagonistContext, conversation, protagonistName]);
 
   // Audio visualisation
   useEffect(() => {
@@ -89,6 +129,8 @@ const ProtagonistVoiceMode = ({
   const startConversation = useCallback(async () => {
     if (sessionStartedRef.current) return;
     sessionStartedRef.current = true;
+    wasConnectedRef.current = false;
+    contextSentRef.current = false;
     setVoiceState("connecting");
     setLastTranscript("");
     setLastReply("");
@@ -107,7 +149,7 @@ const ProtagonistVoiceMode = ({
           );
 
           if (error || !data?.token) {
-            console.warn(`Token attempt ${attempt + 1} failed:`, error, data);
+            console.warn(`[VoiceMode] Token attempt ${attempt + 1} failed:`, error, data);
             if (attempt < 2) {
               await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
               continue;
@@ -117,7 +159,7 @@ const ProtagonistVoiceMode = ({
             break;
           }
         } catch (fetchErr) {
-          console.warn(`Token fetch attempt ${attempt + 1} error:`, fetchErr);
+          console.warn(`[VoiceMode] Token fetch attempt ${attempt + 1} error:`, fetchErr);
           if (attempt < 2) {
             await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
           }
@@ -125,10 +167,10 @@ const ProtagonistVoiceMode = ({
       }
 
       if (!token) {
-        console.error("No token obtained after retries");
+        console.error("[VoiceMode] No token obtained after retries");
         if (mountedRef.current) {
           setVoiceState("error");
-          setErrorMessage("Could not connect. Check your connection and try again.");
+          setErrorMessage("Could not connect to voice service. Check your connection and try again.");
           sessionStartedRef.current = false;
         }
         return;
@@ -136,55 +178,67 @@ const ProtagonistVoiceMode = ({
 
       if (!mountedRef.current) return;
 
-      console.log("Starting ElevenLabs WebRTC session...");
+      // Set connection timeout — if we don't reach "connected" within 15s, error out
+      timeoutRef.current = setTimeout(() => {
+        if (mountedRef.current && !wasConnectedRef.current) {
+          console.error("[VoiceMode] Connection timeout after 15s");
+          setVoiceState("error");
+          setErrorMessage("Connection is taking too long. Please check your network and try again.");
+          sessionStartedRef.current = false;
+          // Try to end any pending session
+          try { conversation.endSession(); } catch (_) { /* ignore */ }
+        }
+      }, CONNECTION_TIMEOUT_MS);
 
-      // Pass overrides HERE in startSession, not in useConversation config
+      console.log("[VoiceMode] Starting WebRTC session (no overrides)...");
+
+      // Connect WITHOUT overrides — context injected via sendContextualUpdate after connect
       await conversation.startSession({
         conversationToken: token,
         connectionType: "webrtc",
-        overrides: {
-          agent: {
-            prompt: {
-              prompt: `You are ${protagonistName}, the protagonist from "${bookTitle}" by ${bookAuthor}. Stay completely in character at all times. Speak as if you ARE this character — reference your world, your experiences, your relationships. Never break character. Never discuss being an AI. If asked about real-world topics outside your story's scope, deflect naturally as your character would. Keep responses conversational and relatively brief (2-4 sentences) since this is a voice conversation. Be evocative and immersive.`,
-            },
-            firstMessage: `*a moment of recognition* Ah... a visitor. I don't often get the chance to speak with someone from beyond my world. I'm ${protagonistName}. What brings you to me?`,
-            language: "en",
-          },
-        },
       } as any);
 
-      console.log("WebRTC session started successfully");
+      console.log("[VoiceMode] startSession resolved successfully");
     } catch (err) {
-      console.error("Failed to start conversation:", err);
+      console.error("[VoiceMode] Failed to start conversation:", err);
       if (mountedRef.current) {
+        clearConnectionTimeout();
         setVoiceState("error");
-        setErrorMessage("Failed to start voice session. Tap to retry.");
+        setErrorMessage(
+          err instanceof DOMException && err.name === "NotAllowedError"
+            ? "Microphone access is required for voice mode. Please allow microphone access and try again."
+            : "Failed to start voice session. Tap to retry."
+        );
         sessionStartedRef.current = false;
       }
     }
-  }, [conversation, protagonistName, bookTitle, bookAuthor]);
+  }, [conversation, clearConnectionTimeout]);
 
   const endSession = useCallback(async () => {
+    clearConnectionTimeout();
     try {
       await conversation.endSession();
     } catch (e) {
-      console.warn("End session error (non-fatal):", e);
+      console.warn("[VoiceMode] End session error (non-fatal):", e);
     }
     onClose();
-  }, [conversation, onClose]);
+  }, [conversation, onClose, clearConnectionTimeout]);
 
   const retryConnection = useCallback(() => {
     sessionStartedRef.current = false;
+    wasConnectedRef.current = false;
+    contextSentRef.current = false;
     startConversation();
   }, [startConversation]);
 
-  // Track mounted state
+  // Track mounted state & cleanup
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      clearConnectionTimeout();
     };
-  }, []);
+  }, [clearConnectionTimeout]);
 
   // Auto-start on mount
   useEffect(() => {
@@ -197,11 +251,11 @@ const ProtagonistVoiceMode = ({
   const isActive = isListening || isSpeaking;
 
   const stateLabel = voiceState === "connecting"
-    ? "Connecting..."
+    ? `Connecting to ${protagonistName}...`
     : voiceState === "error"
     ? errorMessage || "Connection error"
     : voiceState === "idle"
-    ? "Starting session..."
+    ? "Session ended"
     : isSpeaking
     ? `${protagonistName} is speaking...`
     : "Listening...";
@@ -357,7 +411,7 @@ const ProtagonistVoiceMode = ({
       </div>
 
       {/* State label */}
-      <p className={`text-muted-foreground text-sm mb-2 ${isActive ? "animate-pulse" : ""}`}>
+      <p className={`text-muted-foreground text-sm mb-2 text-center max-w-xs ${isActive ? "animate-pulse" : ""}`}>
         {stateLabel}
       </p>
 
