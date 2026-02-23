@@ -1,73 +1,92 @@
 
-# AI-Generated Protagonist Portraits
 
-## Overview
-Generate a unique AI portrait for each of the ~52 protagonists using the Gemini image generation model (`google/gemini-2.5-flash-image`), store them in Supabase Storage, and display them on protagonist cards and the chat modal. Portraits will be based purely on literary descriptions, not film depictions.
+# Voice Mode Audit and Resolution Plan
 
-## Architecture
+## Root Cause Analysis
 
-1. **New Supabase Storage bucket**: `protagonist-portraits` (public)
-2. **New database column**: `transmissions.protagonist_portrait_url` (text, nullable)
-3. **New edge function**: `generate-protagonist-portrait` -- takes book/protagonist info, generates an image via Lovable AI image model, uploads to storage, writes URL back to DB
-4. **Frontend updates**: Show the portrait on `ProtagonistCard` and `ProtagonistChatModal`
+After thorough investigation, here is exactly why the voice feature fails:
 
-## Detailed Steps
+### What happens now
+1. The edge function successfully generates a WebRTC token (confirmed via logs and direct API test)
+2. The client calls `conversation.startSession()` with `overrides` containing a custom system prompt, first message, and language
+3. **The ElevenLabs agent immediately rejects the session** because overrides are disabled by default in the agent's security settings
+4. The SDK fires `onDisconnect` but the code only transitions from "connecting" to "idle" (line 57: `setVoiceState(prev => prev === "error" ? "error" : "idle")`), which shows "Starting session..." indefinitely since `voiceState` becomes `"idle"` and the label for idle is "Starting session..."
+5. No error is surfaced to the user
 
-### Step 1: Database Migration
-- Add `protagonist_portrait_url TEXT` column to `transmissions` table
-- Create `protagonist-portraits` storage bucket (public)
+### Why previous fixes didn't work
+- **First attempt**: Switched from WebSocket to WebRTC -- correct protocol, but didn't address the overrides rejection
+- **Second attempt**: Moved overrides from `useConversation` to `startSession` -- this addresses a different SDK bug (#92) but the real problem is that overrides must be **explicitly enabled in the ElevenLabs dashboard** for agent `agent_8501khxttz5zf9rt0zpn1vtkv1qj`. Without that, any override causes session abort
+- Neither attempt checked whether the agent's security settings actually permit overrides
 
-### Step 2: Edge Function -- `generate-protagonist-portrait`
-- Accepts `{ bookTitle, bookAuthor, protagonistName, transmissionId }`
-- Requires auth (uses `requireUser` pattern)
-- Checks if portrait already exists in DB -- if so, returns it immediately
-- Builds a detailed prompt emphasizing literary description:
-  - "Based ONLY on the novel [title] by [author], create a portrait of [protagonist]. Do NOT reference any film or TV adaptation. Style: painterly, moody, dark sci-fi palette with violet and slate tones, consistent with a literary reading app."
-- Calls `https://ai.gateway.lovable.dev/v1/chat/completions` with model `google/gemini-2.5-flash-image` and `modalities: ["image", "text"]`
-- Extracts the base64 image from `data.choices[0].message.images[0].image_url.url`
-- Decodes base64 and uploads to Supabase Storage at `protagonist-portraits/{transmissionId}.png`
-- Updates `transmissions.protagonist_portrait_url` with the public URL
-- Returns `{ portraitUrl }`
+### The silent failure bug
+When `startSession` fails due to rejected overrides, `onError` is NOT always called. Instead, `onDisconnect` fires, setting state to `"idle"`, which displays "Starting session..." with no retry option -- the user is stuck.
 
-### Step 3: Frontend -- ProtagonistCard Updates
-- Add `protagonist_portrait_url` to the `ProtagonistBook` interface and the Supabase query
-- Display a small circular portrait next to the protagonist name (or as an avatar on the card)
-- If no portrait exists yet, trigger generation on first view (fire-and-forget, similar to how `protagonist_intro` works)
-- Show a subtle loading shimmer while generating
+---
 
-### Step 4: Frontend -- ProtagonistChatModal Updates
-- Show the protagonist portrait in the chat header beside "Speaking with [Name]"
-- Use a circular avatar style (~32px) with a violet ring border
-- Fall back to a `MessageCircle` icon if no portrait available
+## Resolution Plan
 
-### Step 5: Protagonists Page Query Update
-- Add `protagonist_portrait_url` to the select query in `Protagonists.tsx`
+### 1. Remove client-side overrides entirely (eliminate the root cause)
 
-## Design Consistency
-- Portraits use a **painterly, moody sci-fi art style** with the site's slate/violet palette
-- Circular crop with a `border-2 border-violet-500/30` ring
-- 48x48px on cards, 32x32px in chat header
-- Subtle glow effect (`shadow-violet-500/20`) to tie into the neural/sci-fi aesthetic
+Instead of passing dynamic overrides (which require dashboard configuration that may not be set), configure the agent's default system prompt directly in the ElevenLabs dashboard to be a generic protagonist prompt, then pass character-specific context via `customLlmExtraBody` or remove overrides and rely on the agent's configured prompt.
 
-## Technical Details
+**The robust approach**: Remove all `overrides` from `startSession()` and let the agent use its dashboard-configured prompt. Since the agent is already configured for protagonist roleplay, this eliminates the override rejection entirely.
 
-```text
-Flow:
-  User visits /protagonists
-    -> Page loads books with protagonist_portrait_url
-    -> If portrait is null, ProtagonistCard fires generate-protagonist-portrait
-    -> Edge function generates image, uploads to storage, updates DB
-    -> Card re-renders with portrait
+If character-specific prompts are needed, there are two options:
+- **Option A**: Enable overrides in the ElevenLabs dashboard (Security tab) for the agent, then keep current code
+- **Option B**: Use `sendContextualUpdate()` after connection to inject character context without requiring override permissions
 
-Storage path: protagonist-portraits/{transmissionId}.png
-Image size: 512x512 (generated), displayed at 48px circular crop
-```
+**Recommended: Option B** -- connect first without overrides, then use `sendContextualUpdate()` to inject the protagonist's identity after connection is established. This is the most robust approach.
 
-## Config Updates
-- Add `[functions.generate-protagonist-portrait]` with `verify_jwt = true` to `supabase/config.toml`
+### 2. Fix the silent failure state machine
 
-## Cost Considerations
-- ~52 protagonists, each generating one image
-- Uses `google/gemini-2.5-flash-image` (cost-effective image model)
-- One-time generation per protagonist; subsequent visits use cached URL
-- Generation is lazy (only when a user views the card and no portrait exists)
+The current state machine has a critical bug: when `onDisconnect` fires during the connecting phase, the state goes to `"idle"` which shows "Starting session..." with no way out.
+
+Fix:
+- Track whether we ever reached `"connected"` state
+- If `onDisconnect` fires and we were never connected, treat it as an error
+- Add a connection timeout (e.g. 15 seconds) that triggers error state if we never connect
+
+### 3. Improve error recovery
+
+- The `sessionStartedRef` guard prevents retry after certain failures -- needs to be reset in more failure paths
+- Add a visible connection timeout so users aren't stuck on "Starting session..."
+- Show meaningful error messages for different failure modes
+
+### 4. Handle the microphone stream lifecycle
+
+On iOS Safari, the media stream can be garbage-collected if not held in a ref. The current code requests `getUserMedia` but doesn't store the stream reference -- the ElevenLabs SDK manages its own stream internally, but requesting early can cause issues on iOS where the permission prompt timing matters.
+
+---
+
+## Technical Implementation
+
+### File: `src/components/ProtagonistVoiceMode.tsx`
+
+Changes:
+- Remove `overrides` from `startSession()` call entirely
+- After `onConnect` fires, call `conversation.sendContextualUpdate()` with the protagonist context
+- Add `wasConnectedRef` to track if connection was ever established
+- Add 15-second connection timeout that triggers error state
+- Fix `onDisconnect` handler to detect "never connected" scenario and show error
+- Ensure `sessionStartedRef` is properly reset on all failure paths
+- Add better error classification and user-facing messages
+
+### File: `supabase/functions/elevenlabs-conversation-token/index.ts`
+
+Add diagnostic logging:
+- Log the full response from ElevenLabs token API (not just success/fail)
+- Add subscription/quota check endpoint call to verify API key health
+
+### No changes needed to:
+- `supabase/config.toml` (already has `verify_jwt = false` for the token function)
+- Package version (0.14.0 is current)
+
+---
+
+## Quality Improvements
+
+- **Connection status feedback**: Show "Connecting to [protagonist name]..." with a subtle animated indicator
+- **Timeout with graceful fallback**: After 15 seconds, show "Connection taking longer than expected" with a retry button rather than hanging indefinitely
+- **iOS-specific handling**: Ensure audio context is resumed on user interaction (iOS requires user gesture for audio playback)
+- **Clean disconnection**: Properly end the session and release the microphone when returning to chat or on component unmount
+
