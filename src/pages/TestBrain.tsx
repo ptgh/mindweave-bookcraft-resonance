@@ -207,50 +207,49 @@ const TestBrain = () => {
           });
         });
 
-        // Place book nodes near cluster center with collision avoidance
+        // ── Structured layout: books in a grid, more spacing ──
         const nodePositions: { x: number; y: number }[] = new Array(fetchedTransmissions.length);
         const mobile = window.innerWidth < 768;
-        const nodeSize = mobile ? 36 : 50;
-        const minDist = nodeSize + (mobile ? 30 : 55);
-        const padding = mobile ? 40 : 60;
-        const topPad = mobile ? 130 : 110;
+        const nodeSize = mobile ? 52 : 68;
+        const minDist = nodeSize + (mobile ? 36 : 50);
+        const padding = mobile ? 30 : 50;
+        const topPad = mobile ? 130 : 120;
+        const bottomPad = 240;
         
         const placedPositions: { x: number; y: number }[] = [];
         
-        tagGroups.forEach((indices, tag) => {
-          const center = clusterCenters.get(tag)!;
-          const spread = 50 + indices.length * 22;
-          indices.forEach((idx, j) => {
-            let bestX = 0, bestY = 0, placed = false;
-            
-            for (let attempt = 0; attempt < 20; attempt++) {
-              const jitterAngle = (2 * Math.PI * j) / indices.length + Math.random() * 0.8;
-              const jitterR = 25 + attempt * 12 + Math.random() * spread;
-              const candidateX = Math.max(padding, Math.min(vw - padding, center.cx + Math.cos(jitterAngle) * jitterR));
-              const candidateY = Math.max(topPad, Math.min(vh - 220, center.cy + Math.sin(jitterAngle) * jitterR));
-              
-              const hasCollision = placedPositions.some(p => {
-                const dx = p.x - candidateX;
-                const dy = p.y - candidateY;
-                return Math.sqrt(dx * dx + dy * dy) < minDist;
-              });
-              
-              if (!hasCollision || attempt === 19) {
-                bestX = candidateX;
-                bestY = candidateY;
-                placed = true;
-                break;
-              }
-            }
-            
-            if (!placed) {
-              bestX = Math.max(padding, Math.min(vw - padding, center.cx + (Math.random() - 0.5) * 200));
-              bestY = Math.max(topPad, Math.min(vh - 220, center.cy + (Math.random() - 0.5) * 200));
-            }
-            
-            nodePositions[idx] = { x: bestX, y: bestY };
-            placedPositions.push({ x: bestX, y: bestY });
-          });
+        // Sort transmissions by author to group same-author books
+        const sortedIndices = Array.from({ length: fetchedTransmissions.length }, (_, i) => i);
+        sortedIndices.sort((a, b) => {
+          const authorA = (fetchedTransmissions[a].author || '').toLowerCase();
+          const authorB = (fetchedTransmissions[b].author || '').toLowerCase();
+          return authorA.localeCompare(authorB);
+        });
+        
+        // Calculate grid dimensions for available space
+        const availableW = vw - padding * 2;
+        const availableH = vh - topPad - bottomPad;
+        const cols = Math.max(3, Math.floor(availableW / (minDist + 10)));
+        const rowSpacing = Math.max(minDist + 15, availableH / Math.ceil(fetchedTransmissions.length / cols));
+        const colSpacing = availableW / cols;
+        
+        sortedIndices.forEach((originalIdx, gridIdx) => {
+          const col = gridIdx % cols;
+          const row = Math.floor(gridIdx / cols);
+          
+          // Base grid position with slight organic jitter
+          const jitterX = (Math.random() - 0.5) * colSpacing * 0.15;
+          const jitterY = (Math.random() - 0.5) * rowSpacing * 0.12;
+          
+          let bx = padding + col * colSpacing + colSpacing / 2 + jitterX;
+          let by = topPad + row * rowSpacing + rowSpacing / 2 + jitterY;
+          
+          // Clamp
+          bx = Math.max(padding + nodeSize / 2, Math.min(vw - padding - nodeSize / 2, bx));
+          by = Math.max(topPad, Math.min(vh - bottomPad, by));
+          
+          nodePositions[originalIdx] = { x: bx, y: by };
+          placedPositions.push({ x: bx, y: by });
         });
 
         // Create book nodes
@@ -268,7 +267,7 @@ const TestBrain = () => {
           nodeType: 'book' as NodeType,
         }));
 
-        // Create author nodes - placed near their books
+        // Create author nodes — positioned deliberately near their book cluster
         const authorNodes: BrainNode[] = [];
         const addedAuthors = new Set<string>();
         bookNodes.forEach(bookNode => {
@@ -276,18 +275,29 @@ const TestBrain = () => {
           addedAuthors.add(bookNode.author);
           
           const authorData = authorMap.get(bookNode.author);
-          // Find all books by this author to position author near centroid
           const authorBooks = bookNodes.filter(b => b.author === bookNode.author);
           const avgX = authorBooks.reduce((s, b) => s + b.x, 0) / authorBooks.length;
           const avgY = authorBooks.reduce((s, b) => s + b.y, 0) / authorBooks.length;
           
-          // Offset slightly so it doesn't overlap
-          const offsetAngle = Math.random() * Math.PI * 2;
-          const offsetR = mobile ? 35 : 50;
-          let ax = avgX + Math.cos(offsetAngle) * offsetR;
-          let ay = avgY + Math.sin(offsetAngle) * offsetR;
+          // Place author above or to the left of their books cluster
+          const offsetY = mobile ? -45 : -55;
+          let ax = avgX;
+          let ay = avgY + offsetY;
+          
+          // Avoid collisions with placed positions
+          for (let attempt = 0; attempt < 15; attempt++) {
+            const hasCollision = placedPositions.some(p => {
+              const ddx = p.x - ax; const ddy = p.y - ay;
+              return Math.sqrt(ddx * ddx + ddy * ddy) < (mobile ? 40 : 55);
+            });
+            if (!hasCollision) break;
+            ax += (Math.random() - 0.5) * 40;
+            ay += (Math.random() - 0.5) * 30;
+          }
+          
           ax = Math.max(padding, Math.min(vw - padding, ax));
-          ay = Math.max(topPad, Math.min(vh - 220, ay));
+          ay = Math.max(topPad, Math.min(vh - bottomPad, ay));
+          placedPositions.push({ x: ax, y: ay });
           
           authorNodes.push({
             id: `author-${bookNode.author}`,
@@ -305,18 +315,31 @@ const TestBrain = () => {
           });
         });
 
-        // Create protagonist nodes - placed near their book
+        // Create protagonist nodes — placed below their parent book
         const protagonistNodes: BrainNode[] = [];
         protagonistMap.forEach((pData, name) => {
           const parentBook = bookNodes.find(b => b.title === pData.bookTitle);
           if (!parentBook) return;
           
-          const offsetAngle = Math.random() * Math.PI * 2;
-          const offsetR = mobile ? 30 : 45;
-          let px = parentBook.x + Math.cos(offsetAngle) * offsetR;
-          let py = parentBook.y + Math.sin(offsetAngle) * offsetR;
+          // Position protagonist below their book
+          const offsetY = mobile ? 50 : 65;
+          let px = parentBook.x + (Math.random() - 0.5) * 20;
+          let py = parentBook.y + offsetY;
+          
+          // Collision avoidance
+          for (let attempt = 0; attempt < 12; attempt++) {
+            const hasCollision = placedPositions.some(p => {
+              const ddx = p.x - px; const ddy = p.y - py;
+              return Math.sqrt(ddx * ddx + ddy * ddy) < (mobile ? 35 : 45);
+            });
+            if (!hasCollision) break;
+            px += (Math.random() - 0.5) * 30;
+            py += (Math.random() - 0.5) * 25;
+          }
+          
           px = Math.max(padding, Math.min(vw - padding, px));
-          py = Math.max(topPad, Math.min(vh - 220, py));
+          py = Math.max(topPad, Math.min(vh - bottomPad, py));
+          placedPositions.push({ x: px, y: py });
           
           protagonistNodes.push({
             id: `protagonist-${name}`,
@@ -702,10 +725,14 @@ const TestBrain = () => {
       const dy = toNode.y - fromNode.y;
       const dist = Math.sqrt(dx*dx + dy*dy);
       
-      // Slight curve for visual interest
-      const curveFactor = 0.2 + Math.random() * 0.3;
-      const midX = fromNode.x + dx * 0.5 + (Math.random() - 0.5) * dist * curveFactor;
-      const midY = fromNode.y + dy * 0.5 + (Math.random() - 0.5) * dist * curveFactor;
+      // Structured curves — gentler, more vertical flow
+      // Cross-type edges (author↔book, protagonist↔book) use nearly straight lines
+      const isCrossType = fromType !== toType;
+      const curveFactor = isCrossType ? 0.05 : 0.12 + Math.random() * 0.08;
+      const perpX = -dy / (dist || 1);
+      const perpY = dx / (dist || 1);
+      const midX = fromNode.x + dx * 0.5 + perpX * dist * curveFactor;
+      const midY = fromNode.y + dy * 0.5 + perpY * dist * curveFactor;
       const pathData = `M${fromNode.x},${fromNode.y} Q${midX},${midY} ${toNode.x},${toNode.y}`;
 
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -731,21 +758,23 @@ const TestBrain = () => {
 
       gsap.to(path, {
         opacity: lineStyle.opacity,
-        duration: 2 + Math.random() * 1,
-        delay: Math.random() * 0.5,
+        duration: 1.5 + Math.random() * 0.5,
+        delay: Math.random() * 0.3,
         ease: "power2.out"
       });
 
-      // Gentle pulse
-      gsap.to(path, {
-        opacity: lineStyle.opacity * 1.3,
-        strokeWidth: lineStyle.strokeWidth * 1.15,
-        duration: 3 + Math.random() * 2,
-        ease: "sine.inOut",
-        yoyo: true,
-        repeat: -1,
-        delay: Math.random() * 3
-      });
+      // Gentle pulse for strong connections only
+      if (score >= 25) {
+        gsap.to(path, {
+          opacity: lineStyle.opacity * 1.2,
+          strokeWidth: lineStyle.strokeWidth * 1.1,
+          duration: 4 + Math.random() * 2,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+          delay: Math.random() * 4
+        });
+      }
     });
   };
 
