@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { gsap } from 'gsap';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 import { getTransmissions, Transmission } from '@/services/transmissionsService';
+import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
@@ -22,6 +23,8 @@ import { filterConceptualTags, CONCEPTUAL_TAGS } from '@/constants/conceptualTag
 // Register GSAP plugins
 gsap.registerPlugin(MotionPathPlugin);
 
+export type NodeType = 'book' | 'author' | 'protagonist';
+
 export interface BrainNode {
   id: string;
   title: string;
@@ -34,6 +37,11 @@ export interface BrainNode {
   description?: string;
   element?: HTMLElement;
   transmissionId: number;
+  nodeType: NodeType;
+  /** For author nodes: the author's ID in scifi_authors */
+  authorId?: string;
+  /** For protagonist nodes: the book they appear in */
+  bookTitle?: string;
 }
 
 interface NodeTooltip {
@@ -150,6 +158,31 @@ const TestBrain = () => {
           return;
         }
 
+        // Fetch author portraits from scifi_authors
+        const uniqueAuthors = [...new Set(fetchedTransmissions.map(t => t.author).filter(Boolean))];
+        const { data: authorRows } = await supabase
+          .from('scifi_authors')
+          .select('id, name, portrait_url, bio, nationality, birth_year, death_year')
+          .in('name', uniqueAuthors);
+        
+        const authorMap = new Map<string, { id: string; portrait_url: string | null; bio: string | null }>();
+        (authorRows || []).forEach(a => authorMap.set(a.name, { id: a.id, portrait_url: a.portrait_url, bio: a.bio }));
+
+        // Extract unique protagonists
+        const protagonistMap = new Map<string, { name: string; portrait_url: string | null; bookTitle: string; author: string }>();
+        fetchedTransmissions.forEach(t => {
+          if (t.protagonist && t.protagonist.trim() !== '' && t.protagonist !== t.author) {
+            if (!protagonistMap.has(t.protagonist)) {
+              protagonistMap.set(t.protagonist, {
+                name: t.protagonist,
+                portrait_url: t.protagonist_portrait_url || null,
+                bookTitle: t.title,
+                author: t.author
+              });
+            }
+          }
+        });
+
         // Group books by primary tag for spatial clustering
         const tagGroups = new Map<string, number[]>();
         fetchedTransmissions.forEach((t, idx) => {
@@ -163,7 +196,6 @@ const TestBrain = () => {
         const vh = window.innerHeight;
         const centerX = vw / 2;
         const centerY = vh / 2;
-        // Use more of the screen – push clusters further out
         const clusterRadius = Math.min(vw, vh) * 0.38;
         const tagList = Array.from(tagGroups.keys());
         const clusterCenters = new Map<string, { cx: number; cy: number }>();
@@ -175,13 +207,13 @@ const TestBrain = () => {
           });
         });
 
-        // Place nodes near cluster center with collision avoidance
+        // Place book nodes near cluster center with collision avoidance
         const nodePositions: { x: number; y: number }[] = new Array(fetchedTransmissions.length);
         const mobile = window.innerWidth < 768;
         const nodeSize = mobile ? 36 : 50;
-        const minDist = nodeSize + (mobile ? 30 : 55); // More spacing between nodes
-        const padding = mobile ? 40 : 60; // Less padding = more usable space
-        const topPad = mobile ? 130 : 110; // Less top padding
+        const minDist = nodeSize + (mobile ? 30 : 55);
+        const padding = mobile ? 40 : 60;
+        const topPad = mobile ? 130 : 110;
         
         const placedPositions: { x: number; y: number }[] = [];
         
@@ -191,14 +223,12 @@ const TestBrain = () => {
           indices.forEach((idx, j) => {
             let bestX = 0, bestY = 0, placed = false;
             
-            // Try placing with increasing radius until no collision
             for (let attempt = 0; attempt < 20; attempt++) {
               const jitterAngle = (2 * Math.PI * j) / indices.length + Math.random() * 0.8;
               const jitterR = 25 + attempt * 12 + Math.random() * spread;
               const candidateX = Math.max(padding, Math.min(vw - padding, center.cx + Math.cos(jitterAngle) * jitterR));
               const candidateY = Math.max(topPad, Math.min(vh - 220, center.cy + Math.sin(jitterAngle) * jitterR));
               
-              // Check collision with already-placed nodes
               const hasCollision = placedPositions.some(p => {
                 const dx = p.x - candidateX;
                 const dy = p.y - candidateY;
@@ -223,7 +253,8 @@ const TestBrain = () => {
           });
         });
 
-        const userNodes: BrainNode[] = fetchedTransmissions.map((transmission, index) => ({
+        // Create book nodes
+        const bookNodes: BrainNode[] = fetchedTransmissions.map((transmission, index) => ({
           id: `transmission-${transmission.id}`,
           title: transmission.title || 'Unknown Title',
           author: transmission.author || 'Unknown Author',
@@ -233,17 +264,85 @@ const TestBrain = () => {
           y: nodePositions[index].y,
           coverUrl: transmission.cover_url,
           description: transmission.notes,
-          transmissionId: transmission.id
+          transmissionId: transmission.id,
+          nodeType: 'book' as NodeType,
         }));
 
-        setNodes(userNodes);
+        // Create author nodes - placed near their books
+        const authorNodes: BrainNode[] = [];
+        const addedAuthors = new Set<string>();
+        bookNodes.forEach(bookNode => {
+          if (addedAuthors.has(bookNode.author) || bookNode.author === 'Unknown Author') return;
+          addedAuthors.add(bookNode.author);
+          
+          const authorData = authorMap.get(bookNode.author);
+          // Find all books by this author to position author near centroid
+          const authorBooks = bookNodes.filter(b => b.author === bookNode.author);
+          const avgX = authorBooks.reduce((s, b) => s + b.x, 0) / authorBooks.length;
+          const avgY = authorBooks.reduce((s, b) => s + b.y, 0) / authorBooks.length;
+          
+          // Offset slightly so it doesn't overlap
+          const offsetAngle = Math.random() * Math.PI * 2;
+          const offsetR = mobile ? 35 : 50;
+          let ax = avgX + Math.cos(offsetAngle) * offsetR;
+          let ay = avgY + Math.sin(offsetAngle) * offsetR;
+          ax = Math.max(padding, Math.min(vw - padding, ax));
+          ay = Math.max(topPad, Math.min(vh - 220, ay));
+          
+          authorNodes.push({
+            id: `author-${bookNode.author}`,
+            title: bookNode.author,
+            author: bookNode.author,
+            tags: [...new Set(authorBooks.flatMap(b => b.tags))].slice(0, 3),
+            contextTags: [],
+            x: ax,
+            y: ay,
+            coverUrl: authorData?.portrait_url || undefined,
+            description: authorData?.bio || undefined,
+            transmissionId: 0,
+            nodeType: 'author' as NodeType,
+            authorId: authorData?.id,
+          });
+        });
+
+        // Create protagonist nodes - placed near their book
+        const protagonistNodes: BrainNode[] = [];
+        protagonistMap.forEach((pData, name) => {
+          const parentBook = bookNodes.find(b => b.title === pData.bookTitle);
+          if (!parentBook) return;
+          
+          const offsetAngle = Math.random() * Math.PI * 2;
+          const offsetR = mobile ? 30 : 45;
+          let px = parentBook.x + Math.cos(offsetAngle) * offsetR;
+          let py = parentBook.y + Math.sin(offsetAngle) * offsetR;
+          px = Math.max(padding, Math.min(vw - padding, px));
+          py = Math.max(topPad, Math.min(vh - 220, py));
+          
+          protagonistNodes.push({
+            id: `protagonist-${name}`,
+            title: name,
+            author: pData.author,
+            tags: parentBook.tags.slice(0, 2),
+            contextTags: [],
+            x: px,
+            y: py,
+            coverUrl: pData.portrait_url || undefined,
+            description: `Protagonist of "${pData.bookTitle}"`,
+            transmissionId: 0,
+            nodeType: 'protagonist' as NodeType,
+            bookTitle: pData.bookTitle,
+          });
+        });
+
+        const allNodes = [...bookNodes, ...authorNodes, ...protagonistNodes];
+        setNodes(allNodes);
 
         const usedTags = Array.from(new Set(
-          userNodes.flatMap(node => node.tags)
+          allNodes.flatMap(node => node.tags)
         )).filter(tag => tag && tag.trim() !== '');
         
         const tagCounts = new Map<string, number>();
-        userNodes.forEach(node => {
+        allNodes.forEach(node => {
           node.tags.forEach(tag => {
             tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
           });
@@ -360,6 +459,7 @@ const TestBrain = () => {
         title: node.title,
         author: node.author,
         isHighlighted: chatHighlights.nodeIds.includes(node.id),
+        nodeType: node.nodeType,
       });
 
       (nodeElement as any).nodeData = node;
@@ -413,8 +513,14 @@ const TestBrain = () => {
           
           const circle = nodeElement.querySelector('div') as HTMLElement;
           if (circle) {
-            circle.style.borderColor = 'rgba(34, 211, 238, 0.8)';
-            circle.style.boxShadow = '0 0 20px rgba(34, 211, 238, 0.4)';
+            const hoverColor = node.nodeType === 'author' ? 'rgba(251, 191, 36, 0.8)' 
+              : node.nodeType === 'protagonist' ? 'rgba(192, 132, 252, 0.8)' 
+              : 'rgba(34, 211, 238, 0.8)';
+            const hoverGlow = node.nodeType === 'author' ? 'rgba(251, 191, 36, 0.4)' 
+              : node.nodeType === 'protagonist' ? 'rgba(192, 132, 252, 0.4)' 
+              : 'rgba(34, 211, 238, 0.4)';
+            circle.style.borderColor = hoverColor;
+            circle.style.boxShadow = `0 0 20px ${hoverGlow}`;
           }
 
           const now = Date.now();
@@ -436,8 +542,11 @@ const TestBrain = () => {
           
           const circle = nodeElement.querySelector('div') as HTMLElement;
           if (circle) {
-            circle.style.borderColor = `rgba(34, 211, 238, ${nodeConnections > 5 ? 0.6 : 0.3})`;
-            circle.style.boxShadow = `0 0 ${8 + nodeConnections * 2}px rgba(34, 211, 238, ${0.15 + Math.min(nodeConnections * 0.05, 0.35)})`;
+            const baseColor = node.nodeType === 'author' ? 'rgba(251, 191, 36, VAR)' 
+              : node.nodeType === 'protagonist' ? 'rgba(192, 132, 252, VAR)' 
+              : 'rgba(34, 211, 238, VAR)';
+            circle.style.borderColor = baseColor.replace('VAR', String(nodeConnections > 5 ? 0.6 : 0.3));
+            circle.style.boxShadow = `0 0 ${8 + nodeConnections * 2}px ${baseColor.replace('VAR', String(0.15 + Math.min(nodeConnections * 0.05, 0.35)))}`;
           }
 
           gsap.to(nodeElement, {
@@ -585,7 +694,9 @@ const TestBrain = () => {
 
       const edge = connection as any;
       const reasons: string[] = edge.reasons || [];
-      const lineStyle = getEdgeLineStyle(reasons);
+      const fromType = edge.fromType || fromNode.nodeType;
+      const toType = edge.toType || toNode.nodeType;
+      const lineStyle = getEdgeLineStyle(reasons, fromType, toType);
 
       const dx = toNode.x - fromNode.x;
       const dy = toNode.y - fromNode.y;
@@ -931,7 +1042,13 @@ const TestBrain = () => {
       />
 
       {/* Legend */}
-      <NeuralMapLegend nodeCount={visibleNodes.length} edgeCount={visibleEdges.length} />
+      <NeuralMapLegend 
+        nodeCount={visibleNodes.length} 
+        edgeCount={visibleEdges.length}
+        bookCount={visibleNodes.filter(n => n.nodeType === 'book').length}
+        authorCount={visibleNodes.filter(n => n.nodeType === 'author').length}
+        protagonistCount={visibleNodes.filter(n => n.nodeType === 'protagonist').length}
+      />
 
       {/* Empty/Sparse States */}
       <NeuralMapEmptyState 

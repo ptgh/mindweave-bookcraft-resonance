@@ -14,6 +14,8 @@ interface EdgeLabelProps {
  * Get a short human-readable label for a connection
  */
 export function getEdgeLabelText(reasons: ConnectionReason[], sharedTags: string[]): string {
+  if (reasons.includes('wrote')) return 'Wrote';
+  if (reasons.includes('appears_in')) return 'Appears In';
   if (reasons.includes('same_author')) return 'Same Author';
   if (reasons.includes('shared_theme') && sharedTags.length > 0) {
     return sharedTags[0];

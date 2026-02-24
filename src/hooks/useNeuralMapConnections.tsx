@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { BrainNode, BookLink } from '@/pages/TestBrain';
+import { BrainNode, BookLink, NodeType } from '@/pages/TestBrain';
 
 // Connection reason types for meaningful edges
 export type ConnectionReason = 
@@ -7,7 +7,9 @@ export type ConnectionReason =
   | 'shared_theme' 
   | 'shared_subgenre' 
   | 'shared_era' 
-  | 'same_publisher';
+  | 'same_publisher'
+  | 'wrote'
+  | 'appears_in';
 
 export interface ConnectionData {
   a: string;
@@ -20,6 +22,8 @@ export interface ConnectionData {
 export interface NeuralMapEdge extends BookLink {
   score: number;
   reasons: ConnectionReason[];
+  fromType?: NodeType;
+  toType?: NodeType;
 }
 
 interface ConnectionResult {
@@ -268,28 +272,87 @@ export function useNeuralMapConnections(
   const edges = useMemo(() => {
     if (visibleNodes.length < 2) return [];
 
+    // Separate node types
+    const bookNodes = visibleNodes.filter(n => n.nodeType === 'book');
+    const authorNodes = visibleNodes.filter(n => n.nodeType === 'author');
+    const protagonistNodes = visibleNodes.filter(n => n.nodeType === 'protagonist');
+
     let candidateEdges: NeuralMapEdge[];
 
-    if (visibleNodes.length <= LARGE_GRAPH_THRESHOLD) {
-      // Small graph: pairwise comparison
+    // Book↔Book connections (existing logic)
+    if (bookNodes.length <= LARGE_GRAPH_THRESHOLD) {
       candidateEdges = [];
-      for (let i = 0; i < visibleNodes.length; i++) {
-        for (let j = i + 1; j < visibleNodes.length; j++) {
-          const result = calculateConnectionStrength(visibleNodes[i], visibleNodes[j]);
+      for (let i = 0; i < bookNodes.length; i++) {
+        for (let j = i + 1; j < bookNodes.length; j++) {
+          const result = calculateConnectionStrength(bookNodes[i], bookNodes[j]);
           if (result.shouldConnect) {
-            candidateEdges.push(createEdge(visibleNodes[i].id, visibleNodes[j].id, result));
+            candidateEdges.push(createEdge(bookNodes[i].id, bookNodes[j].id, result));
           }
         }
       }
     } else {
-      // Large graph: use bucketing
-      const { authorBuckets, tagBuckets } = groupNodesByAttributes(visibleNodes);
+      const { authorBuckets, tagBuckets } = groupNodesByAttributes(bookNodes);
       candidateEdges = buildEdgesFromBuckets(authorBuckets, tagBuckets);
     }
 
+    // Author↔Book edges ("wrote")
+    authorNodes.forEach(authorNode => {
+      bookNodes.forEach(bookNode => {
+        if (bookNode.author.toLowerCase() === authorNode.title.toLowerCase()) {
+          candidateEdges.push({
+            fromId: authorNode.id,
+            toId: bookNode.id,
+            type: 'author_shared',
+            strength: 0.8,
+            sharedTags: [],
+            connectionReason: 'Wrote',
+            score: 40,
+            reasons: ['wrote'],
+            fromType: 'author',
+            toType: 'book',
+          });
+        }
+      });
+    });
+
+    // Protagonist↔Book edges ("appears_in")
+    protagonistNodes.forEach(protNode => {
+      const parentBook = bookNodes.find(b => b.title === protNode.bookTitle);
+      if (parentBook) {
+        candidateEdges.push({
+          fromId: protNode.id,
+          toId: parentBook.id,
+          type: 'tag_shared',
+          strength: 0.7,
+          sharedTags: [],
+          connectionReason: 'Appears in',
+          score: 35,
+          reasons: ['appears_in'],
+          fromType: 'protagonist',
+          toType: 'book',
+        });
+      }
+      // Also connect protagonist to author
+      const parentAuthor = authorNodes.find(a => a.title.toLowerCase() === protNode.author.toLowerCase());
+      if (parentAuthor) {
+        candidateEdges.push({
+          fromId: protNode.id,
+          toId: parentAuthor.id,
+          type: 'tag_shared',
+          strength: 0.5,
+          sharedTags: [],
+          connectionReason: 'Created by',
+          score: 25,
+          reasons: ['appears_in'],
+          fromType: 'protagonist',
+          toType: 'author',
+        });
+      }
+    });
+
     // Sort by score and cap
     candidateEdges.sort((a, b) => b.score - a.score);
-    return candidateEdges.slice(0, MAX_VISIBLE_CONNECTIONS);
+    return candidateEdges.slice(0, MAX_VISIBLE_CONNECTIONS * 2); // Allow more edges for 3 node types
   }, [visibleNodes]);
 
   // Build adjacency maps

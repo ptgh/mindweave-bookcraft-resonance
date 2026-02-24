@@ -1,7 +1,9 @@
 /**
  * Helper utilities for creating Neural Map DOM nodes imperatively.
- * Used by TestBrain's GSAP-based rendering pipeline.
+ * Supports 3 node types: book, author, protagonist — each with distinct visual style.
  */
+
+import { NodeType } from '@/pages/TestBrain';
 
 export interface NodeRenderOptions {
   isMobile: boolean;
@@ -10,32 +12,82 @@ export interface NodeRenderOptions {
   coverUrl?: string;
   title: string;
   author: string;
+  nodeType: NodeType;
+}
+
+// Color palettes per node type
+const NODE_COLORS: Record<NodeType, { border: string; glow: string; fallbackBg: string; labelColor: string; subtitleColor: string }> = {
+  book: {
+    border: 'rgba(34, 211, 238, VAR)',     // cyan
+    glow: 'rgba(34, 211, 238, VAR)',
+    fallbackBg: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+    labelColor: '#e2e8f0',
+    subtitleColor: 'rgba(34, 211, 238, 0.5)',
+  },
+  author: {
+    border: 'rgba(251, 191, 36, VAR)',      // amber
+    glow: 'rgba(251, 191, 36, VAR)',
+    fallbackBg: 'linear-gradient(135deg, #292524 0%, #1c1917 100%)',
+    labelColor: '#fef3c7',
+    subtitleColor: 'rgba(251, 191, 36, 0.6)',
+  },
+  protagonist: {
+    border: 'rgba(192, 132, 252, VAR)',     // purple
+    glow: 'rgba(192, 132, 252, VAR)',
+    fallbackBg: 'linear-gradient(135deg, #1e1b4b 0%, #0f0a2e 100%)',
+    labelColor: '#e9d5ff',
+    subtitleColor: 'rgba(192, 132, 252, 0.6)',
+  },
+};
+
+function getColor(nodeType: NodeType, field: 'border' | 'glow', opacity: number): string {
+  return NODE_COLORS[nodeType][field].replace('VAR', opacity.toString());
 }
 
 /**
- * Get node size based on device and connection count
+ * Get node size based on device, connection count, and type
  */
-export function getNodeSize(isMobile: boolean, connectionCount: number): number {
+export function getNodeSize(isMobile: boolean, connectionCount: number, nodeType: NodeType = 'book'): number {
+  // Authors slightly larger, protagonists slightly smaller
+  const sizeMultiplier = nodeType === 'author' ? 1.1 : nodeType === 'protagonist' ? 0.9 : 1;
   const tier = connectionCount <= 2 ? 'basic' : connectionCount <= 5 ? 'medium' : 'high';
+  let base: number;
   if (isMobile) {
-    return tier === 'basic' ? 28 : tier === 'medium' ? 32 : 36;
+    base = tier === 'basic' ? 28 : tier === 'medium' ? 32 : 36;
+  } else {
+    base = tier === 'basic' ? 40 : tier === 'medium' ? 45 : 50;
   }
-  return tier === 'basic' ? 40 : tier === 'medium' ? 45 : 50;
+  return Math.round(base * sizeMultiplier);
 }
 
 /**
- * Create a circular book cover node element with fallback
+ * Get border shape CSS for node type
+ */
+function getBorderRadius(nodeType: NodeType): string {
+  switch (nodeType) {
+    case 'book': return '50%';
+    case 'author': return '20%';         // Rounded square — distinct from circle
+    case 'protagonist': return '50%';     // Circle but with inner diamond overlay
+    default: return '50%';
+  }
+}
+
+/**
+ * Create a node element with type-specific styling
  */
 export function createBookNodeElement(
   x: number,
   y: number,
   options: NodeRenderOptions
 ): HTMLElement {
-  const size = getNodeSize(options.isMobile, options.connectionCount);
+  const nodeType = options.nodeType || 'book';
+  const size = getNodeSize(options.isMobile, options.connectionCount, nodeType);
   const halfSize = size / 2;
+  const borderRadius = getBorderRadius(nodeType);
 
   const wrapper = document.createElement('div');
-  wrapper.className = 'thought-node user-node';
+  wrapper.className = `thought-node ${nodeType}-node`;
+  wrapper.dataset.nodeType = nodeType;
   wrapper.style.cssText = `
     position: absolute;
     width: ${size}px;
@@ -43,28 +95,34 @@ export function createBookNodeElement(
     left: ${x - halfSize}px;
     top: ${y - halfSize}px;
     cursor: pointer;
-    z-index: 10;
+    z-index: ${nodeType === 'author' ? 12 : nodeType === 'protagonist' ? 11 : 10};
     opacity: 0;
     will-change: transform, opacity;
   `;
 
-  // Inner circle container with overflow hidden for clipping
+  const borderOpacity = options.connectionCount > 5 ? 0.7 : 0.4;
+  const glowIntensity = 0.15 + Math.min(options.connectionCount * 0.05, 0.35);
+  const glowSize = 8 + options.connectionCount * 2;
+
+  // Inner container with shape clipping
   const circle = document.createElement('div');
   circle.style.cssText = `
     width: 100%;
     height: 100%;
-    border-radius: 50%;
+    border-radius: ${borderRadius};
     overflow: hidden;
     position: relative;
-    border: 1.5px solid rgba(34, 211, 238, ${options.connectionCount > 5 ? 0.6 : 0.3});
-    box-shadow: 0 0 ${8 + options.connectionCount * 2}px rgba(34, 211, 238, ${0.15 + Math.min(options.connectionCount * 0.05, 0.35)});
+    border: ${nodeType === 'author' ? '2px' : '1.5px'} solid ${getColor(nodeType, 'border', borderOpacity)};
+    box-shadow: 0 0 ${glowSize}px ${getColor(nodeType, 'glow', glowIntensity)};
     transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    ${nodeType === 'author' ? 'transform: rotate(0deg);' : ''}
   `;
 
   if (options.coverUrl) {
     const img = document.createElement('img');
     img.src = options.coverUrl;
     img.alt = options.title;
+    img.loading = 'lazy';
     img.style.cssText = `
       width: 100%;
       height: 100%;
@@ -72,18 +130,43 @@ export function createBookNodeElement(
       display: block;
     `;
     img.onerror = () => {
-      // Replace with fallback
       img.remove();
-      const fallback = createFallbackContent(options.title, size);
+      const fallback = createFallbackContent(options.title, size, nodeType);
       circle.appendChild(fallback);
     };
     circle.appendChild(img);
   } else {
-    const fallback = createFallbackContent(options.title, size);
+    const fallback = createFallbackContent(options.title, size, nodeType);
     circle.appendChild(fallback);
   }
 
   wrapper.appendChild(circle);
+
+  // Type indicator badge (small icon in corner)
+  if (nodeType !== 'book') {
+    const badge = document.createElement('div');
+    const badgeIcon = nodeType === 'author' ? '✦' : '⟐';
+    const badgeColor = nodeType === 'author' ? '#fbbf24' : '#c084fc';
+    badge.style.cssText = `
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: ${Math.max(size * 0.35, 14)}px;
+      height: ${Math.max(size * 0.35, 14)}px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid ${badgeColor};
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: ${Math.max(size * 0.2, 8)}px;
+      color: ${badgeColor};
+      z-index: 15;
+      pointer-events: none;
+    `;
+    badge.textContent = badgeIcon;
+    wrapper.appendChild(badge);
+  }
 
   // Glow ring for high-connection nodes
   if (options.connectionCount > 3) {
@@ -91,8 +174,8 @@ export function createBookNodeElement(
     glowRing.style.cssText = `
       position: absolute;
       inset: -3px;
-      border-radius: 50%;
-      border: 1px solid rgba(34, 211, 238, 0.15);
+      border-radius: ${borderRadius};
+      border: 1px solid ${getColor(nodeType, 'border', 0.15)};
       pointer-events: none;
       animation: pulse 3s ease-in-out infinite;
     `;
@@ -102,9 +185,9 @@ export function createBookNodeElement(
   // Title label
   const label = document.createElement('div');
   label.className = 'node-label';
+  const colors = NODE_COLORS[nodeType];
 
   if (options.isMobile) {
-    // Below the node on mobile
     label.style.cssText = `
       position: absolute;
       top: ${size + 4}px;
@@ -114,7 +197,7 @@ export function createBookNodeElement(
       text-align: center;
       font-size: 9px;
       line-height: 1.2;
-      color: #94a3b8;
+      color: ${colors.labelColor};
       pointer-events: none;
       overflow: hidden;
       display: -webkit-box;
@@ -124,7 +207,6 @@ export function createBookNodeElement(
     `;
     label.textContent = options.title;
   } else {
-    // Beside the node on desktop
     label.style.cssText = `
       position: absolute;
       top: 50%;
@@ -133,7 +215,7 @@ export function createBookNodeElement(
       width: 100px;
       font-size: 10px;
       line-height: 1.25;
-      color: #e2e8f0;
+      color: ${colors.labelColor};
       pointer-events: none;
       overflow: hidden;
       display: -webkit-box;
@@ -143,23 +225,27 @@ export function createBookNodeElement(
     `;
     label.textContent = options.title;
 
-    // Author sub-label on desktop
-    const authorLabel = document.createElement('div');
-    authorLabel.style.cssText = `
+    // Sub-label
+    const subLabel = document.createElement('div');
+    const subText = nodeType === 'book' ? options.author 
+      : nodeType === 'protagonist' ? `in "${options.author}"` // author field stores book author for protagonist
+      : 'Author';
+    subLabel.style.cssText = `
       font-size: 8px;
-      color: rgba(34, 211, 238, 0.5);
+      color: ${colors.subtitleColor};
       margin-top: 1px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      font-style: ${nodeType === 'protagonist' ? 'italic' : 'normal'};
     `;
-    authorLabel.textContent = options.author;
-    label.appendChild(authorLabel);
+    subLabel.textContent = subText;
+    label.appendChild(subLabel);
   }
 
   wrapper.appendChild(label);
 
-  // Invisible hit area for touch (44px min)
+  // Hit area
   const hitArea = document.createElement('div');
   hitArea.className = 'node-hit-area';
   hitArea.style.cssText = `
@@ -169,7 +255,7 @@ export function createBookNodeElement(
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    border-radius: 50%;
+    border-radius: ${borderRadius};
     cursor: pointer;
     z-index: 11;
   `;
@@ -178,7 +264,8 @@ export function createBookNodeElement(
   return wrapper;
 }
 
-function createFallbackContent(title: string, size: number): HTMLElement {
+function createFallbackContent(title: string, size: number, nodeType: NodeType): HTMLElement {
+  const colors = NODE_COLORS[nodeType];
   const fallback = document.createElement('div');
   fallback.style.cssText = `
     width: 100%;
@@ -186,8 +273,8 @@ function createFallbackContent(title: string, size: number): HTMLElement {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    color: #94a3b8;
+    background: ${colors.fallbackBg};
+    color: ${colors.labelColor};
     font-size: ${Math.max(size * 0.35, 12)}px;
     font-weight: 600;
   `;
@@ -196,14 +283,27 @@ function createFallbackContent(title: string, size: number): HTMLElement {
 }
 
 /**
- * Get connection line style based on edge reasons
+ * Get connection line style based on edge reasons and node types
  */
-export function getEdgeLineStyle(reasons: string[]): {
+export function getEdgeLineStyle(reasons: string[], fromType?: NodeType, toType?: NodeType): {
   strokeDasharray: string;
   strokeWidth: number;
   color: string;
   opacity: number;
 } {
+  // Cross-type edges (author↔book, protagonist↔book)
+  if (fromType === 'author' || toType === 'author') {
+    if (reasons.includes('wrote')) {
+      return { strokeDasharray: 'none', strokeWidth: 1.2, color: '#fbbf24', opacity: 0.35 };
+    }
+  }
+  if (fromType === 'protagonist' || toType === 'protagonist') {
+    if (reasons.includes('appears_in')) {
+      return { strokeDasharray: '3 2', strokeWidth: 1.0, color: '#c084fc', opacity: 0.3 };
+    }
+  }
+
+  // Book↔Book edges (existing)
   if (reasons.includes('same_author')) {
     return { strokeDasharray: 'none', strokeWidth: 1.8, color: '#22d3ee', opacity: 0.5 };
   }

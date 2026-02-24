@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { HelpCircle, X, BookOpen, Minus } from 'lucide-react';
+import { HelpCircle, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 interface NeuralMapLegendProps {
   nodeCount: number;
   edgeCount: number;
+  bookCount?: number;
+  authorCount?: number;
+  protagonistCount?: number;
 }
 
-const NeuralMapLegend = ({ nodeCount, edgeCount }: NeuralMapLegendProps) => {
+const NeuralMapLegend = ({ nodeCount, edgeCount, bookCount, authorCount, protagonistCount }: NeuralMapLegendProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const legendContent = (
@@ -20,7 +23,7 @@ const NeuralMapLegend = ({ nodeCount, edgeCount }: NeuralMapLegendProps) => {
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
       
       <div className="relative w-full max-w-sm animate-in fade-in zoom-in-95 duration-200">
-        <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400/20 via-blue-500/20 to-cyan-400/20 rounded-xl blur-lg" />
+        <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400/20 via-amber-400/20 to-purple-400/20 rounded-xl blur-lg" />
         
         <div className="relative bg-slate-900/95 border border-cyan-400/30 rounded-xl overflow-hidden shadow-2xl">
           {/* Header */}
@@ -39,15 +42,23 @@ const NeuralMapLegend = ({ nodeCount, edgeCount }: NeuralMapLegendProps) => {
           
           {/* Content */}
           <div className="p-4 space-y-4">
-            {/* Nodes */}
+            {/* Node Types */}
             <div className="space-y-2">
-              <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider">Nodes</h4>
-              <div className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-slate-700 border border-cyan-400/40 flex items-center justify-center text-[8px] text-slate-400 font-medium">A</div>
-                <span className="text-sm text-slate-300">Each node is a book (cover or initial)</span>
-              </div>
+              <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider">Node Types</h4>
               <div className="flex items-center gap-3">
                 <div className="w-6 h-6 rounded-full bg-slate-700 border-2 border-cyan-400/50 shadow-[0_0_8px_rgba(34,211,238,0.3)]" />
+                <span className="text-sm text-slate-300"><strong className="text-cyan-300">Book</strong> — Your transmissions</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 rounded-[20%] bg-slate-700 border-2 border-amber-400/50 shadow-[0_0_8px_rgba(251,191,36,0.3)]" />
+                <span className="text-sm text-slate-300"><strong className="text-amber-300">Author</strong> — SF writers</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 rounded-full bg-slate-700 border-2 border-purple-400/50 shadow-[0_0_8px_rgba(192,132,252,0.3)]" />
+                <span className="text-sm text-slate-300"><strong className="text-purple-300">Protagonist</strong> — Characters</span>
+              </div>
+              <div className="flex items-center gap-3 mt-1">
+                <div className="w-6 h-6 rounded-full bg-slate-700 border-2 border-cyan-400/50 shadow-[0_0_16px_rgba(34,211,238,0.5)]" />
                 <span className="text-sm text-slate-300">Larger glow = more connections</span>
               </div>
             </div>
@@ -57,47 +68,20 @@ const NeuralMapLegend = ({ nodeCount, edgeCount }: NeuralMapLegendProps) => {
               <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider">Connection Lines</h4>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-[2px] bg-cyan-400" />
-                <span className="text-sm text-slate-300"><strong className="text-cyan-300">Solid cyan</strong> — Same author</span>
+                <span className="text-sm text-slate-300"><strong className="text-cyan-300">Cyan</strong> — Same author / theme</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-[1.5px] bg-teal-400" />
-                <span className="text-sm text-slate-300"><strong className="text-cyan-300">Solid teal</strong> — Shared theme</span>
+                <div className="w-8 h-[1.5px] bg-amber-400" />
+                <span className="text-sm text-slate-300"><strong className="text-amber-300">Amber</strong> — Author wrote book</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-0.5 border-t-2 border-dashed border-purple-400/70" />
+                <span className="text-sm text-slate-300"><strong className="text-purple-300">Purple</strong> — Protagonist appears in</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-0.5 border-t-2 border-dotted border-cyan-400/70" />
                 <span className="text-sm text-slate-300"><strong className="text-cyan-300">Dotted</strong> — Shared subgenre</span>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-0.5 border-t-2 border-dashed border-slate-400/60" />
-                <span className="text-sm text-slate-300"><strong className="text-cyan-300">Dashed</strong> — Same era</span>
-              </div>
-              <div className="flex items-center gap-3 mt-1">
-                <div className="w-8 h-1 bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.8)]" />
-                <span className="text-sm text-slate-300">Brighter = stronger connection</span>
-              </div>
-            </div>
-            
-            {/* Connection types */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wider">Connection Types</h4>
-              <ul className="text-sm text-slate-300 space-y-1.5 ml-1">
-                <li className="flex items-start gap-2">
-                  <span className="text-cyan-400 mt-1">•</span>
-                  <span><strong className="text-cyan-300">Same author</strong> - Books by the same writer</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-cyan-400 mt-1">•</span>
-                  <span><strong className="text-cyan-300">Shared themes</strong> - Similar conceptual tags</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-cyan-400 mt-1">•</span>
-                  <span><strong className="text-cyan-300">Shared subgenres</strong> - Similar SF subgenres</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-cyan-400 mt-1">•</span>
-                  <span><strong className="text-cyan-300">Same era</strong> - From the same literary period</span>
-                </li>
-              </ul>
             </div>
             
             {/* Interactions */}
@@ -106,11 +90,11 @@ const NeuralMapLegend = ({ nodeCount, edgeCount }: NeuralMapLegendProps) => {
               <ul className="text-sm text-slate-300 space-y-1.5 ml-1">
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-400 mt-1">•</span>
-                  <span><strong className="text-cyan-300">Tap node</strong> - View book details & connections</span>
+                  <span><strong className="text-cyan-300">Tap node</strong> - View details & connections</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-400 mt-1">•</span>
-                  <span><strong className="text-cyan-300">Focus mode</strong> - Highlight a book's network</span>
+                  <span><strong className="text-cyan-300">Hover</strong> - Preview & highlight network</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-cyan-400 mt-1">•</span>
@@ -122,9 +106,23 @@ const NeuralMapLegend = ({ nodeCount, edgeCount }: NeuralMapLegendProps) => {
             {/* Stats */}
             <div className="pt-2 border-t border-slate-700/50">
               <div className="flex items-center justify-between text-xs text-slate-400">
-                <span>{nodeCount} books</span>
-                <span>·</span>
-                <span>{edgeCount} connections</span>
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                  {bookCount ?? nodeCount} books
+                </span>
+                {authorCount !== undefined && authorCount > 0 && (
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-[20%] bg-amber-400"></span>
+                    {authorCount} authors
+                  </span>
+                )}
+                {protagonistCount !== undefined && protagonistCount > 0 && (
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                    {protagonistCount} chars
+                  </span>
+                )}
+                <span>{edgeCount} links</span>
               </div>
             </div>
           </div>
@@ -135,7 +133,6 @@ const NeuralMapLegend = ({ nodeCount, edgeCount }: NeuralMapLegendProps) => {
 
   return (
     <>
-      {/* Help button */}
       <button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-20 sm:bottom-24 left-3 sm:left-4 z-30 w-10 h-10 bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-full flex items-center justify-center text-slate-400 hover:text-cyan-400 hover:border-cyan-400/50 transition-all shadow-lg active:scale-95"
