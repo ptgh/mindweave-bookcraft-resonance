@@ -187,3 +187,6 @@ verify_jwt = false
 
 [functions.generate-author-portrait]
 verify_jwt = false
+
+[functions.populate-author-books]
+verify_jwt = false

@@ -18,7 +18,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   PlayCircle, RefreshCw, CheckCircle, XCircle, Clock, Image, Film, 
-  Calendar, Database, Users, FileText, Clapperboard, ChevronDown, ChevronRight 
+  Calendar, Database, Users, FileText, Clapperboard, ChevronDown, ChevronRight, BookOpen 
 } from "lucide-react";
 import { invokeAdminFunction } from "@/utils/adminFunctions";
 import { AdminCoverHealthPanel } from "@/components/admin/AdminCoverHealthPanel";
@@ -32,6 +32,7 @@ export const AdminEnrichmentPanel = () => {
   // Section expansion state
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     authors: true,
+    authorBooks: false,
     covers: true,
     films: true,
     scripts: true,
@@ -179,6 +180,32 @@ export const AdminEnrichmentPanel = () => {
     },
   });
 
+  const populateAuthorBooksMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await invokeAdminFunction('populate-author-books', {
+        fillEmpty: true,
+        booksPerAuthor: 8,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (result: any) => {
+      toast({
+        title: "Author Books Populated",
+        description: `Processed ${result.processed || 0} authors. ${result.booksAdded || 0} books added, ${result.skipped || 0} skipped.`,
+        variant: "success"
+      });
+      queryClient.invalidateQueries({ queryKey: ['enrichment-stats'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Author Books Population Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const progressPercentage = progress.total > 0 
     ? (progress.current / progress.total) * 100 
     : 0;
@@ -188,7 +215,8 @@ export const AdminEnrichmentPanel = () => {
     coverEnrichmentMutation.isPending || 
     filmBookEnrichmentMutation.isPending ||
     populateVerifiedFilmsMutation.isPending ||
-    screenplayEnrichmentMutation.isPending;
+    screenplayEnrichmentMutation.isPending ||
+    populateAuthorBooksMutation.isPending;
 
   if (isLoading) {
     return (
@@ -289,7 +317,40 @@ export const AdminEnrichmentPanel = () => {
         </Card>
       </Collapsible>
 
-      {/* Section 2: Book Covers */}
+      {/* Section 1b: Author Books Population */}
+      <Collapsible open={expandedSections.authorBooks} onOpenChange={() => toggleSection('authorBooks')}>
+        <Card className="bg-background/40 backdrop-blur-md border-purple-400/30 overflow-hidden">
+          <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/20 transition-colors">
+            <div className="flex items-center gap-3">
+              <BookOpen className="h-5 w-5 text-purple-400" />
+              <h3 className="text-base font-semibold text-foreground">Author Books</h3>
+              <span className="text-xs text-muted-foreground bg-muted/30 px-2 py-0.5 rounded">
+                Populate from Google Books
+              </span>
+            </div>
+            {expandedSections.authorBooks ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="px-4 pb-4 space-y-3 border-t border-border/30 pt-3">
+              <p className="text-sm text-muted-foreground">
+                Fetch books from Google Books API for all authors with no books in the database. Filters for SF-relevant titles only.
+              </p>
+              <Button
+                onClick={() => populateAuthorBooksMutation.mutate()}
+                disabled={populateAuthorBooksMutation.isPending}
+                className="w-full bg-purple-600 hover:bg-purple-700"
+              >
+                {populateAuthorBooksMutation.isPending ? (
+                  <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Populating...</>
+                ) : (
+                  <><BookOpen className="h-4 w-4 mr-2" /> Populate All Empty Authors</>
+                )}
+              </Button>
+            </div>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
       <Collapsible open={expandedSections.covers} onOpenChange={() => toggleSection('covers')}>
         <Card className="bg-background/40 backdrop-blur-md border-blue-400/30 overflow-hidden">
           <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-muted/20 transition-colors">
