@@ -208,9 +208,19 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Require admin authorization
-  const auth = await requireAdminOrInternal(req);
-  if (auth instanceof Response) return auth;
+  // Allow cron calls (anon key) or admin/internal calls
+  // Cron sends the anon key as Bearer token which isn't a user JWT,
+  // so we check for it explicitly before falling back to admin auth
+  const authHeader = req.headers.get("Authorization");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  const isCronCall = authHeader === `Bearer ${anonKey}`;
+
+  if (!isCronCall) {
+    const auth = await requireAdminOrInternal(req);
+    if (auth instanceof Response) return auth;
+  } else {
+    console.log("✅ [Newsletter] Cron call authorized via anon key");
+  }
 
   try {
     const supabase = createServiceClient();
