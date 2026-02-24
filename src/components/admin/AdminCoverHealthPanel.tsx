@@ -86,6 +86,29 @@ export const AdminCoverHealthPanel = () => {
     },
   });
 
+  const validateCoversMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await invokeAdminFunction('validate-book-covers', { batchSize: 30 });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (result: any) => {
+      toast({
+        title: "Cover Validation Complete",
+        description: `${result.valid || 0} valid, ${result.broken || 0} broken, ${result.fixed || 0} fixed, ${result.unfixable || 0} cleared`,
+        variant: "success"
+      });
+      queryClient.invalidateQueries({ queryKey: ['cover-health-stats'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Cover Validation Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const cacheRate = stats?.cacheRate || 0;
   const healthColor = cacheRate >= 90 ? 'text-green-400' : cacheRate >= 70 ? 'text-yellow-400' : 'text-red-400';
 
@@ -165,11 +188,33 @@ export const AdminCoverHealthPanel = () => {
                 </p>
 
                 {/* Actions */}
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => validateCoversMutation.mutate()}
+                      disabled={validateCoversMutation.isPending}
+                      className="flex-1 bg-amber-600 hover:bg-amber-700"
+                      size="sm"
+                    >
+                      {validateCoversMutation.isPending ? (
+                        <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Validating...</>
+                      ) : (
+                        <><AlertCircle className="h-4 w-4 mr-2" /> Validate & Fix Broken ({stats?.cached || 0})</>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={() => refetch()}
+                      variant="outline"
+                      size="sm"
+                      className="border-purple-400/30"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <Button
                     onClick={() => enrichCoversMutation.mutate()}
                     disabled={enrichCoversMutation.isPending || ((stats?.external || 0) === 0 && (stats?.missing || 0) === 0)}
-                    className="flex-1 bg-purple-600 hover:bg-purple-700"
+                    className="w-full bg-purple-600 hover:bg-purple-700"
                     size="sm"
                   >
                     {enrichCoversMutation.isPending ? (
@@ -177,14 +222,6 @@ export const AdminCoverHealthPanel = () => {
                     ) : (
                       <><Image className="h-4 w-4 mr-2" /> Cache External ({stats?.external || 0})</>
                     )}
-                  </Button>
-                  <Button
-                    onClick={() => refetch()}
-                    variant="outline"
-                    size="sm"
-                    className="border-purple-400/30"
-                  >
-                    <RefreshCw className="h-4 w-4" />
                   </Button>
                 </div>
               </>
