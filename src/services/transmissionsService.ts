@@ -38,7 +38,8 @@ export interface Transmission {
 }
 
 export const saveTransmission = async (transmission: Omit<Transmission, 'id' | 'user_id' | 'created_at'>) => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
   
   if (!user) {
     throw new Error('User not authenticated');
@@ -181,15 +182,18 @@ export const updateTransmission = async (id: number, transmission: Partial<Omit<
 // Improved version with better error handling and fallbacks
 export const getTransmissions = async (): Promise<Transmission[]> => {
   try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    // Use getSession() instead of getUser() — getSession reads from local storage
+    // and doesn't make a network call, avoiding silent failures on mobile Safari
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    if (userError) {
-      console.error('Error getting user:', userError);
+    if (sessionError) {
+      console.error('Error getting session:', sessionError);
       throw new Error('Authentication error');
     }
     
+    const user = session?.user;
     if (!user) {
-      console.log('No authenticated user found');
+      console.log('No authenticated session found');
       return []; // Return empty array instead of throwing error
     }
 
