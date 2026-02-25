@@ -1,134 +1,85 @@
 
 
-## Neural Map Redesign: ER-Diagram Style Visualization
+## Plan: Neural Map Enhancements
 
-### Problem
-The current neural map is an indecipherable scatter of overlapping nodes and crossing lines. With 100+ books, 60+ authors, and 40+ protagonists all placed via grid/random positioning, the result is visual noise rather than insight.
+### Problem Summary
+1. **"Uncategorized" group** — 25+ books with empty tags fall into a catch-all bucket
+2. **No interactivity on EntityCard headers** — category titles and author group titles are plain text with no tooltips
+3. **Signal Details bottom sheet** — missing "Life" (author bio) and "Story" (protagonist info) tabs; author/protagonist names not clickable to chat
+4. **Protagonist/author names in Signal Details** — no GSAP underline or link to chat
 
-### Design Direction
-Inspired by Entity Relationship Diagrams: structured, grouped "entity cards" containing lists of items, connected by clear labeled relationship lines. The layout is deterministic and organized, not random.
+### Changes (4 files modified, 1 new file created)
 
-```text
-+------------------+          +------------------+          +------------------+
-|   AUTHOR CARD    |          |    BOOK CARD     |          | PROTAGONIST CARD |
-|  [portrait]      |--wrote-->|  [cover]         |<--in-----|  [portrait]      |
-|  Philip K. Dick  |          |  Do Androids...  |          |  Rick Deckard    |
-|  Ubik            |          |  Neuromancer     |          |  Case            |
-|  A Scanner...    |          |  Solaris         |          |  Genly Ai        |
-+------------------+          +------------------+          +------------------+
+---
+
+### 1. Fix "Uncategorized" — Auto-infer tags for untagged books
+**File: `src/pages/TestBrain.tsx`** (~5 lines changed)
+
+In the `bookNodes` mapping, when `filterConceptualTags` returns an empty array, run a simple keyword-based fallback that infers a primary tag from the book's title/author/notes. For example, Philip K. Dick → "Cyberpunk", Orwell → "Dystopian Systems", Haldeman → "Space Opera", etc. This uses a small local lookup — no API calls. Books that still can't be classified get labelled **"Unclassified Signals"** instead of "Uncategorized" (more on-brand).
+
+A helper function `inferFallbackTag(node)` will check:
+- Author name against known author→genre mappings (e.g., Dick→Cyberpunk, Orwell→Dystopian Systems, Clarke→Hard Science Fiction, Lem→Hard Science Fiction, Herbert→Space Opera)
+- This keeps the "Uncategorized" bucket small or eliminates it entirely
+
+---
+
+### 2. Clickable EntityCard headers with tooltips
+**File: `src/components/neural-map/EntityCard.tsx`** (~30 lines added)
+
+- Make the **header title** (`<span>`) clickable with a GSAP underline on hover
+- On click, show a small **tooltip popover** positioned below the header:
+  - **For theme/category headers** (type=book): Show a brief description of the tag (from a small local map of tag→description, e.g., "Cyberpunk" → "High tech, low life. A subgenre exploring the intersection of advanced technology and societal breakdown.")
+  - **For author headers** (type=author): Show author name, birth/death years, and a one-line bio pulled from the `authorData` already available in the node's `description` field
+  - **For protagonist group headers** (type=protagonist): Show the author name and number of characters
+- Tooltip styled with the translucent overlay aesthetic (bg-slate-900/90, backdrop-blur, border-cyan-400/20)
+- Dismiss on click outside or after 5 seconds
+
+---
+
+### 3. New "Life" and "Story" tabs in Signal Details
+**New file: `src/components/neural-map/BottomSheetLifeTab.tsx`** (~80 lines)
+
+A new tab component that:
+- Fetches author data from `scifi_authors` table (bio, nationality, birth_year, death_year, portrait_url)
+- Displays: portrait, name, nationality, birth–death years, and full bio
+- If the selected node is a protagonist, shows "Story" content instead: protagonist name, the book they appear in, and their description
+- Author name has GSAP underline and is clickable to open `ProtagonistChatModal` (or `AuthorPopup` if available)
+
+**File: `src/components/NeuralMapBottomSheet.tsx`** (~20 lines changed)
+
+- Add two conditional tabs to the `TABS` array:
+  - `'life'` tab (label: "Life") — shown when the selected node is a book or author type, provides author biographical info
+  - `'story'` tab (label: "Story") — shown when the selected node is a book with a protagonist, provides protagonist info
+- Tabs appear after "Ask" tab
+- Render `BottomSheetLifeTab` for both, passing a `mode` prop ('author' | 'protagonist')
+
+---
+
+### 4. GSAP underline on author/protagonist names in Signal Details header
+**File: `src/components/NeuralMapBottomSheet.tsx`** (~15 lines changed)
+
+- In the "Book Info" section, wrap `node.author` in a clickable span with GSAP underline animation
+- On click, open `AuthorPopup` component (already exists in codebase)
+- If the node has a protagonist, show protagonist name below author with a purple GSAP underline that opens `ProtagonistChatModal` on click
+- Import `gsap`, `AuthorPopup`, and `ProtagonistChatModal`
+
+---
+
+### 5. Tag description map for tooltips
+**File: `src/constants/conceptualTags.ts`** (~25 lines added)
+
+Add an exported `TAG_DESCRIPTIONS` map with a one-line description for each of the 22 conceptual tags. This is used by the EntityCard tooltip. Example:
+```
+"Cyberpunk": "High tech, low life — exploring advanced technology amid societal decay"
+"Space Opera": "Epic interstellar narratives spanning galaxies and civilisations"
 ```
 
-### Architecture
+---
 
-**Three-column layout** (scrollable, not fixed viewport):
-- **Left column**: Author entity cards (amber border, circular portraits on hover)
-- **Center column**: Book entity cards (cyan border, circular covers on hover) -- grouped by theme/tag
-- **Right column**: Protagonist entity cards (purple border, circular portraits on hover)
-
-Each "entity card" is a styled card (matching existing `bg-slate-900/60 backdrop-blur-xl border border-cyan-400/20` aesthetic) containing a list of items within that group.
-
-**Sidebar filter panel** (left, collapsible):
-- Filter by: Author, Theme/Tag, Era
-- Checkboxes to toggle visibility
-- When a filter is active, only relevant cards and connections highlight
-
-**Connection lines** (SVG overlay):
-- Drawn as clean orthogonal or gently curved lines between cards
-- Color-coded: amber (wrote), cyan (shared theme), purple (appears in)
-- Labels on lines ("Wrote", "Cyberpunk", "Appears In")
-- Lines only appear for visible/filtered relationships
-
-### Visual Details
-
-**Entity Cards** (the main visual unit):
-- Rounded rectangle, `bg-slate-900/70 backdrop-blur border border-{color}/30`
-- Header bar with entity type icon + group name (e.g., "Philip K. Dick" or "Cyberpunk" or "Protagonists - PKD")
-- List of items inside, each row: circular thumbnail (40px) + title text
-- GSAP hover on each item name (underline animation matching existing author-interaction-standards)
-- Hover on any item shows a floating tooltip with the full image (book cover, author portrait, protagonist portrait)
-- Click opens the existing Signal Details bottom sheet
-
-**Circular thumbnails** (all node types):
-- Books: 40px circle, cyan border, cover image clipped to circle
-- Authors: 40px circle, amber border, portrait clipped to circle  
-- Protagonists: 40px circle, purple border, portrait clipped to circle
-- Fallback: first letter on dark gradient background
-
-**Grouping logic**:
-- Authors: one card per author (listing their books)
-- Books: grouped by primary conceptual tag (e.g., "Cyberpunk", "Space Opera", "Dystopian Systems")
-- Protagonists: grouped by parent author
-
-### Sidebar Filter Key
-
-A collapsible panel on the left side (desktop) or bottom sheet (mobile):
-
-```text
-+-- FILTER KEY --------+
-| [x] Authors           |
-|   [x] Philip K. Dick  |
-|   [x] Ursula Le Guin  |
-|   [ ] Liu Cixin       |
-|                        |
-| [x] Themes            |
-|   [x] Cyberpunk        |
-|   [x] Space Opera      |
-|   [ ] Golden Age       |
-|                        |
-| [x] Protagonists       |
-+------------------------+
-```
-
-Selecting/deselecting items dims or hides unrelated cards and connections, similar to existing `activeFilters` behavior but with a proper sidebar UI instead of tiny bottom-bar badges.
-
-### Layout Algorithm
-
-1. Group books by their primary conceptual tag
-2. For each tag group, create a "Book Entity Card" positioned in the center column
-3. For each unique author with books in visible groups, create an "Author Entity Card" in the left column
-4. For each protagonist tied to a visible book, create a "Protagonist Entity Card" in the right column
-5. Draw SVG connection lines between:
-   - Author card row -> Book card row (amber, "Wrote")
-   - Book card row -> Protagonist card row (purple, "Appears In")  
-   - Book card -> Book card (cyan, shared theme -- shown subtly, only on hover/filter)
-
-The page scrolls vertically. Cards are arranged top-to-bottom in each column with consistent spacing.
-
-### Files to Change
-
-| File | Change |
-|------|--------|
-| `src/pages/TestBrain.tsx` | Complete rewrite of the visualization: replace canvas/scatter with structured three-column layout, entity cards, SVG connections, sidebar filter |
-| `src/components/neural-map/NeuralMapNode.tsx` | Replace imperative DOM node factory with a React `EntityCard` component and `EntityRow` component |
-| `src/components/NeuralMapHeader.tsx` | Simplify -- remove bottom tag bar, stats move into sidebar |
-| `src/components/NeuralMapRegionLabels.tsx` | Remove (no longer needed -- groups are explicit cards now) |
-| `src/components/neural-map/EdgeLabel.tsx` | Adapt for structured line labels between cards |
-| `src/components/NeuralMapLegend.tsx` | Merge into the sidebar filter panel |
-
-### What is Retained (unchanged)
-
-- `NeuralMapBottomSheet` -- Signal Details card, tabs, discovery -- fully preserved
-- `BottomSheetDetailsTab`, `BottomSheetMiniGraph`, `BottomSheetAskTab` -- untouched
-- `BrainChatInterface` -- neural assistant, untouched
-- `useNeuralMapConnections` hook -- connection logic, untouched
-- `usePatternRecognition` -- untouched
-- Color palette: cyan (#22d3ee), amber (#fbbf24), purple (#c084fc), slate backgrounds
-- Translucent overlay aesthetic (`bg-slate-900/60 backdrop-blur-xl`)
-- All Supabase queries and data fetching logic
-
-### Mobile Adaptation
-
-On mobile (< 768px):
-- Single-column layout: Author cards, then Book cards, then Protagonist cards stacked vertically
-- Filter panel becomes a bottom sheet triggered by a filter icon button
-- Connection lines hidden on mobile (too complex) -- relationships shown in card content instead
-- Touch to open bottom sheet details
-
-### Interaction Flow
-
-1. Page loads -> structured cards appear with GSAP stagger animation
-2. Hover over any item row -> GSAP underline on name + floating circular image tooltip
-3. Click any item -> opens existing Signal Details bottom sheet
-4. Sidebar filter -> check/uncheck to show/hide cards and connections
-5. SVG lines animate in with GSAP, pulse gently on strong connections
+### Technical Notes
+- **No removals** — all existing UI and functionality preserved
+- **GSAP usage** — consistent with existing underline pattern (`story-link` class + gsap hover animations)
+- **Data** — author bio/years already loaded in TestBrain's `authorMap`; passed through node's `description` field for authors. For the Life tab, a targeted Supabase query fetches full author data by name
+- **Protagonist chat** — reuses existing `ProtagonistChatModal` component with same props pattern
+- **Fallback tag inference** — purely client-side, no edge function calls needed
 
