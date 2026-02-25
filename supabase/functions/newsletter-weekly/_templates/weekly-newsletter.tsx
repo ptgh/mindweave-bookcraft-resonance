@@ -55,38 +55,122 @@ export const WeeklyNewsletterEmail = ({
 
         <Section style={statsSection}>
           <Text style={statText}>
-            📡 {recommendations.length} signals this week
+            🛸 {recommendations.length} signals this week
           </Text>
         </Section>
 
-        {/* Compact 2x2 grid for 4 books */}
+        {/* Row 1: Books 0-1 */}
         <table style={booksGrid}>
           <tbody>
-            {[0, 2].map((rowStart) => (
-              <tr key={rowStart}>
-                {recommendations.slice(rowStart, rowStart + 2).map((book, index) => (
-                  <td key={index} style={bookCell}>
-                    <div style={bookCard}>
-                      {book.coverUrl && (
-                        <Img
-                          src={book.coverUrl}
-                          alt={`${book.title} cover`}
-                          style={bookCover}
-                        />
-                      )}
-                      <Heading style={bookTitle}>{book.title}</Heading>
-                      <Text style={bookAuthor}>{book.author}</Text>
-                      <Text style={bookDescription}>{book.description}</Text>
-                      <Link href={book.addUrl} style={button}>
-                        Add Signal →
-                      </Link>
-                    </div>
+            <tr>
+              {recommendations.slice(0, 2).map((book, index) => (
+                <td key={index} style={bookCell} valign="top">
+                  <table style={bookCardTable}>
+                    <tbody>
+                      {/* Fixed-height cover row */}
+                      <tr>
+                        <td style={coverCell}>
+                          {book.coverUrl ? (
+                            <Img
+                              src={book.coverUrl}
+                              alt={`${book.title} cover`}
+                              style={bookCover}
+                            />
+                          ) : (
+                            <div style={coverPlaceholder}>
+                              <Text style={placeholderText}>{book.title.charAt(0)}</Text>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                      {/* Fixed-height title row */}
+                      <tr>
+                        <td style={titleCell}>
+                          <Heading style={bookTitle}>{book.title}</Heading>
+                        </td>
+                      </tr>
+                      {/* Author row */}
+                      <tr>
+                        <td style={authorCell}>
+                          <Text style={bookAuthor}>{book.author}</Text>
+                        </td>
+                      </tr>
+                      {/* Fixed-height description row */}
+                      <tr>
+                        <td style={descriptionCell}>
+                          <Text style={bookDescription}>{book.description}</Text>
+                        </td>
+                      </tr>
+                      {/* Button row */}
+                      <tr>
+                        <td style={buttonCell}>
+                          <Link href={book.addUrl} style={button}>
+                            Add Signal →
+                          </Link>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Row 2: Books 2-3 */}
+        {recommendations.length > 2 && (
+          <table style={booksGrid}>
+            <tbody>
+              <tr>
+                {recommendations.slice(2, 4).map((book, index) => (
+                  <td key={index} style={bookCell} valign="top">
+                    <table style={bookCardTable}>
+                      <tbody>
+                        <tr>
+                          <td style={coverCell}>
+                            {book.coverUrl ? (
+                              <Img
+                                src={book.coverUrl}
+                                alt={`${book.title} cover`}
+                                style={bookCover}
+                              />
+                            ) : (
+                              <div style={coverPlaceholder}>
+                                <Text style={placeholderText}>{book.title.charAt(0)}</Text>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style={titleCell}>
+                            <Heading style={bookTitle}>{book.title}</Heading>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style={authorCell}>
+                            <Text style={bookAuthor}>{book.author}</Text>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style={descriptionCell}>
+                            <Text style={bookDescription}>{book.description}</Text>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style={buttonCell}>
+                            <Link href={book.addUrl} style={button}>
+                              Add Signal →
+                            </Link>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </td>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        )}
 
         <Section style={ctaSection}>
           <Text style={ctaText}>
@@ -218,52 +302,103 @@ const booksGrid = {
   width: '100%',
   borderCollapse: 'separate' as const,
   borderSpacing: '8px',
-  margin: '16px 0',
+  margin: '8px 0',
 };
 
 const bookCell = {
   width: '50%',
-  verticalAlign: 'top',
+  verticalAlign: 'top' as const,
   padding: '0',
 };
 
-const bookCard = {
+const bookCardTable = {
+  width: '100%',
   backgroundColor: 'rgba(15, 23, 42, 0.5)',
   borderRadius: '8px',
-  padding: '12px',
   border: '1px solid rgba(100, 116, 139, 0.2)',
+};
+
+const coverCell = {
   textAlign: 'center' as const,
+  padding: '16px 12px 8px',
+  height: '140px',
+  verticalAlign: 'bottom' as const,
 };
 
 const bookCover = {
-  width: '70px',
-  height: 'auto',
+  width: '90px',
+  height: '120px',
+  objectFit: 'cover' as const,
   borderRadius: '4px',
   border: '1px solid rgba(51, 65, 85, 0.5)',
-  margin: '0 auto 8px',
+  margin: '0 auto',
   display: 'block',
+};
+
+const coverPlaceholder = {
+  width: '90px',
+  height: '120px',
+  borderRadius: '4px',
+  border: '1px solid rgba(51, 65, 85, 0.5)',
+  margin: '0 auto',
+  backgroundColor: 'rgba(30, 41, 59, 0.8)',
+  display: 'table',
+};
+
+const placeholderText = {
+  color: '#64748b',
+  fontSize: '28px',
+  fontWeight: '700',
+  margin: '0',
+  display: 'table-cell',
+  verticalAlign: 'middle',
+  textAlign: 'center' as const,
+};
+
+const titleCell = {
+  textAlign: 'center' as const,
+  padding: '8px 10px 2px',
+  height: '44px',
+  verticalAlign: 'top' as const,
 };
 
 const bookTitle = {
   color: '#f1f5f9',
   fontSize: '13px',
   fontWeight: '600',
-  margin: '0 0 4px',
-  lineHeight: '1.2',
+  margin: '0',
+  lineHeight: '1.3',
+};
+
+const authorCell = {
+  textAlign: 'center' as const,
+  padding: '0 10px 6px',
 };
 
 const bookAuthor = {
   color: '#94a3b8',
   fontSize: '11px',
   fontWeight: '400',
-  margin: '0 0 6px',
+  margin: '0',
+};
+
+const descriptionCell = {
+  textAlign: 'center' as const,
+  padding: '0 10px 8px',
+  height: '60px',
+  verticalAlign: 'top' as const,
 };
 
 const bookDescription = {
   color: '#94a3b8',
   fontSize: '10px',
   lineHeight: '14px',
-  margin: '0 0 8px',
+  margin: '0',
+};
+
+const buttonCell = {
+  textAlign: 'center' as const,
+  padding: '0 10px 14px',
 };
 
 const button = {
@@ -275,7 +410,7 @@ const button = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   display: 'inline-block',
-  padding: '6px 12px',
+  padding: '6px 14px',
   border: '1px solid rgba(6, 182, 212, 0.25)',
   letterSpacing: '0.3px',
 };
