@@ -14,7 +14,7 @@ import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 import ContributionButton from "@/components/ContributionButton";
 import ContactModal from "@/components/ContactModal";
 import { searchAppleBooks } from "@/services/appleBooks";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthorPopup } from "@/components/AuthorPopup";
 import { getAuthorByName, ScifiAuthor, findOrCreateAuthor } from "@/services/scifiAuthorsService";
 import { usePatternRecognition } from "@/hooks/usePatternRecognition";
@@ -27,6 +27,7 @@ interface AIRecommendation {
 }
 
 const Index = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [books, setBooks] = useState<Transmission[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<Transmission | null>(null);
@@ -37,6 +38,7 @@ const Index = () => {
   const [authorPopupVisible, setAuthorPopupVisible] = useState(false);
   const [showInsightsModal, setShowInsightsModal] = useState(false);
   const [aiRecommendations, setAiRecommendations] = useState<Map<string, AIRecommendation>>(() => new Map());
+  const [prefilledBook, setPrefilledBook] = useState<{title: string; author: string} | null>(null);
 
   // Memoize static data to prevent unnecessary re-renders
   const currentSignal = useMemo(() => ({
@@ -99,6 +101,35 @@ const Index = () => {
       }
     }
   }, [user, authLoading, loadTransmissions]);
+
+  // Handle ?add= query param from newsletter emails
+  useEffect(() => {
+    const addTitle = searchParams.get('add');
+    const addAuthor = searchParams.get('author');
+    if (addTitle && user) {
+      // Check if already in library
+      const existingBook = books.find(
+        b => b.title.toLowerCase() === addTitle.toLowerCase() && 
+             b.author.toLowerCase() === (addAuthor || '').toLowerCase()
+      );
+      if (existingBook) {
+        // Scroll to existing book - it's already in the list
+        toast({
+          title: "Already in Your Library",
+          description: `"${existingBook.title}" is already in your transmissions.`,
+        });
+      } else {
+        // Pre-fill and open the add modal
+        setPrefilledBook({ title: addTitle, author: addAuthor || '' });
+        setIsAddModalOpen(true);
+      }
+      // Clean URL
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('add');
+      newParams.delete('author');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, user, books]);
 
   // Load AI recommendations for transmissions (deferred for performance)
   useEffect(() => {
@@ -243,6 +274,7 @@ const Index = () => {
   const closeModal = useCallback(() => {
     setIsAddModalOpen(false);
     setEditingBook(null);
+    setPrefilledBook(null);
   }, []);
 
   const handleRetry = useCallback(() => {
@@ -383,7 +415,7 @@ const Index = () => {
           isOpen={isAddModalOpen}
           onClose={closeModal}
           onAdd={addBook}
-          editingBook={editingBook}
+          editingBook={editingBook || (prefilledBook ? { title: prefilledBook.title, author: prefilledBook.author, status: 'want-to-read', tags: [], notes: '', cover_url: '', rating: {} } : undefined)}
         />
 
         <ContactModal 

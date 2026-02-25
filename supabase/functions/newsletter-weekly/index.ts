@@ -280,7 +280,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Add Leafnode URLs for each book - now linking to Signal Archive
     const recommendations = selectedBooks.map(book => ({
       ...book,
-      addUrl: `https://leafnode.co.uk/?add=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}`,
+      addUrl: `https://leafnode.co.uk/library?add=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}`,
     }));
 
     let successCount = 0;
