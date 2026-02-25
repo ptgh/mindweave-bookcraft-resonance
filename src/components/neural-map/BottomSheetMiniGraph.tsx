@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BookOpen } from "lucide-react";
+import { gsap } from "gsap";
 import { BrainNode } from "@/pages/TestBrain";
 
 interface BottomSheetMiniGraphProps {
@@ -13,7 +14,8 @@ const BottomSheetMiniGraph = ({ node, allNodes, neighbors, onSelectNode }: Botto
   const SIZE = 320;
   const CENTER = SIZE / 2;
   const RADIUS = 110;
-  const NODE_R = 18;
+  const NODE_R = 22;
+  const svgRef = useRef<SVGSVGElement>(null);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   const getNode = (id: string) => allNodes.find(n => n.id === id);
@@ -43,6 +45,38 @@ const BottomSheetMiniGraph = ({ node, allNodes, neighbors, onSelectNode }: Botto
     };
   }).filter(n => n.node);
 
+  // GSAP entrance animation
+  useEffect(() => {
+    if (!svgRef.current || positioned.length === 0) return;
+    
+    const neighborGroups = svgRef.current.querySelectorAll('.neighbor-node');
+    const centerGroup = svgRef.current.querySelector('.center-node');
+    const edges = svgRef.current.querySelectorAll('.edge-line');
+    
+    // Start small and invisible
+    gsap.set(neighborGroups, { scale: 0, transformOrigin: 'center center', opacity: 0 });
+    gsap.set(edges, { opacity: 0 });
+    if (centerGroup) gsap.set(centerGroup, { scale: 0, transformOrigin: 'center center', opacity: 0 });
+
+    // Animate center first
+    if (centerGroup) {
+      gsap.to(centerGroup, { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.7)' });
+    }
+
+    // Then edges
+    gsap.to(edges, { opacity: 1, duration: 0.3, delay: 0.3, stagger: 0.05 });
+
+    // Then neighbors with stagger
+    gsap.to(neighborGroups, {
+      scale: 1,
+      opacity: 1,
+      duration: 0.5,
+      delay: 0.35,
+      stagger: 0.08,
+      ease: 'back.out(1.7)',
+    });
+  }, [node.id, positioned.length]);
+
   if (positioned.length === 0) {
     return (
       <div className="p-6 flex items-center justify-center text-slate-500/60 text-sm">
@@ -53,7 +87,7 @@ const BottomSheetMiniGraph = ({ node, allNodes, neighbors, onSelectNode }: Botto
 
   return (
     <div className="p-4 flex items-center justify-center">
-      <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} className="overflow-visible">
+      <svg ref={svgRef} width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} className="overflow-visible">
         {/* Edges */}
         {positioned.map(n => {
           const opacity = 0.15 + (n.score / maxScore) * 0.45;
@@ -61,6 +95,7 @@ const BottomSheetMiniGraph = ({ node, allNodes, neighbors, onSelectNode }: Botto
           return (
             <line
               key={`edge-${n.nodeId}`}
+              className="edge-line"
               x1={CENTER} y1={CENTER}
               x2={n.x} y2={n.y}
               stroke="#22d3ee"
@@ -71,7 +106,7 @@ const BottomSheetMiniGraph = ({ node, allNodes, neighbors, onSelectNode }: Botto
         })}
 
         {/* Center node */}
-        <g>
+        <g className="center-node">
           <circle cx={CENTER} cy={CENTER} r={NODE_R + 2} fill="none" stroke="#22d3ee" strokeOpacity={0.3} strokeWidth={1} />
           {node.coverUrl && !failedImages.has(node.id) ? (
             <>
@@ -101,7 +136,7 @@ const BottomSheetMiniGraph = ({ node, allNodes, neighbors, onSelectNode }: Botto
           return (
             <g
               key={n.nodeId}
-              className="cursor-pointer"
+              className="cursor-pointer neighbor-node"
               onClick={() => onSelectNode(n.nodeId)}
               style={{ pointerEvents: 'all' }}
             >

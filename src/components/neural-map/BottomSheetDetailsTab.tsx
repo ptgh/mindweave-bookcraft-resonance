@@ -99,7 +99,7 @@ const BottomSheetDetailsTab = ({
           <h4 className="text-xs font-medium text-slate-400/80 uppercase tracking-wider mb-3">
             Connections
           </h4>
-          <div className="space-y-1.5 max-h-32 overflow-y-auto">
+          <div className="space-y-1.5 max-h-32 overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
             {typedConnections.map(({ nodeId, label, nodeTitle }, i) => (
               <button
                 key={i}
