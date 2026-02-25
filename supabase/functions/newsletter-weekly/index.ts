@@ -12,7 +12,7 @@ const WEEKLY_RECOMMENDATIONS = [
   {
     title: "Neuromancer",
     author: "William Gibson",
-    coverUrl: "https://covers.openlibrary.org/b/isbn/9780441007462-M.jpg",
+    coverUrl: "https://covers.openlibrary.org/b/isbn/0441569595-M.jpg",
     description: "The book that defined cyberpunk. Follow Case through the neon-soaked matrix in this genre-defining masterpiece.",
   },
   {
@@ -280,7 +280,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Add Leafnode URLs for each book - now linking to Signal Archive
     const recommendations = selectedBooks.map(book => ({
       ...book,
-      addUrl: `https://leafnode.co.uk/book-browser?add=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}`,
+      addUrl: `https://leafnode.co.uk/?add=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}`,
     }));
 
     let successCount = 0;
