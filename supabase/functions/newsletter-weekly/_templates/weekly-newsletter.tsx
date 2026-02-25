@@ -195,7 +195,10 @@ export const WeeklyNewsletterEmail = ({
         </Section>
 
         <Text style={footer}>
-          This transmission was compiled for {email}
+          This transmission was compiled for{' '}
+          <Link href={`mailto:${email}`} style={footerEmailLink}>
+            {email}
+          </Link>
         </Text>
         
         <Text style={contactText}>
@@ -529,6 +532,11 @@ const footerLinks = {
   paddingTop: '16px',
   borderTop: '1px solid rgba(51, 65, 85, 0.3)',
   textAlign: 'center' as const,
+};
+
+const footerEmailLink = {
+  color: '#22d3ee',
+  textDecoration: 'none',
 };
 
 const unsubscribeLink = {

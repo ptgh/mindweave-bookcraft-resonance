@@ -50,13 +50,13 @@ const SearchInput = ({ onResults, placeholder = "Search authors, books, or your 
   return (
     <div className={`relative ${className}`}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 w-3.5 h-3.5 pointer-events-none" />
         <Input
           type="text"
           value={query}
           onChange={(e) => handleQueryChange(e.target.value)}
           placeholder={placeholder}
-          className="pl-10 pr-10 bg-slate-800/50 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-blue-400"
+          className="pl-9 pr-10 bg-slate-800/50 border-slate-600 text-slate-200 placeholder-slate-400 focus:border-blue-400"
         />
         {query && (
           <Button
