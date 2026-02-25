@@ -10,7 +10,7 @@ import ERFilterSidebar from '@/components/neural-map/ERFilterSidebar';
 import ERConnectionLines from '@/components/neural-map/ERConnectionLines';
 import { usePatternRecognition } from '@/hooks/usePatternRecognition';
 import { useNeuralMapConnections } from '@/hooks/useNeuralMapConnections';
-import { filterConceptualTags } from '@/constants/conceptualTags';
+import { filterConceptualTags, AUTHOR_GENRE_MAP } from '@/constants/conceptualTags';
 import { Filter, HelpCircle } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
@@ -217,7 +217,7 @@ const TestBrain = () => {
   const booksByTheme = useMemo(() => {
     const groups = new Map<string, BrainNode[]>();
     filteredBookNodes.forEach(b => {
-      const primaryTag = b.tags[0] || 'Uncategorized';
+      const primaryTag = b.tags[0] || AUTHOR_GENRE_MAP[b.author] || 'Unclassified Signals';
       if (!groups.has(primaryTag)) groups.set(primaryTag, []);
       groups.get(primaryTag)!.push(b);
     });
