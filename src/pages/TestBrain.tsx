@@ -364,10 +364,10 @@ const TestBrain = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <Header />
 
-      <div className="flex" style={{ minHeight: 'calc(100vh - 64px)' }}>
-        {/* Desktop sidebar */}
+      <div className="flex" style={{ height: 'calc(100vh - 64px)' }}>
+        {/* Desktop sidebar - fixed, non-scrolling */}
         {!isMobile && (
-          <aside className="w-64 flex-shrink-0 border-r border-cyan-400/10 bg-slate-900/50 backdrop-blur-sm sticky top-16 h-[calc(100vh-64px)] overflow-y-auto scrollbar-hide">
+          <aside className="w-64 flex-shrink-0 border-r border-cyan-400/10 bg-slate-900/50 backdrop-blur-sm overflow-y-auto scrollbar-hide">
             <ERFilterSidebar
               authors={authorsList}
               themes={themesList}
@@ -385,7 +385,7 @@ const TestBrain = () => {
         )}
 
         {/* Main content — three-column ER diagram */}
-        <main ref={columnsRef} className="flex-1 relative overflow-auto">
+        <main ref={columnsRef} className="flex-1 relative overflow-x-auto overflow-y-auto">
           {/* Stats bar */}
           <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-cyan-400/10 px-4 py-2 flex items-center gap-4">
             {isMobile && (
