@@ -209,17 +209,34 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   // Allow cron calls (anon key) or admin/internal calls
-  // Cron sends the anon key as Bearer token which isn't a user JWT,
-  // so we check for it explicitly before falling back to admin auth
+  // The cron job sends the anon key as Bearer token. We detect this by decoding
+  // the JWT and checking for role=anon (anon key JWTs have role "anon", not "authenticated").
   const authHeader = req.headers.get("Authorization");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  const isCronCall = authHeader === `Bearer ${anonKey}`;
+  const token = authHeader?.replace("Bearer ", "").trim();
+  
+  let isCronCall = false;
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.role === 'anon') {
+        isCronCall = true;
+      }
+    } catch (_) {
+      // Not a valid JWT, proceed with normal auth
+    }
+  }
 
   if (!isCronCall) {
-    const auth = await requireAdminOrInternal(req);
-    if (auth instanceof Response) return auth;
+    const internalHeader = req.headers.get("x-internal-secret");
+    const internalSecret = Deno.env.get("INTERNAL_EDGE_SECRET");
+    if (internalSecret && internalHeader === internalSecret) {
+      console.log("✅ [Newsletter] Internal call authorized");
+    } else {
+      const auth = await requireAdminOrInternal(req);
+      if (auth instanceof Response) return auth;
+    }
   } else {
-    console.log("✅ [Newsletter] Cron call authorized via anon key");
+    console.log("✅ [Newsletter] Cron call authorized via anon key (role=anon)");
   }
 
   try {
@@ -297,8 +314,8 @@ const handler = async (req: Request): Promise<Response> => {
           successCount++;
         }
 
-        // Small delay to avoid rate limits
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Delay to avoid Resend rate limits (2 req/sec)
+        await new Promise(resolve => setTimeout(resolve, 600));
       } catch (emailErr) {
         console.error(`Error processing ${subscriber.email}:`, emailErr);
         errorCount++;
