@@ -8,6 +8,8 @@ import { useNavigate } from "react-router-dom";
 import BottomSheetDetailsTab from "@/components/neural-map/BottomSheetDetailsTab";
 import BottomSheetMiniGraph from "@/components/neural-map/BottomSheetMiniGraph";
 import BottomSheetAskTab from "@/components/neural-map/BottomSheetAskTab";
+import BottomSheetLifeTab from "@/components/neural-map/BottomSheetLifeTab";
+import ProtagonistChatModal from "@/components/ProtagonistChatModal";
 import { useNeuralMapDiscovery, DiscoveryResult } from "@/hooks/useNeuralMapDiscovery";
 
 interface ConnectionBreakdown {
@@ -34,13 +36,7 @@ interface NeuralMapBottomSheetProps {
   onSelectRelated: (nodeId: string) => void;
 }
 
-type TabId = 'details' | 'graph' | 'ask';
-
-const TABS: { id: TabId; label: string }[] = [
-  { id: 'details', label: 'Details' },
-  { id: 'graph', label: 'Graph' },
-  { id: 'ask', label: 'Ask' },
-];
+type TabId = 'details' | 'graph' | 'ask' | 'life' | 'story';
 
 const NeuralMapBottomSheet = ({
   node,
@@ -55,9 +51,34 @@ const NeuralMapBottomSheet = ({
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabId>('details');
   const [coverError, setCoverError] = useState(false);
+  const [showProtagonistChat, setShowProtagonistChat] = useState(false);
   
   const existingTitles = useMemo(() => allNodes.map(n => n.title), [allNodes]);
   const { results: discoveryResults, loading: discoveryLoading, error: discoveryError, findSimilar } = useNeuralMapDiscovery(existingTitles);
+
+  // Find protagonist for this book
+  const protagonist = useMemo(() => {
+    if (node.nodeType !== 'book') return null;
+    return allNodes.find(n => n.nodeType === 'protagonist' && n.bookTitle === node.title) || null;
+  }, [node, allNodes]);
+
+  // Build dynamic tabs
+  const tabs = useMemo(() => {
+    const t: { id: TabId; label: string }[] = [
+      { id: 'details', label: 'Details' },
+      { id: 'graph', label: 'Graph' },
+      { id: 'ask', label: 'Ask' },
+    ];
+    // Life tab for books/authors (author bio)
+    if (node.nodeType === 'book' || node.nodeType === 'author') {
+      t.push({ id: 'life', label: 'Life' });
+    }
+    // Story tab for books with a protagonist
+    if (protagonist) {
+      t.push({ id: 'story', label: 'Story' });
+    }
+    return t;
+  }, [node, protagonist]);
 
   const handleSignalArchive = () => {
     navigate(`/book-browser?highlight=${node.transmissionId}&search=${encodeURIComponent(node.title)}`);
@@ -92,7 +113,7 @@ const NeuralMapBottomSheet = ({
 
           {/* Tabs */}
           <div className="flex border-b border-cyan-400/10">
-            {TABS.map(tab => (
+            {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -121,8 +142,27 @@ const NeuralMapBottomSheet = ({
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-slate-100 font-medium text-base leading-tight mb-1 line-clamp-2">{node.title}</h3>
-                <p className="text-cyan-400/70 text-sm mb-2">{node.author}</p>
-                <div className="flex items-center gap-2 text-xs text-cyan-300/60">
+                {/* Author with GSAP underline */}
+                <div className="story-link inline-block mb-1">
+                  <button
+                    onClick={() => setActiveTab('life')}
+                    className="text-cyan-400/70 text-sm hover:text-cyan-300 transition-colors cursor-pointer"
+                  >
+                    {node.author}
+                  </button>
+                </div>
+                {/* Protagonist link */}
+                {protagonist && (
+                  <div className="story-link inline-block ml-2">
+                    <button
+                      onClick={() => setShowProtagonistChat(true)}
+                      className="text-purple-400/70 text-xs hover:text-purple-300 transition-colors cursor-pointer"
+                    >
+                      ⟡ {protagonist.title}
+                    </button>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-xs text-cyan-300/60 mt-1">
                   <Network className="w-3.5 h-3.5 text-cyan-400/80" />
                   <span>{connectionBreakdown.total} neural connections</span>
                 </div>
@@ -153,6 +193,18 @@ const NeuralMapBottomSheet = ({
 
           {activeTab === 'ask' && (
             <BottomSheetAskTab node={node} allNodes={allNodes} />
+          )}
+
+          {activeTab === 'life' && (
+            <BottomSheetLifeTab node={node} mode="author" />
+          )}
+
+          {activeTab === 'story' && protagonist && (
+            <BottomSheetLifeTab
+              node={protagonist}
+              mode="protagonist"
+              onOpenProtagonistChat={() => setShowProtagonistChat(true)}
+            />
           )}
           
           {/* Actions */}
@@ -197,6 +249,17 @@ const NeuralMapBottomSheet = ({
           </div>
         </div>
       </div>
+
+      {/* Protagonist Chat Modal */}
+      {showProtagonistChat && protagonist && (
+        <ProtagonistChatModal
+          bookTitle={protagonist.bookTitle || node.title}
+          bookAuthor={node.author}
+          protagonistName={protagonist.title}
+          portraitUrl={protagonist.coverUrl}
+          onClose={() => setShowProtagonistChat(false)}
+        />
+      )}
     </div>
   );
 
