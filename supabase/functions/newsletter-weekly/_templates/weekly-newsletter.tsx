@@ -388,7 +388,7 @@ const bookAuthor = {
 const descriptionCell = {
   textAlign: 'center' as const,
   padding: '0 10px 8px',
-  height: '60px',
+  height: '70px',
   verticalAlign: 'top' as const,
 };
 
@@ -401,7 +401,8 @@ const bookDescription = {
 
 const buttonCell = {
   textAlign: 'center' as const,
-  padding: '0 10px 14px',
+  padding: '4px 10px 14px',
+  verticalAlign: 'bottom' as const,
 };
 
 const button = {
@@ -537,6 +538,7 @@ const footerLinks = {
 const footerEmailLink = {
   color: '#22d3ee',
   textDecoration: 'none',
+  fontStyle: 'normal' as const,
 };
 
 const unsubscribeLink = {
