@@ -360,7 +360,7 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
         <div className="p-3 border-t border-slate-700/50 flex items-center gap-2">
           <button
             onClick={isRecording ? stopRecording : startRecording}
-            className={`p-2 rounded-lg transition-all ${
+            className={`h-10 w-10 flex items-center justify-center rounded-lg transition-all flex-shrink-0 ${
               isRecording 
                 ? 'bg-red-500/20 border border-red-500/40 text-red-400' 
                 : 'bg-slate-800 border border-slate-700/50 text-slate-400 hover:text-cyan-400'
@@ -375,13 +375,13 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={`Ask ${protagonistName} something...`}
-            className="flex-1 bg-slate-800 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50"
+            className="flex-1 h-10 bg-slate-800 border border-slate-700/50 rounded-lg px-3 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50"
             disabled={isLoading}
           />
           <button
             onClick={() => sendMessage(input)}
             disabled={!input.trim() || isLoading}
-            className="p-2 bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 rounded-lg hover:bg-cyan-500/30 disabled:opacity-30 transition-all"
+            className="h-10 w-10 flex items-center justify-center bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 rounded-lg hover:bg-cyan-500/30 disabled:opacity-30 transition-all flex-shrink-0"
           >
             <Send className="w-4 h-4" />
           </button>
