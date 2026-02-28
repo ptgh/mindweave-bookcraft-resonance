@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { bookTitle, bookAuthor, protagonistName, transmissionId } = await req.json();
+    const { bookTitle, bookAuthor, protagonistName, transmissionId, forceRegenerate } = await req.json();
 
     if (!bookTitle || !protagonistName || !transmissionId) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
@@ -33,11 +33,21 @@ serve(async (req) => {
       .eq("id", transmissionId)
       .maybeSingle();
 
-    if (existing?.protagonist_portrait_url) {
+    if (existing?.protagonist_portrait_url && !forceRegenerate) {
       return new Response(
         JSON.stringify({ portraitUrl: existing.protagonist_portrait_url }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // If force regenerating, clear existing URL and delete old file
+    if (forceRegenerate && existing?.protagonist_portrait_url) {
+      await supabase.from("transmissions").update({ protagonist_portrait_url: null }).eq("id", transmissionId);
+      // Try to delete old storage file
+      const oldPath = existing.protagonist_portrait_url.split('/protagonist-portraits/')[1];
+      if (oldPath) {
+        await supabase.storage.from("protagonist-portraits").remove([oldPath]);
+      }
     }
 
     // Generate portrait using Lovable AI
