@@ -49,7 +49,7 @@ const ERFilterSidebar = ({
   return (
     <div className={`flex flex-col h-full ${isMobile ? '' : 'w-64'}`}>
       {/* Header */}
-      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-2 border-b border-cyan-400/10 bg-slate-900/80 backdrop-blur-md">
+      <div className="sticky top-0 z-10 flex items-center justify-between px-3 py-2 border-b border-cyan-400/10 bg-slate-900/80 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-cyan-400/70" />
           <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Filter Key</span>
