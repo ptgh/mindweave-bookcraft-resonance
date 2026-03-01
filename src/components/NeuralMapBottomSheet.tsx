@@ -49,15 +49,16 @@ const NeuralMapBottomSheet = ({
   onSelectRelated
 }: NeuralMapBottomSheetProps) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<TabId>('details');
+  const [activeTab, setActiveTab] = useState<TabId>(node.nodeType === 'protagonist' ? 'story' : 'details');
   const [coverError, setCoverError] = useState(false);
   const [showProtagonistChat, setShowProtagonistChat] = useState(false);
   
   const existingTitles = useMemo(() => allNodes.map(n => n.title), [allNodes]);
   const { results: discoveryResults, loading: discoveryLoading, error: discoveryError, findSimilar } = useNeuralMapDiscovery(existingTitles);
 
-  // Find protagonist for this book
+  // Find protagonist for this book, or use node itself if it's a protagonist
   const protagonist = useMemo(() => {
+    if (node.nodeType === 'protagonist') return node;
     if (node.nodeType !== 'book') return null;
     return allNodes.find(n => n.nodeType === 'protagonist' && n.bookTitle === node.title) || null;
   }, [node, allNodes]);
