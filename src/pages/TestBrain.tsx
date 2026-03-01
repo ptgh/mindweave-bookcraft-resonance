@@ -379,30 +379,27 @@ const TestBrain = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <Header />
 
-      <div className="flex" style={{ height: 'calc(100vh - 64px)' }}>
-        {/* Desktop sidebar - fixed, non-scrolling */}
-        {!isMobile && (
-          <aside className="w-64 flex-shrink-0 border-r border-cyan-400/10 bg-slate-900/50 backdrop-blur-sm overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            <ERFilterSidebar
-              authors={authorsList}
-              themes={themesList}
-              selectedAuthors={selectedAuthors}
-              selectedThemes={selectedThemes}
-              showAuthors={showAuthors}
-              showProtagonists={showProtagonists}
-              onToggleAuthor={handleToggleAuthor}
-              onToggleTheme={handleToggleTheme}
-              onToggleShowAuthors={setShowAuthors}
-              onToggleShowProtagonists={setShowProtagonists}
-              onClearAll={handleClearAll}
-            />
-          </aside>
-        )}
-
-        {/* Main content — three-column ER diagram */}
-        <main ref={columnsRef} className="flex-1 relative overflow-x-auto overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-          {/* Stats bar - aligned with filter key */}
-          <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-cyan-400/10 px-3 py-2 flex items-center gap-3">
+      <div className="flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
+        {/* Shared header row — one continuous line */}
+        <div className="flex-shrink-0 flex border-b border-cyan-400/10 bg-slate-900/80 backdrop-blur-md z-10">
+          {/* Sidebar header */}
+          {!isMobile && (
+            <div className="w-64 flex-shrink-0 flex items-center justify-between px-3 py-2 border-r border-cyan-400/10">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-cyan-400/70" />
+                <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Filter Key</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {(selectedAuthors.size > 0 || selectedThemes.size > 0 || !showAuthors || !showProtagonists) && (
+                  <button onClick={handleClearAll} className="text-[10px] text-cyan-400 hover:text-cyan-300 transition-colors px-2 py-0.5 bg-cyan-400/10 rounded-full">
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+          {/* Main stats bar */}
+          <div className="flex-1 flex items-center gap-3 px-3 py-2">
             {isMobile && (
               <button onClick={() => setShowMobileFilter(true)} className="p-1.5 rounded-lg border border-slate-700/50 hover:border-cyan-400/30 text-slate-400 hover:text-cyan-400 transition-colors">
                 <Filter className="w-4 h-4" />
@@ -435,6 +432,32 @@ const TestBrain = () => {
               <span className="hidden sm:inline"><strong className="text-slate-300">{computedEdges.length}</strong> links</span>
             </div>
           </div>
+        </div>
+
+        {/* Content row — sidebar + main scroll independently */}
+        <div className="flex flex-1 min-h-0">
+        {/* Desktop sidebar - scrollable content only */}
+        {!isMobile && (
+          <aside className="w-64 flex-shrink-0 border-r border-cyan-400/10 bg-slate-900/50 backdrop-blur-sm overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <ERFilterSidebar
+              authors={authorsList}
+              themes={themesList}
+              selectedAuthors={selectedAuthors}
+              selectedThemes={selectedThemes}
+              showAuthors={showAuthors}
+              showProtagonists={showProtagonists}
+              onToggleAuthor={handleToggleAuthor}
+              onToggleTheme={handleToggleTheme}
+              onToggleShowAuthors={setShowAuthors}
+              onToggleShowProtagonists={setShowProtagonists}
+              onClearAll={handleClearAll}
+              hideHeader
+            />
+          </aside>
+        )}
+
+        {/* Main content — three-column ER diagram */}
+        <main ref={columnsRef} className="flex-1 relative overflow-x-auto overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
 
           {/* SVG connection lines (desktop only) */}
           {!isMobile && <ERConnectionLines connections={erConnections} containerRef={columnsRef} />}
@@ -511,6 +534,7 @@ const TestBrain = () => {
             </div>
           </div>
         </main>
+        </div>
       </div>
 
       {/* Mobile filter bottom sheet */}

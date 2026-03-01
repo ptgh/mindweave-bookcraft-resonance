@@ -24,6 +24,7 @@ interface ERFilterSidebarProps {
   onClearAll: () => void;
   onClose?: () => void;
   isMobile?: boolean;
+  hideHeader?: boolean;
 }
 
 const ERFilterSidebar = ({
@@ -40,6 +41,7 @@ const ERFilterSidebar = ({
   onClearAll,
   onClose,
   isMobile,
+  hideHeader,
 }: ERFilterSidebarProps) => {
   const [authorsOpen, setAuthorsOpen] = useState(true);
   const [themesOpen, setThemesOpen] = useState(true);
@@ -48,25 +50,27 @@ const ERFilterSidebar = ({
 
   return (
     <div className={`flex flex-col h-full ${isMobile ? '' : 'w-64'}`}>
-      {/* Header */}
-      <div className="sticky top-0 z-10 flex items-center justify-between px-3 py-2 border-b border-cyan-400/10 bg-slate-900/80 backdrop-blur-md">
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-cyan-400/70" />
-          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Filter Key</span>
+      {/* Header - hidden when parent provides its own */}
+      {!hideHeader && (
+        <div className="sticky top-0 z-10 flex items-center justify-between px-3 py-2 border-b border-cyan-400/10 bg-slate-900/80 backdrop-blur-md">
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-cyan-400/70" />
+            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Filter Key</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {hasActiveFilters && (
+              <button onClick={onClearAll} className="text-[10px] text-cyan-400 hover:text-cyan-300 transition-colors px-2 py-0.5 bg-cyan-400/10 rounded-full">
+                Clear
+              </button>
+            )}
+            {onClose && (
+              <button onClick={onClose} className="text-slate-400 hover:text-slate-200 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {hasActiveFilters && (
-            <button onClick={onClearAll} className="text-[10px] text-cyan-400 hover:text-cyan-300 transition-colors px-2 py-0.5 bg-cyan-400/10 rounded-full">
-              Clear
-            </button>
-          )}
-          {onClose && (
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-200 transition-colors">
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      </div>
+      )}
 
       <ScrollArea className="flex-1 px-3 py-2">
         {/* Node type toggles */}
