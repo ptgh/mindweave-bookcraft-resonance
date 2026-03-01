@@ -381,7 +381,7 @@ const TestBrain = () => {
 
       <div className="flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
         {/* Shared header row — one continuous line */}
-        <div className="flex-shrink-0 flex border-b border-cyan-400/10 bg-slate-900/80 backdrop-blur-md z-10">
+        <div className="flex-shrink-0 flex border-b border-cyan-400/10 bg-slate-900 z-10">
           {/* Sidebar header */}
           {!isMobile && (
             <div className="w-64 flex-shrink-0 flex items-center justify-between px-3 py-2 border-r border-cyan-400/10">
@@ -438,7 +438,7 @@ const TestBrain = () => {
         <div className="flex flex-1 min-h-0">
         {/* Desktop sidebar - scrollable content only */}
         {!isMobile && (
-          <aside className="w-64 flex-shrink-0 border-r border-cyan-400/10 bg-slate-900/50 backdrop-blur-sm overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <aside className="w-64 flex-shrink-0 border-r border-cyan-400/10 bg-slate-900/50 backdrop-blur-sm overflow-y-auto scrollbar-hide [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             <ERFilterSidebar
               authors={authorsList}
               themes={themesList}
@@ -457,7 +457,7 @@ const TestBrain = () => {
         )}
 
         {/* Main content — three-column ER diagram */}
-        <main ref={columnsRef} className="flex-1 relative overflow-x-auto overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <main ref={columnsRef} className="flex-1 relative overflow-x-auto overflow-y-auto scrollbar-hide [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
 
           {/* SVG connection lines (desktop only) */}
           {!isMobile && <ERConnectionLines connections={erConnections} containerRef={columnsRef} />}
