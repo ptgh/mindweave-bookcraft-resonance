@@ -49,7 +49,7 @@ const NeuralMapBottomSheet = ({
   onSelectRelated
 }: NeuralMapBottomSheetProps) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<TabId>('details');
+  const [activeTab, setActiveTab] = useState<TabId>(node.nodeType === 'protagonist' ? 'story' : 'details');
   const [coverError, setCoverError] = useState(false);
   const [showProtagonistChat, setShowProtagonistChat] = useState(false);
   
