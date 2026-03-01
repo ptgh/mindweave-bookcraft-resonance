@@ -84,9 +84,12 @@ const BottomSheetLifeTab = ({ node, mode, onOpenProtagonistChat }: BottomSheetLi
         )}
         <p className="text-xs text-slate-400/80">by <span className="text-amber-300/80 font-medium">{node.author}</span></p>
         {node.description && (
-          <p className="text-xs text-slate-300/70 leading-relaxed border-l-2 border-purple-400/20 pl-3 italic">
-            {node.description}
-          </p>
+          <div className="space-y-1.5">
+            <h5 className="text-[10px] text-slate-400/60 uppercase tracking-wider">Who is {node.title}?</h5>
+            <p className="text-xs text-slate-300/70 leading-relaxed border-l-2 border-purple-400/20 pl-3 italic">
+              {node.description}
+            </p>
+          </div>
         )}
         {onOpenProtagonistChat && (
           <button
