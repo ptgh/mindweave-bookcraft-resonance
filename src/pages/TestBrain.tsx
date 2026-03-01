@@ -402,7 +402,7 @@ const TestBrain = () => {
         {/* Main content — three-column ER diagram */}
         <main ref={columnsRef} className="flex-1 relative overflow-x-auto overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
           {/* Stats bar - aligned with filter key */}
-          <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-cyan-400/10 px-4 py-2 flex items-center gap-3">
+          <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-cyan-400/10 px-3 py-2 flex items-center gap-3">
             {isMobile && (
               <button onClick={() => setShowMobileFilter(true)} className="p-1.5 rounded-lg border border-slate-700/50 hover:border-cyan-400/30 text-slate-400 hover:text-cyan-400 transition-colors">
                 <Filter className="w-4 h-4" />
