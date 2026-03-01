@@ -92,11 +92,11 @@ const TestBrain = () => {
         const authorMap = new Map<string, { id: string; portrait_url: string | null; bio: string | null }>();
         (authorRows || []).forEach(a => authorMap.set(a.name, { id: a.id, portrait_url: a.portrait_url, bio: a.bio }));
 
-        const protagonistMap = new Map<string, { name: string; portrait_url: string | null; bookTitle: string; author: string }>();
+        const protagonistMap = new Map<string, { name: string; portrait_url: string | null; bookTitle: string; author: string; intro: string | null }>();
         fetchedTransmissions.forEach(t => {
           if (t.protagonist && t.protagonist.trim() !== '' && t.protagonist !== t.author) {
             if (!protagonistMap.has(t.protagonist)) {
-              protagonistMap.set(t.protagonist, { name: t.protagonist, portrait_url: t.protagonist_portrait_url || null, bookTitle: t.title, author: t.author });
+              protagonistMap.set(t.protagonist, { name: t.protagonist, portrait_url: t.protagonist_portrait_url || null, bookTitle: t.title, author: t.author, intro: t.protagonist_intro || null });
             }
           }
         });
@@ -146,7 +146,7 @@ const TestBrain = () => {
             contextTags: [],
             x: 0, y: 0,
             coverUrl: pData.portrait_url || undefined,
-            description: `Protagonist of "${pData.bookTitle}"`,
+            description: pData.intro || `Protagonist of "${pData.bookTitle}"`,
             transmissionId: 0,
             nodeType: 'protagonist' as NodeType,
             bookTitle: pData.bookTitle,
