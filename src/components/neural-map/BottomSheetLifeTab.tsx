@@ -8,6 +8,8 @@ interface BottomSheetLifeTabProps {
   node: BrainNode;
   mode: 'author' | 'protagonist';
   onOpenProtagonistChat?: () => void;
+  onViewBook?: (bookTitle: string) => void;
+  onViewAuthorLife?: () => void;
 }
 
 interface AuthorData {
@@ -20,7 +22,7 @@ interface AuthorData {
   notable_works: string[] | null;
 }
 
-const BottomSheetLifeTab = ({ node, mode, onOpenProtagonistChat }: BottomSheetLifeTabProps) => {
+const BottomSheetLifeTab = ({ node, mode, onOpenProtagonistChat, onViewBook, onViewAuthorLife }: BottomSheetLifeTabProps) => {
   const [author, setAuthor] = useState<AuthorData | null>(null);
   const [loading, setLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -79,10 +81,24 @@ const BottomSheetLifeTab = ({ node, mode, onOpenProtagonistChat }: BottomSheetLi
         {node.bookTitle && (
           <div className="flex items-center gap-2 text-xs text-slate-400/80">
             <BookOpen className="w-3.5 h-3.5 text-cyan-400/60" />
-            <span>Appears in <span className="text-cyan-300/80 font-medium">"{node.bookTitle}"</span></span>
+            <span>Appears in{' '}
+              <button
+                onClick={() => onViewBook?.(node.bookTitle!)}
+                className="story-link inline-block"
+              >
+                <span className="text-cyan-300/80 font-medium hover:text-cyan-200 transition-colors cursor-pointer">"{node.bookTitle}"</span>
+              </button>
+            </span>
           </div>
         )}
-        <p className="text-xs text-slate-400/80">by <span className="text-amber-300/80 font-medium">{node.author}</span></p>
+        <p className="text-xs text-slate-400/80">by{' '}
+          <button
+            onClick={() => onViewAuthorLife?.()}
+            className="story-link inline-block"
+          >
+            <span className="text-amber-300/80 font-medium hover:text-amber-200 transition-colors cursor-pointer">{node.author}</span>
+          </button>
+        </p>
         {node.description && (
           <div className="space-y-1.5">
             <h5 className="text-[10px] text-slate-400/60 uppercase tracking-wider">Who is {node.title}?</h5>

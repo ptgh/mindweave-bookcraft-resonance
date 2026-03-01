@@ -11,7 +11,7 @@ import ERConnectionLines from '@/components/neural-map/ERConnectionLines';
 import { usePatternRecognition } from '@/hooks/usePatternRecognition';
 import { useNeuralMapConnections } from '@/hooks/useNeuralMapConnections';
 import { filterConceptualTags, AUTHOR_GENRE_MAP } from '@/constants/conceptualTags';
-import { Filter, HelpCircle } from 'lucide-react';
+import { Filter, HelpCircle, Search, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 export type NodeType = 'book' | 'author' | 'protagonist';
@@ -50,6 +50,7 @@ const TestBrain = () => {
   const [transmissions, setTransmissions] = useState<Transmission[]>([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showMobileFilter, setShowMobileFilter] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Filter state
   const [selectedAuthors, setSelectedAuthors] = useState<Set<string>>(new Set());
@@ -191,6 +192,10 @@ const TestBrain = () => {
   // Filtering logic
   const filteredBookNodes = useMemo(() => {
     let books = bookNodes;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      books = books.filter(b => b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q));
+    }
     if (selectedAuthors.size > 0) {
       const authorNames = new Set(authorNodes.filter(a => selectedAuthors.has(a.id)).map(a => a.title));
       books = books.filter(b => authorNames.has(b.author));
@@ -199,19 +204,29 @@ const TestBrain = () => {
       books = books.filter(b => b.tags.some(t => selectedThemes.has(t)));
     }
     return books;
-  }, [bookNodes, selectedAuthors, selectedThemes, authorNodes]);
+  }, [bookNodes, selectedAuthors, selectedThemes, authorNodes, searchQuery]);
 
   const filteredAuthorNodes = useMemo(() => {
     if (!showAuthors) return [];
+    let authors = authorNodes;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      authors = authors.filter(a => a.title.toLowerCase().includes(q));
+    }
     const relevantAuthors = new Set(filteredBookNodes.map(b => b.author));
-    return authorNodes.filter(a => relevantAuthors.has(a.title));
-  }, [authorNodes, filteredBookNodes, showAuthors]);
+    return authors.filter(a => relevantAuthors.has(a.title) || (searchQuery.trim() && a.title.toLowerCase().includes(searchQuery.toLowerCase())));
+  }, [authorNodes, filteredBookNodes, showAuthors, searchQuery]);
 
   const filteredProtagonistNodes = useMemo(() => {
     if (!showProtagonists) return [];
+    let prots = protagonistNodes;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      prots = prots.filter(p => p.title.toLowerCase().includes(q) || p.author.toLowerCase().includes(q));
+    }
     const relevantBooks = new Set(filteredBookNodes.map(b => b.title));
-    return protagonistNodes.filter(p => p.bookTitle && relevantBooks.has(p.bookTitle));
-  }, [protagonistNodes, filteredBookNodes, showProtagonists]);
+    return prots.filter(p => (p.bookTitle && relevantBooks.has(p.bookTitle)) || (searchQuery.trim() && p.title.toLowerCase().includes(searchQuery.toLowerCase())));
+  }, [protagonistNodes, filteredBookNodes, showProtagonists, searchQuery]);
 
   // Group books by primary tag
   const booksByTheme = useMemo(() => {
@@ -387,21 +402,37 @@ const TestBrain = () => {
         {/* Main content — three-column ER diagram */}
         <main ref={columnsRef} className="flex-1 relative overflow-x-auto overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
           {/* Stats bar - aligned with filter key */}
-          <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-cyan-400/10 px-4 py-2 flex items-center gap-4">
+          <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-cyan-400/10 px-4 py-2 flex items-center gap-3">
             {isMobile && (
               <button onClick={() => setShowMobileFilter(true)} className="p-1.5 rounded-lg border border-slate-700/50 hover:border-cyan-400/30 text-slate-400 hover:text-cyan-400 transition-colors">
                 <Filter className="w-4 h-4" />
               </button>
             )}
+            {/* Search */}
+            <div className="relative flex-shrink-0">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search authors, books, characters..."
+                className="w-48 sm:w-56 pl-8 pr-7 py-1.5 text-xs bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:border-cyan-400/40 focus:outline-none transition-colors"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
             <div className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
-              <span className="text-[10px] text-slate-400">Consciousness Network</span>
+              <span className="text-[10px] text-slate-400 hidden sm:inline">Consciousness Network</span>
             </div>
             <div className="flex items-center gap-3 text-[10px] text-slate-500 ml-auto">
               <span><strong className="text-slate-300">{filteredBookNodes.length}</strong> books</span>
               <span><strong className="text-slate-300">{filteredAuthorNodes.length}</strong> authors</span>
               <span><strong className="text-slate-300">{filteredProtagonistNodes.length}</strong> chars</span>
-              <span><strong className="text-slate-300">{computedEdges.length}</strong> links</span>
+              <span className="hidden sm:inline"><strong className="text-slate-300">{computedEdges.length}</strong> links</span>
             </div>
           </div>
 
@@ -546,6 +577,10 @@ const TestBrain = () => {
           onSelectRelated={(nodeId) => {
             const relatedNode = nodes.find(n => n.id === nodeId);
             if (relatedNode) setSelectedNode(relatedNode);
+          }}
+          onSelectBook={(bookTitle) => {
+            const bookNode = nodes.find(n => n.nodeType === 'book' && n.title === bookTitle);
+            if (bookNode) setSelectedNode(bookNode);
           }}
         />
       )}
