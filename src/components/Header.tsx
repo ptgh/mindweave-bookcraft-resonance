@@ -139,7 +139,7 @@ const Header = () => {
   
   return (
     <header className="bg-slate-900 pt-[env(safe-area-inset-top)]" role="banner" aria-label="Site header">
-      <div className="container mx-auto px-4 py-2 md:px-6 md:py-2">
+      <div className="w-full px-4 py-2 md:px-6 md:py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1 md:gap-3">
             <Link 
