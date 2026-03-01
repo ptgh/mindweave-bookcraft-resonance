@@ -382,7 +382,7 @@ const TestBrain = () => {
       <div className="flex" style={{ height: 'calc(100vh - 64px)' }}>
         {/* Desktop sidebar - fixed, non-scrolling */}
         {!isMobile && (
-          <aside className="w-64 flex-shrink-0 border-r border-cyan-400/10 bg-slate-900/50 backdrop-blur-sm overflow-y-auto scrollbar-hide">
+          <aside className="w-64 flex-shrink-0 border-r border-cyan-400/10 bg-slate-900/50 backdrop-blur-sm overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             <ERFilterSidebar
               authors={authorsList}
               themes={themesList}
@@ -400,7 +400,7 @@ const TestBrain = () => {
         )}
 
         {/* Main content — three-column ER diagram */}
-        <main ref={columnsRef} className="flex-1 relative overflow-x-auto overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+        <main ref={columnsRef} className="flex-1 relative overflow-x-auto overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {/* Stats bar - aligned with filter key */}
           <div className="sticky top-0 z-10 bg-slate-900/80 backdrop-blur-md border-b border-cyan-400/10 px-3 py-2 flex items-center gap-3">
             {isMobile && (
