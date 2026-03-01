@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, Filter, X } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface FilterSection {
@@ -72,7 +71,7 @@ const ERFilterSidebar = ({
         </div>
       )}
 
-      <ScrollArea className="flex-1 px-3 py-2">
+      <div className="flex-1 px-3 py-2 overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
         {/* Node type toggles */}
         <div className="space-y-2 mb-4">
           <h4 className="text-[10px] font-medium text-slate-500 uppercase tracking-wider px-1">Show</h4>
@@ -141,7 +140,7 @@ const ERFilterSidebar = ({
             })}
           </CollapsibleContent>
         </Collapsible>
-      </ScrollArea>
+      </div>
     </div>
   );
 };

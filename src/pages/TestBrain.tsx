@@ -384,7 +384,7 @@ const TestBrain = () => {
         <div className="flex-shrink-0 flex border-b border-cyan-400/10 bg-slate-900 z-10">
           {/* Sidebar header */}
           {!isMobile && (
-            <div className="w-64 flex-shrink-0 flex items-center justify-between px-3 py-2 border-r border-cyan-400/10">
+            <div className="w-64 flex-shrink-0 flex items-center justify-between px-3 py-2">
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-cyan-400/70" />
                 <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Filter Key</span>
@@ -423,9 +423,9 @@ const TestBrain = () => {
             </div>
             <div className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
-              <span className="text-[10px] text-slate-400 hidden sm:inline">Consciousness Network</span>
+              <span className="text-[11px] text-slate-400 hidden sm:inline">Consciousness Network</span>
             </div>
-            <div className="flex items-center gap-3 text-[10px] text-slate-500 ml-auto">
+            <div className="flex items-center gap-3 text-[11px] text-slate-500 ml-auto">
               <span><strong className="text-slate-300">{filteredBookNodes.length}</strong> books</span>
               <span><strong className="text-slate-300">{filteredAuthorNodes.length}</strong> authors</span>
               <span><strong className="text-slate-300">{filteredProtagonistNodes.length}</strong> chars</span>
@@ -438,7 +438,7 @@ const TestBrain = () => {
         <div className="flex flex-1 min-h-0">
         {/* Desktop sidebar - scrollable content only */}
         {!isMobile && (
-          <aside className="w-64 flex-shrink-0 border-r border-cyan-400/10 bg-slate-900/50 backdrop-blur-sm overflow-y-auto scrollbar-hide [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <aside className="w-64 flex-shrink-0 border-r border-cyan-400/10 bg-slate-900/50 backdrop-blur-sm overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             <ERFilterSidebar
               authors={authorsList}
               themes={themesList}
