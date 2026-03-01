@@ -1,5 +1,5 @@
-import { BookOpen, LogOut, Instagram, Menu, Shield, ChevronDown, Database, Sparkles, User, Film, Users, MessageCircle, Download } from "lucide-react";
-import { useCallback, useState } from "react";
+import { BookOpen, LogOut, Instagram, Menu, Shield, ChevronDown, ChevronLeft, ChevronRight, Database, Sparkles, User, Film, Users, MessageCircle, Download } from "lucide-react";
+import { useCallback, useState, useRef, useEffect } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { StandardButton } from "./ui/standard-button";
 import { useAuth } from "@/hooks/useAuth";
@@ -81,7 +81,37 @@ const Header = () => {
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const { canPrompt, isInstalled, isIOS, promptInstall } = useInstallPrompt();
   const isMobile = useIsMobile();
+  const navRef = useRef<HTMLElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
+  const checkScroll = useCallback(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    setCanScrollLeft(nav.scrollLeft > 2);
+    setCanScrollRight(nav.scrollLeft < nav.scrollWidth - nav.clientWidth - 2);
+  }, []);
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    checkScroll();
+    nav.addEventListener('scroll', checkScroll, { passive: true });
+    const ro = new ResizeObserver(checkScroll);
+    ro.observe(nav);
+    return () => { nav.removeEventListener('scroll', checkScroll); ro.disconnect(); };
+  }, [checkScroll]);
+
+  const scrollNav = useCallback((dir: 'left' | 'right') => {
+    const nav = navRef.current;
+    if (!nav) return;
+    nav.scrollBy({ left: dir === 'left' ? -160 : 160, behavior: 'smooth' });
+  }, []);
+
+  const handleNavKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowRight') { scrollNav('right'); e.preventDefault(); }
+    if (e.key === 'ArrowLeft') { scrollNav('left'); e.preventDefault(); }
+  }, [scrollNav]);
   const userLabel =
     profile?.display_name?.trim() ||
     [profile?.first_name, profile?.last_name].filter(Boolean).join(' ').trim() ||
@@ -162,7 +192,27 @@ const Header = () => {
               <Instagram className="w-4 h-4" />
             </a>
             
-            <nav className="hidden lg:flex flex-1 min-w-0 items-center gap-3 xl:gap-4 overflow-x-auto overscroll-x-contain scrollbar-hide smooth-scroll pr-2" role="navigation" aria-label="Main navigation">
+            {/* Scrollable nav with arrow indicators */}
+            <div className="hidden lg:flex flex-1 min-w-0 items-center relative">
+              {/* Left scroll arrow */}
+              <button
+                onClick={() => scrollNav('left')}
+                className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-blue-400 transition-all duration-200 ${
+                  canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
+                aria-label="Scroll navigation left"
+                tabIndex={-1}
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+
+              <nav
+                ref={navRef}
+                onKeyDown={handleNavKeyDown}
+                className="flex flex-1 min-w-0 items-center gap-3 xl:gap-4 overflow-x-auto overscroll-x-contain scrollbar-hide smooth-scroll px-1"
+                role="navigation"
+                aria-label="Main navigation"
+              >
               <Link
                 to="/"
                 className={`transition-colors text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded px-1.5 py-1 whitespace-nowrap ${
@@ -304,7 +354,20 @@ const Header = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
-            </nav>
+              </nav>
+
+              {/* Right scroll arrow */}
+              <button
+                onClick={() => scrollNav('right')}
+                className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-blue-400 transition-all duration-200 ${
+                  canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
+                aria-label="Scroll navigation right"
+                tabIndex={-1}
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
 
             {user && (
               <div className="flex items-center space-x-1 md:space-x-3">
