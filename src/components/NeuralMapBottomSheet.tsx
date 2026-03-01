@@ -34,6 +34,7 @@ interface NeuralMapBottomSheetProps {
   onClose: () => void;
   onFocusNetwork: () => void;
   onSelectRelated: (nodeId: string) => void;
+  onSelectBook?: (bookTitle: string) => void;
 }
 
 type TabId = 'details' | 'graph' | 'ask' | 'life' | 'story';
@@ -46,7 +47,8 @@ const NeuralMapBottomSheet = ({
   typedConnections,
   onClose,
   onFocusNetwork,
-  onSelectRelated
+  onSelectRelated,
+  onSelectBook
 }: NeuralMapBottomSheetProps) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabId>(node.nodeType === 'protagonist' ? 'story' : 'details');
@@ -203,6 +205,11 @@ const NeuralMapBottomSheet = ({
               node={protagonist}
               mode="protagonist"
               onOpenProtagonistChat={() => setShowProtagonistChat(true)}
+              onViewBook={(bookTitle) => {
+                const bookNode = allNodes.find(n => n.nodeType === 'book' && n.title === bookTitle);
+                if (bookNode) onSelectBook?.(bookTitle);
+              }}
+              onViewAuthorLife={() => setActiveTab('life')}
             />
           )}
           
