@@ -56,16 +56,20 @@ const EntityCard = ({ title, type, items, onItemClick, animationDelay = 0, id }:
     }
   }, [animationDelay]);
 
-  // Dismiss tooltip on outside click
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  // Dismiss tooltip on outside click (excluding the trigger button)
   useEffect(() => {
     if (!showTooltip) return;
     const handler = (e: MouseEvent) => {
-      if (tooltipRef.current && !tooltipRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (triggerRef.current?.contains(target)) return; // let toggle handle it
+      if (tooltipRef.current && !tooltipRef.current.contains(target)) {
         setShowTooltip(false);
       }
     };
     document.addEventListener('mousedown', handler);
-    const timer = setTimeout(() => setShowTooltip(false), 5000);
+    const timer = setTimeout(() => setShowTooltip(false), 8000);
     return () => { document.removeEventListener('mousedown', handler); clearTimeout(timer); };
   }, [showTooltip]);
 
@@ -103,6 +107,7 @@ const EntityCard = ({ title, type, items, onItemClick, animationDelay = 0, id }:
         <div className={`w-1.5 h-1.5 rounded-full ${config.accentDot}`} />
         <Icon className={`w-3.5 h-3.5 ${config.headerText}`} />
         <button
+          ref={triggerRef}
           onClick={() => setShowTooltip(prev => !prev)}
           className="story-link cursor-pointer"
         >
@@ -110,11 +115,12 @@ const EntityCard = ({ title, type, items, onItemClick, animationDelay = 0, id }:
         </button>
         <span className="text-[9px] text-slate-500 ml-auto">{items.length}</span>
 
-        {/* Header tooltip */}
+        {/* Header tooltip - centered overlay */}
         {showTooltip && (
           <div
             ref={tooltipRef}
-            className="absolute left-2 right-2 top-full mt-1 z-50 bg-slate-900/95 backdrop-blur-xl border border-cyan-400/20 rounded-lg p-3 shadow-[0_0_20px_rgba(34,211,238,0.08)] animate-fade-in"
+            className="absolute left-0 right-0 top-full z-[60] bg-slate-900 border border-cyan-400/20 rounded-lg p-3 shadow-[0_0_30px_rgba(0,0,0,0.7),0_0_15px_rgba(34,211,238,0.08)] animate-fade-in"
+            style={{ marginTop: '-2px' }}
           >
             <p className={`text-xs font-semibold ${config.headerText} mb-1`}>{tooltip.label}</p>
             <p className="text-[11px] text-slate-400/90 leading-relaxed">{tooltip.detail}</p>
@@ -174,7 +180,11 @@ const EntityRow = ({ node, type, config, onClick }: EntityRowProps) => {
           {node.coverUrl && !imgError ? (
             <img src={node.coverUrl} alt={node.title} className="w-full h-full object-cover" loading="lazy" onError={() => setImgError(true)} />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-slate-500 text-sm font-bold bg-gradient-to-br from-slate-800 to-slate-900">
+            <div className={`w-full h-full flex items-center justify-center text-sm font-bold ${
+              type === 'author' ? 'bg-gradient-to-br from-amber-900/60 to-amber-950/80 text-amber-300' :
+              type === 'protagonist' ? 'bg-gradient-to-br from-purple-900/60 to-purple-950/80 text-purple-300' :
+              'bg-gradient-to-br from-slate-700 to-slate-900 text-cyan-300'
+            }`}>
               {node.title.charAt(0).toUpperCase()}
             </div>
           )}

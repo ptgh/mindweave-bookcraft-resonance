@@ -277,10 +277,11 @@ function createFallbackContent(title: string, size: number, nodeType: NodeType):
     width: 100%; height: 100%;
     display: flex; align-items: center; justify-content: center;
     background: ${colors.fallbackBg};
-    color: ${colors.labelColor};
-    font-size: ${Math.max(size * 0.38, 14)}px;
+    color: ${colors.accent};
+    font-size: ${Math.max(size * 0.42, 16)}px;
     font-weight: 700;
     letter-spacing: 0.5px;
+    text-shadow: 0 0 8px ${colors.accent}40;
   `;
   fallback.textContent = title.charAt(0).toUpperCase();
   return fallback;
