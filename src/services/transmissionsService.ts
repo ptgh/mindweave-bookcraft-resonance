@@ -1,5 +1,17 @@
 import { supabase } from "@/integrations/supabase/client";
 
+/** Parse tags from DB — handles JSON arrays, comma-separated strings, and edge cases */
+function parseTags(raw: string): string[] {
+  if (!raw || raw === '[]') return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.filter(Boolean);
+  } catch {
+    // Not valid JSON — try comma-separated
+  }
+  return raw.split(',').map(t => t.trim()).filter(Boolean);
+}
+
 export interface Transmission {
   id: number;
   title: string;
@@ -222,7 +234,7 @@ export const getTransmissions = async (): Promise<Transmission[]> => {
       title: item.title || '',
       author: item.author || '',
       status: 'read' as const,
-      tags: item.tags ? JSON.parse(item.tags) : [],
+      tags: item.tags ? parseTags(item.tags) : [],
       notes: item.notes || '',
       cover_url: item.cover_url || '',
       rating: item.resonance_labels ? JSON.parse(item.resonance_labels) : {},
