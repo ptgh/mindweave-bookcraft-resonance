@@ -401,7 +401,7 @@ const TestBrain = () => {
           {/* Main stats bar */}
           <div className="flex-1 flex items-center gap-3 px-3 py-2">
             {isMobile && (
-              <button onClick={() => setShowMobileFilter(true)} className="p-1.5 rounded-lg border border-slate-700/50 hover:border-cyan-400/30 text-slate-400 hover:text-cyan-400 transition-colors">
+              <button onClick={() => setShowMobileFilter(true)} className="flex items-center justify-center h-[30px] w-[30px] rounded-lg border border-slate-700/50 hover:border-cyan-400/30 text-slate-400 hover:text-cyan-400 transition-colors">
                 <Filter className="w-4 h-4" />
               </button>
             )}
@@ -413,7 +413,7 @@ const TestBrain = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search authors, books, characters..."
-                className="w-48 sm:w-56 pl-8 pr-7 py-1.5 text-xs bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:border-cyan-400/40 focus:outline-none transition-colors"
+                className="w-48 sm:w-56 h-[30px] pl-8 pr-7 text-xs bg-slate-800/60 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:border-cyan-400/40 focus:outline-none transition-colors"
               />
               {searchQuery && (
                 <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
