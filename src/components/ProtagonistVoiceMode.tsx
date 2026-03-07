@@ -481,6 +481,15 @@ const ProtagonistVoiceMode = ({
         </button>
       )}
 
+      {voiceState === "error" && (
+        <div className="bg-muted/50 border border-border rounded-lg px-4 py-3 max-w-sm text-center mb-4">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            <span className="font-medium text-foreground">Connection blocked?</span> Browser extensions (ad blockers, privacy tools, VPNs) can block voice connections.
+            Try <span className="font-medium">Incognito mode</span> or <span className="font-medium">Safari</span> if this persists.
+          </p>
+        </div>
+      )}
+
       <div className="max-w-md w-full px-6 space-y-3 text-center min-h-[80px]">
         {lastTranscript && (
           <p className="text-muted-foreground text-xs">
