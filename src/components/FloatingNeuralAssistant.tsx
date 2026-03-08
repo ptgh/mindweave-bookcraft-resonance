@@ -584,8 +584,8 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
         {/* Panel positioning */}
         <div className={cn(
           "absolute",
-          // Mobile: bottom sheet anchored to bottom
-          "bottom-0 left-0 right-0",
+          // Mobile: bottom sheet anchored to bottom with spacing
+          "bottom-4 left-4 right-4",
           // Desktop: floating bottom-right
           "md:bottom-6 md:right-6 md:left-auto md:w-96"
         )}>
