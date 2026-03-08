@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { MessageCircle, X, Send, Mic, MicOff, Volume2, VolumeX, Loader2, Sparkles, Trash2, Brain, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageContext } from '@/hooks/usePageContext';
@@ -127,7 +127,6 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
   const panelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (isOpen && panelRef.current) {
-      // Subtle pulse on panel border
       gsap.to(panelRef.current, {
         boxShadow: '0 0 20px rgba(34, 211, 238, 0.15), 0 0 40px rgba(34, 211, 238, 0.05)',
         duration: 2,
@@ -135,25 +134,11 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
         yoyo: true,
         ease: 'sine.inOut'
       });
-      
-      // Input glow animation
-      const inputEl = panelRef.current.querySelector('.input-glow');
-      if (inputEl) {
-        gsap.to(inputEl, {
-          boxShadow: '0 0 8px rgba(34, 211, 238, 0.3), inset 0 0 4px rgba(34, 211, 238, 0.1)',
-          duration: 2.5,
-          repeat: -1,
-          yoyo: true,
-          ease: 'sine.inOut'
-        });
-      }
     }
     
     return () => {
       if (panelRef.current) {
         gsap.killTweensOf(panelRef.current);
-        const inputEl = panelRef.current.querySelector('.input-glow');
-        if (inputEl) gsap.killTweensOf(inputEl);
       }
     };
   }, [isOpen]);
@@ -357,60 +342,58 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
       )}
 
       {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-700/30 bg-slate-800/40">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50 flex-shrink-0" />
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-200 font-medium text-xs">Neural Assistant</span>
-              {hasActiveMemory && (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Brain className="w-3 h-3 text-purple-400" />
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-xs">
-                    Long-term memory active
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-            <span className="text-slate-400 text-[9px]">{pageContext.pageName}</span>
-          </div>
+      <div className="flex flex-col px-3 py-2.5 border-b border-slate-700/30 bg-slate-800/40">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50 flex-shrink-0" />
+            <span className="text-slate-200 font-medium text-xs">Neural Assistant</span>
+            {hasActiveMemory && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <Brain className="w-3 h-3 text-purple-400" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  Long-term memory active
+                </TooltipContent>
+              </Tooltip>
+            )}
         </div>
-        <div className="flex items-center gap-1">
-          {messages.length > 0 && (
+          <div className="flex items-center gap-1">
+            {messages.length > 0 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+                onClick={(e) => { e.stopPropagation(); handleClearConversation(); }}
+                title="Clear conversation"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
-              onClick={(e) => { e.stopPropagation(); handleClearConversation(); }}
-              title="Clear conversation"
+              className="h-8 w-8 text-slate-400 hover:text-slate-100"
+              onClick={(e) => { e.stopPropagation(); toggleVoice(); }}
+              title={voiceEnabled ? 'Disable voice' : 'Enable voice'}
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-slate-400 hover:text-slate-100"
-            onClick={(e) => { e.stopPropagation(); toggleVoice(); }}
-            title={voiceEnabled ? 'Disable voice' : 'Enable voice'}
-          >
-            {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-slate-400 hover:text-red-400"
-            onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
-          >
-            <X className="w-4 h-4" />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-slate-400 hover:text-red-400"
+              onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
+        <span className="text-slate-400 text-[9px] ml-[14px]">{pageContext.pageName}</span>
       </div>
 
       {/* Messages Area */}
-      <ScrollArea className="flex-1 min-h-0 p-3" ref={scrollRef}>
+      <div className="flex-1 min-h-0 overflow-y-auto p-3 scrollbar-hide" ref={scrollRef} style={{ scrollbarWidth: 'none' }}>
         <div className="space-y-3">
           {isLoadingConversation ? (
             <div className="flex items-center justify-center py-8">
@@ -510,7 +493,7 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Input Area */}
       <div className="p-3 border-t border-slate-700/30 bg-slate-800/50 pb-safe">
@@ -534,7 +517,7 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder="Ask about SF books, themes..."
-            className="input-glow flex-1 bg-slate-900/60 border-cyan-500/40 focus:border-cyan-400/70 text-slate-100 placeholder:text-slate-500 text-sm h-11"
+            className="flex-1 bg-slate-900/60 border-slate-600/50 focus:border-cyan-400/50 text-slate-100 placeholder:text-slate-500 text-sm h-11 caret-slate-300"
             disabled={isLoading || isRecording || isLoadingConversation}
           />
           <Button
