@@ -870,6 +870,27 @@ export type Database = {
         }
         Relationships: []
       }
+      edge_rate_limits: {
+        Row: {
+          count: number
+          key: string
+          updated_at: string
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          key: string
+          updated_at?: string
+          window_start: string
+        }
+        Update: {
+          count?: number
+          key?: string
+          updated_at?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       free_ebook_links: {
         Row: {
           archive_id: string | null
@@ -1881,6 +1902,14 @@ export type Database = {
       }
     }
     Functions: {
+      consume_edge_rate_limit: {
+        Args: {
+          p_key: string
+          p_max_requests: number
+          p_window_seconds: number
+        }
+        Returns: boolean
+      }
       find_or_create_scifi_author: {
         Args: { author_name: string }
         Returns: string
