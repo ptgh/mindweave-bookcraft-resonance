@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { MessageCircle, X, Send, Mic, MicOff, Volume2, VolumeX, Loader2, Sparkles, Trash2, Brain, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageContext } from '@/hooks/usePageContext';
