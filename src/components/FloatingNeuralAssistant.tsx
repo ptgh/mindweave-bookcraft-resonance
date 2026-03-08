@@ -127,7 +127,6 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
   const panelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (isOpen && panelRef.current) {
-      // Subtle pulse on panel border
       gsap.to(panelRef.current, {
         boxShadow: '0 0 20px rgba(34, 211, 238, 0.15), 0 0 40px rgba(34, 211, 238, 0.05)',
         duration: 2,
@@ -135,25 +134,11 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
         yoyo: true,
         ease: 'sine.inOut'
       });
-      
-      // Input glow animation
-      const inputEl = panelRef.current.querySelector('.input-glow');
-      if (inputEl) {
-        gsap.to(inputEl, {
-          boxShadow: '0 0 8px rgba(34, 211, 238, 0.3), inset 0 0 4px rgba(34, 211, 238, 0.1)',
-          duration: 2.5,
-          repeat: -1,
-          yoyo: true,
-          ease: 'sine.inOut'
-        });
-      }
     }
     
     return () => {
       if (panelRef.current) {
         gsap.killTweensOf(panelRef.current);
-        const inputEl = panelRef.current.querySelector('.input-glow');
-        if (inputEl) gsap.killTweensOf(inputEl);
       }
     };
   }, [isOpen]);
