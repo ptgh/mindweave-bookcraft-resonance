@@ -384,9 +384,16 @@ const ProtagonistVoiceMode = ({
         <span>Return to chat</span>
       </button>
 
-      <p className="text-muted-foreground text-xs mb-2 tracking-wider uppercase">
-        Voice Mode
-      </p>
+      <div className="flex items-center gap-2 mb-2">
+        <p className="text-muted-foreground text-xs tracking-wider uppercase">Voice Mode</p>
+        <span className={`px-2 py-0.5 rounded-full text-[9px] font-medium ${
+          activeMode === 'mission'
+            ? 'bg-violet-500/20 text-violet-300 border border-violet-500/20'
+            : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/20'
+        }`}>
+          {activeMode === 'mission' ? 'Mission' : 'Chat'}
+        </span>
+      </div>
       <h2 className="text-foreground text-lg font-medium mb-1">{protagonistName}</h2>
       <p className="text-muted-foreground text-[11px] mb-8">
         from "{bookTitle}" by {bookAuthor}
