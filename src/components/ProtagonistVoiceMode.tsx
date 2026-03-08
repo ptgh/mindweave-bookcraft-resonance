@@ -11,6 +11,7 @@ interface ProtagonistVoiceModeProps {
   portraitUrl?: string | null;
   conversationId?: string | null;
   onConversationId?: (id: string) => void;
+  activeMode?: 'chat' | 'mission';
   onClose: () => void;
 }
 
