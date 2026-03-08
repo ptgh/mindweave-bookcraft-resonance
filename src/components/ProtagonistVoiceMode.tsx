@@ -25,6 +25,7 @@ const ProtagonistVoiceMode = ({
   bookAuthor,
   protagonistName,
   portraitUrl,
+  activeMode = 'chat',
   onClose,
 }: ProtagonistVoiceModeProps) => {
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
