@@ -517,7 +517,7 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder="Ask about SF books, themes..."
-            className="input-glow flex-1 bg-slate-900/60 border-cyan-500/40 focus:border-cyan-400/70 text-slate-100 placeholder:text-slate-500 text-sm h-11"
+            className="flex-1 bg-slate-900/60 border-slate-600/50 focus:border-cyan-400/50 text-slate-100 placeholder:text-slate-500 text-sm h-11 caret-slate-300"
             disabled={isLoading || isRecording || isLoadingConversation}
           />
           <Button
