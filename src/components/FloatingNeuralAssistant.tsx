@@ -357,9 +357,9 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
       )}
 
       {/* Header */}
-      <div className="flex items-start justify-between px-3 py-2.5 border-b border-slate-700/30 bg-slate-800/40">
-        <div className="flex items-start gap-2">
-          <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50 mt-0.5 flex-shrink-0" />
+        <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-700/30 bg-slate-800/40">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50 flex-shrink-0" />
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
               <span className="text-slate-200 font-medium text-xs">Neural Assistant</span>
@@ -410,7 +410,7 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
       </div>
 
       {/* Messages Area */}
-      <ScrollArea className="flex-1 p-3" ref={scrollRef}>
+      <ScrollArea className="flex-1 min-h-0 p-3" ref={scrollRef}>
         <div className="space-y-3">
           {isLoadingConversation ? (
             <div className="flex items-center justify-center py-8">
@@ -547,9 +547,6 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
             <Send className="w-4 h-4" />
           </Button>
         </div>
-        <p className="text-xs text-slate-500 mt-2 text-center">
-          Powered by Lovable AI + ElevenLabs
-        </p>
       </div>
     </div>
   );
