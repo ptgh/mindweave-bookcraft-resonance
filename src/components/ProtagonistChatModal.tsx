@@ -348,10 +348,10 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
             {/* Voice button */}
             <button
               onClick={() => setShowVoiceMode(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-800 border border-slate-700/50 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/30 transition-all"
+              className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 border border-slate-700/50 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/30 transition-all flex-shrink-0"
               title="Voice mode"
             >
-              <AudioLines className="w-3.5 h-3.5" />
+              <AudioLines className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -478,7 +478,7 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleChatKeyDown}
               placeholder={`Ask ${protagonistName} something...`}
-              className="flex-1 h-10 bg-slate-800 border border-slate-700/50 rounded-lg px-3 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50"
+              className="flex-1 h-10 bg-slate-800 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50"
               disabled={isLoading}
             />
             <button
@@ -519,7 +519,7 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
                 onChange={(e) => setMissionInput(e.target.value)}
                 onKeyDown={handleMissionKeyDown}
                 placeholder={`What do you do next...`}
-                className="flex-1 h-10 bg-slate-800 border border-slate-700/50 rounded-lg px-3 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50"
+                className="flex-1 h-10 bg-slate-800 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50"
                 disabled={isLoading}
               />
               <button
