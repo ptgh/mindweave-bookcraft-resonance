@@ -66,7 +66,8 @@ Style requirements:
 - Atmospheric lighting with dramatic shadows
 - Portrait composition: head and upper shoulders, slightly off-center
 - Background MUST be dark — deep navy, charcoal, or near-black tones. NEVER use white, light grey, or bright backgrounds.
-- The entire image should have a consistently dark tonality with no white or light-colored borders, edges, or backgrounds
+- CRITICAL: The entire image canvas must be dark from edge to edge. There must be absolutely NO white pixels, NO light-colored borders, NO white edges or corners anywhere in the image. Every single pixel at the border of the image must be dark (navy, charcoal, or black).
+- The portrait will be displayed inside a circular frame, so ALL four corners of the square image MUST be very dark to avoid visible artifacts
 - The character should feel like they belong in a literary reading app with a neural/cerebral aesthetic
 - Square 1:1 aspect ratio portrait`;
 
