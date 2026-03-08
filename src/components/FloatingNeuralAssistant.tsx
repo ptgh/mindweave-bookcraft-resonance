@@ -342,8 +342,8 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
       style={isMobile && dragY > 0 ? { transform: `translateY(${dragY}px)`, transition: isDragging ? 'none' : 'transform 0.3s ease-out' } : undefined}
       className={cn(
         "chat-panel-glow bg-slate-900/90 backdrop-blur-xl border border-cyan-400/30 shadow-2xl shadow-black/50 overflow-hidden flex flex-col",
-        // Mobile: bottom sheet style, not fullscreen
-        "w-full rounded-t-2xl max-h-[75vh]",
+        // Mobile: bottom sheet style with rounded corners top and bottom
+        "w-full rounded-t-2xl rounded-b-2xl max-h-[75vh]",
         // Desktop: floating panel
         "md:w-96 md:h-[520px] md:rounded-2xl md:max-h-none",
         !isDragging && "transition-transform duration-300"
@@ -357,9 +357,9 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-700/30 bg-slate-800/40">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50" />
+      <div className="flex items-start justify-between px-3 py-2.5 border-b border-slate-700/30 bg-slate-800/40">
+        <div className="flex items-start gap-2">
+          <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50 mt-0.5 flex-shrink-0" />
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
               <span className="text-slate-200 font-medium text-xs">Neural Assistant</span>
@@ -584,8 +584,8 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
         {/* Panel positioning */}
         <div className={cn(
           "absolute",
-          // Mobile: bottom sheet anchored to bottom
-          "bottom-0 left-0 right-0",
+          // Mobile: bottom sheet anchored to bottom with spacing
+          "bottom-4 left-4 right-4",
           // Desktop: floating bottom-right
           "md:bottom-6 md:right-6 md:left-auto md:w-96"
         )}>
