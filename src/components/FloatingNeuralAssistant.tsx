@@ -342,8 +342,8 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
       style={isMobile && dragY > 0 ? { transform: `translateY(${dragY}px)`, transition: isDragging ? 'none' : 'transform 0.3s ease-out' } : undefined}
       className={cn(
         "chat-panel-glow bg-slate-900/90 backdrop-blur-xl border border-cyan-400/30 shadow-2xl shadow-black/50 overflow-hidden flex flex-col",
-        // Mobile: bottom sheet style, not fullscreen
-        "w-full rounded-t-2xl max-h-[75vh]",
+        // Mobile: bottom sheet style with rounded corners top and bottom
+        "w-full rounded-t-2xl rounded-b-2xl max-h-[75vh]",
         // Desktop: floating panel
         "md:w-96 md:h-[520px] md:rounded-2xl md:max-h-none",
         !isDragging && "transition-transform duration-300"
