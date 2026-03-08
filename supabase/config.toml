@@ -190,3 +190,6 @@ verify_jwt = false
 
 [functions.populate-author-books]
 verify_jwt = false
+
+[functions.protagonist-mission]
+verify_jwt = true
