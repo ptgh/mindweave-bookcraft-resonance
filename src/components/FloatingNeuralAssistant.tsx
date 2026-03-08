@@ -31,6 +31,13 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
   const [userName, setUserName] = useState<string | null>(null);
   const [userInsights, setUserInsights] = useState<string | null>(null);
   const [hasActiveMemory, setHasActiveMemory] = useState(false);
+
+  // Swipe-to-dismiss state
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartY = useRef(0);
+  const handleRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
