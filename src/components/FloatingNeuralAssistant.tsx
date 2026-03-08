@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { MessageCircle, X, Send, Mic, MicOff, Volume2, VolumeX, Loader2, Sparkles, Trash2, Brain, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { gsap } from 'gsap';
 import { useVoiceChat } from '@/hooks/useVoiceChat';
 import { useChatPersistence, PersistedMessage } from '@/hooks/useChatPersistence';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Message type re-exported from persistence hook
 type Message = PersistedMessage;
