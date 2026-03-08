@@ -303,232 +303,304 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
   // Don't render on Neural Map page (has its own BrainChatInterface)
   if (!user || isNeuralMapPage) return null;
 
-  return (
-    <TooltipProvider>
-      <div className={cn("fixed z-50", isOpen ? "inset-0 md:inset-auto md:bottom-6 md:right-6" : "bottom-6 right-6", className)}>
-        {/* Floating Button (when closed) - smaller, subtle like BrainChatInterface */}
-        {!isOpen && (
-          <button
-            onClick={() => setIsOpen(true)}
-            className="group relative w-11 h-11 rounded-full bg-slate-900/70 hover:bg-slate-900/90 border border-slate-700/40 hover:border-cyan-400/40 backdrop-blur-md shadow-lg shadow-slate-900/30 transition-all duration-300 hover:scale-105 flex items-center justify-center"
-            aria-label="Open Neural Assistant"
-          >
-            <MessageCircle className="w-5 h-5 text-cyan-400/80 group-hover:text-cyan-400 transition-colors" />
-            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-cyan-400/60 rounded-full" />
-            {/* Memory indicator */}
-            {hasActiveMemory && (
-              <span className="absolute -bottom-0.5 -left-0.5 w-2 h-2 bg-purple-400/80 rounded-full animate-pulse" title="Memory active" />
-            )}
-          </button>
-        )}
+  // Swipe-to-dismiss handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // Only allow swipe from the drag handle area
+    if (handleRef.current?.contains(e.target as Node)) {
+      setIsDragging(true);
+      dragStartY.current = e.touches[0].clientY;
+      setDragY(0);
+    }
+  };
 
-        {/* Chat Panel - full-screen on mobile, floating on desktop */}
-        {isOpen && (
-          <div 
-            ref={panelRef}
-            className="chat-panel-glow bg-slate-900/85 backdrop-blur-xl border border-cyan-400/30 shadow-2xl shadow-black/50 overflow-hidden transition-all duration-300 flex flex-col w-full h-full md:w-96 md:h-[520px] md:rounded-2xl"
-          >
-            {/* Header - styled like BrainChatInterface */}
-            <div 
-              className="flex items-center justify-between px-3 py-3 border-b border-slate-700/30 bg-slate-800/40"
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - dragStartY.current;
+    // Only allow dragging downward
+    if (diff > 0) {
+      setDragY(diff);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    // Dismiss if dragged more than 100px
+    if (dragY > 100) {
+      setIsOpen(false);
+    }
+    setDragY(0);
+  };
+
+  const chatPanel = (
+    <div 
+      ref={panelRef}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={isMobile && dragY > 0 ? { transform: `translateY(${dragY}px)`, transition: isDragging ? 'none' : 'transform 0.3s ease-out' } : undefined}
+      className={cn(
+        "chat-panel-glow bg-slate-900/90 backdrop-blur-xl border border-cyan-400/30 shadow-2xl shadow-black/50 overflow-hidden flex flex-col",
+        // Mobile: bottom sheet style, not fullscreen
+        "w-full rounded-t-2xl max-h-[75vh]",
+        // Desktop: floating panel
+        "md:w-96 md:h-[520px] md:rounded-2xl md:max-h-none",
+        !isDragging && "transition-transform duration-300"
+      )}
+    >
+      {/* Drag Handle (mobile only) */}
+      {isMobile && (
+        <div ref={handleRef} className="flex justify-center pt-2 pb-1 cursor-grab active:cursor-grabbing">
+          <div className="w-10 h-1 rounded-full bg-slate-600/80" />
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-700/30 bg-slate-800/40">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50" />
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-200 font-medium text-xs">Neural Assistant</span>
+              {hasActiveMemory && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Brain className="w-3 h-3 text-purple-400" />
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">
+                    Long-term memory active
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+            <span className="text-slate-400 text-[9px]">{pageContext.pageName}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          {messages.length > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+              onClick={(e) => { e.stopPropagation(); handleClearConversation(); }}
+              title="Clear conversation"
             >
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50" />
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-slate-200 font-medium text-xs">Neural Assistant</span>
-                    {hasActiveMemory && (
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Brain className="w-3 h-3 text-purple-400" />
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" className="text-xs">
-                          Long-term memory active
-                        </TooltipContent>
-                      </Tooltip>
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-slate-400 hover:text-slate-100"
+            onClick={(e) => { e.stopPropagation(); toggleVoice(); }}
+            title={voiceEnabled ? 'Disable voice' : 'Enable voice'}
+          >
+            {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-slate-400 hover:text-red-400"
+            onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Messages Area */}
+      <ScrollArea className="flex-1 p-3" ref={scrollRef}>
+        <div className="space-y-3">
+          {isLoadingConversation ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />
+              <span className="text-slate-400 text-xs ml-2">Loading conversation...</span>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="text-center py-6">
+              <div className="w-10 h-10 mx-auto mb-3 rounded-full border-2 border-cyan-400/60 bg-cyan-400/10 flex items-center justify-center shadow-lg shadow-cyan-400/20">
+                <Sparkles className="w-5 h-5 text-cyan-400" />
+              </div>
+              <p className="text-slate-300 text-xs mb-1">
+                {userName ? `Welcome back, ${userName}!` : 'Welcome!'}
+              </p>
+              <p className="text-slate-400 text-xs mb-3">
+                Ask about your reading network, thematic connections, or book recommendations!
+              </p>
+              
+              {/* Quick Actions */}
+              {showQuickActions && (
+                <div className="space-y-2">
+                  {pageContext.quickActions.map((action, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleQuickAction(action.prompt)}
+                      className="block w-full text-left text-xs text-slate-300 hover:text-cyan-300 p-2 rounded border border-slate-700/40 hover:border-cyan-400/60 bg-slate-800/30 hover:bg-slate-800/50 transition-all"
+                    >
+                      {action.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={cn(
+                  "flex",
+                  msg.role === 'user' ? "justify-end" : "justify-start"
+                )}
+              >
+                <div className="flex flex-col max-w-[80%]">
+                  <div
+                    className={cn(
+                      "p-2.5 rounded-lg text-xs whitespace-pre-line",
+                      msg.role === 'user'
+                        ? "bg-cyan-600/25 border border-cyan-500/35 text-cyan-100"
+                        : "bg-slate-800/60 border border-slate-700/30 text-slate-200"
                     )}
+                  >
+                    {msg.content}
+                    {msg.isTyping && <span className="animate-pulse">▌</span>}
                   </div>
-                  <span className="text-slate-400 text-[9px]">{pageContext.pageName}</span>
+                  
+                  {/* Memory indicator for assistant messages */}
+                  {msg.role === 'assistant' && (msg.usedMemory || msg.learnedInsight) && (
+                    <div className="flex items-center gap-1.5 mt-1 ml-1">
+                      {msg.usedMemory && (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <div className="flex items-center gap-0.5 text-purple-400/70">
+                              <Brain className="w-3 h-3" />
+                              <span className="text-[9px]">Memory</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="text-xs">
+                            Used your reading preferences
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      {msg.learnedInsight && (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <div className="flex items-center gap-0.5 text-amber-400/70">
+                              <Zap className="w-3 h-3" />
+                              <span className="text-[9px]">Learned</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="text-xs max-w-48">
+                            {msg.learnedInsight}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-1">
-                {messages.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
-                    onClick={(e) => { e.stopPropagation(); handleClearConversation(); }}
-                    title="Clear conversation"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-slate-400 hover:text-slate-100"
-                  onClick={(e) => { e.stopPropagation(); toggleVoice(); }}
-                  title={voiceEnabled ? 'Disable voice' : 'Enable voice'}
-                >
-                  {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-slate-400 hover:text-red-400"
-                  onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
+            ))
+          )}
+
+          {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
+            <div className="flex items-center gap-3">
+              <div className="bg-slate-800/60 px-4 py-2 rounded-lg border border-slate-700/30">
+                <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
               </div>
             </div>
+          )}
+        </div>
+      </ScrollArea>
 
-            {/* Messages Area - cyan styling like BrainChatInterface */}
-            <ScrollArea className="flex-1 p-3" ref={scrollRef}>
-              <div className="space-y-3">
-                {isLoadingConversation ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />
-                    <span className="text-slate-400 text-xs ml-2">Loading conversation...</span>
-                  </div>
-                ) : messages.length === 0 ? (
-                  <div className="text-center py-6">
-                    <div className="w-10 h-10 mx-auto mb-3 rounded-full border-2 border-cyan-400/60 bg-cyan-400/10 flex items-center justify-center shadow-lg shadow-cyan-400/20">
-                      <Sparkles className="w-5 h-5 text-cyan-400" />
-                    </div>
-                    <p className="text-slate-300 text-xs mb-1">
-                      {userName ? `Welcome back, ${userName}!` : 'Welcome!'}
-                    </p>
-                    <p className="text-slate-400 text-xs mb-3">
-                      Ask about your reading network, thematic connections, or book recommendations!
-                    </p>
-                    
-                    {/* Quick Actions */}
-                    {showQuickActions && (
-                      <div className="space-y-2">
-                        {pageContext.quickActions.map((action, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => handleQuickAction(action.prompt)}
-                            className="block w-full text-left text-xs text-slate-300 hover:text-cyan-300 p-2 rounded border border-slate-700/40 hover:border-cyan-400/60 bg-slate-800/30 hover:bg-slate-800/50 transition-all"
-                          >
-                            {action.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={cn(
-                        "flex",
-                        msg.role === 'user' ? "justify-end" : "justify-start"
-                      )}
-                    >
-                      <div className="flex flex-col max-w-[80%]">
-                        <div
-                          className={cn(
-                            "p-2.5 rounded-lg text-xs whitespace-pre-line",
-                            msg.role === 'user'
-                              ? "bg-cyan-600/25 border border-cyan-500/35 text-cyan-100"
-                              : "bg-slate-800/60 border border-slate-700/30 text-slate-200"
-                          )}
-                        >
-                          {msg.content}
-                          {msg.isTyping && <span className="animate-pulse">▌</span>}
-                        </div>
-                        
-                        {/* Memory indicator for assistant messages */}
-                        {msg.role === 'assistant' && (msg.usedMemory || msg.learnedInsight) && (
-                          <div className="flex items-center gap-1.5 mt-1 ml-1">
-                            {msg.usedMemory && (
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <div className="flex items-center gap-0.5 text-purple-400/70">
-                                    <Brain className="w-3 h-3" />
-                                    <span className="text-[9px]">Memory</span>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent side="bottom" className="text-xs">
-                                  Used your reading preferences
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
-                            {msg.learnedInsight && (
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <div className="flex items-center gap-0.5 text-amber-400/70">
-                                    <Zap className="w-3 h-3" />
-                                    <span className="text-[9px]">Learned</span>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent side="bottom" className="text-xs max-w-48">
-                                  {msg.learnedInsight}
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-
-                {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
-                  <div className="flex items-center gap-3">
-                    <div className="bg-slate-800/60 px-4 py-2 rounded-lg border border-slate-700/30">
-                      <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-
-            {/* Input Area */}
-            <div className="p-3 border-t border-slate-700/30 bg-slate-800/50">
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "h-9 w-9 flex-shrink-0",
-                    isRecording ? "text-red-400 bg-red-400/10" : "text-slate-400 hover:text-slate-100"
-                  )}
-                  onClick={isRecording ? stopRecording : startRecording}
-                  disabled={isLoading}
-                  title={isRecording ? 'Stop recording' : 'Start voice input'}
-                >
-                  {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                </Button>
-                <Input
-                  ref={inputRef}
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder="Ask about SF books, themes..."
-                  className="input-glow flex-1 bg-slate-900/60 border-cyan-500/40 focus:border-cyan-400/70 text-slate-100 placeholder:text-slate-500 text-sm h-11"
-                  disabled={isLoading || isRecording || isLoadingConversation}
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 flex-shrink-0 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
-                  onClick={() => sendMessage(inputValue)}
-                  disabled={!inputValue.trim() || isLoading}
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
-              </div>
-              <p className="text-xs text-slate-500 mt-2 text-center">
-                Powered by Lovable AI + ElevenLabs
-              </p>
-            </div>
-          </div>
-        )}
+      {/* Input Area */}
+      <div className="p-3 border-t border-slate-700/30 bg-slate-800/50 pb-safe">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "h-11 w-11 flex-shrink-0",
+              isRecording ? "text-red-400 bg-red-400/10" : "text-slate-400 hover:text-slate-100"
+            )}
+            onClick={isRecording ? stopRecording : startRecording}
+            disabled={isLoading}
+            title={isRecording ? 'Stop recording' : 'Start voice input'}
+          >
+            {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          </Button>
+          <Input
+            ref={inputRef}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyPress}
+            placeholder="Ask about SF books, themes..."
+            className="input-glow flex-1 bg-slate-900/60 border-cyan-500/40 focus:border-cyan-400/70 text-slate-100 placeholder:text-slate-500 text-sm h-11"
+            disabled={isLoading || isRecording || isLoadingConversation}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-11 w-11 flex-shrink-0 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
+            onClick={() => sendMessage(inputValue)}
+            disabled={!inputValue.trim() || isLoading}
+          >
+            <Send className="w-4 h-4" />
+          </Button>
+        </div>
+        <p className="text-xs text-slate-500 mt-2 text-center">
+          Powered by Lovable AI + ElevenLabs
+        </p>
       </div>
-    </TooltipProvider>
+    </div>
+  );
+
+  // Floating button (when closed)
+  const floatingButton = !isOpen ? (
+    <div className={cn("fixed z-50 bottom-6 right-6", className)}>
+      <button
+        onClick={() => setIsOpen(true)}
+        className="group relative w-11 h-11 rounded-full bg-slate-900/70 hover:bg-slate-900/90 border border-slate-700/40 hover:border-cyan-400/40 backdrop-blur-md shadow-lg shadow-slate-900/30 transition-all duration-300 hover:scale-105 flex items-center justify-center"
+        aria-label="Open Neural Assistant"
+      >
+        <MessageCircle className="w-5 h-5 text-cyan-400/80 group-hover:text-cyan-400 transition-colors" />
+        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-cyan-400/60 rounded-full" />
+        {hasActiveMemory && (
+          <span className="absolute -bottom-0.5 -left-0.5 w-2 h-2 bg-purple-400/80 rounded-full animate-pulse" title="Memory active" />
+        )}
+      </button>
+    </div>
+  ) : null;
+
+  // Open state: portal with backdrop on mobile, floating on desktop
+  const openPanel = isOpen ? createPortal(
+    <TooltipProvider>
+      <div className="fixed inset-0 z-50">
+        {/* Backdrop — tap to dismiss */}
+        <div 
+          className="absolute inset-0 bg-black/40 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none"
+          onClick={() => setIsOpen(false)}
+          aria-label="Close assistant"
+        />
+        {/* Panel positioning */}
+        <div className={cn(
+          "absolute",
+          // Mobile: bottom sheet anchored to bottom
+          "bottom-0 left-0 right-0",
+          // Desktop: floating bottom-right
+          "md:bottom-6 md:right-6 md:left-auto md:w-96"
+        )}>
+          {chatPanel}
+        </div>
+      </div>
+    </TooltipProvider>,
+    document.body
+  ) : null;
+
+  return (
+    <>
+      {floatingButton}
+      {openPanel}
+    </>
   );
 };
 
