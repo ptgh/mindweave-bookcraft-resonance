@@ -519,7 +519,7 @@ const ProtagonistChatModal = ({ bookTitle, bookAuthor, protagonistName, portrait
                 onChange={(e) => setMissionInput(e.target.value)}
                 onKeyDown={handleMissionKeyDown}
                 placeholder={`What do you do next...`}
-                className="flex-1 h-10 bg-slate-800 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50"
+                className="flex-1 h-10 bg-slate-800 border border-slate-700/50 rounded-lg px-3 py-0 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50"
                 disabled={isLoading}
               />
               <button
