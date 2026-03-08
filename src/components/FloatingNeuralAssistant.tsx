@@ -393,7 +393,7 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
       </div>
 
       {/* Messages Area */}
-      <ScrollArea className="flex-1 min-h-0 p-3" ref={scrollRef}>
+      <div className="flex-1 min-h-0 overflow-y-auto p-3 scrollbar-hide" ref={scrollRef} style={{ scrollbarWidth: 'none' }}>
         <div className="space-y-3">
           {isLoadingConversation ? (
             <div className="flex items-center justify-center py-8">
@@ -493,7 +493,7 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Input Area */}
       <div className="p-3 border-t border-slate-700/30 bg-slate-800/50 pb-safe">
