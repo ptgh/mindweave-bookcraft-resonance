@@ -358,36 +358,38 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
               </Tooltip>
             )}
         </div>
-        <div className="flex items-center gap-1">
-          {messages.length > 0 && (
+          <div className="flex items-center gap-1">
+            {messages.length > 0 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+                onClick={(e) => { e.stopPropagation(); handleClearConversation(); }}
+                title="Clear conversation"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
-              onClick={(e) => { e.stopPropagation(); handleClearConversation(); }}
-              title="Clear conversation"
+              className="h-8 w-8 text-slate-400 hover:text-slate-100"
+              onClick={(e) => { e.stopPropagation(); toggleVoice(); }}
+              title={voiceEnabled ? 'Disable voice' : 'Enable voice'}
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-slate-400 hover:text-slate-100"
-            onClick={(e) => { e.stopPropagation(); toggleVoice(); }}
-            title={voiceEnabled ? 'Disable voice' : 'Enable voice'}
-          >
-            {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-slate-400 hover:text-red-400"
-            onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
-          >
-            <X className="w-4 h-4" />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-slate-400 hover:text-red-400"
+              onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
+        <span className="text-slate-400 text-[9px] ml-[14px]">{pageContext.pageName}</span>
       </div>
 
       {/* Messages Area */}
