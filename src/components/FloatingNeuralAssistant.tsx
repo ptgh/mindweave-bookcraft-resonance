@@ -547,9 +547,6 @@ export const FloatingNeuralAssistant: React.FC<FloatingNeuralAssistantProps> = (
             <Send className="w-4 h-4" />
           </Button>
         </div>
-        <p className="text-xs text-slate-500 mt-2 text-center">
-          Powered by Lovable AI + ElevenLabs
-        </p>
       </div>
     </div>
   );
