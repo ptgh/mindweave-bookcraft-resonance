@@ -136,10 +136,10 @@ const Index = () => {
     }
   }, [searchParams, user, books]);
 
-  // Load AI recommendations for transmissions (deferred for performance)
+  // Load AI recommendations for transmissions (deferred for performance, auth only)
   useEffect(() => {
+    if (!user || books.length < 5) return;
     const loadAIRecommendations = async () => {
-      if (books.length < 5) return;
       
       try {
         const { data, error } = await supabase.functions.invoke('ai-book-recommendations', {
