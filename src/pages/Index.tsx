@@ -52,8 +52,12 @@ const Index = () => {
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
   const navigate = useNavigate();
   
+  // For anonymous users, show starter transmissions
+  const displayBooks = user ? books : STARTER_TRANSMISSIONS;
+  const isAnonymous = !user;
+
   // Pattern recognition for subtle intelligence
-  const { getBookBridges } = usePatternRecognition(books);
+  const { getBookBridges } = usePatternRecognition(displayBooks);
 
   const loadTransmissions = useCallback(async () => {
     if (!user) {
