@@ -267,6 +267,11 @@ const Index = () => {
   }, [toast, loadTransmissions]);
 
   const handleDiscardBook = useCallback(async (book: Transmission) => {
+    if (isStarterTransmission(book)) {
+      toast({ title: "Sign up to manage your library", description: "Create a free account to curate your collection.", variant: "default" });
+      navigate('/auth');
+      return;
+    }
     try {
       setError(null);
       await deleteTransmission(book.id);
