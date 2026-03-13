@@ -386,7 +386,14 @@ const Index = () => {
             </div>
             
             <StandardButton
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={() => {
+                if (isAnonymous) {
+                  toast({ title: "Sign up to log signals", description: "Create a free account to build your library.", variant: "default" });
+                  navigate('/auth');
+                  return;
+                }
+                setIsAddModalOpen(true);
+              }}
               variant="standard"
               className="touch-manipulation active:scale-95 whitespace-nowrap touch-target"
               aria-label="Log a new book to your library"
@@ -394,6 +401,19 @@ const Index = () => {
               + Log Signal
             </StandardButton>
           </div>
+
+          {/* Sign-up nudge banner for anonymous visitors */}
+          {isAnonymous && (
+            <div className="mb-4 px-4 py-3 rounded-lg border border-cyan-500/20 bg-cyan-500/5">
+              <p className="text-slate-300 text-sm">
+                <span className="text-cyan-400 font-medium">Curated for you</span> — these are starter suggestions to help you explore.{' '}
+                <Link to="/auth" className="text-blue-400 hover:text-blue-300 underline underline-offset-2 font-medium">
+                  Sign up free
+                </Link>{' '}
+                to build your own library.
+              </p>
+            </div>
+          )}
           
           <div ref={addFeatureBlockRef} className="feature-block">
             {error ? (
@@ -409,12 +429,18 @@ const Index = () => {
               </div>
             ) : (
               <TransmissionsList
-                transmissions={books}
-                loading={loading}
+                transmissions={displayBooks}
+                loading={isAnonymous ? false : loading}
                 onEdit={handleEditBook}
                 onKeep={handleKeepBook}
                 onDiscard={handleDiscardBook}
-                onAddNew={() => setIsAddModalOpen(true)}
+                onAddNew={() => {
+                  if (isAnonymous) {
+                    navigate('/auth');
+                    return;
+                  }
+                  setIsAddModalOpen(true);
+                }}
                 onAuthorClick={handleAuthorClick}
                 getBookBridges={getBookBridges}
                 aiRecommendations={aiRecommendations}
