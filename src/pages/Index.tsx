@@ -225,9 +225,14 @@ const Index = () => {
   }, [editingBook, toast, loadTransmissions]);
 
   const handleEditBook = useCallback((book: Transmission) => {
+    if (isStarterTransmission(book)) {
+      toast({ title: "Sign up to manage your library", description: "Create a free account to add and edit books.", variant: "default" });
+      navigate('/auth');
+      return;
+    }
     setEditingBook(book);
     setIsAddModalOpen(true);
-  }, []);
+  }, [toast, navigate]);
 
   const handleKeepBook = useCallback(async (book: Transmission) => {
     try {
