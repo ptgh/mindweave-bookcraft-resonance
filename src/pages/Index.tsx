@@ -14,12 +14,13 @@ import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 import ContributionButton from "@/components/ContributionButton";
 import ContactModal from "@/components/ContactModal";
 import { searchAppleBooks } from "@/services/appleBooks";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { AuthorPopup } from "@/components/AuthorPopup";
 import { getAuthorByName, ScifiAuthor, findOrCreateAuthor } from "@/services/scifiAuthorsService";
 import { usePatternRecognition } from "@/hooks/usePatternRecognition";
 import { SEOHead } from "@/components/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
+import { STARTER_TRANSMISSIONS, isStarterTransmission } from "@/constants/starterTransmissions";
 
 interface AIRecommendation {
   reason: string;
