@@ -235,6 +235,11 @@ const Index = () => {
   }, [toast, navigate]);
 
   const handleKeepBook = useCallback(async (book: Transmission) => {
+    if (isStarterTransmission(book)) {
+      toast({ title: "Sign up to save favourites", description: "Create a free account to keep books.", variant: "default" });
+      navigate('/auth');
+      return;
+    }
     try {
       const newFavoriteStatus = !book.is_favorite;
       
