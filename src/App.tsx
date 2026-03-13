@@ -70,50 +70,39 @@ const AppRoutes = () => {
     </div>
   );
 
-  // If user is not authenticated, show auth page and test-brain (for demo)
-  if (!user) {
-    return (
-      <Suspense fallback={SuspenseFallback}>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/test-brain" element={<TestBrain />} />
-          <Route path="/unsubscribe/:token" element={<Unsubscribe />} />
-          <Route path="/protagonist-app" element={<ProtagonistApp />} />
-          <Route path="/share/book/:id" element={<ShareBook />} />
-          <Route path="*" element={<Navigate to="/auth" replace />} />
-        </Routes>
-      </Suspense>
-    );
-  }
-
-  // If user is authenticated, show all routes including test-brain
+  // All main read-only routes are accessible to everyone.
+  // Auth-gated routes (admin, insights) redirect unauthenticated users to /auth.
   return (
     <>
       <Suspense fallback={SuspenseFallback}>
         <Routes>
+          {/* Public routes — accessible to all visitors */}
           <Route path="/" element={<Discovery />} />
           <Route path="/library" element={<Index />} />
           <Route path="/thread-map" element={<Navigate to="/book-browser" replace />} />
-          <Route path="/insights" element={<ReadingInsights />} />
           <Route path="/author-matrix" element={<AuthorMatrix />} />
           <Route path="/search" element={<Search />} />
           <Route path="/book-browser" element={<BookBrowser />} />
           <Route path="/publisher-resonance" element={<PublisherResonance />} />
-          
           <Route path="/test-brain" element={<TestBrain />} />
           <Route path="/community" element={<Community />} />
           <Route path="/protagonists" element={<Protagonists />} />
           <Route path="/book-to-screen" element={<BookToScreen />} />
-          <Route path="/admin/enrichment" element={<AdminEnrichment />} />
-          <Route path="/admin/populate" element={<Navigate to="/admin/enrichment" replace />} />
           <Route path="/unsubscribe/:token" element={<Unsubscribe />} />
           <Route path="/protagonist-app" element={<ProtagonistApp />} />
           <Route path="/share/book/:id" element={<ShareBook />} />
-          <Route path="/auth" element={<Navigate to="/" replace />} />
+
+          {/* Auth-gated routes */}
+          <Route path="/insights" element={user ? <ReadingInsights /> : <Navigate to="/auth" replace />} />
+          <Route path="/admin/enrichment" element={user ? <AdminEnrichment /> : <Navigate to="/auth" replace />} />
+          <Route path="/admin/populate" element={<Navigate to="/admin/enrichment" replace />} />
+
+          {/* Auth page — redirect home if already signed in */}
+          <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
-      {/* Global floating AI assistant - wrapped in ErrorBoundary for graceful degradation */}
+      {/* Global floating AI assistant */}
       <ErrorBoundary fallback={null}>
         <FloatingNeuralAssistant />
       </ErrorBoundary>
