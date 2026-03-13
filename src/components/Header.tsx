@@ -369,7 +369,7 @@ const Header = () => {
               </button>
             </div>
 
-            {user && (
+            {user ? (
               <div className="flex items-center space-x-1 md:space-x-3">
                 <NotificationsDropdown />
                 <button
@@ -389,6 +389,14 @@ const Header = () => {
                   <span className="hidden sm:inline">Sign Out</span>
                 </StandardButton>
               </div>
+            ) : (
+              <Link
+                to="/auth"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 border border-blue-400/30 text-blue-400 hover:bg-blue-400/10 hover:border-blue-400/50"
+              >
+                <User className="w-3 h-3" />
+                <span>Sign In</span>
+              </Link>
             )}
 
             {/* Profile Edit Modal */}

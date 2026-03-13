@@ -14,12 +14,13 @@ import { useGSAPAnimations } from "@/hooks/useGSAPAnimations";
 import ContributionButton from "@/components/ContributionButton";
 import ContactModal from "@/components/ContactModal";
 import { searchAppleBooks } from "@/services/appleBooks";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { AuthorPopup } from "@/components/AuthorPopup";
 import { getAuthorByName, ScifiAuthor, findOrCreateAuthor } from "@/services/scifiAuthorsService";
 import { usePatternRecognition } from "@/hooks/usePatternRecognition";
 import { SEOHead } from "@/components/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
+import { STARTER_TRANSMISSIONS, isStarterTransmission } from "@/constants/starterTransmissions";
 
 interface AIRecommendation {
   reason: string;
@@ -51,8 +52,12 @@ const Index = () => {
   const { mainContainerRef, heroTitleRef, addFeatureBlockRef } = useGSAPAnimations();
   const navigate = useNavigate();
   
+  // For anonymous users, show starter transmissions
+  const displayBooks = user ? books : STARTER_TRANSMISSIONS;
+  const isAnonymous = !user;
+
   // Pattern recognition for subtle intelligence
-  const { getBookBridges } = usePatternRecognition(books);
+  const { getBookBridges } = usePatternRecognition(displayBooks);
 
   const loadTransmissions = useCallback(async () => {
     if (!user) {
@@ -131,10 +136,10 @@ const Index = () => {
     }
   }, [searchParams, user, books]);
 
-  // Load AI recommendations for transmissions (deferred for performance)
+  // Load AI recommendations for transmissions (deferred for performance, auth only)
   useEffect(() => {
+    if (!user || books.length < 5) return;
     const loadAIRecommendations = async () => {
-      if (books.length < 5) return;
       
       try {
         const { data, error } = await supabase.functions.invoke('ai-book-recommendations', {
@@ -220,11 +225,21 @@ const Index = () => {
   }, [editingBook, toast, loadTransmissions]);
 
   const handleEditBook = useCallback((book: Transmission) => {
+    if (isStarterTransmission(book)) {
+      toast({ title: "Sign up to manage your library", description: "Create a free account to add and edit books.", variant: "default" });
+      navigate('/auth');
+      return;
+    }
     setEditingBook(book);
     setIsAddModalOpen(true);
-  }, []);
+  }, [toast, navigate]);
 
   const handleKeepBook = useCallback(async (book: Transmission) => {
+    if (isStarterTransmission(book)) {
+      toast({ title: "Sign up to save favourites", description: "Create a free account to keep books.", variant: "default" });
+      navigate('/auth');
+      return;
+    }
     try {
       const newFavoriteStatus = !book.is_favorite;
       
@@ -252,6 +267,11 @@ const Index = () => {
   }, [toast, loadTransmissions]);
 
   const handleDiscardBook = useCallback(async (book: Transmission) => {
+    if (isStarterTransmission(book)) {
+      toast({ title: "Sign up to manage your library", description: "Create a free account to curate your collection.", variant: "default" });
+      navigate('/auth');
+      return;
+    }
     try {
       setError(null);
       await deleteTransmission(book.id);
@@ -366,7 +386,14 @@ const Index = () => {
             </div>
             
             <StandardButton
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={() => {
+                if (isAnonymous) {
+                  toast({ title: "Sign up to log signals", description: "Create a free account to build your library.", variant: "default" });
+                  navigate('/auth');
+                  return;
+                }
+                setIsAddModalOpen(true);
+              }}
               variant="standard"
               className="touch-manipulation active:scale-95 whitespace-nowrap touch-target"
               aria-label="Log a new book to your library"
@@ -374,6 +401,19 @@ const Index = () => {
               + Log Signal
             </StandardButton>
           </div>
+
+          {/* Sign-up nudge banner for anonymous visitors */}
+          {isAnonymous && (
+            <div className="mb-4 px-4 py-3 rounded-lg border border-cyan-500/20 bg-cyan-500/5">
+              <p className="text-slate-300 text-sm">
+                <span className="text-cyan-400 font-medium">Curated for you</span> — these are starter suggestions to help you explore.{' '}
+                <Link to="/auth" className="text-blue-400 hover:text-blue-300 underline underline-offset-2 font-medium">
+                  Sign up free
+                </Link>{' '}
+                to build your own library.
+              </p>
+            </div>
+          )}
           
           <div ref={addFeatureBlockRef} className="feature-block">
             {error ? (
@@ -389,12 +429,18 @@ const Index = () => {
               </div>
             ) : (
               <TransmissionsList
-                transmissions={books}
-                loading={loading}
+                transmissions={displayBooks}
+                loading={isAnonymous ? false : loading}
                 onEdit={handleEditBook}
                 onKeep={handleKeepBook}
                 onDiscard={handleDiscardBook}
-                onAddNew={() => setIsAddModalOpen(true)}
+                onAddNew={() => {
+                  if (isAnonymous) {
+                    navigate('/auth');
+                    return;
+                  }
+                  setIsAddModalOpen(true);
+                }}
                 onAuthorClick={handleAuthorClick}
                 getBookBridges={getBookBridges}
                 aiRecommendations={aiRecommendations}
